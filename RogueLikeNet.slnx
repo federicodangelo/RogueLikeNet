@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RogueLikeNet.Client.Core/RogueLikeNet.Client.Core.csproj" />
+    <Project Path="src/RogueLikeNet.Client.Desktop/RogueLikeNet.Client.Desktop.csproj" />
+    <Project Path="src/RogueLikeNet.Client.Web/RogueLikeNet.Client.Web.csproj" />
+    <Project Path="src/RogueLikeNet.Core/RogueLikeNet.Core.csproj" />
+    <Project Path="src/RogueLikeNet.Protocol/RogueLikeNet.Protocol.csproj" />
+    <Project Path="src/RogueLikeNet.Server/RogueLikeNet.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RogueLikeNet.Core.Tests/RogueLikeNet.Core.Tests.csproj" />
+    <Project Path="tests/RogueLikeNet.Protocol.Tests/RogueLikeNet.Protocol.Tests.csproj" />
+    <Project Path="tests/RogueLikeNet.Server.Tests/RogueLikeNet.Server.Tests.csproj" />
+  </Folder>
+</Solution>

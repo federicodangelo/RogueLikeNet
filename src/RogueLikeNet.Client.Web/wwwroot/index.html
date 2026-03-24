@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RogueLikeNet</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background: #1a1a2e; }
+        #out { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="out"></div>
+    <script type="module" src="./main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
