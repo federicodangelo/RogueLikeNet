@@ -103,23 +103,48 @@ public class TileRenderer
             float px = sx * TileWidth + shakeX;
             float py = sy * TileHeight + shakeY;
 
-            var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
-            r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+            bool visible = state.IsVisible(worldX, worldY);
+            bool explored = state.IsExplored(worldX, worldY);
 
-            if (tile.GlyphId > 0 && tile.LightLevel > 0)
+            if (visible)
             {
-                var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
+                // Currently in FOV — render with actual light level
+                var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
+                r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+
+                if (tile.GlyphId > 0 && tile.LightLevel > 0)
+                {
+                    var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
+                    char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
+                    r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
+                }
+            }
+            else if (explored && tile.GlyphId > 0)
+            {
+                // Explored but not in FOV — dim fog of war
+                var bgColor = FogColor(tile.BgColor);
+                r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+
+                var fgColor = FogColor(tile.FgColor);
                 char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
                 r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
             }
+            else
+            {
+                // Unknown — black
+                r.DrawRectScreen(px, py, TileWidth, TileHeight, ColorBlack);
+            }
         }
 
-        // Pass 2: glow effects behind torches and light-emitting tiles
+        // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
         for (int sx = 0; sx < gameCols; sx++)
         for (int sy = 0; sy < totalRows; sy++)
         {
             int worldX = cameraCenterX - halfW + sx;
             int worldY = cameraCenterY - halfH + sy;
+
+            if (!state.IsVisible(worldX, worldY)) continue;
+
             var tile = state.GetTile(worldX, worldY);
 
             if (tile.LightLevel < 5) continue;
@@ -626,10 +651,20 @@ public class TileRenderer
     {
         if (lightLevel <= 0) return ColorBlack;
 
-        float brightness = lightLevel / 10f;
-        byte cr = (byte)((packedRgb >> 16 & 0xFF) * brightness);
-        byte cg = (byte)((packedRgb >> 8 & 0xFF) * brightness);
-        byte cb = (byte)((packedRgb & 0xFF) * brightness);
+        float raw = Math.Clamp(lightLevel / 10f, 0f, 1f);
+        float brightness = 0.12f + 0.88f * MathF.Pow(raw, 0.65f);
+        byte cr = (byte)Math.Min(255, (int)((packedRgb >> 16 & 0xFF) * brightness));
+        byte cg = (byte)Math.Min(255, (int)((packedRgb >> 8 & 0xFF) * brightness));
+        byte cb = (byte)Math.Min(255, (int)((packedRgb & 0xFF) * brightness));
+        return new Color4(cr, cg, cb, 255);
+    }
+
+    private static Color4 FogColor(int packedRgb)
+    {
+        const float dim = 0.22f;
+        byte cr = (byte)((packedRgb >> 16 & 0xFF) * dim);
+        byte cg = (byte)((packedRgb >> 8 & 0xFF) * dim);
+        byte cb = (byte)((packedRgb & 0xFF) * dim);
         return new Color4(cr, cg, cb, 255);
     }
 
@@ -659,29 +694,36 @@ public class TileRenderer
         {
             int wx = cx - half + dx;
             int wy = cy - half + dy;
+
+            if (!state.IsExplored(wx, wy))
+                continue;
+
             var tile = state.GetTile(wx, wy);
+            if (tile.GlyphId == 0)
+                continue;
+
+            // Bright for tiles currently visible, dim for explored fog of war
+            bool visible = state.IsVisible(wx, wy);
 
             Color4 dotColor;
-            if (tile.GlyphId == 0 || tile.LightLevel == 0)
-                continue; // unexplored/dark — skip
-            else if (tile.Type == TileType.Wall)
-                dotColor = new Color4(120, 120, 140, 255);
+            if (tile.Type == TileType.Wall)
+                dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
             else if (tile.Type == TileType.Lava)
-                dotColor = new Color4(255, 80, 20, 255);
+                dotColor = visible ? new Color4(255, 80, 20, 255) : new Color4(80, 30, 10, 255);
             else if (tile.Type == TileType.Water)
-                dotColor = new Color4(70, 130, 255, 255);
+                dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphTorch)
-                dotColor = new Color4(255, 200, 100, 255);
+                dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphDoor)
-                dotColor = new Color4(180, 130, 60, 255);
+                dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
-                dotColor = new Color4(255, 255, 80, 255);
+                dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
             else if (tile.Type == TileType.Decoration)
-                dotColor = new Color4(80, 80, 60, 255);
+                dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);
             else if (tile.Type == TileType.Floor)
-                dotColor = new Color4(60, 60, 70, 255);
+                dotColor = visible ? new Color4(60, 60, 70, 255) : new Color4(25, 25, 30, 255);
             else
-                dotColor = new Color4(50, 50, 60, 255);
+                dotColor = visible ? new Color4(50, 50, 60, 255) : new Color4(20, 20, 25, 255);
 
             r.DrawRectScreen(baseX + dx * pixelSize, baseY + dy * pixelSize, pixelSize, pixelSize, dotColor);
         }

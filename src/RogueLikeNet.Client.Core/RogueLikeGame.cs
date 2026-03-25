@@ -234,7 +234,9 @@ public sealed class RogueLikeGame : GameBase
             int halfH = totalRows / 2;
             _particles.Render(renderer, _gameState.PlayerX, _gameState.PlayerY,
                 halfW, halfH, shakeX, shakeY);
-            _tileRenderer.RenderMinimap(renderer, _gameState, gameCols, totalRows);
+
+            // Disable minimap until further notice (its not usually used in roguelikes)
+            //_tileRenderer.RenderMinimap(renderer, _gameState, gameCols, totalRows);
 
             _tileRenderer.RenderChatOverlay(renderer, totalCols, totalRows,
                 _chatLog, _chatInputActive, _chatInputText);

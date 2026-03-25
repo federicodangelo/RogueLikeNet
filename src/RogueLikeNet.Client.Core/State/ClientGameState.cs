@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 
@@ -9,9 +10,12 @@ namespace RogueLikeNet.Client.Core.State;
 /// </summary>
 public class ClientGameState
 {
+    private const int FovRadius = 20;
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
+    private readonly HashSet<long> _exploredTiles = new();
+    private readonly HashSet<long> _visibleTiles = new();
 
     public int PlayerX { get; set; }
     public int PlayerY { get; set; }
@@ -26,6 +30,8 @@ public class ClientGameState
         _chunks.Clear();
         _entities.Clear();
         _pendingCombatEvents.Clear();
+        _exploredTiles.Clear();
+        _visibleTiles.Clear();
         PlayerX = 0;
         PlayerY = 0;
         WorldTick = 0;
@@ -58,6 +64,7 @@ public class ClientGameState
         }
 
         PlayerHud = snapshot.PlayerHud;
+        ComputeVisibility();
     }
 
     public void ApplyDelta(WorldDeltaMsg delta)
@@ -130,6 +137,8 @@ public class ClientGameState
         // Queue combat events for particle system
         if (delta.CombatEvents.Length > 0)
             _pendingCombatEvents.AddRange(delta.CombatEvents);
+
+        ComputeVisibility();
     }
 
     public void DrainCombatEvents()
@@ -166,6 +175,25 @@ public class ClientGameState
         if (!chunk.InBounds(lx, ly))
             return default;
         return chunk.Tiles[lx, ly];
+    }
+
+    public bool IsExplored(int worldX, int worldY) =>
+        _exploredTiles.Contains(((long)worldX << 32) | (uint)worldY);
+
+    public bool IsVisible(int worldX, int worldY) =>
+        _visibleTiles.Contains(((long)worldX << 32) | (uint)worldY);
+
+    private void ComputeVisibility()
+    {
+        _visibleTiles.Clear();
+        ShadowCastFov.Compute(PlayerX, PlayerY, FovRadius,
+            isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
+            markVisible: (x, y) =>
+            {
+                long key = ((long)x << 32) | (uint)y;
+                _visibleTiles.Add(key);
+                _exploredTiles.Add(key);
+            });
     }
 }
 
