@@ -3,6 +3,7 @@ using Engine.Platform;
 using Engine.Rendering.Base;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -134,7 +135,7 @@ public class TileRenderer
                 r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
             }
             // Subtle glow behind lava tiles
-            else if (tile.GlyphId == TileDefinitions.GlyphLava && tile.FgColor == TileDefinitions.ColorLavaFg)
+            else if (tile.Type == TileType.Lava)
             {
                 float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
                 float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
@@ -663,20 +664,22 @@ public class TileRenderer
             Color4 dotColor;
             if (tile.GlyphId == 0 || tile.LightLevel == 0)
                 continue; // unexplored/dark — skip
-            else if (tile.GlyphId == TileDefinitions.GlyphWall)
+            else if (tile.Type == TileType.Wall)
                 dotColor = new Color4(120, 120, 140, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphFloor)
-                dotColor = new Color4(60, 60, 70, 255);
+            else if (tile.Type == TileType.Lava)
+                dotColor = new Color4(255, 80, 20, 255);
+            else if (tile.Type == TileType.Water)
+                dotColor = new Color4(70, 130, 255, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphTorch)
                 dotColor = new Color4(255, 200, 100, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphLava)
-                dotColor = new Color4(255, 80, 20, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphWater)
-                dotColor = new Color4(70, 130, 255, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphDoor)
                 dotColor = new Color4(180, 130, 60, 255);
             else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
                 dotColor = new Color4(255, 255, 80, 255);
+            else if (tile.Type == TileType.Decoration)
+                dotColor = new Color4(80, 80, 60, 255);
+            else if (tile.Type == TileType.Floor)
+                dotColor = new Color4(60, 60, 70, 255);
             else
                 dotColor = new Color4(50, 50, 60, 255);
 

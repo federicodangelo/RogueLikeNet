@@ -17,7 +17,7 @@ public class BiomePaletteTests
     [Fact]
     public void GetBiomeName_ReturnsValidBiomeName()
     {
-        string[] validNames = ["Stone", "Lava", "Ice", "Forest", "Arcane"];
+        string[] validNames = ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
         var (cx, cy) = Chunk.WorldToChunkCoord(5, 5);
         var biome = BiomeDefinitions.GetBiomeForChunk(cx, cy, 42);
         string name = BiomeDefinitions.GetBiomeName(biome);
@@ -83,5 +83,37 @@ public class BiomePaletteTests
     public void ApplyBiomeTint_Zero_ReturnsZero()
     {
         Assert.Equal(0, BiomeDefinitions.ApplyBiomeTint(0, BiomeType.Ice));
+    }
+
+    [Fact]
+    public void AllBiomes_HaveDecorations()
+    {
+        for (int i = 0; i < BiomeDefinitions.BiomeCount; i++)
+        {
+            var decos = BiomeDefinitions.GetDecorations((BiomeType)i);
+            Assert.True(decos.Length > 0, $"Biome {(BiomeType)i} should have decorations");
+        }
+    }
+
+    [Fact]
+    public void AllBiomes_HaveNames()
+    {
+        for (int i = 0; i < BiomeDefinitions.BiomeCount; i++)
+        {
+            string name = BiomeDefinitions.GetBiomeName((BiomeType)i);
+            Assert.False(string.IsNullOrEmpty(name));
+        }
+    }
+
+    [Fact]
+    public void LiquidBiomes_HaveValidLiquidDefs()
+    {
+        // Lava, Ice, Forest, Sewer, Fungal, Infernal should have liquid
+        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Lava));
+        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Sewer));
+        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Infernal));
+        // Stone, Arcane, Crypt, Ruined should not
+        Assert.Null(BiomeDefinitions.GetLiquid(BiomeType.Stone));
+        Assert.Null(BiomeDefinitions.GetLiquid(BiomeType.Arcane));
     }
 }

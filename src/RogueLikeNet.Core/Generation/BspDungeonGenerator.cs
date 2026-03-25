@@ -20,6 +20,7 @@ public class BspDungeonGenerator : IDungeonGenerator
         var result = new GenerationResult();
         int width = Chunk.Size;
         int height = Chunk.Size;
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
 
         // Fill with walls
         for (int x = 0; x < width; x++)
@@ -56,12 +57,17 @@ public class BspDungeonGenerator : IDungeonGenerator
             PlaceFeature(chunk, last.CenterX, last.CenterY, TileType.StairsDown, TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
         }
 
+        // Biome-specific: liquid pools in select rooms
+        PlaceLiquidPools(chunk, rooms, biome, rng);
+
+        // Biome-specific: scatter decorations on floor tiles
+        PlaceDecorations(chunk, biome, rng);
+
         // Populate rooms with monsters, items, and torches (skip first room — spawn area)
         for (int i = 1; i < rooms.Count; i++)
             PopulateRoom(rooms[i], rng, result);
 
         // Apply biome tint to all tile colors
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
         for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
         {
@@ -71,6 +77,64 @@ public class BspDungeonGenerator : IDungeonGenerator
         }
 
         return result;
+    }
+
+    private static void PlaceLiquidPools(Chunk chunk, List<Room> rooms, BiomeType biome, SeededRandom rng)
+    {
+        var liquidDef = BiomeDefinitions.GetLiquid(biome);
+        if (liquidDef == null) return;
+        var liq = liquidDef.Value;
+
+        // Skip the first room (spawn area) and last room (stairs)
+        for (int i = 1; i < rooms.Count - 1; i++)
+        {
+            if (rng.Next(100) >= liq.RoomChance) continue;
+            var room = rooms[i];
+            if (room.Width < 6 || room.Height < 6) continue;
+
+            // Carve a small pool in the room interior (leaving 2-tile walkable border)
+            int poolX = room.X + 2;
+            int poolY = room.Y + 2;
+            int poolW = room.Width - 4;
+            int poolH = room.Height - 4;
+
+            for (int x = poolX; x < poolX + poolW; x++)
+            for (int y = poolY; y < poolY + poolH; y++)
+            {
+                if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
+                {
+                    ref var tile = ref chunk.Tiles[x, y];
+                    tile.Type = liq.Type;
+                    tile.GlyphId = liq.GlyphId;
+                    tile.FgColor = liq.FgColor;
+                    tile.BgColor = liq.BgColor;
+                }
+            }
+        }
+    }
+
+    private static void PlaceDecorations(Chunk chunk, BiomeType biome, SeededRandom rng)
+    {
+        var decorations = BiomeDefinitions.GetDecorations(biome);
+        if (decorations.Length == 0) return;
+
+        for (int x = 0; x < Chunk.Size; x++)
+        for (int y = 0; y < Chunk.Size; y++)
+        {
+            ref var tile = ref chunk.Tiles[x, y];
+            if (tile.Type != TileType.Floor) continue;
+
+            foreach (var deco in decorations)
+            {
+                if (rng.Next(100) < deco.Chance)
+                {
+                    tile.Type = TileType.Decoration;
+                    tile.GlyphId = deco.GlyphId;
+                    tile.FgColor = deco.FgColor;
+                    break; // Only one decoration per tile
+                }
+            }
+        }
     }
 
     private static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result)

@@ -10,6 +10,7 @@ public enum TileType : byte
     StairsUp = 5,
     Water = 6,
     Lava = 7,
+    Decoration = 8,
 }
 
 public struct TileInfo
@@ -21,6 +22,6 @@ public struct TileInfo
     public int LightLevel;
     public bool Explored;
 
-    public bool IsWalkable => Type is TileType.Floor or TileType.Door or TileType.StairsDown or TileType.StairsUp;
+    public bool IsWalkable => Type is TileType.Floor or TileType.Door or TileType.StairsDown or TileType.StairsUp or TileType.Decoration;
     public bool IsTransparent => Type is not TileType.Wall;
 }
