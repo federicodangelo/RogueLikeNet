@@ -511,6 +511,28 @@ public class TileRenderer : IDisposable
         DrawCentered(canvas, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", ColorDim);
     }
 
+    // ── Performance Overlay ──────────────────────────────────
+
+    private static readonly SKColor ColorOverlayBg = new(0, 0, 0, 180);
+    private static readonly SKColor ColorFps = new(0, 255, 0);
+    private static readonly SKColor ColorLatency = new(255, 200, 50);
+
+    public void RenderPerformanceOverlay(SKCanvas canvas, int fps, int latencyMs)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        string fpsText = $"FPS:{fps}";
+        string latText = $"Tick:{latencyMs}ms";
+        int width = Math.Max(fpsText.Length, latText.Length) + 1;
+
+        // Dark background behind the text
+        _bgPaint.Color = ColorOverlayBg;
+        canvas.DrawRect(0, 0, width * TileWidth, 2 * TileHeight, _bgPaint);
+
+        DrawString(canvas, 0, 0, fpsText, ColorFps);
+        DrawString(canvas, 0, 1, latText, ColorLatency);
+    }
+
     // ── Drawing Helpers ────────────────────────────────────────
 
     private void DrawChar(SKCanvas canvas, int tileX, int tileY, char ch, SKColor color)

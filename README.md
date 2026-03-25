@@ -1,6 +1,6 @@
 # RogueLikeNet
 
-A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons, real-time combat, ECS architecture, and both desktop and web browser clients.
+A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons, real-time combat, ECS architecture, item stacking and equipment, and both desktop and web browser clients.
 
 ## Architecture
 
@@ -46,11 +46,12 @@ The pure game logic library. Zero dependencies on networking, rendering, or pers
 
 | Folder | Description |
 |--------|-------------|
-| `Components/` | ECS components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags` |
+| `Components/` | ECS components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment` |
 | `Algorithms/` | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS |
-| `Systems/` | ECS systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem` |
+| `Systems/` | ECS systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem` |
 | `Generation/` | Procedural content: `BspDungeonGenerator` (BSP tree rooms+corridors), `SeededRandom` (xoshiro256\*\*), `TileDefinitions` (CP437 glyphs) |
 | `World/` | World structure: `Chunk` (64×64 tiles), `WorldMap` (chunk dictionary), `TileInfo` |
+| `Definitions/` | Data-driven definitions: `ItemTypeDefinition` (stackable items), `SkillDefinition` (array-based lookup), `NpcDefinition` (NPC templates) |
 | `GameEngine.cs` | Orchestrates all systems, manages the ECS world and world map |
 
 ### `src/RogueLikeNet.Protocol`
@@ -63,8 +64,10 @@ Network message definitions using [MessagePack](https://github.com/MessagePack-C
 | `Messages/ClientInputMsg.cs` | Client → Server: player actions (move, attack, use item) |
 | `Messages/WorldSnapshotMsg.cs` | Server → Client: full world state (chunks + entities) |
 | `Messages/WorldDeltaMsg.cs` | Server → Client: incremental updates (entity moves, combat events) |
+| `Messages/PlayerHudMsg.cs` | Server → Client: player HUD data (HP, stats, inventory, equipment, skills) |
 | `Messages/AuthMsg.cs` | Authentication request/response + chat messages |
 | `NetSerializer.cs` | Serialize/deserialize helpers with `UntrustedData` security |
+| `GameStateSerializer.cs` | Shared helpers for entity/chunk/HUD serialization |
 
 ### `src/RogueLikeNet.Server`
 
@@ -87,8 +90,8 @@ Shared client library — the **only** layer that contains rendering code (SkiaS
 
 | File | Description |
 |------|-------------|
-| `Rendering/TileRenderer.cs` | SkiaSharp renderer — CP437 character map, tile coloring, lighting |
-| `Rendering/GameRenderControl.cs` | Avalonia `Control` — 30fps render loop, keyboard input (WASD/arrows) |
+| `Rendering/TileRenderer.cs` | SkiaSharp renderer — CP437 character map, tile coloring, lighting, FPS/latency overlay |
+| `Rendering/GameRenderControl.cs` | Avalonia `Control` — 30fps render loop, keyboard input (WASD/arrows), performance tracking |
 | `Networking/IGameServerConnection.cs` | Connection abstraction (`ConnectAsync`, `SendInputAsync`, events) |
 | `Networking/WebSocketServerConnection.cs` | WebSocket client implementation for remote server play |
 | `State/ClientGameState.cs` | Client-side world state — applies snapshots and deltas |
@@ -118,11 +121,11 @@ Avalonia Browser (WebAssembly) client. Runs the game engine **locally in the bro
 
 ### `tests/`
 
-| Project | Coverage |
-|---------|----------|
-| `RogueLikeNet.Core.Tests` | Position, Health, Chunk, SeededRandom, BSP dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine |
-| `RogueLikeNet.Protocol.Tests` | MessagePack round-trip, envelope wrapping, snapshot/delta serialization |
-| `RogueLikeNet.Server.Tests` | GameLoop lifecycle, connections, player spawning, input queuing |
+| Project | Tests | Coverage |
+|---------|-------|----------|
+| `RogueLikeNet.Core.Tests` | 205 | Position, Health, Chunk, SeededRandom, BSP dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, InventorySystem, ItemTypeDefinition, SkillDefinition, NpcDefinition |
+| `RogueLikeNet.Protocol.Tests` | 36 | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer |
+| `RogueLikeNet.Server.Tests` | 73 | GameLoop lifecycle, connections, player spawning, input queuing |
 
 ## Prerequisites
 
@@ -190,6 +193,26 @@ Platform-specific scripts are provided in the `scripts/` folder:
 | `A` / `←` | Move west |
 | `D` / `→` | Move east |
 | `Space` | Wait one turn |
+| `F` | Attack nearest enemy |
+| `G` | Pick up item |
+| `1`-`4` | Use item in slot |
+| `Q` | Use skill 1 |
+| `E` | Use skill 2 |
+| `X` | Drop item |
+| `I` | Open inventory |
+| `Escape` | Pause / Back |
+
+### Inventory Controls
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate slots |
+| `Enter` | Use selected item |
+| `E` | Equip selected item |
+| `U` | Unequip weapon |
+| `R` | Unequip armor |
+| `X` | Drop selected item |
+| `Escape` | Close inventory |
 
 ## Technology Stack
 
@@ -197,7 +220,7 @@ Platform-specific scripts are provided in the `scripts/` folder:
 |-----------|-----------|
 | Game Logic | [Arch ECS](https://github.com/genaray/Arch) 2.0 — Entity Component System |
 | Serialization | [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp) 3.1 — binary protocol |
-| UI Framework | [Avalonia](https://avaloniaui.net/) 11.2 — cross-platform (Desktop + WASM) |
+| UI Framework | [Avalonia](https://avaloniaui.net/) 11.3 — cross-platform (Desktop + WASM) |
 | Rendering | SkiaSharp — 2D tile rendering with CP437 character set |
 | Persistence | EF Core + SQLite — player accounts, characters, world chunks |
 | Server | ASP.NET Core (Kestrel) — WebSocket transport |

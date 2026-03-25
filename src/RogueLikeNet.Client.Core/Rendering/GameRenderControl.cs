@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -29,6 +30,13 @@ public class GameRenderControl : Control
     private int _pauseIndex;
     private int _inventoryIndex;
     private string? _connectionError;
+
+    // Performance metrics
+    private readonly Stopwatch _fpsStopwatch = Stopwatch.StartNew();
+    private int _frameCount;
+    private int _fps;
+    private long _lastDeltaTicks;
+    private int _latencyMs;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenState;
@@ -129,6 +137,15 @@ public class GameRenderControl : Control
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.Black);
 
+        // Update FPS counter
+        _frameCount++;
+        if (_fpsStopwatch.ElapsedMilliseconds >= 1000)
+        {
+            _fps = _frameCount;
+            _frameCount = 0;
+            _fpsStopwatch.Restart();
+        }
+
         switch (_screenState)
         {
             case ScreenState.MainMenu:
@@ -155,6 +172,10 @@ public class GameRenderControl : Control
                 _tileRenderer.RenderHelp(canvas, totalCols, totalRows, isOverlay: true);
                 break;
         }
+
+        // FPS/latency overlay on game screens
+        if (_screenState is ScreenState.Playing or ScreenState.Inventory or ScreenState.Paused or ScreenState.PausedHelp)
+            _tileRenderer.RenderPerformanceOverlay(canvas, _fps, _latencyMs);
 
         using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = new MemoryStream(data.ToArray());
@@ -407,6 +428,11 @@ public class GameRenderControl : Control
 
     private void OnWorldDelta(WorldDeltaMsg delta)
     {
+        long now = Stopwatch.GetTimestamp();
+        if (_lastDeltaTicks > 0)
+            _latencyMs = (int)((now - _lastDeltaTicks) * 1000 / Stopwatch.Frequency);
+        _lastDeltaTicks = now;
+
         Dispatcher.UIThread.Post(() =>
         {
             _gameState.ApplyDelta(delta);
