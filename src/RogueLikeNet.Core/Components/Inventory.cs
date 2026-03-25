@@ -1,16 +1,14 @@
-using Arch.Core;
-
 namespace RogueLikeNet.Core.Components;
 
 public struct Inventory
 {
-    public List<Entity>? Items;
+    public List<ItemData>? Items;
     public int Capacity;
 
     public Inventory(int capacity)
     {
         Capacity = capacity;
-        Items = new List<Entity>(capacity);
+        Items = new List<ItemData>(capacity);
     }
 
     public bool IsFull => Items != null && Items.Count >= Capacity;
@@ -18,14 +16,11 @@ public struct Inventory
 
 public struct Equipment
 {
-    public Entity Weapon;
-    public Entity Armor;
-    public Entity Helmet;
-    public Entity Boots;
-    public Entity Ring;
+    public ItemData? Weapon;
+    public ItemData? Armor;
 
-    public bool HasWeapon => Weapon != Entity.Null;
-    public bool HasArmor => Armor != Entity.Null;
+    public bool HasWeapon => Weapon.HasValue;
+    public bool HasArmor => Armor.HasValue;
 }
 
 public struct ItemData

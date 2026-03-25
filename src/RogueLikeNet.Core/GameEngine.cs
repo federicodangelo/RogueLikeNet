@@ -324,16 +324,8 @@ public class GameEngine : IDisposable
                 var names = new List<string>();
                 foreach (var item in inv.Items)
                 {
-                    if (_ecsWorld.IsAlive(item) && _ecsWorld.Has<ItemData>(item))
-                    {
-                        var itemData = _ecsWorld.Get<ItemData>(item);
-                        var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
-                        names.Add(template.Name ?? "Unknown");
-                    }
-                    else
-                    {
-                        names.Add("???");
-                    }
+                    var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == item.ItemTypeId);
+                    names.Add(template.Name ?? "Unknown");
                 }
                 hud.InventoryNames = names.ToArray();
             }

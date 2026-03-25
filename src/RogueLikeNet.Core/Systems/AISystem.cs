@@ -27,6 +27,15 @@ public class AISystem
 
         if (playerPositions.Count == 0) return;
 
+        // Collect all actor positions (alive) for collision
+        var actorPositions = new HashSet<long>();
+        var actorQuery = new QueryDescription().WithAll<Position, Health>();
+        world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
+        {
+            if (h.IsAlive)
+                actorPositions.Add(FOVData.PackCoord(aPos.X, aPos.Y));
+        });
+
         // Process AI entities
         var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
         world.Query(in aiQuery, (ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
@@ -73,10 +82,14 @@ public class AISystem
                     if (path != null && path.Count >= 2)
                     {
                         var next = path[1];
-                        if (map.IsWalkable(next.X, next.Y))
+                        long nextKey = FOVData.PackCoord(next.X, next.Y);
+                        if (map.IsWalkable(next.X, next.Y) && !actorPositions.Contains(nextKey))
                         {
+                            // Remove old position, move, add new position
+                            actorPositions.Remove(FOVData.PackCoord(pos.X, pos.Y));
                             pos.X = next.X;
                             pos.Y = next.Y;
+                            actorPositions.Add(nextKey);
                         }
                     }
                     break;

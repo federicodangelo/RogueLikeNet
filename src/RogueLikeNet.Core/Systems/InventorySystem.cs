@@ -7,7 +7,7 @@ namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Handles item pickup, drop, use, and equipment.
-/// Processes PlayerInput actions: PickUp, Drop, UseItem.
+/// Inventory stores ItemData values — picked-up floor entities are destroyed.
 /// </summary>
 public class InventorySystem
 {
@@ -32,14 +32,11 @@ public class InventorySystem
 
             int px = pPos.X, py = pPos.Y;
 
-            // Find a ground item at the player's position
             var itemQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
             world.Query(in itemQuery, (Entity item, ref Position iPos) =>
             {
                 if (iPos.X == px && iPos.Y == py)
-                {
                     pickups.Add((player, item));
-                }
             });
         });
 
@@ -50,12 +47,10 @@ public class InventorySystem
             ref var inv = ref world.Get<Inventory>(player);
             if (inv.Items == null || inv.IsFull) continue;
 
-            // Move item from ground to inventory
-            inv.Items.Add(item);
-            world.Remove<GroundItemTag>(item);
-            world.Remove<Position>(item);
-            if (world.Has<TileAppearance>(item))
-                world.Remove<TileAppearance>(item);
+            // Copy item data to inventory, then destroy the floor entity
+            var itemData = world.Get<ItemData>(item);
+            inv.Items.Add(itemData);
+            world.Destroy(item);
         }
     }
 
@@ -79,20 +74,16 @@ public class InventorySystem
 
             if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
 
-            var itemEntity = inv.Items[slot];
+            var itemData = inv.Items[slot];
             inv.Items.RemoveAt(slot);
 
-            if (!world.IsAlive(itemEntity)) continue;
-
-            // Place item on the ground at the player's position
-            world.Add(itemEntity, new Position(pos.X, pos.Y));
-            world.Add(itemEntity, new GroundItemTag());
-            if (world.Has<ItemData>(itemEntity) && !world.Has<TileAppearance>(itemEntity))
-            {
-                var itemData = world.Get<ItemData>(itemEntity);
-                var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
-                world.Add(itemEntity, new TileAppearance(template.GlyphId, template.Color));
-            }
+            // Create a new entity on the ground
+            var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
+            world.Create(
+                new Position(pos.X, pos.Y),
+                new TileAppearance(template.GlyphId, template.Color),
+                itemData,
+                new GroundItemTag());
         }
     }
 
@@ -114,10 +105,7 @@ public class InventorySystem
             ref var inv = ref world.Get<Inventory>(player);
             if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
 
-            var itemEntity = inv.Items[slot];
-            if (!world.IsAlive(itemEntity) || !world.Has<ItemData>(itemEntity)) continue;
-
-            var itemData = world.Get<ItemData>(itemEntity);
+            var itemData = inv.Items[slot];
             var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
 
             switch (template.Category)
@@ -125,7 +113,6 @@ public class InventorySystem
                 case ItemDefinitions.CategoryPotion:
                     ApplyPotion(world, player, itemData);
                     inv.Items.RemoveAt(slot);
-                    world.Destroy(itemEntity);
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
@@ -161,20 +148,16 @@ public class InventorySystem
         inv.Items.RemoveAt(slot);
 
         // Unequip current weapon if any
-        if (equip.HasWeapon && world.IsAlive(equip.Weapon) && world.Has<ItemData>(equip.Weapon))
+        if (equip.HasWeapon)
         {
-            var oldData = world.Get<ItemData>(equip.Weapon);
+            var oldData = equip.Weapon!.Value;
             stats.Attack -= oldData.BonusAttack;
-            inv.Items.Add(equip.Weapon);
+            inv.Items.Add(oldData);
         }
 
         // Equip new weapon
         equip.Weapon = newWeapon;
-        if (world.Has<ItemData>(newWeapon))
-        {
-            var weaponData = world.Get<ItemData>(newWeapon);
-            stats.Attack += weaponData.BonusAttack;
-        }
+        stats.Attack += newWeapon.BonusAttack;
     }
 
     private static void EquipArmor(Arch.Core.World world, Entity player, int slot)
@@ -188,19 +171,15 @@ public class InventorySystem
         inv.Items.RemoveAt(slot);
 
         // Unequip current armor if any
-        if (equip.HasArmor && world.IsAlive(equip.Armor) && world.Has<ItemData>(equip.Armor))
+        if (equip.HasArmor)
         {
-            var oldData = world.Get<ItemData>(equip.Armor);
+            var oldData = equip.Armor!.Value;
             stats.Defense -= oldData.BonusDefense;
-            inv.Items.Add(equip.Armor);
+            inv.Items.Add(oldData);
         }
 
         // Equip new armor
         equip.Armor = newArmor;
-        if (world.Has<ItemData>(newArmor))
-        {
-            var armorData = world.Get<ItemData>(newArmor);
-            stats.Defense += armorData.BonusDefense;
-        }
+        stats.Defense += newArmor.BonusDefense;
     }
 }

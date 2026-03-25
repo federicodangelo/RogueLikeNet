@@ -86,8 +86,11 @@ public class ClientGameState
         }
 
         // Update entities
+        var seenIds = new HashSet<long>(delta.EntityUpdates.Length);
         foreach (var entityUpdate in delta.EntityUpdates)
         {
+            seenIds.Add(entityUpdate.Id);
+
             if (entityUpdate.Removed)
             {
                 _entities.Remove(entityUpdate.Id);
@@ -109,6 +112,11 @@ public class ClientGameState
             entity.Health = entityUpdate.Health;
             entity.MaxHealth = entityUpdate.MaxHealth;
         }
+
+        // Remove entities no longer present in the delta (dead, picked up, etc.)
+        var staleIds = _entities.Keys.Where(id => !seenIds.Contains(id)).ToList();
+        foreach (var id in staleIds)
+            _entities.Remove(id);
 
         // Find player entity and update position
         foreach (var entity in _entities.Values)

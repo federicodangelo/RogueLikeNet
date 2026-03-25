@@ -30,10 +30,11 @@ public class InventorySystemTests
 
         engine.Tick();
 
-        // Item should be in inventory
+        // Item data should be in inventory, floor entity should be destroyed
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
-        Assert.Contains(item, inv.Items!);
-        Assert.False(engine.EcsWorld.Has<GroundItemTag>(item));
+        Assert.Single(inv.Items!);
+        Assert.Equal(template.TypeId, inv.Items[0].ItemTypeId);
+        Assert.False(engine.EcsWorld.IsAlive(item));
     }
 
     [Fact]
@@ -59,7 +60,15 @@ public class InventorySystemTests
 
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         Assert.Empty(inv.Items!);
-        Assert.True(engine.EcsWorld.Has<GroundItemTag>(item));
+
+        // Original entity was destroyed on pickup; drop creates a new ground entity
+        int groundCount = 0;
+        var gq = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+        engine.EcsWorld.Query(in gq, (ref Position gPos) =>
+        {
+            if (gPos.X == sx && gPos.Y == sy) groundCount++;
+        });
+        Assert.Equal(1, groundCount);
     }
 
     [Fact]
@@ -154,17 +163,11 @@ public class InventorySystemTests
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy);
 
-        // Fill inventory to capacity
+        // Fill inventory to capacity with ItemData
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         int cap = inv.Capacity;
         for (int i = 0; i < cap; i++)
-        {
-            var t = ItemDefinitions.Templates[0];
-            var item = engine.SpawnItemOnGround(t, 0, sx, sy);
-            inv.Items!.Add(item);
-            engine.EcsWorld.Remove<GroundItemTag>(item);
-            engine.EcsWorld.Remove<Position>(item);
-        }
+            inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword });
 
         // Now spawn another item and try to pick it up
         var extraItem = engine.SpawnItemOnGround(ItemDefinitions.Templates[0], 0, sx, sy);

@@ -539,6 +539,16 @@ public class GameLoopTests
         int startX = startPos.X;
         int startY = startPos.Y;
 
+        // Clear any actors that could block the path (spawned by chunk generation)
+        var clearQuery = new Arch.Core.QueryDescription().WithAll<Position, Health>();
+        var toDestroy = new List<Arch.Core.Entity>();
+        loop.Engine.EcsWorld.Query(in clearQuery, (Arch.Core.Entity e, ref Position _, ref Health _) =>
+        {
+            if (e != conn.PlayerEntity!.Value)
+                toDestroy.Add(e);
+        });
+        foreach (var e in toDestroy) loop.Engine.EcsWorld.Destroy(e);
+
         // Queue 3 right-moves before start
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });

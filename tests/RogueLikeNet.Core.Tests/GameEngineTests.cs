@@ -220,21 +220,20 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_DeadItemInInventory_ShowsQuestionMarks()
+    public void GetPlayerHudData_FloorItems_ReturnsNames()
     {
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
 
-        // Create a temp entity and add it to inventory, then destroy it
-        var tempItem = engine.EcsWorld.Create(new Position(0, 0));
-        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
-        inv.Items!.Add(tempItem);
-        engine.EcsWorld.Destroy(tempItem);
+        // Spawn a floor item
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
-        Assert.Contains("???", hud!.InventoryNames);
+        Assert.NotEmpty(hud!.FloorItemNames);
+        Assert.Equal("Short Sword", hud.FloorItemNames[0]);
     }
 }
