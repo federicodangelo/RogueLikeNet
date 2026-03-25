@@ -1,5 +1,5 @@
 // Service worker for PWA offline support
-const CACHE_NAME = 'roguelikenet-v1';
+const CACHE_NAME = 'roguelikenet-v2';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -14,16 +14,14 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    // Network-first: try network, fall back to cache for offline support
     event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            return fetch(event.request).then(response => {
-                if (response.ok && event.request.method === 'GET') {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                }
-                return response;
-            }).catch(() => cached);
-        })
+        fetch(event.request).then(response => {
+            if (response.ok && event.request.method === 'GET') {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+            return response;
+        }).catch(() => caches.match(event.request))
     );
 });

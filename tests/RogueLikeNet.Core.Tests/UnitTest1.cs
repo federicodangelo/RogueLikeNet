@@ -384,4 +384,35 @@ public class GameEngineTests
         var chunk = engine.EnsureChunkLoaded(0, 0);
         Assert.Equal(TileType.Floor, chunk.Tiles[x, y].Type);
     }
+
+    [Fact]
+    public void Tick_ComputesLightingAroundPlayer()
+    {
+        // Reproduce the exact startup flow used by LocalGameConnection / GameLoop
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+
+        var (sx, sy) = engine.FindSpawnPosition();
+        engine.SpawnPlayer(1, sx, sy);
+        engine.Tick();
+
+        // The player's own tile must be lit
+        var chunk = engine.WorldMap.TryGetChunk(0, 0)!;
+        Assert.True(chunk.Tiles[sx, sy].LightLevel > 0,
+            $"Player tile ({sx},{sy}) has LightLevel={chunk.Tiles[sx, sy].LightLevel}, expected > 0");
+
+        // At least some neighboring floor tiles should also be lit
+        int litCount = 0;
+        for (int dx = -3; dx <= 3; dx++)
+        for (int dy = -3; dy <= 3; dy++)
+        {
+            int nx = sx + dx, ny = sy + dy;
+            if (nx >= 0 && nx < Chunk.Size && ny >= 0 && ny < Chunk.Size)
+            {
+                if (chunk.Tiles[nx, ny].LightLevel > 0)
+                    litCount++;
+            }
+        }
+        Assert.True(litCount > 5, $"Only {litCount} tiles lit in 7x7 area around player, expected > 5");
+    }
 }
