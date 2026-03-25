@@ -19,20 +19,55 @@ public class MainView : UserControl
         _gameControl = new GameRenderControl();
         Content = _gameControl;
 
-        AttachedToVisualTree += async (_, _) => await StartGame();
+        _gameControl.StartOfflineRequested += OnStartOffline;
+        _gameControl.StartOnlineRequested += OnStartOnline;
+        _gameControl.ReturnToMenuRequested += OnReturnToMenu;
+
         DetachedFromVisualTree += (_, _) => Cleanup();
     }
 
-    private async Task StartGame()
+    private async void OnStartOffline()
     {
-        // Use local game engine for offline WASM mode
         _connection = new LocalGameConnection(42);
         _gameControl.SetConnection(_connection);
         await _connection.ConnectAsync("local://");
+        _gameControl.TransitionToPlaying();
+    }
+
+    private async void OnStartOnline()
+    {
+        _gameControl.TransitionToConnecting();
+
+        try
+        {
+            var wsConnection = new WebSocketServerConnection();
+            _connection = wsConnection;
+            _gameControl.SetConnection(_connection);
+            await _connection.ConnectAsync("ws://localhost:5000/ws");
+            _gameControl.TransitionToPlaying();
+        }
+        catch (Exception ex)
+        {
+            _gameControl.ClearConnection();
+            _connection = null;
+            _gameControl.ShowConnectionError(ex.Message);
+        }
+    }
+
+    private void OnReturnToMenu()
+    {
+        _gameControl.TransitionToMainMenu();
+        CleanupConnection();
+    }
+
+    private void CleanupConnection()
+    {
+        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
+        _connection = null;
     }
 
     private void Cleanup()
     {
-        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
+        CleanupConnection();
     }
 }
