@@ -7,9 +7,11 @@ namespace RogueLikeNet.Core.Tests;
 
 public class InventorySystemTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     private GameEngine CreateEngine()
     {
-        var engine = new GameEngine(42);
+        var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         return engine;
     }

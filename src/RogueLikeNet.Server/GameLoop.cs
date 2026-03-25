@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -24,9 +25,9 @@ public class GameLoop : IDisposable
     public GameEngine Engine => _engine;
     public bool IsRunning => _loopTask != null && !_loopTask.IsCompleted;
 
-    public GameLoop(long worldSeed)
+    public GameLoop(long worldSeed, IDungeonGenerator? generator = null)
     {
-        _engine = new GameEngine(worldSeed);
+        _engine = new GameEngine(worldSeed, generator);
         // Pre-generate spawn chunk
         _engine.EnsureChunkLoaded(0, 0);
     }

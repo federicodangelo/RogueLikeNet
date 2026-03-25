@@ -1,15 +1,18 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
 
 public class LootAndDeathTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     [Fact]
     public void MonsterDeath_DropsLoot()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
 
@@ -29,7 +32,7 @@ public class LootAndDeathTests
     [Fact]
     public void PlayerDeath_Respawns()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy);
@@ -47,7 +50,7 @@ public class LootAndDeathTests
     [Fact]
     public void PlayerDeath_LosesExperience()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -69,7 +72,7 @@ public class LootAndDeathTests
     [Fact]
     public void MonsterDeath_MultipleMonstersDropLoot()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
 

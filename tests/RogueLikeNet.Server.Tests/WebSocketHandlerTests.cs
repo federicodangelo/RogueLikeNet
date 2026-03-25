@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
@@ -7,10 +8,12 @@ namespace RogueLikeNet.Server.Tests;
 
 public class WebSocketHandlerTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     [Fact]
     public async Task HandleConnection_SpawnsPlayerAndSendsSnapshot()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
         socket.EnqueueClose();
 
@@ -25,7 +28,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_ProcessesClientInput()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
 
         // Create a valid ClientInput message
@@ -44,7 +47,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_HandlesChatMessage()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
 
         var chat = new ChatMsg { Text = "Hello" };
@@ -62,7 +65,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_ClosesSocketOnNormalExit()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
         socket.EnqueueClose();
 
@@ -74,7 +77,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_HandlesWebSocketException()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket { ThrowOnReceive = true };
 
         await WebSocketHandler.HandleConnection(socket, loop);
@@ -86,7 +89,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_HandlesInvalidBinaryData()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
 
         // Send invalid/corrupt binary data
@@ -102,7 +105,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_RemovesConnectionOnClose()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
         socket.EnqueueClose();
 
@@ -116,7 +119,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_SocketNotOpenSkipsClose()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket { ThrowOnReceive = true };
 
         await WebSocketHandler.HandleConnection(socket, loop);
@@ -129,7 +132,7 @@ public class WebSocketHandlerTests
     [Fact]
     public async Task HandleConnection_SendSkipsWhenSocketClosed()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         // Socket starts already closed — the send callback checks state before sending
         var socket = new FakeWebSocket { StartClosed = true };
 

@@ -8,7 +8,7 @@ namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Simple monster AI: idle → chase player when in range → attack when adjacent.
-/// Uses A* pathfinding for chasing.
+/// Uses A* pathfinding for chasing. Respects <see cref="MoveDelay"/> for walk speed.
 /// </summary>
 public class AISystem
 {
@@ -36,11 +36,28 @@ public class AISystem
                 actorPositions.Add(FOVData.PackCoord(aPos.X, aPos.Y));
         });
 
+        // Tick down move delays
+        var delayQuery = new QueryDescription().WithAll<MoveDelay>();
+        world.Query(in delayQuery, (ref MoveDelay delay) =>
+        {
+            if (delay.Current > 0)
+                delay.Current--;
+        });
+
         // Process AI entities
         var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
-        world.Query(in aiQuery, (ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
+        world.Query(in aiQuery, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
         {
             if (!health.IsAlive) return;
+
+            // Check move delay — skip movement (not state transitions) if on cooldown
+            bool canMove = true;
+            if (world.Has<MoveDelay>(entity))
+            {
+                ref var delay = ref world.Get<MoveDelay>(entity);
+                if (delay.Current > 0)
+                    canMove = false;
+            }
 
             // Find nearest player
             int nearestDist = int.MaxValue;
@@ -74,6 +91,7 @@ public class AISystem
                         ai.StateId = AIStates.Attack;
                         break;
                     }
+                    if (!canMove) break; // Wait for move delay
                     // Move towards player using A*
                     var path = AStarPathfinder.FindPath(
                         pos.X, pos.Y, nearestPx, nearestPy,
@@ -90,6 +108,13 @@ public class AISystem
                             pos.X = next.X;
                             pos.Y = next.Y;
                             actorPositions.Add(nextKey);
+
+                            // Reset move delay after moving
+                            if (world.Has<MoveDelay>(entity))
+                            {
+                                ref var delay = ref world.Get<MoveDelay>(entity);
+                                delay.Current = delay.Interval;
+                            }
                         }
                     }
                     break;

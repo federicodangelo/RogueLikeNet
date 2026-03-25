@@ -6,10 +6,12 @@ namespace RogueLikeNet.Core.Tests;
 
 public class PlayerHudDataTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     [Fact]
     public void GetPlayerHudData_ReturnsValidData()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -26,7 +28,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_FloorItemNames_Empty_WhenNoItems()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -39,7 +41,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_FloorItemNames_ReturnsItemsAtPlayerPosition()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -57,7 +59,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_FloorItemNames_IgnoresItemsElsewhere()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -74,7 +76,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_SkillNames_Populated()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -89,7 +91,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_EquippedWeaponName_AfterEquip()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -114,7 +116,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_EquippedArmorName_AfterEquip()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -139,7 +141,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_InventoryStackCounts_Populated()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -160,7 +162,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_InventoryRarities_Populated()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -181,7 +183,7 @@ public class PlayerHudDataTests
     [Fact]
     public void GetPlayerHudData_NoEquipment_EmptyNames()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);

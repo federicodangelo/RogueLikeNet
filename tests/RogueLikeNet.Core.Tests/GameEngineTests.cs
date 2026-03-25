@@ -9,10 +9,12 @@ namespace RogueLikeNet.Core.Tests;
 
 public class GameEngineTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     [Fact]
     public void SpawnPlayer_CreatesEntity()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var entity = engine.SpawnPlayer(1, 10, 10);
         Assert.True(engine.EcsWorld.IsAlive(entity));
@@ -24,7 +26,7 @@ public class GameEngineTests
     [Fact]
     public void Tick_IncrementsTickCounter()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         Assert.Equal(0, engine.CurrentTick);
         engine.Tick();
@@ -34,7 +36,7 @@ public class GameEngineTests
     [Fact]
     public void FindSpawnPosition_ReturnsFloorTile()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         var (x, y) = engine.FindSpawnPosition();
         var chunk = engine.EnsureChunkLoaded(0, 0);
         Assert.Equal(TileType.Floor, chunk.Tiles[x, y].Type);
@@ -43,7 +45,7 @@ public class GameEngineTests
     [Fact]
     public void Tick_ComputesLightingAroundPlayer()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
 
         var (sx, sy) = engine.FindSpawnPosition();
@@ -71,21 +73,21 @@ public class GameEngineTests
     [Fact]
     public void CombatProperty_ReturnsSystem()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         Assert.NotNull(engine.Combat);
     }
 
     [Fact]
     public void InventoryProperty_ReturnsSystem()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         Assert.NotNull(engine.Inventory);
     }
 
     [Fact]
     public void GetPlayerHudData_WithInventoryItems_ReturnsNames()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -108,7 +110,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_DeadEntity_ReturnsNull()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 1, 5, 0, 8);
@@ -125,7 +127,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_ReturnsSkillData()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -141,7 +143,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_ReturnsClassInfo()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
@@ -155,7 +157,7 @@ public class GameEngineTests
     [Fact]
     public void EnsureChunkLoaded_SpawnsEntities()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         // Loading a chunk should spawn monsters and items from generation results
         engine.EnsureChunkLoaded(0, 0);
 
@@ -169,7 +171,7 @@ public class GameEngineTests
     [Fact]
     public void SpawnTorch_CreatesLightSource()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var torch = engine.SpawnTorch(10, 10);
 
@@ -181,7 +183,7 @@ public class GameEngineTests
     [Fact]
     public void SpawnItemOnGround_CreatesItemWithRarity()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
 
         var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
@@ -197,7 +199,7 @@ public class GameEngineTests
     [Fact]
     public void EnsureChunkLoaded_FarChunk_HigherDifficulty()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         // Load a chunk far from origin for higher difficulty
         engine.EnsureChunkLoaded(5, 5);
         // Should not crash and should generate entities
@@ -208,7 +210,7 @@ public class GameEngineTests
     [Fact]
     public void FindSpawnPosition_FallbackWhenNoFloor()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         var chunk = engine.EnsureChunkLoaded(0, 0);
         // Set all tiles to Wall to trigger fallback
         for (int x = 0; x < Chunk.Size; x++)
@@ -223,7 +225,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_FloorItems_ReturnsNames()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -241,7 +243,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_SkillNames_MatchSkillDefinitions()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
@@ -257,7 +259,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_EquippedNames_AfterEquip()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
@@ -293,7 +295,7 @@ public class GameEngineTests
     [Fact]
     public void GetPlayerHudData_InventoryStackCountsAndRarities()
     {
-        using var engine = new GameEngine(42);
+        using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);

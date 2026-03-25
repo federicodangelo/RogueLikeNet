@@ -14,10 +14,10 @@ public static class NpcDefinitions
 
     public static readonly NpcDefinition[] All =
     [
-        new(Goblin,   "Goblin",   TileDefinitions.GlyphGoblin,   TileDefinitions.ColorGreen,   15, 4, 1, 10),
-        new(Orc,      "Orc",      TileDefinitions.GlyphOrc,      TileDefinitions.ColorRed,     30, 7, 3, 8),
-        new(Skeleton, "Skeleton", TileDefinitions.GlyphSkeleton, TileDefinitions.ColorWhite,   20, 5, 2, 9),
-        new(Dragon,   "Dragon",   TileDefinitions.GlyphDragon,   TileDefinitions.ColorOrange, 100, 15, 8, 6),
+        new(Goblin,   "Goblin",   TileDefinitions.GlyphGoblin,   TileDefinitions.ColorGreen,   15, 4, 1, 3),
+        new(Orc,      "Orc",      TileDefinitions.GlyphOrc,      TileDefinitions.ColorRed,     30, 7, 3, 2),
+        new(Skeleton, "Skeleton", TileDefinitions.GlyphSkeleton, TileDefinitions.ColorWhite,   20, 5, 2, 3),
+        new(Dragon,   "Dragon",   TileDefinitions.GlyphDragon,   TileDefinitions.ColorOrange, 100, 15, 8, 1),
     ];
 
     /// <summary>Lookup by TypeId.</summary>

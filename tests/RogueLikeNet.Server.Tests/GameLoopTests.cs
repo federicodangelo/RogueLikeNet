@@ -1,6 +1,7 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
@@ -9,10 +10,12 @@ namespace RogueLikeNet.Server.Tests;
 
 public class GameLoopTests
 {
+    private static readonly BspDungeonGenerator _gen = new();
+
     [Fact]
     public void GameLoop_StartsAndStops()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         loop.Start();
         Assert.True(loop.IsRunning);
         loop.Dispose();
@@ -21,7 +24,7 @@ public class GameLoopTests
     [Fact]
     public void AddConnection_ReturnsValidConnection()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         Assert.NotNull(conn);
         Assert.True(conn.ConnectionId > 0);
@@ -30,7 +33,7 @@ public class GameLoopTests
     [Fact]
     public async Task SpawnPlayerForConnection_CreatesEntity()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
         Assert.NotNull(conn.PlayerEntity);
@@ -40,7 +43,7 @@ public class GameLoopTests
     [Fact]
     public void RemoveConnection_DestroysEntity()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
 #pragma warning disable xUnit1031 // Do not use blocking task operations in test method
         loop.SpawnPlayerForConnection(conn.ConnectionId).Wait();
@@ -55,7 +58,7 @@ public class GameLoopTests
     [Fact]
     public void EnqueueInput_QueuesCorrectly()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
 
         var input = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 };
@@ -70,7 +73,7 @@ public class GameLoopTests
     public async Task SpawnPlayer_SendsSnapshot()
     {
         byte[]? receivedData = null;
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
@@ -91,7 +94,7 @@ public class GameLoopTests
     public async Task RunLoop_BroadcastsDeltas()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -117,7 +120,7 @@ public class GameLoopTests
     public async Task ProcessInputs_AppliesPlayerInput()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -139,7 +142,7 @@ public class GameLoopTests
     [Fact]
     public void RemoveConnection_WithoutEntity_NoError()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.RemoveConnection(conn.ConnectionId);
     }
@@ -147,14 +150,14 @@ public class GameLoopTests
     [Fact]
     public void RemoveConnection_NonExistent_NoError()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         loop.RemoveConnection(9999);
     }
 
     [Fact]
     public void EnqueueInput_NonExistentConnection_NoError()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         loop.EnqueueInput(9999, new ClientInputMsg { ActionType = 1 });
     }
 
@@ -162,7 +165,7 @@ public class GameLoopTests
     public async Task BroadcastDeltas_HandlesSendException()
     {
         int sendCount = 0;
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             sendCount++;
@@ -180,14 +183,14 @@ public class GameLoopTests
     [Fact]
     public void Dispose_WithoutStart()
     {
-        var loop = new GameLoop(42);
+        var loop = new GameLoop(42, _gen);
         loop.Dispose();
     }
 
     [Fact]
     public void Dispose_WithStart()
     {
-        var loop = new GameLoop(42);
+        var loop = new GameLoop(42, _gen);
         loop.Start();
         Assert.True(loop.IsRunning);
         loop.Dispose();
@@ -196,7 +199,7 @@ public class GameLoopTests
     [Fact]
     public async Task SpawnPlayerForConnection_InvalidConnection_NoOp()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         await loop.SpawnPlayerForConnection(9999); // Non-existent connection
     }
 
@@ -204,7 +207,7 @@ public class GameLoopTests
     public async Task Snapshot_ContainsEntitiesAndChunks()
     {
         byte[]? receivedData = null;
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
@@ -240,7 +243,7 @@ public class GameLoopTests
     public async Task Delta_ContainsEntityUpdates()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -266,7 +269,7 @@ public class GameLoopTests
     {
         var messages1 = new List<byte[]>();
         var messages2 = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
 
         var conn1 = loop.AddConnection(data =>
         {
@@ -295,14 +298,14 @@ public class GameLoopTests
     [Fact]
     public void Engine_IsAccessible()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         Assert.NotNull(loop.Engine);
     }
 
     [Fact]
     public void IsRunning_FalseBeforeStart()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         Assert.False(loop.IsRunning);
     }
 
@@ -310,7 +313,7 @@ public class GameLoopTests
     public async Task ProcessInputs_SkipsConnectionWithoutEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
 
         // Add connection but don't spawn player
         var connNoEntity = loop.AddConnection(data =>
@@ -334,7 +337,7 @@ public class GameLoopTests
     public async Task ProcessInputs_SkipsDeadEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -360,7 +363,7 @@ public class GameLoopTests
     public async Task Delta_ContainsCombatEvents()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -412,7 +415,7 @@ public class GameLoopTests
     public async Task BuildPlayerHud_ReturnsNullForNoEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -433,7 +436,7 @@ public class GameLoopTests
     public async Task ProcessInputs_AppliesMultipleInputsFromQueue()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -456,7 +459,7 @@ public class GameLoopTests
     [Fact]
     public void AddConnection_AssignsUniqueIds()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn1 = loop.AddConnection(_ => Task.CompletedTask);
         var conn2 = loop.AddConnection(_ => Task.CompletedTask);
         Assert.NotEqual(conn1.ConnectionId, conn2.ConnectionId);
@@ -466,7 +469,7 @@ public class GameLoopTests
     public async Task Snapshot_IncludesEntitiesWithoutHealth()
     {
         byte[]? receivedData = null;
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
@@ -499,7 +502,7 @@ public class GameLoopTests
     public async Task Delta_IncludesEntitiesWithoutHealth()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -536,7 +539,7 @@ public class GameLoopTests
     public async Task ProcessInputs_OnlyOneInputPerTick()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -579,7 +582,7 @@ public class GameLoopTests
     public async Task Delta_IncludesFloorItemNames()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -619,7 +622,7 @@ public class GameLoopTests
     [Fact]
     public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var chunk = loop.Engine.EnsureChunkLoaded(0, 0);
 
         var msg = GameStateSerializer.SerializeChunk(chunk);
@@ -637,7 +640,7 @@ public class GameLoopTests
     [Fact]
     public async Task GameStateSerializer_SerializeEntities_IncludesPlayer()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
 
@@ -652,7 +655,7 @@ public class GameLoopTests
     [Fact]
     public async Task GameStateSerializer_BuildPlayerHud_PopulatesAllFields()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
 
@@ -672,7 +675,7 @@ public class GameLoopTests
     [Fact]
     public async Task GameStateSerializer_BuildPlayerHud_NullForDeadEntity()
     {
-        using var loop = new GameLoop(42);
+        using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
 

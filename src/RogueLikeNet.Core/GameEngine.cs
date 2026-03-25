@@ -33,11 +33,11 @@ public class GameEngine : IDisposable
     public CombatSystem Combat => _combatSystem;
     public InventorySystem Inventory => _inventorySystem;
 
-    public GameEngine(long worldSeed)
+    public GameEngine(long worldSeed, IDungeonGenerator? generator = null)
     {
         _ecsWorld = Arch.Core.World.Create();
         _worldMap = new WorldMap(worldSeed);
-        _generator = new BiomeDungeonGenerator();
+        _generator = generator ?? new OverworldGenerator();
         _movementSystem = new MovementSystem();
         _fovSystem = new FOVSystem();
         _lightingSystem = new LightingSystem();
@@ -111,7 +111,7 @@ public class GameEngine : IDisposable
             new Position(x, y),
             new Health(100 + bonusHp),
             new CombatStats(10 + bonusAtk, 5 + bonusDef, 10 + bonusSpeed),
-            new FOVData(10),
+            new FOVData(20),
             new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             new PlayerTag { ConnectionId = connectionId },
             new PlayerInput(),
@@ -128,13 +128,18 @@ public class GameEngine : IDisposable
     public Entity SpawnMonster(int monsterTypeId, int x, int y, int glyphId, int color,
         int health = 20, int attack = 5, int defense = 2, int speed = 8)
     {
+        // Speed maps to move delay: higher speed → lower delay.
+        // Speed 10 = every tick (0 delay), speed 6 = every 3rd tick, etc.
+        int moveInterval = Math.Max(0, 10 - speed);
+
         return _ecsWorld.Create(
             new Position(x, y),
             new Health(health),
             new CombatStats(attack, defense, speed),
             new TileAppearance(glyphId, color),
             new MonsterTag { MonsterTypeId = monsterTypeId },
-            new AIState { StateId = AIStates.Idle }
+            new AIState { StateId = AIStates.Idle },
+            new MoveDelay(moveInterval)
         );
     }
 
@@ -274,10 +279,19 @@ public class GameEngine : IDisposable
     public (int X, int Y) FindSpawnPosition()
     {
         var chunk = EnsureChunkLoaded(0, 0);
+
+        // Collect occupied positions to avoid spawning on entities
+        var occupied = new HashSet<long>();
+        var posQuery = new QueryDescription().WithAll<Position>();
+        _ecsWorld.Query(in posQuery, (ref Position p) =>
+        {
+            occupied.Add(FOVData.PackCoord(p.X, p.Y));
+        });
+
         for (int x = 0; x < Chunk.Size; x++)
         for (int y = 0; y < Chunk.Size; y++)
         {
-            if (chunk.Tiles[x, y].Type == TileType.Floor)
+            if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(FOVData.PackCoord(x, y)))
                 return (x, y);
         }
         return (Chunk.Size / 2, Chunk.Size / 2);

@@ -131,6 +131,60 @@ public static class BiomeDefinitions
     public static LiquidDef? GetLiquid(BiomeType biome) => Liquids[(int)biome];
 
     /// <summary>
+    /// Maps continuous temperature/moisture noise values (each in [-1,1]) to a biome type.
+    /// This creates gradual transitions between biomes in world space.
+    /// </summary>
+    /// <remarks>
+    /// Layout (temperature → right, moisture → up):
+    /// <code>
+    ///              cold        cool       warm        hot
+    /// wet    |  Fungal   |  Forest  |  Sewer   | Infernal |
+    /// damp   |  Ice      |  Arcane  |  Crypt   |  Lava    |
+    /// dry    |  Ice      |  Stone   |  Ruined  |  Lava    |
+    /// </code>
+    /// </remarks>
+    public static BiomeType GetBiomeFromClimate(double temperature, double moisture)
+    {
+        // Map [-1,1] → column/row indices
+        // Temperature: 4 columns  Moisture: 3 rows
+        int col = temperature switch
+        {
+            < -0.4 => 0, // cold
+            < 0.0 => 1,  // cool
+            < 0.4 => 2,  // warm
+            _ => 3,       // hot
+        };
+
+        int row = moisture switch
+        {
+            < -0.3 => 0, // dry
+            < 0.3 => 1,  // damp
+            _ => 2,       // wet
+        };
+
+        return (col, row) switch
+        {
+            (0, 0) => BiomeType.Ice,
+            (0, 1) => BiomeType.Ice,
+            (0, 2) => BiomeType.Fungal,
+
+            (1, 0) => BiomeType.Stone,
+            (1, 1) => BiomeType.Arcane,
+            (1, 2) => BiomeType.Forest,
+
+            (2, 0) => BiomeType.Ruined,
+            (2, 1) => BiomeType.Crypt,
+            (2, 2) => BiomeType.Sewer,
+
+            (3, 0) => BiomeType.Lava,
+            (3, 1) => BiomeType.Lava,
+            (3, 2) => BiomeType.Infernal,
+
+            _ => BiomeType.Stone,
+        };
+    }
+
+    /// <summary>
     /// Applies the biome tint to a packed 0xRRGGBB color, returning a new packed color.
     /// </summary>
     public static int ApplyBiomeTint(int packedRgb, BiomeType biome)
