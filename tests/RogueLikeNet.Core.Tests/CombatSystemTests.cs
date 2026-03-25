@@ -228,4 +228,180 @@ public class CombatSystemTests
         Assert.Equal(sx, evt.TargetX);
         Assert.Equal(sy, evt.TargetY);
     }
+
+    // === Monster Attack Tests ===
+
+    [Fact]
+    public void MonsterAttack_AdjacentToPlayer_DealsDamage()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        // Set monster to Attack state
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
+        Assert.True(pHealth.Current < 100 + ClassDefinitions.GetStartingBonus(ClassDefinitions.Warrior).Hp,
+            "Player should take damage from monster attack");
+    }
+
+    [Fact]
+    public void MonsterAttack_ProducesCombatEvent()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        // Should have at least one event from the monster attack
+        var monsterEvents = engine.Combat.LastTickEvents.Where(
+            e => e.AttackerX == sx + 1 && e.AttackerY == sy).ToList();
+        Assert.Single(monsterEvents);
+        Assert.Equal(sx, monsterEvents[0].TargetX);
+        Assert.Equal(sy, monsterEvents[0].TargetY);
+    }
+
+    [Fact]
+    public void MonsterAttack_RespectsDefense()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        // Monster attack = 8, player defense = 5+bonus → damage = max(1, 8 - playerDef)
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 8, 0, 8);
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        ref var pHealthBefore = ref engine.EcsWorld.Get<Health>(player);
+        int hpBefore = pHealthBefore.Current;
+        ref var pStats = ref engine.EcsWorld.Get<CombatStats>(player);
+        int expectedDmg = Math.Max(1, 8 - pStats.Defense);
+
+        engine.Tick();
+
+        ref var pHealthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(hpBefore - expectedDmg, pHealthAfter.Current);
+    }
+
+    [Fact]
+    public void MonsterAttack_NotAdjacent_NoDamage()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        // Monster 3 tiles away
+        var monster = engine.SpawnMonster(0, sx + 3, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        ref var pHealthBefore = ref engine.EcsWorld.Get<Health>(player);
+        int hpBefore = pHealthBefore.Current;
+
+        engine.Tick();
+
+        ref var pHealthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(hpBefore, pHealthAfter.Current);
+    }
+
+    [Fact]
+    public void MonsterAttack_NotInAttackState_NoDamage()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        // Monster stays in Idle state (default)
+        ref var pHealthBefore = ref engine.EcsWorld.Get<Health>(player);
+        int hpBefore = pHealthBefore.Current;
+
+        engine.Tick();
+
+        ref var pHealthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(hpBefore, pHealthAfter.Current);
+    }
+
+    [Fact]
+    public void MonsterAttack_KillsPlayer_EventShowsDeath()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        // Very high attack monster
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 500, 0, 8);
+
+        // Reduce player health to 1
+        ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
+        pHealth.Current = 1;
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        var monsterEvents = engine.Combat.LastTickEvents.Where(
+            e => e.AttackerX == sx + 1 && e.AttackerY == sy).ToList();
+        Assert.Single(monsterEvents);
+        Assert.True(monsterEvents[0].TargetDied);
+    }
+
+    [Fact]
+    public void MonsterAttack_DeadMonster_DoesNotAttack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        // Kill the monster and add DeadTag
+        ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
+        mHealth.Current = 0;
+        engine.EcsWorld.Add<DeadTag>(monster);
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        ref var pHealthBefore = ref engine.EcsWorld.Get<Health>(player);
+        int hpBefore = pHealthBefore.Current;
+
+        engine.Tick();
+
+        ref var pHealthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(hpBefore, pHealthAfter.Current);
+    }
+
+    [Fact]
+    public void MonsterAttack_DeadPlayer_NotTargeted()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
+
+        // Kill the player (health=0) but keep them alive in ECS (no DeadTag yet)
+        ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
+        pHealth.Current = 0;
+
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        // Monster shouldn't produce a combat event targeting a dead player
+        var monsterEvents = engine.Combat.LastTickEvents.Where(
+            e => e.AttackerX == sx + 1 && e.AttackerY == sy).ToList();
+        Assert.Empty(monsterEvents);
+    }
 }

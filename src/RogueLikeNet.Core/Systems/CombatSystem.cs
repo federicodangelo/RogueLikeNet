@@ -75,6 +75,9 @@ public class CombatSystem
             input.ActionType = ActionTypes.None;
         });
 
+        // Monster attacks: AI entities in Attack state hit adjacent players
+        ProcessMonsterAttacks(world);
+
         // Mark dead entities
         var deathQuery = new QueryDescription().WithAll<Health>().WithNone<DeadTag>();
         world.Query(in deathQuery, (Entity entity, ref Health health) =>
@@ -82,6 +85,57 @@ public class CombatSystem
             if (!health.IsAlive)
             {
                 world.Add<DeadTag>(entity);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Process monster attacks: monsters in Attack state hit an adjacent player each tick.
+    /// Called from <see cref="Update"/> after player attacks.
+    /// </summary>
+    private void ProcessMonsterAttacks(Arch.Core.World world)
+    {
+        // Collect player positions
+        var players = new List<(Entity Entity, int X, int Y)>();
+        var playerQuery = new QueryDescription().WithAll<Position, Health, CombatStats, PlayerTag>();
+        world.Query(in playerQuery, (Entity entity, ref Position pos, ref Health health) =>
+        {
+            if (health.IsAlive)
+                players.Add((entity, pos.X, pos.Y));
+        });
+        if (players.Count == 0) return;
+
+        // Process monster attacks
+        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
+        world.Query(in monsterQuery, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth) =>
+        {
+            if (!mHealth.IsAlive || ai.StateId != AIStates.Attack) return;
+
+            // Find adjacent player
+            foreach (var (playerEntity, px, py) in players)
+            {
+                int dx = Math.Abs(mPos.X - px);
+                int dy = Math.Abs(mPos.Y - py);
+                if (dx + dy > 1) continue; // not adjacent
+
+                // Deal damage
+                ref var pHealth = ref world.Get<Health>(playerEntity);
+                ref var pStats = ref world.Get<CombatStats>(playerEntity);
+                if (!pHealth.IsAlive) continue;
+
+                int damage = Math.Max(1, mStats.Attack - pStats.Defense);
+                pHealth.Current = Math.Max(0, pHealth.Current - damage);
+
+                _events.Add(new CombatEvent
+                {
+                    AttackerX = mPos.X,
+                    AttackerY = mPos.Y,
+                    TargetX = px,
+                    TargetY = py,
+                    Damage = damage,
+                    TargetDied = !pHealth.IsAlive
+                });
+                break; // One attack per monster per tick
             }
         });
     }

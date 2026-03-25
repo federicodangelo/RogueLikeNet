@@ -696,4 +696,113 @@ public class InventorySystemTests
         Assert.Equal(10, invAfter.Items[0].StackCount); // Was 9, absorbed 1
         Assert.Equal(7, invAfter.Items[1].StackCount); // Was 5, absorbed 2
     }
+
+    // === Drop Position Spreading Tests ===
+
+    [Fact]
+    public void Drop_OnEmptyTile_StaysAtPlayerPosition()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Give player an item directly
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.Drop;
+        input.ItemSlot = 0;
+        engine.Tick();
+
+        // Item should land at player position since nothing is there
+        var positions = new List<(int X, int Y)>();
+        var gq = new QueryDescription().WithAll<Position, GroundItemTag>();
+        engine.EcsWorld.Query(in gq, (ref Position gPos) =>
+        {
+            positions.Add((gPos.X, gPos.Y));
+        });
+        Assert.Contains((sx, sy), positions);
+    }
+
+    [Fact]
+    public void Drop_OnOccupiedTile_MovesToAdjacentPosition()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Place an item on the ground at player's position
+        var template = ItemDefinitions.All[0];
+        engine.SpawnItemOnGround(template, 0, sx, sy);
+
+        // Count ground items before drop
+        int countBefore = 0;
+        var gqBefore = new QueryDescription().WithAll<Position, GroundItemTag>();
+        engine.EcsWorld.Query(in gqBefore, (ref Position gPos) => { countBefore++; });
+
+        // Give player an item to drop
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.Drop;
+        input.ItemSlot = 0;
+        engine.Tick();
+
+        // Count ground items after drop — should be one more
+        int countAfter = 0;
+        int atOrigin = 0;
+        var gqAfter = new QueryDescription().WithAll<Position, GroundItemTag>();
+        engine.EcsWorld.Query(in gqAfter, (ref Position gPos) =>
+        {
+            countAfter++;
+            if (gPos.X == sx && gPos.Y == sy) atOrigin++;
+        });
+        Assert.Equal(countBefore + 1, countAfter);
+        // Only the original item should be at origin; dropped one goes elsewhere
+        Assert.Equal(1, atOrigin);
+    }
+
+    [Fact]
+    public void Drop_MultipleItems_SpreadOutward()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Count items before dropping
+        int countBefore = 0;
+        var gqBefore = new QueryDescription().WithAll<Position, GroundItemTag>();
+        engine.EcsWorld.Query(in gqBefore, (ref Position gPos) => { countBefore++; });
+
+        // Drop 3 items — each should land at a different position
+        for (int i = 0; i < 3; i++)
+        {
+            ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+            inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+
+            ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+            input.ActionType = ActionTypes.Drop;
+            input.ItemSlot = 0;
+            engine.Tick();
+        }
+
+        // Count total items after
+        int countAfter = 0;
+        var gqAfter = new QueryDescription().WithAll<Position, GroundItemTag>();
+        engine.EcsWorld.Query(in gqAfter, (ref Position gPos) => { countAfter++; });
+        Assert.Equal(countBefore + 3, countAfter);
+
+        // Verify all 3 dropped items are at distinct positions near player
+        // (we can check the total distinct positions increased by 3)
+        var nearPositions = new HashSet<long>();
+        engine.EcsWorld.Query(in gqAfter, (ref Position gPos) =>
+        {
+            if (Math.Abs(gPos.X - sx) <= 5 && Math.Abs(gPos.Y - sy) <= 5)
+                nearPositions.Add(((long)gPos.X << 32) | (uint)gPos.Y);
+        });
+        // At least 3 distinct positions near player (the 3 drops; possibly more from dungeon gen)
+        Assert.True(nearPositions.Count >= 3);
+    }
 }
