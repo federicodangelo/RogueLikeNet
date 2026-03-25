@@ -29,12 +29,7 @@ public class OverworldGenerator : IDungeonGenerator
     // Spawn density: chance per floor tile (out of 1000)
     private const int MonsterChance = 4;
     private const int ItemChance = 1;
-    private const int TorchChance = 3;
-
-    // Guaranteed initial spawns near the first floor tile
-    private const int InitialMonsters = 3;
-    private const int InitialTorches = 2;
-    private const int InitialSpawnRadius = 6;
+    private const int TorchChance = 0; // Disabled for now, it doesn't make sense for overworld
 
     public GenerationResult Generate(Chunk chunk, long seed)
     {
@@ -145,64 +140,6 @@ public class OverworldGenerator : IDungeonGenerator
             }
         }
 
-        // Pass 3: Guarantee a cluster of spawns near the first floor tile.
-        // This ensures the player always finds initial encounters nearby.
-        PlaceInitialSpawns(chunk, rng, result);
-
         return result;
-    }
-
-    private static void PlaceInitialSpawns(Chunk chunk, SeededRandom rng, GenerationResult result)
-    {
-        // Find the first walkable tile (same logic as FindSpawnPosition)
-        int anchorX = -1, anchorY = -1;
-        for (int x = 0; x < Chunk.Size && anchorX < 0; x++)
-        for (int y = 0; y < Chunk.Size && anchorX < 0; y++)
-        {
-            if (chunk.Tiles[x, y].Type == TileType.Floor)
-            {
-                anchorX = x;
-                anchorY = y;
-            }
-        }
-
-        if (anchorX < 0) return; // No floor at all (shouldn't happen)
-
-        // Collect nearby floor tiles
-        var candidates = new List<(int X, int Y)>();
-        for (int dx = -InitialSpawnRadius; dx <= InitialSpawnRadius; dx++)
-        for (int dy = -InitialSpawnRadius; dy <= InitialSpawnRadius; dy++)
-        {
-            int nx = anchorX + dx;
-            int ny = anchorY + dy;
-            if (nx >= 0 && nx < Chunk.Size && ny >= 0 && ny < Chunk.Size
-                && chunk.Tiles[nx, ny].Type == TileType.Floor
-                && (dx != 0 || dy != 0)) // Don't spawn on the anchor
-            {
-                candidates.Add((nx, ny));
-            }
-        }
-
-        // Place guaranteed monsters
-        int monstersPlaced = 0;
-        for (int i = 0; i < candidates.Count && monstersPlaced < InitialMonsters; i++)
-        {
-            int idx = rng.Next(candidates.Count);
-            var (cx, cy) = candidates[idx];
-            result.SpawnPoints.Add(new SpawnPoint(cx, cy, SpawnType.Monster));
-            candidates.RemoveAt(idx);
-            monstersPlaced++;
-        }
-
-        // Place guaranteed torches
-        int torchesPlaced = 0;
-        for (int i = 0; i < candidates.Count && torchesPlaced < InitialTorches; i++)
-        {
-            int idx = rng.Next(candidates.Count);
-            var (cx, cy) = candidates[idx];
-            result.SpawnPoints.Add(new SpawnPoint(cx, cy, SpawnType.Torch));
-            candidates.RemoveAt(idx);
-            torchesPlaced++;
-        }
     }
 }
