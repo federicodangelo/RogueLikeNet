@@ -14,8 +14,11 @@ public class EmbeddedServerConnection : IGameServerConnection
     private readonly GameLoop _gameLoop;
     private long _connectionId;
     private bool _connected;
+    private long _bytesReceived;
 
     public bool IsConnected => _connected;
+    public long BytesSent => 0;
+    public long BytesReceived => Interlocked.Read(ref _bytesReceived);
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
@@ -53,6 +56,7 @@ public class EmbeddedServerConnection : IGameServerConnection
 
     private Task ProcessServerData(byte[] data)
     {
+        Interlocked.Add(ref _bytesReceived, data.Length);
         try
         {
             var envelope = NetSerializer.UnwrapMessage(data);

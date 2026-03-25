@@ -19,6 +19,8 @@ public class LocalGameConnection : IGameServerConnection
     private readonly Dictionary<long, EntitySnapshot> _lastSentEntities = new();
 
     public bool IsConnected => _connected;
+    public long BytesSent => 0;
+    public long BytesReceived => 0;
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;

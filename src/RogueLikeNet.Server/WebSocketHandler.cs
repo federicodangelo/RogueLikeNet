@@ -24,6 +24,8 @@ public static class WebSocketHandler
             }
         });
 
+        Console.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameLoop.ConnectionCount} online)");
+
         try
         {
             // Spawn player
@@ -49,7 +51,10 @@ public static class WebSocketHandler
                     break;
 
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
+                {
+                    conn.TrackReceived(ms.Length);
                     ProcessMessage(conn, ms.ToArray(), gameLoop);
+                }
             }
         }
         catch (WebSocketException)
@@ -59,6 +64,7 @@ public static class WebSocketHandler
         finally
         {
             gameLoop.RemoveConnection(conn.ConnectionId);
+            Console.WriteLine($"[Server] Player {conn.ConnectionId} disconnected ({gameLoop.ConnectionCount} online)");
             if (socket.State == WebSocketState.Open)
             {
                 await socket.CloseAsync(

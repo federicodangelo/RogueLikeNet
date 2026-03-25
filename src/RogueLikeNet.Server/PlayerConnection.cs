@@ -17,6 +17,11 @@ public class PlayerConnection
     public Dictionary<long, EntitySnapshot> LastSentEntities { get; } = new();
 
     private readonly Func<byte[], Task> _sendFunc;
+    private long _bytesSent;
+    private long _bytesReceived;
+
+    public long BytesSent => Interlocked.Read(ref _bytesSent);
+    public long BytesReceived => Interlocked.Read(ref _bytesReceived);
 
     public PlayerConnection(long connectionId, Func<byte[], Task> sendFunc)
     {
@@ -24,5 +29,11 @@ public class PlayerConnection
         _sendFunc = sendFunc;
     }
 
-    public Task SendAsync(byte[] data) => _sendFunc(data);
+    public Task SendAsync(byte[] data)
+    {
+        Interlocked.Add(ref _bytesSent, data.Length);
+        return _sendFunc(data);
+    }
+
+    public void TrackReceived(long bytes) => Interlocked.Add(ref _bytesReceived, bytes);
 }

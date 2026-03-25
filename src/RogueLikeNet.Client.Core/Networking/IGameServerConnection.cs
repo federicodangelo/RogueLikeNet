@@ -10,6 +10,8 @@ namespace RogueLikeNet.Client.Core.Networking;
 public interface IGameServerConnection : IAsyncDisposable
 {
     bool IsConnected { get; }
+    long BytesSent { get; }
+    long BytesReceived { get; }
 
     Task ConnectAsync(string uri, CancellationToken ct = default);
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);

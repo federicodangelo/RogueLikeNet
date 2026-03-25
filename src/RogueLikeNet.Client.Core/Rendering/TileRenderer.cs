@@ -546,16 +546,22 @@ public class TileRenderer
 
     // ── Performance Overlay ──────────────────────────────────
 
-    public void RenderPerformanceOverlay(ISpriteRenderer r, int fps, int latencyMs)
+    public void RenderPerformanceOverlay(ISpriteRenderer r, int fps, int latencyMs,
+        double bwInKBps, double bwOutKBps)
     {
         string fpsText = $"FPS:{fps}";
         string latText = $"Tick:{latencyMs}ms";
-        int width = Math.Max(fpsText.Length, latText.Length) + 1;
+        string inText = $"In:{bwInKBps:F1}KB/s";
+        string outText = $"Out:{bwOutKBps:F1}KB/s";
+        int width = Math.Max(Math.Max(fpsText.Length, latText.Length),
+                             Math.Max(inText.Length, outText.Length)) + 1;
 
-        r.DrawRectScreen(0, 0, width * TileWidth, 2 * TileHeight, ColorOverlayBg);
+        r.DrawRectScreen(0, 0, width * TileWidth, 4 * TileHeight, ColorOverlayBg);
 
         DrawString(r, 0, 0, fpsText, ColorFps);
         DrawString(r, 0, 1, latText, ColorLatency);
+        DrawString(r, 0, 2, inText, ColorLatency);
+        DrawString(r, 0, 3, outText, ColorLatency);
     }
 
     public void RenderChatOverlay(ISpriteRenderer r, int totalCols, int totalRows,

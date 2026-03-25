@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
@@ -24,6 +25,7 @@ public class GameLoop : IDisposable
 
     public GameEngine Engine => _engine;
     public bool IsRunning => _loopTask != null && !_loopTask.IsCompleted;
+    public int ConnectionCount => _connections.Count;
 
     public GameLoop(long worldSeed, IDungeonGenerator? generator = null)
     {
@@ -102,11 +104,33 @@ public class GameLoop : IDisposable
     private async Task RunLoop(CancellationToken ct)
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickRateMs));
+        var statsStopwatch = Stopwatch.StartNew();
+        long lastTotalSent = 0;
+        long lastTotalRecv = 0;
+
         while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
         {
             ProcessInputs();
             _engine.Tick();
             await BroadcastDeltas();
+
+            if (statsStopwatch.ElapsedMilliseconds >= 5000)
+            {
+                long totalSent = 0, totalRecv = 0;
+                foreach (var c in _connections.Values)
+                {
+                    totalSent += c.BytesSent;
+                    totalRecv += c.BytesReceived;
+                }
+                double elapsed = statsStopwatch.Elapsed.TotalSeconds;
+                double sentKBps = (totalSent - lastTotalSent) / 1024.0 / elapsed;
+                double recvKBps = (totalRecv - lastTotalRecv) / 1024.0 / elapsed;
+                lastTotalSent = totalSent;
+                lastTotalRecv = totalRecv;
+
+                Console.WriteLine($"[Server] tick={_engine.CurrentTick} players={_connections.Count} out={sentKBps:F1}KB/s in={recvKBps:F1}KB/s");
+                statsStopwatch.Restart();
+            }
         }
     }
 

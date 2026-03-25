@@ -12,8 +12,12 @@ public class WebSocketServerConnection : IGameServerConnection
     private ClientWebSocket? _socket;
     private CancellationTokenSource? _readCts;
     private Task? _readTask;
+    private long _bytesSent;
+    private long _bytesReceived;
 
     public bool IsConnected => _socket?.State == WebSocketState.Open;
+    public long BytesSent => Interlocked.Read(ref _bytesSent);
+    public long BytesReceived => Interlocked.Read(ref _bytesReceived);
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
@@ -35,6 +39,7 @@ public class WebSocketServerConnection : IGameServerConnection
 
         var payload = NetSerializer.Serialize(input);
         var data = NetSerializer.WrapMessage(MessageTypes.ClientInput, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
         await _socket.SendAsync(
             new ArraySegment<byte>(data),
             WebSocketMessageType.Binary,
@@ -49,6 +54,7 @@ public class WebSocketServerConnection : IGameServerConnection
         var msg = new ChatMsg { Text = text };
         var payload = NetSerializer.Serialize(msg);
         var data = NetSerializer.WrapMessage(MessageTypes.ChatSend, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
         await _socket.SendAsync(
             new ArraySegment<byte>(data),
             WebSocketMessageType.Binary,
@@ -77,7 +83,10 @@ public class WebSocketServerConnection : IGameServerConnection
                     break;
 
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
+                {
+                    Interlocked.Add(ref _bytesReceived, ms.Length);
                     ProcessMessage(ms.ToArray());
+                }
             }
         }
         catch (OperationCanceledException) { }

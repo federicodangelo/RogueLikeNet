@@ -41,6 +41,10 @@ public sealed class RogueLikeGame : GameBase
     private int _fps;
     private long _lastDeltaTicks;
     private int _latencyMs;
+    private long _lastBytesSent;
+    private long _lastBytesReceived;
+    private double _bwInKBps;
+    private double _bwOutKBps;
 
     // Chat
     private readonly List<string> _chatLog = new();
@@ -174,6 +178,24 @@ public sealed class RogueLikeGame : GameBase
         {
             _fps = _frameCount;
             _frameCount = 0;
+
+            // Update bandwidth stats
+            if (_connection != null)
+            {
+                long curSent = _connection.BytesSent;
+                long curRecv = _connection.BytesReceived;
+                double elapsed = _fpsStopwatch.Elapsed.TotalSeconds;
+                _bwOutKBps = (curSent - _lastBytesSent) / 1024.0 / elapsed;
+                _bwInKBps = (curRecv - _lastBytesReceived) / 1024.0 / elapsed;
+                _lastBytesSent = curSent;
+                _lastBytesReceived = curRecv;
+            }
+            else
+            {
+                _bwInKBps = 0;
+                _bwOutKBps = 0;
+            }
+
             _fpsStopwatch.Restart();
         }
 
@@ -240,7 +262,8 @@ public sealed class RogueLikeGame : GameBase
 
             _tileRenderer.RenderChatOverlay(renderer, totalCols, totalRows,
                 _chatLog, _chatInputActive, _chatInputText);
-            _tileRenderer.RenderPerformanceOverlay(renderer, _fps, _latencyMs);
+            _tileRenderer.RenderPerformanceOverlay(renderer, _fps, _latencyMs,
+                _bwInKBps, _bwOutKBps);
         }
 
         renderer.EndFrame();
