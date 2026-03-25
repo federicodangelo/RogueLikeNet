@@ -1,4 +1,4 @@
-﻿using RogueLikeNet.Protocol;
+using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Protocol.Tests;
@@ -99,7 +99,6 @@ public class NetSerializerTests
     [Fact]
     public void NetworkEnvelope_DifferentMessageTypes()
     {
-        // Test that different message types are distinguished correctly
         var input = new ClientInputMsg { ActionType = 5 };
         var inputPayload = NetSerializer.Serialize(input);
         var inputWrapped = NetSerializer.WrapMessage(MessageTypes.ClientInput, inputPayload);

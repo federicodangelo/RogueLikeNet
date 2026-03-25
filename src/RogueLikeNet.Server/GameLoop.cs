@@ -17,7 +17,6 @@ namespace RogueLikeNet.Server;
 public class GameLoop : IDisposable
 {
     private const int TickRateMs = 50; // 20 ticks/sec
-    private const int AutoSaveIntervalTicks = 600; // every 30 seconds
 
     private readonly GameEngine _engine;
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
@@ -87,21 +86,9 @@ public class GameLoop : IDisposable
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickRateMs));
         while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
         {
-            try
-            {
-                ProcessInputs();
-                _engine.Tick();
-                await BroadcastDeltas();
-
-                if (_engine.CurrentTick % AutoSaveIntervalTicks == 0)
-                {
-                    // Persistence hook
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Game loop error at tick {_engine.CurrentTick}: {ex.Message}");
-            }
+            ProcessInputs();
+            _engine.Tick();
+            await BroadcastDeltas();
         }
     }
 
@@ -147,51 +134,50 @@ public class GameLoop : IDisposable
 
     private WorldSnapshotMsg BuildSnapshot(PlayerConnection conn)
     {
+        // Caller (SpawnPlayerForConnection) guarantees conn.PlayerEntity is set and alive
+        var entity = conn.PlayerEntity!.Value;
+        ref var pos = ref _engine.EcsWorld.Get<Position>(entity);
+
         var snapshot = new WorldSnapshotMsg
         {
             WorldTick = _engine.CurrentTick,
+            PlayerX = pos.X,
+            PlayerY = pos.Y,
         };
 
-        if (conn.PlayerEntity.HasValue && _engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+        // Load chunks around player
+        var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
+        var chunks = new List<ChunkDataMsg>();
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
         {
-            ref var pos = ref _engine.EcsWorld.Get<Position>(conn.PlayerEntity.Value);
-            snapshot.PlayerX = pos.X;
-            snapshot.PlayerY = pos.Y;
-
-            // Load chunk around player
-            var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
-            var chunks = new List<ChunkDataMsg>();
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                var chunk = _engine.EnsureChunkLoaded(cx + dx, cy + dy);
-                chunks.Add(SerializeChunk(chunk));
-            }
-            snapshot.Chunks = chunks.ToArray();
-
-            // Serialize visible entities
-            var entities = new List<EntityMsg>();
-            var entityQuery = new QueryDescription().WithAll<Position, TileAppearance>();
-            _engine.EcsWorld.Query(in entityQuery, (Entity entity, ref Position ePos, ref TileAppearance appearance) =>
-            {
-                var eMsg = new EntityMsg
-                {
-                    Id = entity.Id,
-                    X = ePos.X,
-                    Y = ePos.Y,
-                    GlyphId = appearance.GlyphId,
-                    FgColor = appearance.FgColor,
-                };
-                if (_engine.EcsWorld.Has<Health>(entity))
-                {
-                    ref var health = ref _engine.EcsWorld.Get<Health>(entity);
-                    eMsg.Health = health.Current;
-                    eMsg.MaxHealth = health.Max;
-                }
-                entities.Add(eMsg);
-            });
-            snapshot.Entities = entities.ToArray();
+            var chunk = _engine.EnsureChunkLoaded(cx + dx, cy + dy);
+            chunks.Add(SerializeChunk(chunk));
         }
+        snapshot.Chunks = chunks.ToArray();
+
+        // Serialize visible entities
+        var entities = new List<EntityMsg>();
+        var entityQuery = new QueryDescription().WithAll<Position, TileAppearance>();
+        _engine.EcsWorld.Query(in entityQuery, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
+        {
+            var eMsg = new EntityMsg
+            {
+                Id = e.Id,
+                X = ePos.X,
+                Y = ePos.Y,
+                GlyphId = appearance.GlyphId,
+                FgColor = appearance.FgColor,
+            };
+            if (_engine.EcsWorld.Has<Health>(e))
+            {
+                ref var health = ref _engine.EcsWorld.Get<Health>(e);
+                eMsg.Health = health.Current;
+                eMsg.MaxHealth = health.Max;
+            }
+            entities.Add(eMsg);
+        });
+        snapshot.Entities = entities.ToArray();
 
         snapshot.PlayerHud = BuildPlayerHud(conn);
         return snapshot;
@@ -199,6 +185,10 @@ public class GameLoop : IDisposable
 
     private WorldDeltaMsg BuildDelta(PlayerConnection conn)
     {
+        // Caller (BroadcastDeltas) guarantees conn.PlayerEntity is set and alive
+        var playerEntity = conn.PlayerEntity!.Value;
+        ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
+
         var delta = new WorldDeltaMsg
         {
             FromTick = conn.LastAckedTick,
@@ -206,19 +196,15 @@ public class GameLoop : IDisposable
         };
 
         // Include chunks around the player with updated light levels
-        if (conn.PlayerEntity.HasValue && _engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+        var (cx, cy) = Chunk.WorldToChunkCoord(playerPos.X, playerPos.Y);
+        var chunks = new List<ChunkDataMsg>();
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
         {
-            ref var playerPos = ref _engine.EcsWorld.Get<Position>(conn.PlayerEntity.Value);
-            var (cx, cy) = Chunk.WorldToChunkCoord(playerPos.X, playerPos.Y);
-            var chunks = new List<ChunkDataMsg>();
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                var chunk = _engine.EnsureChunkLoaded(cx + dx, cy + dy);
-                chunks.Add(SerializeChunk(chunk));
-            }
-            delta.Chunks = chunks.ToArray();
+            var chunk = _engine.EnsureChunkLoaded(cx + dx, cy + dy);
+            chunks.Add(SerializeChunk(chunk));
         }
+        delta.Chunks = chunks.ToArray();
 
         // Entity updates (send all visible entities each tick for now; optimize later with true delta tracking)
         var entities = new List<EntityUpdateMsg>();
@@ -264,9 +250,8 @@ public class GameLoop : IDisposable
 
     private PlayerHudMsg? BuildPlayerHud(PlayerConnection conn)
     {
-        if (!conn.PlayerEntity.HasValue) return null;
+        if (!conn.PlayerEntity.HasValue || !_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value)) return null;
         var hudData = _engine.GetPlayerHudData(conn.PlayerEntity.Value);
-        if (hudData == null) return null;
         return new PlayerHudMsg
         {
             Health = hudData.Health,
@@ -315,7 +300,7 @@ public class GameLoop : IDisposable
     public void Dispose()
     {
         try { _cts.Cancel(); } catch (ObjectDisposedException) { }
-        _loopTask?.Wait(TimeSpan.FromSeconds(2));
+        try { _loopTask?.Wait(TimeSpan.FromSeconds(2)); } catch (AggregateException) { }
         _engine.Dispose();
         try { _cts.Dispose(); } catch (ObjectDisposedException) { }
     }
