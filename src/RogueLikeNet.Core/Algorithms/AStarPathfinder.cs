@@ -6,13 +6,6 @@ namespace RogueLikeNet.Core.Algorithms;
 /// </summary>
 public static class AStarPathfinder
 {
-    private struct PathNode
-    {
-        public int X, Y;
-        public int G; // cost from start
-        public int F; // G + heuristic
-    }
-
     /// <summary>
     /// Finds a path from (startX, startY) to (goalX, goalY).
     /// <paramref name="isWalkable"/> returns true for passable tiles.
