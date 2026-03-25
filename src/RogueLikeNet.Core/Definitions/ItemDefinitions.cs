@@ -1,4 +1,6 @@
-namespace RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Generation;
+
+namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
 /// Item type definitions and loot generation. All values are integers.
@@ -24,7 +26,7 @@ public static class ItemDefinitions
     public const int StrengthPotion = 21;
     public const int Gold = 30;
 
-    public static readonly ItemTypeDefinition[] All =
+    public static readonly ItemDefinition[] All =
     [
         // Weapons (not stackable)
         new(ShortSword,   CategoryWeapon, "Short Sword",   TileDefinitions.GlyphSword,  TileDefinitions.ColorWhite,  3, 0, 0, false, 1),
@@ -44,16 +46,13 @@ public static class ItemDefinitions
     ];
 
     /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>
-    public static ItemTypeDefinition Get(int typeId) =>
+    public static ItemDefinition Get(int typeId) =>
         Array.Find(All, d => d.TypeId == typeId);
-
-    /// <summary>Backward-compatible alias for All.</summary>
-    public static readonly ItemTypeDefinition[] Templates = All;
 
     /// <summary>
     /// Generates a random item with optional rarity bonus.
     /// </summary>
-    public static (ItemTypeDefinition Definition, int Rarity) GenerateLoot(SeededRandom rng, int difficulty)
+    public static (ItemDefinition Definition, int Rarity) GenerateLoot(SeededRandom rng, int difficulty)
     {
         // Pick category weighted: 30% weapon, 25% armor, 25% potion, 20% gold
         int roll = rng.Next(100);
@@ -87,7 +86,8 @@ public static class ItemDefinitions
 /// Immutable definition for an item type. Describes everything about an item kind:
 /// appearance, base stats, stackability, etc. Instances live in ItemDefinitions.All.
 /// </summary>
-public readonly record struct ItemTypeDefinition(
+public readonly record struct ItemDefinition(
     int TypeId, int Category, string Name, int GlyphId, int Color,
     int BaseAttack, int BaseDefense, int BaseHealth,
-    bool Stackable, int MaxStackSize);
+    bool Stackable, int MaxStackSize
+);

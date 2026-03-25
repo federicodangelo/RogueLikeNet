@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
@@ -11,7 +12,7 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
@@ -28,7 +29,7 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
@@ -41,10 +42,10 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Place a Health Potion at player's position
-        var template = ItemDefinitions.Templates[8]; // Health Potion
+        var template = ItemDefinitions.All[8]; // Health Potion
         engine.SpawnItemOnGround(template, 0, sx, sy);
 
         var hud = engine.GetPlayerHudData(player);
@@ -59,10 +60,10 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Place an item far from player
-        var template = ItemDefinitions.Templates[0]; // Short Sword
+        var template = ItemDefinitions.All[0]; // Short Sword
         engine.SpawnItemOnGround(template, 0, sx + 5, sy + 5);
 
         var hud = engine.GetPlayerHudData(player);
@@ -76,7 +77,7 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
@@ -91,9 +92,9 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LongSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -116,9 +117,9 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ChainMail);
+        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
         engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -141,9 +142,9 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
         engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -162,9 +163,9 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 2, sx, sy);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -183,7 +184,7 @@ public class PlayerHudDataTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);

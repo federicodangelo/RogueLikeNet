@@ -1,9 +1,11 @@
-namespace RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Generation;
+
+namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
 /// NPC/monster definitions indexed by type ID. All values are integers.
 /// </summary>
-public static class MonsterDefinitions
+public static class NpcDefinitions
 {
     public const int Goblin = 0;
     public const int Orc = 1;
@@ -17,9 +19,6 @@ public static class MonsterDefinitions
         new(Skeleton, "Skeleton", TileDefinitions.GlyphSkeleton, TileDefinitions.ColorWhite,   20, 5, 2, 9),
         new(Dragon,   "Dragon",   TileDefinitions.GlyphDragon,   TileDefinitions.ColorOrange, 100, 15, 8, 6),
     ];
-
-    /// <summary>Backward-compatible alias for All.</summary>
-    public static readonly NpcDefinition[] Templates = All;
 
     /// <summary>Lookup by TypeId.</summary>
     public static NpcDefinition Get(int typeId) =>
@@ -39,4 +38,5 @@ public static class MonsterDefinitions
 
 public readonly record struct NpcDefinition(
     int TypeId, string Name, int GlyphId, int Color,
-    int Health, int Attack, int Defense, int Speed);
+    int Health, int Attack, int Defense, int Speed
+);

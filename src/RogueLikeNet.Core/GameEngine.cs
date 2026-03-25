@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
@@ -77,7 +78,7 @@ public class GameEngine : IDisposable
             switch (sp.Type)
             {
                 case SpawnType.Monster:
-                    var template = MonsterDefinitions.Pick(_worldRng, difficulty);
+                    var template = NpcDefinitions.Pick(_worldRng, difficulty);
                     // Scale stats with difficulty
                     int hpScale = 1 + difficulty / 2;
                     SpawnMonster(template.TypeId, wx, wy, template.GlyphId, template.Color,
@@ -101,10 +102,10 @@ public class GameEngine : IDisposable
     /// Spawns a player entity at the given world position.
     /// Class choice affects starting stats.
     /// </summary>
-    public Entity SpawnPlayer(long connectionId, int x, int y, int classId = ClassIds.Warrior)
+    public Entity SpawnPlayer(long connectionId, int x, int y, int classId = ClassDefinitions.Warrior)
     {
-        var (bonusAtk, bonusDef, bonusHp, bonusSpeed) = ClassModifiers.GetStartingBonus(classId);
-        var skills = ClassModifiers.GetStartingSkills(classId);
+        var (bonusAtk, bonusDef, bonusHp, bonusSpeed) = ClassDefinitions.GetStartingBonus(classId);
+        var skills = ClassDefinitions.GetStartingSkills(classId);
 
         return _ecsWorld.Create(
             new Position(x, y),
@@ -140,7 +141,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public Entity SpawnItemOnGround(ItemTypeDefinition def, int rarity, int x, int y)
+    public Entity SpawnItemOnGround(ItemDefinition def, int rarity, int x, int y)
     {
         // Rarity multiplier: each tier adds 50% to base stats
         int rarityMult = 100 + rarity * 50;

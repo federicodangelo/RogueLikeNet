@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;

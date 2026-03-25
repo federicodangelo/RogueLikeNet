@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -87,10 +88,10 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up an item
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -127,14 +128,14 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
         Assert.Equal(4, hud!.SkillIds.Length);
         Assert.Equal(4, hud.SkillCooldowns.Length);
-        Assert.Equal(SkillIds.PowerStrike, hud.SkillIds[0]);
-        Assert.Equal(SkillIds.ShieldBash, hud.SkillIds[1]);
+        Assert.Equal(SkillDefinitions.PowerStrike, hud.SkillIds[0]);
+        Assert.Equal(SkillDefinitions.ShieldBash, hud.SkillIds[1]);
     }
 
     [Fact]
@@ -143,7 +144,7 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Mage);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
@@ -183,7 +184,7 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
 
-        var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LongSword);
+        var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
         var item = engine.SpawnItemOnGround(template, 3, 10, 10);
 
         Assert.True(engine.EcsWorld.IsAlive(item));
@@ -225,10 +226,10 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Spawn a floor item
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
         var hud = engine.GetPlayerHudData(player);
@@ -243,7 +244,7 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Mage);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
@@ -259,10 +260,10 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Equip weapon
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
         ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
         input1.ActionType = ActionTypes.PickUp;
@@ -273,7 +274,7 @@ public class GameEngineTests
         engine.Tick();
 
         // Equip armor
-        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
         engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
         ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
         input3.ActionType = ActionTypes.PickUp;
@@ -295,9 +296,9 @@ public class GameEngineTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 1, sx, sy);
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.PickUp;
@@ -305,9 +306,9 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerHudData(player);
         Assert.NotNull(hud);
-        Assert.Equal(1, hud!.InventoryStackCounts.Length);
+        Assert.Single(hud!.InventoryStackCounts);
         Assert.Equal(1, hud.InventoryStackCounts[0]); // Sword is not stackable
-        Assert.Equal(1, hud.InventoryRarities.Length);
+        Assert.Single(hud.InventoryRarities);
         Assert.Equal(1, hud.InventoryRarities[0]); // Rarity 1 (Uncommon)
     }
 }

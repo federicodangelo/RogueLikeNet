@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 
 namespace RogueLikeNet.Core.Tests;
 
@@ -49,7 +50,7 @@ public class LootAndDeathTests
         using var engine = new GameEngine(42);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Give some experience
         ref var classData = ref engine.EcsWorld.Get<ClassData>(player);

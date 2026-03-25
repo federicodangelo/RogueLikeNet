@@ -1,6 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
@@ -113,7 +113,7 @@ public class InventorySystem
             inv.Items.RemoveAt(slot);
 
             // Create a new entity on the ground
-            var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
+            var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
             world.Create(
                 new Position(pos.X, pos.Y),
                 new TileAppearance(template.GlyphId, template.Color),
@@ -141,7 +141,7 @@ public class InventorySystem
             if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
 
             var itemData = inv.Items[slot];
-            var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
+            var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
 
             switch (template.Category)
             {

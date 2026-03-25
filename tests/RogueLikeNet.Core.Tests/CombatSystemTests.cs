@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
@@ -26,7 +27,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -43,7 +44,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -61,7 +62,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         // Low health monster
         engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 1, 0, 0, 8);
 
@@ -80,7 +81,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -96,7 +97,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -115,7 +116,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx - 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -134,7 +135,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx, sy - 1, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -153,7 +154,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx, sy + 1, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -172,7 +173,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -191,7 +192,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         // Monster 3 tiles away - not adjacent
         engine.SpawnMonster(0, sx + 3, sy, 103, 0x00FF00, 100, 5, 0, 8);
 
@@ -209,7 +210,7 @@ public class CombatSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var sameTile = engine.SpawnMonster(0, sx, sy, 103, 0x00FF00, 100, 5, 0, 8);
         engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
 

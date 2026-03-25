@@ -160,12 +160,11 @@ public class GameLoop : IDisposable
         {
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y),
+            EntityUpdates = GameStateSerializer.SerializeEntityUpdates(_engine.EcsWorld),
+            CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
+            PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity)
         };
-
-        delta.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y);
-        delta.EntityUpdates = GameStateSerializer.SerializeEntityUpdates(_engine.EcsWorld);
-        delta.CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine);
-        delta.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity);
         return delta;
     }
 

@@ -1,44 +1,45 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 
 namespace RogueLikeNet.Core.Tests;
 
 public class ClassDataTests
 {
     [Theory]
-    [InlineData(SkillIds.PowerStrike, 5)]
-    [InlineData(SkillIds.ShieldBash, 8)]
-    [InlineData(SkillIds.Backstab, 6)]
-    [InlineData(SkillIds.Dodge, 10)]
-    [InlineData(SkillIds.Fireball, 8)]
-    [InlineData(SkillIds.Heal, 12)]
-    [InlineData(SkillIds.PowerShot, 6)]
-    [InlineData(SkillIds.Trap, 15)]
-    [InlineData(SkillIds.None, 0)]
+    [InlineData(SkillDefinitions.PowerStrike, 5)]
+    [InlineData(SkillDefinitions.ShieldBash, 8)]
+    [InlineData(SkillDefinitions.Backstab, 6)]
+    [InlineData(SkillDefinitions.Dodge, 10)]
+    [InlineData(SkillDefinitions.Fireball, 8)]
+    [InlineData(SkillDefinitions.Heal, 12)]
+    [InlineData(SkillDefinitions.PowerShot, 6)]
+    [InlineData(SkillDefinitions.Trap, 15)]
+    [InlineData(SkillDefinitions.None, 0)]
     public void GetCooldown_ReturnsCorrectValue(int skillId, int expected)
     {
         Assert.Equal(expected, SkillDefinitions.GetCooldown(skillId));
     }
 
     [Theory]
-    [InlineData(SkillIds.PowerStrike, 200)]
-    [InlineData(SkillIds.ShieldBash, 50)]
-    [InlineData(SkillIds.Backstab, 300)]
-    [InlineData(SkillIds.Fireball, 150)]
-    [InlineData(SkillIds.PowerShot, 180)]
-    [InlineData(SkillIds.Heal, 100)] // default case
-    [InlineData(SkillIds.Dodge, 100)] // default case
-    [InlineData(SkillIds.None, 100)] // default case
+    [InlineData(SkillDefinitions.PowerStrike, 200)]
+    [InlineData(SkillDefinitions.ShieldBash, 50)]
+    [InlineData(SkillDefinitions.Backstab, 300)]
+    [InlineData(SkillDefinitions.Fireball, 150)]
+    [InlineData(SkillDefinitions.PowerShot, 180)]
+    [InlineData(SkillDefinitions.Heal, 100)] // default case
+    [InlineData(SkillDefinitions.Dodge, 100)] // default case
+    [InlineData(SkillDefinitions.None, 100)] // default case
     public void GetDamageMultiplier_ReturnsCorrectValue(int skillId, int expected)
     {
         Assert.Equal(expected, SkillDefinitions.GetDamageMultiplier(skillId));
     }
 
     [Theory]
-    [InlineData(SkillIds.Fireball, 5)]
-    [InlineData(SkillIds.PowerShot, 5)]
-    [InlineData(SkillIds.Trap, 3)]
-    [InlineData(SkillIds.PowerStrike, 1)] // default case
-    [InlineData(SkillIds.None, 1)] // default case
+    [InlineData(SkillDefinitions.Fireball, 5)]
+    [InlineData(SkillDefinitions.PowerShot, 5)]
+    [InlineData(SkillDefinitions.Trap, 3)]
+    [InlineData(SkillDefinitions.PowerStrike, 1)] // default case
+    [InlineData(SkillDefinitions.None, 1)] // default case
     public void GetRange_ReturnsCorrectValue(int skillId, int expected)
     {
         Assert.Equal(expected, SkillDefinitions.GetRange(skillId));
@@ -51,9 +52,9 @@ public class ClassDataTests
     }
 
     [Theory]
-    [InlineData(SkillIds.PowerStrike, "Power Strike", 5, 200, 1)]
-    [InlineData(SkillIds.Fireball, "Fireball", 8, 150, 5)]
-    [InlineData(SkillIds.Trap, "Trap", 15, 100, 3)]
+    [InlineData(SkillDefinitions.PowerStrike, "Power Strike", 5, 200, 1)]
+    [InlineData(SkillDefinitions.Fireball, "Fireball", 8, 150, 5)]
+    [InlineData(SkillDefinitions.Trap, "Trap", 15, 100, 3)]
     public void Get_ReturnsCorrectSkill(int skillId, string name, int cooldown, int dmgMult, int range)
     {
         var skill = SkillDefinitions.Get(skillId);
@@ -65,10 +66,10 @@ public class ClassDataTests
     }
 
     [Theory]
-    [InlineData(SkillIds.PowerStrike, "Power Strike")]
-    [InlineData(SkillIds.Backstab, "Backstab")]
-    [InlineData(SkillIds.Heal, "Heal")]
-    [InlineData(SkillIds.None, "")]
+    [InlineData(SkillDefinitions.PowerStrike, "Power Strike")]
+    [InlineData(SkillDefinitions.Backstab, "Backstab")]
+    [InlineData(SkillDefinitions.Heal, "Heal")]
+    [InlineData(SkillDefinitions.None, "")]
     public void GetName_ReturnsCorrectName(int skillId, string expectedName)
     {
         Assert.Equal(expectedName, SkillDefinitions.GetName(skillId));

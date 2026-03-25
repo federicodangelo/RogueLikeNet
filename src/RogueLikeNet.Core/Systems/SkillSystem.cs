@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 
 namespace RogueLikeNet.Core.Systems;
 
@@ -45,7 +46,7 @@ public class SkillSystem
 
             ref var slots = ref world.Get<SkillSlots>(player);
             int skillId = GetSkillId(ref slots, skillSlot);
-            if (skillId == SkillIds.None) continue;
+            if (skillId == SkillDefinitions.None) continue;
 
             int cooldown = GetCooldown(ref slots, skillSlot);
             if (cooldown > 0) continue; // still on cooldown
@@ -59,14 +60,14 @@ public class SkillSystem
 
             bool used = skillId switch
             {
-                SkillIds.PowerStrike => ExecuteMelee(world, player, ref stats, targetX, targetY, 200),
-                SkillIds.ShieldBash => ExecuteMelee(world, player, ref stats, targetX, targetY, 50),
-                SkillIds.Backstab => ExecuteMelee(world, player, ref stats, targetX, targetY, 300),
-                SkillIds.Dodge => ExecuteDodge(world, player, ref stats),
-                SkillIds.Fireball => ExecuteAoe(world, ref stats, targetX, targetY, 150, 1),
-                SkillIds.Heal => ExecuteHeal(world, player),
-                SkillIds.PowerShot => ExecuteRanged(world, ref stats, pos, targetX, targetY, range, 180),
-                SkillIds.Trap => false, // TODO: place trap entity
+                SkillDefinitions.PowerStrike => ExecuteMelee(world, player, ref stats, targetX, targetY, 200),
+                SkillDefinitions.ShieldBash => ExecuteMelee(world, player, ref stats, targetX, targetY, 50),
+                SkillDefinitions.Backstab => ExecuteMelee(world, player, ref stats, targetX, targetY, 300),
+                SkillDefinitions.Dodge => ExecuteDodge(world, player, ref stats),
+                SkillDefinitions.Fireball => ExecuteAoe(world, ref stats, targetX, targetY, 150, 1),
+                SkillDefinitions.Heal => ExecuteHeal(world, player),
+                SkillDefinitions.PowerShot => ExecuteRanged(world, ref stats, pos, targetX, targetY, range, 180),
+                SkillDefinitions.Trap => false, // TODO: place trap entity
                 _ => false,
             };
 
@@ -158,7 +159,7 @@ public class SkillSystem
         1 => slots.Skill1,
         2 => slots.Skill2,
         3 => slots.Skill3,
-        _ => SkillIds.None,
+        _ => SkillDefinitions.None,
     };
 
     private static int GetCooldown(ref SkillSlots slots, int index) => index switch

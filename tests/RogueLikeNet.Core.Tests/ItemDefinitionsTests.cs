@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
@@ -68,7 +69,6 @@ public class ItemDefinitionsTests
     public void All_ContainsAllDefinedItems()
     {
         Assert.Equal(11, ItemDefinitions.All.Length);
-        Assert.Same(ItemDefinitions.Templates, ItemDefinitions.All);
     }
 
     [Theory]

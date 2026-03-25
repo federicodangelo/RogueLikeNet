@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
@@ -41,7 +42,9 @@ public class GameLoopTests
     {
         using var loop = new GameLoop(42);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
+#pragma warning disable xUnit1031 // Do not use blocking task operations in test method
         loop.SpawnPlayerForConnection(conn.ConnectionId).Wait();
+#pragma warning restore xUnit1031 // Do not use blocking task operations in test method
 
         var entity = conn.PlayerEntity!.Value;
         loop.RemoveConnection(conn.ConnectionId);
@@ -579,7 +582,7 @@ public class GameLoopTests
 
         // Place an item at the player's position
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
-        var template = RogueLikeNet.Core.Generation.ItemDefinitions.Templates[8]; // Health Potion
+        var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion); // Health Potion
         loop.Engine.SpawnItemOnGround(template, 0, playerPos.X, playerPos.Y);
 
         messages.Clear();
@@ -598,7 +601,7 @@ public class GameLoopTests
                 if (delta.PlayerHud?.FloorItemNames.Length > 0)
                 {
                     hasFloorItems = true;
-                    Assert.Contains("Health Potion", delta.PlayerHud.FloorItemNames);
+                    Assert.Contains(template.Name, delta.PlayerHud.FloorItemNames);
                     break;
                 }
             }

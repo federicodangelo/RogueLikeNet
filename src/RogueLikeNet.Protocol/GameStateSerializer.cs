@@ -105,10 +105,10 @@ public static class GameStateSerializer
         return entities.ToArray();
     }
 
-    public static CombatEventMsg[]? SerializeCombatEvents(GameEngine engine)
+    public static CombatEventMsg[] SerializeCombatEvents(GameEngine engine)
     {
         var combatEvents = engine.Combat.LastTickEvents;
-        if (combatEvents.Count == 0) return null;
+        if (combatEvents.Count == 0) return [];
         return combatEvents.Select(e => new CombatEventMsg
         {
             AttackerX = e.AttackerX,

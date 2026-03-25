@@ -1,4 +1,4 @@
-namespace RogueLikeNet.Core.Generation;
+namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
 /// Common glyph IDs (CP437 charset indices) and packed RGB colors for map generation.
