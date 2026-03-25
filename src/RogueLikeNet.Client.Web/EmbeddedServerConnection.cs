@@ -113,6 +113,8 @@ public class LocalGameConnection : IGameServerConnection
             });
             snapshot.Entities = entities.ToArray();
         }
+
+        snapshot.PlayerHud = BuildPlayerHud();
         return snapshot;
     }
 
@@ -157,7 +159,29 @@ public class LocalGameConnection : IGameServerConnection
                 Damage = ev.Damage, TargetDied = ev.TargetDied,
             }).ToArray();
         }
+
+        delta.PlayerHud = BuildPlayerHud();
         return delta;
+    }
+
+    private PlayerHudMsg? BuildPlayerHud()
+    {
+        var hudData = _engine.GetPlayerHudData(_playerEntity);
+        if (hudData == null) return null;
+        return new PlayerHudMsg
+        {
+            Health = hudData.Health,
+            MaxHealth = hudData.MaxHealth,
+            Attack = hudData.Attack,
+            Defense = hudData.Defense,
+            Level = hudData.Level,
+            Experience = hudData.Experience,
+            InventoryCount = hudData.InventoryCount,
+            InventoryCapacity = hudData.InventoryCapacity,
+            SkillIds = hudData.SkillIds,
+            SkillCooldowns = hudData.SkillCooldowns,
+            InventoryNames = hudData.InventoryNames,
+        };
     }
 
     private static ChunkDataMsg SerializeChunk(Chunk chunk)

@@ -15,18 +15,17 @@ public class WorldMap
         _seed = seed;
     }
 
-    public Chunk GetOrCreateChunk(int chunkX, int chunkY, Generation.IDungeonGenerator generator)
+    public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(int chunkX, int chunkY, Generation.IDungeonGenerator generator)
     {
         long key = Chunk.PackChunkKey(chunkX, chunkY);
-        if (!_chunks.TryGetValue(key, out var chunk))
-        {
-            chunk = new Chunk(chunkX, chunkY);
-            // Derive per-chunk seed from world seed + chunk coords
-            long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
-            generator.Generate(chunk, chunkSeed);
-            _chunks[key] = chunk;
-        }
-        return chunk;
+        if (_chunks.TryGetValue(key, out var chunk))
+            return (chunk, null);
+
+        chunk = new Chunk(chunkX, chunkY);
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var result = generator.Generate(chunk, chunkSeed);
+        _chunks[key] = chunk;
+        return (chunk, result);
     }
 
     public Chunk? TryGetChunk(int chunkX, int chunkY)

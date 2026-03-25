@@ -13,9 +13,10 @@ public class BspDungeonGenerator : IDungeonGenerator
     private const int MinLeafSize = 8;
     private const int Padding = 1;
 
-    public void Generate(Chunk chunk, long seed)
+    public GenerationResult Generate(Chunk chunk, long seed)
     {
         var rng = new SeededRandom(seed);
+        var result = new GenerationResult();
         int width = Chunk.Size;
         int height = Chunk.Size;
 
@@ -52,6 +53,38 @@ public class BspDungeonGenerator : IDungeonGenerator
             var last = rooms[^1];
             PlaceFeature(chunk, first.CenterX, first.CenterY, TileType.StairsUp, TileDefinitions.GlyphStairsUp, TileDefinitions.ColorWhite);
             PlaceFeature(chunk, last.CenterX, last.CenterY, TileType.StairsDown, TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
+        }
+
+        // Populate rooms with monsters, items, and torches (skip first room — spawn area)
+        for (int i = 1; i < rooms.Count; i++)
+            PopulateRoom(rooms[i], rng, result);
+
+        return result;
+    }
+
+    private static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result)
+    {
+        // 1-3 monsters per room
+        int monsterCount = 1 + rng.Next(3);
+        for (int m = 0; m < monsterCount; m++)
+        {
+            int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
+            int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
+            result.SpawnPoints.Add(new SpawnPoint(x, y, SpawnType.Monster));
+        }
+
+        // 30% chance of an item
+        if (rng.Next(100) < 30)
+        {
+            int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
+            int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
+            result.SpawnPoints.Add(new SpawnPoint(x, y, SpawnType.Item));
+        }
+
+        // 40% chance of a torch (light source)
+        if (rng.Next(100) < 40)
+        {
+            result.SpawnPoints.Add(new SpawnPoint(room.CenterX, room.CenterY, SpawnType.Torch));
         }
     }
 

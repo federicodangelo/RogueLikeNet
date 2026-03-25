@@ -93,6 +93,18 @@ public class GameRenderControl : Control
             Key.Left or Key.A => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 },
             Key.Right or Key.D => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 },
             Key.Space => new ClientInputMsg { ActionType = ActionTypes.Wait },
+            // Pickup
+            Key.G => new ClientInputMsg { ActionType = ActionTypes.PickUp },
+            // Use item (slots 0-3)
+            Key.D1 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 0 },
+            Key.D2 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 1 },
+            Key.D3 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 2 },
+            Key.D4 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 3 },
+            // Use skill (slots 0-1, target direction from last move or default right)
+            Key.Q => new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 },
+            Key.E => new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 },
+            // Drop item (slot 0)
+            Key.X => new ClientInputMsg { ActionType = ActionTypes.Drop, ItemSlot = 0 },
             _ => null
         };
 

@@ -21,12 +21,16 @@ public class GameEngine : IDisposable
     private readonly LightingSystem _lightingSystem;
     private readonly CombatSystem _combatSystem;
     private readonly AISystem _aiSystem;
+    private readonly InventorySystem _inventorySystem;
+    private readonly SkillSystem _skillSystem;
+    private readonly SeededRandom _worldRng;
     private long _tick;
 
     public Arch.Core.World EcsWorld => _ecsWorld;
     public WorldMap WorldMap => _worldMap;
     public long CurrentTick => _tick;
     public CombatSystem Combat => _combatSystem;
+    public InventorySystem Inventory => _inventorySystem;
 
     public GameEngine(long worldSeed)
     {
@@ -38,32 +42,82 @@ public class GameEngine : IDisposable
         _lightingSystem = new LightingSystem();
         _combatSystem = new CombatSystem();
         _aiSystem = new AISystem();
+        _inventorySystem = new InventorySystem();
+        _skillSystem = new SkillSystem();
+        _worldRng = new SeededRandom(worldSeed);
     }
 
     /// <summary>
     /// Ensures the chunk at the given chunk coords is loaded/generated.
+    /// Spawns entities from generation results if newly created.
     /// </summary>
     public Chunk EnsureChunkLoaded(int chunkX, int chunkY)
     {
-        return _worldMap.GetOrCreateChunk(chunkX, chunkY, _generator);
+        var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkX, chunkY, _generator);
+
+        if (genResult != null)
+            ProcessSpawnPoints(chunk, genResult, chunkX, chunkY);
+
+        return chunk;
+    }
+
+    private void ProcessSpawnPoints(Chunk chunk, GenerationResult result, int chunkX, int chunkY)
+    {
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+
+        // Determine difficulty from distance to origin
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+
+        foreach (var sp in result.SpawnPoints)
+        {
+            int wx = worldOffsetX + sp.LocalX;
+            int wy = worldOffsetY + sp.LocalY;
+
+            switch (sp.Type)
+            {
+                case SpawnType.Monster:
+                    var template = MonsterDefinitions.Pick(_worldRng, difficulty);
+                    // Scale stats with difficulty
+                    int hpScale = 1 + difficulty / 2;
+                    SpawnMonster(template.TypeId, wx, wy, template.GlyphId, template.Color,
+                        template.Health * hpScale, template.Attack + difficulty,
+                        template.Defense + difficulty / 2, template.Speed);
+                    break;
+
+                case SpawnType.Item:
+                    var (itemTemplate, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                    SpawnItemOnGround(itemTemplate, rarity, wx, wy);
+                    break;
+
+                case SpawnType.Torch:
+                    SpawnTorch(wx, wy);
+                    break;
+            }
+        }
     }
 
     /// <summary>
     /// Spawns a player entity at the given world position.
-    /// Returns the entity reference.
+    /// Class choice affects starting stats.
     /// </summary>
-    public Entity SpawnPlayer(long connectionId, int x, int y)
+    public Entity SpawnPlayer(long connectionId, int x, int y, int classId = ClassIds.Warrior)
     {
+        var (bonusAtk, bonusDef, bonusHp, bonusSpeed) = ClassModifiers.GetStartingBonus(classId);
+        var skills = ClassModifiers.GetStartingSkills(classId);
+
         return _ecsWorld.Create(
             new Position(x, y),
-            new Health(100),
-            new CombatStats(10, 5, 10),
+            new Health(100 + bonusHp),
+            new CombatStats(10 + bonusAtk, 5 + bonusDef, 10 + bonusSpeed),
             new FOVData(10),
             new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             new PlayerTag { ConnectionId = connectionId },
             new PlayerInput(),
-            new ClassData { ClassId = ClassIds.Warrior, Level = 1 },
-            new Inventory(20)
+            new ClassData { ClassId = classId, Level = 1 },
+            skills,
+            new Inventory(20),
+            new Equipment()
         );
     }
 
@@ -84,20 +138,119 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
-    /// Runs one game tick: process inputs → move → combat → AI → FOV → lighting.
+    /// Creates an item entity lying on the ground.
+    /// </summary>
+    public Entity SpawnItemOnGround(ItemTemplate template, int rarity, int x, int y)
+    {
+        // Rarity multiplier: each tier adds 50% to base stats
+        int rarityMult = 100 + rarity * 50;
+        return _ecsWorld.Create(
+            new Position(x, y),
+            new TileAppearance(template.GlyphId, template.Color),
+            new ItemData
+            {
+                ItemTypeId = template.TypeId,
+                Rarity = rarity,
+                BonusAttack = template.BaseAttack * rarityMult / 100,
+                BonusDefense = template.BaseDefense * rarityMult / 100,
+                BonusHealth = template.BaseHealth * rarityMult / 100,
+                StackCount = template.Category == ItemDefinitions.CategoryGold
+                    ? 10 + _worldRng.Next(50)
+                    : 1,
+            },
+            new GroundItemTag()
+        );
+    }
+
+    /// <summary>
+    /// Spawns a torch (light source) at the given position.
+    /// </summary>
+    public Entity SpawnTorch(int x, int y)
+    {
+        return _ecsWorld.Create(
+            new Position(x, y),
+            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+            new LightSource(6, TileDefinitions.ColorTorchFg)
+        );
+    }
+
+    /// <summary>
+    /// Runs one game tick: process inputs → move → combat → AI → inventory → skills → FOV → lighting.
     /// </summary>
     public void Tick()
     {
         _movementSystem.Update(_ecsWorld, _worldMap);
         _combatSystem.Update(_ecsWorld);
         _aiSystem.Update(_ecsWorld, _worldMap);
+        _inventorySystem.Update(_ecsWorld, _worldMap);
+        _skillSystem.Update(_ecsWorld);
         _fovSystem.Update(_ecsWorld, _worldMap);
         _lightingSystem.Update(_ecsWorld, _worldMap);
 
-        // Cleanup dead entities
+        ProcessLootDrops();
+        ProcessPlayerDeath();
         CleanupDead();
 
         _tick++;
+    }
+
+    /// <summary>
+    /// Drop loot when monsters die (before entity destruction).
+    /// </summary>
+    private void ProcessLootDrops()
+    {
+        var deadMonsters = new List<(int X, int Y, int MonsterTypeId)>();
+        var deathQuery = new QueryDescription().WithAll<DeadTag, MonsterTag, Position>();
+        _ecsWorld.Query(in deathQuery, (ref Position pos, ref MonsterTag tag) =>
+        {
+            deadMonsters.Add((pos.X, pos.Y, tag.MonsterTypeId));
+        });
+
+        foreach (var (x, y, typeId) in deadMonsters)
+        {
+            // 60% chance to drop loot
+            if (_worldRng.Next(100) < 60)
+            {
+                int difficulty = typeId; // rough mapping: harder monster = higher difficulty
+                var (template, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                SpawnItemOnGround(template, rarity, x, y);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handle player death: respawn at chunk origin with restored health.
+    /// </summary>
+    private void ProcessPlayerDeath()
+    {
+        var deadPlayers = new List<Entity>();
+        var playerDeathQuery = new QueryDescription().WithAll<DeadTag, Health, PlayerTag, Position>();
+        _ecsWorld.Query(in playerDeathQuery, (Entity entity) =>
+        {
+            deadPlayers.Add(entity);
+        });
+
+        foreach (var entity in deadPlayers)
+        {
+            ref var health = ref _ecsWorld.Get<Health>(entity);
+            ref var pos = ref _ecsWorld.Get<Position>(entity);
+
+            // Respawn: restore half health, move to spawn
+            var (sx, sy) = FindSpawnPosition();
+            health.Current = health.Max / 2;
+            pos.X = sx;
+            pos.Y = sy;
+
+            // Remove DeadTag so player stays alive
+            _ecsWorld.Remove<DeadTag>(entity);
+
+            // Lose some experience on death
+            if (_ecsWorld.Has<ClassData>(entity))
+            {
+                ref var classData = ref _ecsWorld.Get<ClassData>(entity);
+                classData.Experience = Math.Max(0, classData.Experience - classData.Experience / 4);
+            }
+        }
     }
 
     private void CleanupDead()
@@ -120,7 +273,6 @@ public class GameEngine : IDisposable
     public (int X, int Y) FindSpawnPosition()
     {
         var chunk = EnsureChunkLoaded(0, 0);
-        // Find first floor tile
         for (int x = 0; x < Chunk.Size; x++)
         for (int y = 0; y < Chunk.Size; y++)
         {
@@ -134,4 +286,81 @@ public class GameEngine : IDisposable
     {
         Arch.Core.World.Destroy(_ecsWorld);
     }
+
+    /// <summary>
+    /// Returns HUD data for a player entity (health, stats, inventory, skills).
+    /// </summary>
+    public PlayerHudData? GetPlayerHudData(Entity playerEntity)
+    {
+        if (!_ecsWorld.IsAlive(playerEntity)) return null;
+
+        ref var health = ref _ecsWorld.Get<Health>(playerEntity);
+        ref var stats = ref _ecsWorld.Get<CombatStats>(playerEntity);
+
+        var hud = new PlayerHudData
+        {
+            Health = health.Current,
+            MaxHealth = health.Max,
+            Attack = stats.Attack,
+            Defense = stats.Defense,
+        };
+
+        if (_ecsWorld.Has<ClassData>(playerEntity))
+        {
+            ref var classData = ref _ecsWorld.Get<ClassData>(playerEntity);
+            hud.Level = classData.Level;
+            hud.Experience = classData.Experience;
+        }
+
+        if (_ecsWorld.Has<Inventory>(playerEntity))
+        {
+            ref var inv = ref _ecsWorld.Get<Inventory>(playerEntity);
+            hud.InventoryCount = inv.Items?.Count ?? 0;
+            hud.InventoryCapacity = inv.Capacity;
+
+            // Build inventory item names
+            if (inv.Items != null)
+            {
+                var names = new List<string>();
+                foreach (var item in inv.Items)
+                {
+                    if (_ecsWorld.IsAlive(item) && _ecsWorld.Has<ItemData>(item))
+                    {
+                        var itemData = _ecsWorld.Get<ItemData>(item);
+                        var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == itemData.ItemTypeId);
+                        names.Add(template.Name ?? "Unknown");
+                    }
+                    else
+                    {
+                        names.Add("???");
+                    }
+                }
+                hud.InventoryNames = names.ToArray();
+            }
+        }
+
+        if (_ecsWorld.Has<SkillSlots>(playerEntity))
+        {
+            ref var skills = ref _ecsWorld.Get<SkillSlots>(playerEntity);
+            hud.SkillIds = [skills.Skill0, skills.Skill1, skills.Skill2, skills.Skill3];
+            hud.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
+        }
+
+        return hud;
+    }
+}
+
+public class PlayerHudData
+{
+    public int Health;
+    public int MaxHealth;
+    public int Attack;
+    public int Defense;
+    public int Level;
+    public int Experience;
+    public int InventoryCount;
+    public int InventoryCapacity;
+    public int[] SkillIds = [];
+    public int[] SkillCooldowns = [];
+    public string[] InventoryNames = [];
 }

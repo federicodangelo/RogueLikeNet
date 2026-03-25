@@ -20,3 +20,8 @@ public struct MonsterTag
 /// Marks an entity for removal at end of tick.
 /// </summary>
 public struct DeadTag { }
+
+/// <summary>
+/// Marks an item entity that is lying on the ground (not in any inventory).
+/// </summary>
+public struct GroundItemTag { }

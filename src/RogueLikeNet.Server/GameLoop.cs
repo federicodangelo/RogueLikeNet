@@ -193,6 +193,7 @@ public class GameLoop : IDisposable
             snapshot.Entities = entities.ToArray();
         }
 
+        snapshot.PlayerHud = BuildPlayerHud(conn);
         return snapshot;
     }
 
@@ -257,7 +258,29 @@ public class GameLoop : IDisposable
             }).ToArray();
         }
 
+        delta.PlayerHud = BuildPlayerHud(conn);
         return delta;
+    }
+
+    private PlayerHudMsg? BuildPlayerHud(PlayerConnection conn)
+    {
+        if (!conn.PlayerEntity.HasValue) return null;
+        var hudData = _engine.GetPlayerHudData(conn.PlayerEntity.Value);
+        if (hudData == null) return null;
+        return new PlayerHudMsg
+        {
+            Health = hudData.Health,
+            MaxHealth = hudData.MaxHealth,
+            Attack = hudData.Attack,
+            Defense = hudData.Defense,
+            Level = hudData.Level,
+            Experience = hudData.Experience,
+            InventoryCount = hudData.InventoryCount,
+            InventoryCapacity = hudData.InventoryCapacity,
+            SkillIds = hudData.SkillIds,
+            SkillCooldowns = hudData.SkillCooldowns,
+            InventoryNames = hudData.InventoryNames,
+        };
     }
 
     private static ChunkDataMsg SerializeChunk(Chunk chunk)

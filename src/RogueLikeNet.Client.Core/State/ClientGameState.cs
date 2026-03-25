@@ -16,6 +16,7 @@ public class ClientGameState
     public int PlayerY { get; set; }
     public long WorldTick { get; set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
+    public PlayerHudMsg? PlayerHud { get; set; }
 
     public void ApplySnapshot(WorldSnapshotMsg snapshot)
     {
@@ -41,6 +42,8 @@ public class ClientGameState
                 MaxHealth = entityMsg.MaxHealth,
             };
         }
+
+        PlayerHud = snapshot.PlayerHud;
     }
 
     public void ApplyDelta(WorldDeltaMsg delta)
@@ -108,6 +111,9 @@ public class ClientGameState
                 break;
             }
         }
+
+        if (delta.PlayerHud != null)
+            PlayerHud = delta.PlayerHud;
     }
 
     private void ApplyChunkData(ChunkDataMsg msg)

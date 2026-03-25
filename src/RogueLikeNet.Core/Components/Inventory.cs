@@ -1,22 +1,31 @@
+using Arch.Core;
+
 namespace RogueLikeNet.Core.Components;
 
 public struct Inventory
 {
-    public List<long>? ItemEntityIds;
+    public List<Entity>? Items;
+    public int Capacity;
 
     public Inventory(int capacity)
     {
-        ItemEntityIds = new List<long>(capacity);
+        Capacity = capacity;
+        Items = new List<Entity>(capacity);
     }
+
+    public bool IsFull => Items != null && Items.Count >= Capacity;
 }
 
 public struct Equipment
 {
-    public long WeaponEntityId;
-    public long ArmorEntityId;
-    public long HelmetEntityId;
-    public long BootsEntityId;
-    public long RingEntityId;
+    public Entity Weapon;
+    public Entity Armor;
+    public Entity Helmet;
+    public Entity Boots;
+    public Entity Ring;
+
+    public bool HasWeapon => Weapon != Entity.Null;
+    public bool HasArmor => Armor != Entity.Null;
 }
 
 public struct ItemData

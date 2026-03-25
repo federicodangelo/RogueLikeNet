@@ -11,6 +11,7 @@ public class WorldDeltaMsg
     [Key(3)] public EntityUpdateMsg[] EntityUpdates { get; set; } = [];
     [Key(4)] public CombatEventMsg[] CombatEvents { get; set; } = [];
     [Key(5)] public ChunkDataMsg[] Chunks { get; set; } = [];
+    [Key(6)] public PlayerHudMsg? PlayerHud { get; set; }
 }
 
 [MessagePackObject]
@@ -47,4 +48,20 @@ public class CombatEventMsg
     [Key(3)] public int TargetY { get; set; }
     [Key(4)] public int Damage { get; set; }
     [Key(5)] public bool TargetDied { get; set; }
+}
+
+[MessagePackObject]
+public class PlayerHudMsg
+{
+    [Key(0)] public int Health { get; set; }
+    [Key(1)] public int MaxHealth { get; set; }
+    [Key(2)] public int Attack { get; set; }
+    [Key(3)] public int Defense { get; set; }
+    [Key(4)] public int Level { get; set; }
+    [Key(5)] public int Experience { get; set; }
+    [Key(6)] public int InventoryCount { get; set; }
+    [Key(7)] public int InventoryCapacity { get; set; }
+    [Key(8)] public int[] SkillIds { get; set; } = [];
+    [Key(9)] public int[] SkillCooldowns { get; set; } = [];
+    [Key(10)] public string[] InventoryNames { get; set; } = [];
 }
