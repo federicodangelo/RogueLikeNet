@@ -63,16 +63,21 @@ public class WebSocketServerConnection : IGameServerConnection
         {
             while (!ct.IsCancellationRequested && _socket?.State == WebSocketState.Open)
             {
-                var result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
+                using var ms = new MemoryStream();
+                WebSocketReceiveResult result;
+                do
+                {
+                    result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        break;
+                    ms.Write(buffer, 0, result.Count);
+                } while (!result.EndOfMessage);
+
                 if (result.MessageType == WebSocketMessageType.Close)
                     break;
 
-                if (result.MessageType == WebSocketMessageType.Binary && result.Count > 0)
-                {
-                    var data = new byte[result.Count];
-                    Array.Copy(buffer, data, result.Count);
-                    ProcessMessage(data);
-                }
+                if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
+                    ProcessMessage(ms.ToArray());
             }
         }
         catch (OperationCanceledException) { }

@@ -167,4 +167,45 @@ public class GameStateSerializerTests
         Assert.Equal("Hello world!", result.Text);
         Assert.Equal(1234567890, result.Timestamp);
     }
+
+    [Fact]
+    public void FullSnapshot_SerializeDeserialize_RoundTrip()
+    {
+        // Replicate the exact server→client flow: build a real snapshot, serialize, wrap, unwrap, deserialize
+        var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator());
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+        engine.Tick();
+
+        ref var pos = ref engine.EcsWorld.Get<Position>(player);
+        ref var fov = ref engine.EcsWorld.Get<FOVData>(player);
+
+        var snapshot = new WorldSnapshotMsg
+        {
+            WorldTick = engine.CurrentTick,
+            PlayerX = pos.X,
+            PlayerY = pos.Y,
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y),
+            Entities = GameStateSerializer.SerializeEntities(engine.EcsWorld, fov),
+            PlayerHud = GameStateSerializer.BuildPlayerHud(engine, player),
+        };
+
+        // Serialize + wrap (server side)
+        var payload = NetSerializer.Serialize(snapshot);
+        var data = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+
+        // Unwrap + deserialize (client side)
+        var envelope = NetSerializer.UnwrapMessage(data);
+        Assert.Equal(MessageTypes.WorldSnapshot, envelope.MessageType);
+
+        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
+        Assert.Equal(snapshot.WorldTick, result.WorldTick);
+        Assert.Equal(snapshot.PlayerX, result.PlayerX);
+        Assert.Equal(9, result.Chunks.Length); // 3x3 around player
+        Assert.True(result.Entities.Length > 0);
+        Assert.NotNull(result.PlayerHud);
+
+        engine.Dispose();
+    }
 }
