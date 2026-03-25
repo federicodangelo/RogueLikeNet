@@ -6,13 +6,11 @@ namespace RogueLikeNet.Core.Algorithms;
 /// </summary>
 public static class AStarPathfinder
 {
-    private struct PathNode : IComparable<PathNode>
+    private struct PathNode
     {
         public int X, Y;
         public int G; // cost from start
         public int F; // G + heuristic
-
-        public int CompareTo(PathNode other) => F.CompareTo(other.F);
     }
 
     /// <summary>
