@@ -14,7 +14,7 @@ public class TileRenderer : IDisposable
 {
     public const int TileWidth = 12;
     public const int TileHeight = 16;
-    public const int HudColumns = 14;
+    public const int HudColumns = 20;
 
     private SKFont? _font;
     private SKPaint? _bgPaint;
@@ -42,6 +42,9 @@ public class TileRenderer : IDisposable
     private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Help", "Quit"];
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
 
+    private static readonly SKColor ColorFloor = new(150, 220, 130);
+    private static readonly SKColor ColorInvSel = new(255, 255, 80);
+
     private static readonly string[] HelpLines =
     [
         "CONTROLS",
@@ -51,12 +54,14 @@ public class TileRenderer : IDisposable
         "A / \u2190    Move left",
         "D / \u2192    Move right",
         "Space    Wait a turn",
+        "F        Attack nearest",
         "G        Pick up item",
         "1-4      Use item slot",
         "Q        Use skill 1",
         "E        Use skill 2",
         "X        Drop item",
-        "Escape   Pause menu",
+        "I        Inventory",
+        "Escape   Pause / Back",
     ];
 
     public void Initialize()
@@ -72,7 +77,8 @@ public class TileRenderer : IDisposable
 
     // ── Game Screen ────────────────────────────────────────────
 
-    public void RenderGame(SKCanvas canvas, ClientGameState state, int totalCols, int totalRows)
+    public void RenderGame(SKCanvas canvas, ClientGameState state, int totalCols, int totalRows,
+        bool inventoryMode = false, int inventoryIndex = 0)
     {
         if (_font == null || _bgPaint == null || _fgPaint == null) return;
 
@@ -80,7 +86,10 @@ public class TileRenderer : IDisposable
 
         int gameCols = totalCols - HudColumns;
         RenderGameWorld(canvas, state, gameCols, totalRows);
-        RenderHudPanel(canvas, state, gameCols, totalRows);
+        if (inventoryMode)
+            RenderInventoryPanel(canvas, state, gameCols, totalRows, inventoryIndex);
+        else
+            RenderHudPanel(canvas, state, gameCols, totalRows);
     }
 
     private void RenderGameWorld(SKCanvas canvas, ClientGameState state, int gameCols, int totalRows)
@@ -216,10 +225,117 @@ public class TileRenderer : IDisposable
         row++;
 
         DrawString(canvas, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
+        row += 2;
+
+        // Floor items
+        if (hud.FloorItemNames.Length > 0)
+        {
+            DrawString(canvas, col, row, "On Ground", ColorTitle);
+            row++;
+            DrawHudSeparator(canvas, col, row, innerW);
+            row++;
+            int floorToShow = Math.Min(hud.FloorItemNames.Length, 4);
+            for (int i = 0; i < floorToShow; i++)
+            {
+                string name = hud.FloorItemNames[i];
+                DrawString(canvas, col, row, $"  {name}", ColorFloor);
+                row++;
+            }
+            row++;
+            DrawString(canvas, col, row, "[G] Pick up", ColorDim);
+            row++;
+        }
 
         // Controls reminder at bottom
         int bottom = totalRows - 2;
+        DrawString(canvas, col, bottom - 1, "[I] Inventory", ColorDim);
         DrawString(canvas, col, bottom, "[Esc] Menu", ColorDim);
+    }
+
+    private void RenderInventoryPanel(SKCanvas canvas, ClientGameState state, int hudStartCol, int totalRows, int selectedIndex)
+    {
+        float hx = hudStartCol * TileWidth;
+        _bgPaint!.Color = new SKColor(15, 15, 20);
+        canvas.DrawRect(hx, 0, HudColumns * TileWidth, totalRows * TileHeight, _bgPaint);
+
+        // Vertical separator
+        DrawChar(canvas, hudStartCol, 0, '┬', ColorBorder);
+        for (int y = 1; y < totalRows - 1; y++)
+            DrawChar(canvas, hudStartCol, y, '│', ColorBorder);
+        DrawChar(canvas, hudStartCol, totalRows - 1, '┴', ColorBorder);
+
+        int col = hudStartCol + 1;
+        int innerW = HudColumns - 2;
+        int row = 1;
+
+        DrawString(canvas, col, row, "INVENTORY", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+
+        var hud = state.PlayerHud;
+        if (hud == null)
+        {
+            DrawString(canvas, col, row, "No data", ColorDim);
+            return;
+        }
+
+        int cap = Math.Max(hud.InventoryCapacity, 4);
+        for (int i = 0; i < cap; i++)
+        {
+            bool sel = i == selectedIndex;
+            string prefix = sel ? "\u25ba" : " ";
+            string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
+                ? hud.InventoryNames[i]
+                : "---";
+            string text = $"{prefix}[{i + 1}]{name}";
+            DrawString(canvas, col, row, text, sel ? ColorInvSel : ColorItem);
+            row++;
+        }
+        row++;
+
+        DrawString(canvas, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
+        row += 2;
+
+        // Contextual actions
+        DrawString(canvas, col, row, "Actions", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+        DrawString(canvas, col, row, "[1-4]  Use item", ColorDim);
+        row++;
+        DrawString(canvas, col, row, "[X]    Drop item", ColorDim);
+        row++;
+        DrawString(canvas, col, row, "[Esc]  Close", ColorDim);
+    }
+
+    // ── Connecting Screen ──────────────────────────────────────
+
+    public void RenderConnecting(SKCanvas canvas, int totalCols, int totalRows, string? errorMessage = null)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        canvas.Clear(SKColors.Black);
+
+        int boxW = 40;
+        int boxH = errorMessage != null ? 10 : 7;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        DrawBox(canvas, bx, by, boxW, boxH, ColorBorder, new SKColor(10, 10, 15));
+
+        if (errorMessage != null)
+        {
+            DrawCentered(canvas, totalCols, by + 2, "CONNECTION FAILED", ColorHpText);
+            // Truncate error message to fit box
+            string msg = errorMessage.Length > boxW - 4 ? errorMessage[..(boxW - 4)] : errorMessage;
+            DrawCentered(canvas, totalCols, by + 4, msg, ColorNormal);
+            DrawCentered(canvas, totalCols, by + boxH - 2, "Press any key to return", ColorDim);
+        }
+        else
+        {
+            DrawCentered(canvas, totalCols, by + 3, "Connecting...", ColorNormal);
+        }
     }
 
     private void DrawHudSeparator(SKCanvas canvas, int col, int row, int width)

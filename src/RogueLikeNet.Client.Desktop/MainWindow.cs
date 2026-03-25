@@ -43,11 +43,22 @@ public class MainWindow : Window
 
     private async void OnStartOnline()
     {
-        var wsConnection = new WebSocketServerConnection();
-        _connection = wsConnection;
-        _gameControl.SetConnection(_connection);
-        await _connection.ConnectAsync("ws://localhost:5000/ws");
-        _gameControl.TransitionToPlaying();
+        _gameControl.TransitionToConnecting();
+
+        try
+        {
+            var wsConnection = new WebSocketServerConnection();
+            _connection = wsConnection;
+            _gameControl.SetConnection(_connection);
+            await _connection.ConnectAsync("ws://localhost:5000/ws");
+            _gameControl.TransitionToPlaying();
+        }
+        catch (Exception ex)
+        {
+            _gameControl.ClearConnection();
+            _connection = null;
+            _gameControl.ShowConnectionError(ex.Message);
+        }
     }
 
     private void OnReturnToMenu()

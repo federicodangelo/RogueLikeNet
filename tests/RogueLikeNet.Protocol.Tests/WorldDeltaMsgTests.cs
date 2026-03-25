@@ -57,7 +57,8 @@ public class WorldDeltaMsgTests
             InventoryCapacity = 20,
             SkillIds = [1, 2, 3],
             SkillCooldowns = [0, 5, 10],
-            InventoryNames = ["Sword", "Shield", "Potion"]
+            InventoryNames = ["Sword", "Shield", "Potion"],
+            FloorItemNames = ["Health Potion", "Gold"]
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<PlayerHudMsg>(data);
@@ -72,6 +73,7 @@ public class WorldDeltaMsgTests
         Assert.Equal([1, 2, 3], result.SkillIds);
         Assert.Equal([0, 5, 10], result.SkillCooldowns);
         Assert.Equal(["Sword", "Shield", "Potion"], result.InventoryNames);
+        Assert.Equal(["Health Potion", "Gold"], result.FloorItemNames);
     }
 
     [Fact]
@@ -89,6 +91,7 @@ public class WorldDeltaMsgTests
         Assert.Empty(msg.SkillIds);
         Assert.Empty(msg.SkillCooldowns);
         Assert.Empty(msg.InventoryNames);
+        Assert.Empty(msg.FloorItemNames);
     }
 
     [Fact]

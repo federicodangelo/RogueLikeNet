@@ -521,4 +521,78 @@ public class GameLoopTests
         Assert.NotNull(healthless);
         Assert.Equal(0, healthless.Health);
     }
+
+    [Fact]
+    public async Task ProcessInputs_OnlyOneInputPerTick()
+    {
+        var messages = new List<byte[]>();
+        using var loop = new GameLoop(42);
+        var conn = loop.AddConnection(data =>
+        {
+            messages.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        // Record starting position
+        ref var startPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
+        int startX = startPos.X;
+        int startY = startPos.Y;
+
+        // Queue 3 right-moves before start
+        loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
+        loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
+        loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
+
+        messages.Clear();
+        loop.Start();
+        await Task.Delay(400); // Enough time for all 3 moves to process one per tick
+        loop.Dispose();
+
+        // Player should have moved exactly 3 tiles right (one per tick, not all at once)
+        ref var endPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
+        Assert.Equal(startX + 3, endPos.X);
+        Assert.Equal(startY, endPos.Y);
+    }
+
+    [Fact]
+    public async Task Delta_IncludesFloorItemNames()
+    {
+        var messages = new List<byte[]>();
+        using var loop = new GameLoop(42);
+        var conn = loop.AddConnection(data =>
+        {
+            messages.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        // Place an item at the player's position
+        ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
+        var template = RogueLikeNet.Core.Generation.ItemDefinitions.Templates[8]; // Health Potion
+        loop.Engine.SpawnItemOnGround(template, 0, playerPos.X, playerPos.Y);
+
+        messages.Clear();
+        loop.Start();
+        await Task.Delay(200);
+        loop.Dispose();
+
+        // Find a delta with floor item data
+        bool hasFloorItems = false;
+        foreach (var msg in messages)
+        {
+            var env = NetSerializer.UnwrapMessage(msg);
+            if (env.MessageType == MessageTypes.WorldDelta)
+            {
+                var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
+                if (delta.PlayerHud?.FloorItemNames.Length > 0)
+                {
+                    hasFloorItems = true;
+                    Assert.Contains("Health Potion", delta.PlayerHud.FloorItemNames);
+                    break;
+                }
+            }
+        }
+        Assert.True(hasFloorItems, "Delta should contain floor item names in PlayerHud");
+    }
 }

@@ -346,6 +346,25 @@ public class GameEngine : IDisposable
             hud.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
         }
 
+        // Floor items at player position
+        if (_ecsWorld.Has<Position>(playerEntity))
+        {
+            ref var playerPos = ref _ecsWorld.Get<Position>(playerEntity);
+            int px = playerPos.X, py = playerPos.Y;
+            var floorNames = new List<string>();
+            var floorQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+            _ecsWorld.Query(in floorQuery, (ref Position iPos, ref ItemData itemData) =>
+            {
+                if (iPos.X == px && iPos.Y == py)
+                {
+                    int typeId = itemData.ItemTypeId;
+                    var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == typeId);
+                    floorNames.Add(template.Name ?? "Unknown");
+                }
+            });
+            hud.FloorItemNames = floorNames.ToArray();
+        }
+
         return hud;
     }
 }
@@ -363,4 +382,5 @@ public class PlayerHudData
     public int[] SkillIds = [];
     public int[] SkillCooldowns = [];
     public string[] InventoryNames = [];
+    public string[] FloorItemNames = [];
 }

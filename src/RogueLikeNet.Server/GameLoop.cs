@@ -99,7 +99,8 @@ public class GameLoop : IDisposable
             if (!conn.PlayerEntity.HasValue) continue;
             if (!_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value)) continue;
 
-            while (conn.InputQueue.TryDequeue(out var input))
+            // Process only ONE input per tick to prevent action skipping
+            if (conn.InputQueue.TryDequeue(out var input))
             {
                 ref var playerInput = ref _engine.EcsWorld.Get<PlayerInput>(conn.PlayerEntity.Value);
                 playerInput.ActionType = input.ActionType;
@@ -265,6 +266,7 @@ public class GameLoop : IDisposable
             SkillIds = hudData.SkillIds,
             SkillCooldowns = hudData.SkillCooldowns,
             InventoryNames = hudData.InventoryNames,
+            FloorItemNames = hudData.FloorItemNames,
         };
     }
 

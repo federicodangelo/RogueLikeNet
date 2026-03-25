@@ -27,6 +27,8 @@ public class GameRenderControl : Control
     private ScreenState _screenState = ScreenState.MainMenu;
     private int _menuIndex;
     private int _pauseIndex;
+    private int _inventoryIndex;
+    private string? _connectionError;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenState;
@@ -58,6 +60,20 @@ public class GameRenderControl : Control
             _connection.OnWorldDelta -= OnWorldDelta;
             _connection = null;
         }
+    }
+
+    public void TransitionToConnecting()
+    {
+        _connectionError = null;
+        _screenState = ScreenState.Connecting;
+        InvalidateVisual();
+    }
+
+    public void ShowConnectionError(string error)
+    {
+        _connectionError = error;
+        _screenState = ScreenState.Connecting;
+        InvalidateVisual();
     }
 
     public void TransitionToPlaying()
@@ -121,8 +137,14 @@ public class GameRenderControl : Control
             case ScreenState.MainMenuHelp:
                 _tileRenderer.RenderHelp(canvas, totalCols, totalRows);
                 break;
+            case ScreenState.Connecting:
+                _tileRenderer.RenderConnecting(canvas, totalCols, totalRows, _connectionError);
+                break;
             case ScreenState.Playing:
                 _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows);
+                break;
+            case ScreenState.Inventory:
+                _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows, true, _inventoryIndex);
                 break;
             case ScreenState.Paused:
                 _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows);
@@ -154,8 +176,14 @@ public class GameRenderControl : Control
             case ScreenState.MainMenuHelp:
                 HandleHelpInput(e, ScreenState.MainMenu);
                 break;
+            case ScreenState.Connecting:
+                HandleConnectingInput(e);
+                break;
             case ScreenState.Playing:
                 HandleGameInput(e);
+                break;
+            case ScreenState.Inventory:
+                HandleInventoryInput(e);
                 break;
             case ScreenState.Paused:
                 HandlePauseInput(e);
@@ -205,6 +233,14 @@ public class GameRenderControl : Control
             return;
         }
 
+        if (e.Key == Key.I)
+        {
+            _screenState = ScreenState.Inventory;
+            _inventoryIndex = 0;
+            e.Handled = true;
+            return;
+        }
+
         var input = e.Key switch
         {
             Key.Up or Key.W => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = -1 },
@@ -212,6 +248,7 @@ public class GameRenderControl : Control
             Key.Left or Key.A => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 },
             Key.Right or Key.D => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 },
             Key.Space => new ClientInputMsg { ActionType = ActionTypes.Wait },
+            Key.F => new ClientInputMsg { ActionType = ActionTypes.Attack, TargetX = 0, TargetY = 0 },
             Key.G => new ClientInputMsg { ActionType = ActionTypes.PickUp },
             Key.D1 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 0 },
             Key.D2 => new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 1 },
@@ -259,6 +296,75 @@ public class GameRenderControl : Control
                 e.Handled = true;
                 break;
         }
+    }
+
+    // ── Connecting Input ─────────────────────────────────────
+
+    private void HandleConnectingInput(KeyEventArgs e)
+    {
+        if (_connectionError != null)
+        {
+            _screenState = ScreenState.MainMenu;
+            _menuIndex = 0;
+            _connectionError = null;
+            e.Handled = true;
+        }
+    }
+
+    // ── Inventory Input ─────────────────────────────────────
+
+    private void HandleInventoryInput(KeyEventArgs e)
+    {
+        int cap = _gameState.PlayerHud?.InventoryCapacity ?? 4;
+        if (cap < 1) cap = 4;
+
+        switch (e.Key)
+        {
+            case Key.Escape:
+                _screenState = ScreenState.Playing;
+                e.Handled = true;
+                break;
+            case Key.Up or Key.W:
+                _inventoryIndex = (_inventoryIndex + cap - 1) % cap;
+                e.Handled = true;
+                break;
+            case Key.Down or Key.S:
+                _inventoryIndex = (_inventoryIndex + 1) % cap;
+                e.Handled = true;
+                break;
+            case Key.D1:
+                SendInventoryAction(ActionTypes.UseItem, 0);
+                e.Handled = true;
+                break;
+            case Key.D2:
+                SendInventoryAction(ActionTypes.UseItem, 1);
+                e.Handled = true;
+                break;
+            case Key.D3:
+                SendInventoryAction(ActionTypes.UseItem, 2);
+                e.Handled = true;
+                break;
+            case Key.D4:
+                SendInventoryAction(ActionTypes.UseItem, 3);
+                e.Handled = true;
+                break;
+            case Key.X:
+                SendInventoryAction(ActionTypes.Drop, _inventoryIndex);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void SendInventoryAction(int actionType, int slot)
+    {
+        if (_connection == null) return;
+        var input = new ClientInputMsg
+        {
+            ActionType = actionType,
+            ItemSlot = slot,
+            Tick = _gameState.WorldTick
+        };
+        _ = _connection.SendInputAsync(input);
     }
 
     // ── Help Input ─────────────────────────────────────────────

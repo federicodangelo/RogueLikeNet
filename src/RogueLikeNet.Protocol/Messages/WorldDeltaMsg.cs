@@ -64,4 +64,5 @@ public class PlayerHudMsg
     [Key(8)] public int[] SkillIds { get; set; } = [];
     [Key(9)] public int[] SkillCooldowns { get; set; } = [];
     [Key(10)] public string[] InventoryNames { get; set; } = [];
+    [Key(11)] public string[] FloorItemNames { get; set; } = [];
 }
