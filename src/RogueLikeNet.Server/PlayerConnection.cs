@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using RogueLikeNet.Protocol;
 
 namespace RogueLikeNet.Server;
 
@@ -11,6 +12,9 @@ public class PlayerConnection
     public Arch.Core.Entity? PlayerEntity { get; set; }
     public long LastAckedTick { get; set; }
     public ConcurrentQueue<Protocol.Messages.ClientInputMsg> InputQueue { get; } = new();
+
+    /// <summary>Tracks last-sent entity state per entity ID for delta compression.</summary>
+    public Dictionary<long, EntitySnapshot> LastSentEntities { get; } = new();
 
     private readonly Func<byte[], Task> _sendFunc;
 

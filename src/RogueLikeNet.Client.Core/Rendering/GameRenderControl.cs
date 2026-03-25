@@ -46,6 +46,17 @@ public class GameRenderControl : Control
     private long _lastDeltaTicks;
     private int _latencyMs;
 
+    // Chat
+    private readonly List<string> _chatLog = new();
+    private readonly ConcurrentQueue<ChatMsg> _pendingChats = new();
+    private bool _chatInputActive;
+    private string _chatInputText = "";
+
+    // Screen shake
+    private int _lastKnownHealth;
+    private long _shakeUntilTicks;
+    private readonly Random _shakeRng = new();
+
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenState;
 
@@ -66,6 +77,7 @@ public class GameRenderControl : Control
         _connection = connection;
         _connection.OnWorldSnapshot += OnWorldSnapshot;
         _connection.OnWorldDelta += OnWorldDelta;
+        _connection.OnChatReceived += OnChatReceived;
     }
 
     public void ClearConnection()
@@ -74,6 +86,7 @@ public class GameRenderControl : Control
         {
             _connection.OnWorldSnapshot -= OnWorldSnapshot;
             _connection.OnWorldDelta -= OnWorldDelta;
+            _connection.OnChatReceived -= OnChatReceived;
             _connection = null;
         }
     }
@@ -146,6 +159,18 @@ public class GameRenderControl : Control
         }
         while (_pendingDeltas.TryDequeue(out var delta))
             _gameState.ApplyDelta(delta);
+
+        while (_pendingChats.TryDequeue(out var chat))
+        {
+            _chatLog.Add($"{chat.SenderName}: {chat.Text}");
+            if (_chatLog.Count > 50) _chatLog.RemoveAt(0);
+        }
+
+        // Detect player damage → trigger screen shake
+        int currentHealth = _gameState.PlayerHud?.Health ?? 0;
+        if (_lastKnownHealth > 0 && currentHealth < _lastKnownHealth)
+            _shakeUntilTicks = Stopwatch.GetTimestamp() + Stopwatch.Frequency / 4; // 250ms
+        _lastKnownHealth = currentHealth;
 
         // Update FPS counter
         _frameCount++;
@@ -222,6 +247,12 @@ public class GameRenderControl : Control
 
     private void HandleGameInput(KeyEventArgs e)
     {
+        if (_chatInputActive)
+        {
+            HandleChatInput(e);
+            return;
+        }
+
         if (e.Key == Key.Escape)
         {
             _screenState = ScreenState.Paused;
@@ -234,6 +265,14 @@ public class GameRenderControl : Control
         {
             _screenState = ScreenState.Inventory;
             _inventoryIndex = 0;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.T)
+        {
+            _chatInputActive = true;
+            _chatInputText = "";
             e.Handled = true;
             return;
         }
@@ -368,6 +407,44 @@ public class GameRenderControl : Control
         }
     }
 
+    private void HandleChatInput(KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Escape:
+                _chatInputActive = false;
+                _chatInputText = "";
+                e.Handled = true;
+                break;
+            case Key.Enter:
+                if (_chatInputText.Length > 0 && _connection != null)
+                    _ = _connection.SendChatAsync(_chatInputText);
+                _chatInputActive = false;
+                _chatInputText = "";
+                e.Handled = true;
+                break;
+            case Key.Back:
+                if (_chatInputText.Length > 0)
+                    _chatInputText = _chatInputText[..^1];
+                e.Handled = true;
+                break;
+            default:
+                // Let OnTextInput handle character input
+                break;
+        }
+    }
+
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+        if (_chatInputActive && !string.IsNullOrEmpty(e.Text))
+        {
+            if (_chatInputText.Length < 100)
+                _chatInputText += e.Text;
+            e.Handled = true;
+        }
+    }
+
     private void SendInventoryAction(int actionType, int slot)
     {
         if (_connection == null) return;
@@ -408,6 +485,11 @@ public class GameRenderControl : Control
         _pendingDeltas.Enqueue(delta);
     }
 
+    private void OnChatReceived(ChatMsg msg)
+    {
+        _pendingChats.Enqueue(msg);
+    }
+
     // ── GPU-accelerated Draw Operation ─────────────────────────
 
     private sealed class GameDrawOperation(GameRenderControl owner) : ICustomDrawOperation
@@ -434,6 +516,15 @@ public class GameRenderControl : Control
             canvas.ClipRect(SKRect.Create(0, 0,
                 totalCols * TileRenderer.TileWidth, totalRows * TileRenderer.TileHeight));
             canvas.Clear(SKColors.Black);
+
+            // Screen shake offset when player takes damage
+            bool shaking = Stopwatch.GetTimestamp() < owner._shakeUntilTicks;
+            if (shaking)
+            {
+                float sx = (owner._shakeRng.NextSingle() - 0.5f) * 8f;
+                float sy = (owner._shakeRng.NextSingle() - 0.5f) * 8f;
+                canvas.Translate(sx, sy);
+            }
 
             var renderer = owner._tileRenderer;
 
@@ -466,7 +557,11 @@ public class GameRenderControl : Control
 
             if (owner._screenState is ScreenState.Playing or ScreenState.Inventory
                 or ScreenState.Paused or ScreenState.PausedHelp)
+            {
+                renderer.RenderChatOverlay(canvas, totalCols, totalRows,
+                    owner._chatLog, owner._chatInputActive, owner._chatInputText);
                 renderer.RenderPerformanceOverlay(canvas, owner._fps, owner._latencyMs);
+            }
 
             canvas.Restore();
         }

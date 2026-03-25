@@ -19,6 +19,7 @@ public class EmbeddedServerConnection : IGameServerConnection
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
+    public event Action<ChatMsg>? OnChatReceived;
     public event Action? OnDisconnected;
 
     public EmbeddedServerConnection(GameLoop gameLoop)
@@ -44,6 +45,12 @@ public class EmbeddedServerConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
+    public async Task SendChatAsync(string text, CancellationToken ct = default)
+    {
+        if (!_connected) return;
+        await _gameLoop.BroadcastChat(_connectionId, text);
+    }
+
     private Task ProcessServerData(byte[] data)
     {
         try
@@ -59,6 +66,11 @@ public class EmbeddedServerConnection : IGameServerConnection
                 case MessageTypes.WorldDelta:
                     var delta = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
                     OnWorldDelta?.Invoke(delta);
+                    break;
+
+                case MessageTypes.ChatReceive:
+                    var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
+                    OnChatReceived?.Invoke(chat);
                     break;
             }
         }

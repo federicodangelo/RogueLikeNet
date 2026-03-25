@@ -17,6 +17,7 @@ public class WebSocketServerConnection : IGameServerConnection
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
+    public event Action<ChatMsg>? OnChatReceived;
     public event Action? OnDisconnected;
 
     public async Task ConnectAsync(string uri, CancellationToken ct = default)
@@ -34,6 +35,20 @@ public class WebSocketServerConnection : IGameServerConnection
 
         var payload = NetSerializer.Serialize(input);
         var data = NetSerializer.WrapMessage(MessageTypes.ClientInput, payload);
+        await _socket.SendAsync(
+            new ArraySegment<byte>(data),
+            WebSocketMessageType.Binary,
+            endOfMessage: true,
+            ct);
+    }
+
+    public async Task SendChatAsync(string text, CancellationToken ct = default)
+    {
+        if (_socket?.State != WebSocketState.Open) return;
+
+        var msg = new ChatMsg { Text = text };
+        var payload = NetSerializer.Serialize(msg);
+        var data = NetSerializer.WrapMessage(MessageTypes.ChatSend, payload);
         await _socket.SendAsync(
             new ArraySegment<byte>(data),
             WebSocketMessageType.Binary,
@@ -83,6 +98,11 @@ public class WebSocketServerConnection : IGameServerConnection
                 case MessageTypes.WorldDelta:
                     var delta = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
                     OnWorldDelta?.Invoke(delta);
+                    break;
+
+                case MessageTypes.ChatReceive:
+                    var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
+                    OnChatReceived?.Invoke(chat);
                     break;
             }
         }

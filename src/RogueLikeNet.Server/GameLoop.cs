@@ -60,6 +60,26 @@ public class GameLoop : IDisposable
             conn.InputQueue.Enqueue(input);
     }
 
+    public async Task BroadcastChat(long senderConnectionId, string text)
+    {
+        string senderName = $"Player {senderConnectionId}";
+        var chat = new ChatMsg
+        {
+            SenderId = senderConnectionId,
+            SenderName = senderName,
+            Text = text,
+            Timestamp = _engine.CurrentTick,
+        };
+        var payload = NetSerializer.Serialize(chat);
+        var data = NetSerializer.WrapMessage(MessageTypes.ChatReceive, payload);
+
+        foreach (var conn in _connections.Values)
+        {
+            try { await conn.SendAsync(data); }
+            catch { /* connection closing */ }
+        }
+    }
+
     public async Task SpawnPlayerForConnection(long connectionId)
     {
         if (!_connections.TryGetValue(connectionId, out var conn)) return;
@@ -136,6 +156,7 @@ public class GameLoop : IDisposable
         // Caller (SpawnPlayerForConnection) guarantees conn.PlayerEntity is set and alive
         var entity = conn.PlayerEntity!.Value;
         ref var pos = ref _engine.EcsWorld.Get<Position>(entity);
+        ref var fov = ref _engine.EcsWorld.Get<FOVData>(entity);
 
         var snapshot = new WorldSnapshotMsg
         {
@@ -145,8 +166,14 @@ public class GameLoop : IDisposable
         };
 
         snapshot.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y);
-        snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld);
+        snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov);
         snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, entity);
+
+        // Seed delta tracking from snapshot so first delta is already compressed
+        conn.LastSentEntities.Clear();
+        foreach (var e in snapshot.Entities)
+            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth);
+
         return snapshot;
     }
 
@@ -155,13 +182,14 @@ public class GameLoop : IDisposable
         // Caller (BroadcastDeltas) guarantees conn.PlayerEntity is set and alive
         var playerEntity = conn.PlayerEntity!.Value;
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
+        ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
 
         var delta = new WorldDeltaMsg
         {
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
             Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y),
-            EntityUpdates = GameStateSerializer.SerializeEntityUpdates(_engine.EcsWorld),
+            EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
             PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity)
         };

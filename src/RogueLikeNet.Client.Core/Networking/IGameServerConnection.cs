@@ -13,8 +13,10 @@ public interface IGameServerConnection : IAsyncDisposable
 
     Task ConnectAsync(string uri, CancellationToken ct = default);
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);
+    Task SendChatAsync(string text, CancellationToken ct = default);
 
     event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     event Action<WorldDeltaMsg>? OnWorldDelta;
+    event Action<ChatMsg>? OnChatReceived;
     event Action? OnDisconnected;
 }

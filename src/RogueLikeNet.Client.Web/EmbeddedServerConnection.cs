@@ -16,11 +16,13 @@ public class LocalGameConnection : IGameServerConnection
     private Arch.Core.Entity _playerEntity;
     private CancellationTokenSource? _loopCts;
     private bool _connected;
+    private readonly Dictionary<long, EntitySnapshot> _lastSentEntities = new();
 
     public bool IsConnected => _connected;
 
     public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
+    public event Action<ChatMsg>? OnChatReceived;
     public event Action? OnDisconnected;
 
     public LocalGameConnection(long seed)
@@ -64,6 +66,12 @@ public class LocalGameConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
+    public Task SendChatAsync(string text, CancellationToken ct = default)
+    {
+        // Single-player: no chat target
+        return Task.CompletedTask;
+    }
+
     private async Task RunLoop(CancellationToken ct)
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(50)); // 20 ticks/sec
@@ -87,11 +95,16 @@ public class LocalGameConnection : IGameServerConnection
         if (_engine.EcsWorld.IsAlive(_playerEntity))
         {
             ref var pos = ref _engine.EcsWorld.Get<Position>(_playerEntity);
+            ref var fov = ref _engine.EcsWorld.Get<FOVData>(_playerEntity);
             snapshot.PlayerX = pos.X;
             snapshot.PlayerY = pos.Y;
             snapshot.PlayerEntityId = _playerEntity.Id;
             snapshot.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y);
-            snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld);
+            snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov);
+
+            _lastSentEntities.Clear();
+            foreach (var e in snapshot.Entities)
+                _lastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth);
         }
 
         snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
@@ -105,10 +118,11 @@ public class LocalGameConnection : IGameServerConnection
         if (_engine.EcsWorld.IsAlive(_playerEntity))
         {
             ref var playerPos = ref _engine.EcsWorld.Get<Position>(_playerEntity);
+            ref var fov = ref _engine.EcsWorld.Get<FOVData>(_playerEntity);
             delta.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y);
+            delta.EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, _lastSentEntities);
         }
 
-        delta.EntityUpdates = GameStateSerializer.SerializeEntityUpdates(_engine.EcsWorld);
         delta.CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine);
         delta.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
         return delta;

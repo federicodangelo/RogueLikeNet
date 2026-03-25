@@ -533,6 +533,49 @@ public class TileRenderer : IDisposable
         DrawString(canvas, 0, 1, latText, ColorLatency);
     }
 
+    private static readonly SKColor ColorChatBg = new(0, 0, 0, 160);
+    private static readonly SKColor ColorChatText = new(200, 200, 200);
+    private static readonly SKColor ColorChatInput = new(255, 255, 100);
+
+    public void RenderChatOverlay(SKCanvas canvas, int totalCols, int totalRows,
+        List<string> chatLog, bool chatInputActive, string chatInputText)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        int maxVisible = 5;
+        int startY = totalRows - maxVisible - (chatInputActive ? 1 : 0);
+        int maxWidth = Math.Min(totalCols - 2, 60);
+
+        // Only show if there are messages or input is active
+        if (chatLog.Count == 0 && !chatInputActive) return;
+
+        int msgCount = Math.Min(chatLog.Count, maxVisible);
+        int bgHeight = msgCount + (chatInputActive ? 1 : 0);
+        if (bgHeight == 0) return;
+
+        // Dark background behind chat area
+        _bgPaint.Color = ColorChatBg;
+        canvas.DrawRect(0, startY * TileHeight,
+            (maxWidth + 1) * TileWidth, bgHeight * TileHeight, _bgPaint);
+
+        // Render last N messages
+        for (int i = 0; i < msgCount; i++)
+        {
+            string msg = chatLog[chatLog.Count - msgCount + i];
+            if (msg.Length > maxWidth) msg = msg[..maxWidth];
+            DrawString(canvas, 0, startY + i, msg, ColorChatText);
+        }
+
+        // Render input line
+        if (chatInputActive)
+        {
+            int inputY = totalRows - 1;
+            string prompt = $"> {chatInputText}_";
+            if (prompt.Length > maxWidth) prompt = prompt[..maxWidth];
+            DrawString(canvas, 0, inputY, prompt, ColorChatInput);
+        }
+    }
+
     // ── Drawing Helpers ────────────────────────────────────────
 
     private void DrawChar(SKCanvas canvas, int tileX, int tileY, char ch, SKColor color)

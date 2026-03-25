@@ -473,9 +473,12 @@ public class GameLoopTests
             return Task.CompletedTask;
         });
 
-        // Create an entity with Position + TileAppearance but NO Health
+        // Determine where the player will spawn so we can place the test entity nearby
+        var (spawnX, spawnY) = loop.Engine.FindSpawnPosition();
+
+        // Create an entity with Position + TileAppearance but NO Health — near the spawn
         loop.Engine.EcsWorld.Create(
-            new Position(0, 0),
+            new Position(spawnX, spawnY),
             new TileAppearance(42, 0x00FF00)
         );
 
@@ -503,14 +506,18 @@ public class GameLoopTests
             return Task.CompletedTask;
         });
 
-        // Create an entity with Position + TileAppearance but NO Health
-        loop.Engine.EcsWorld.Create(
-            new Position(0, 0),
-            new TileAppearance(88, 0xFF0000)
-        );
-
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
         messages.Clear();
+
+        // Get the player's position so the entity is within FOV
+        var playerEntity = conn.PlayerEntity!.Value;
+        ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(playerEntity);
+
+        // Create an entity with Position + TileAppearance but NO Health — at player pos
+        loop.Engine.EcsWorld.Create(
+            new Position(playerPos.X, playerPos.Y),
+            new TileAppearance(88, 0xFF0000)
+        );
 
         loop.Start();
         await Task.Delay(200);

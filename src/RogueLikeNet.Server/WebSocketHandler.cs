@@ -78,7 +78,8 @@ public static class WebSocketHandler
                     break;
 
                 case MessageTypes.ChatSend:
-                    // Chat handling would go here
+                    var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
+                    _ = gameLoop.BroadcastChat(conn.ConnectionId, chat.Text);
                     break;
             }
         }
