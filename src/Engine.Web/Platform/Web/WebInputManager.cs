@@ -67,10 +67,10 @@ public class WebInputManager : BaseInputManager
         [InputAction.MenuBack] = [InputBinding.Key("Escape"), InputBinding.Btn(GpBtnEast), InputBinding.Btn(GpBtnStart)],
         [InputAction.MenuSecondaryAction] = [InputBinding.Key("KeyX"), InputBinding.Key("Delete")],
 
-        [InputAction.MoveUp] = [InputBinding.Key("KeyW"), InputBinding.Key("ArrowUp")],
-        [InputAction.MoveDown] = [InputBinding.Key("KeyS"), InputBinding.Key("ArrowDown")],
-        [InputAction.MoveLeft] = [InputBinding.Key("KeyA"), InputBinding.Key("ArrowLeft")],
-        [InputAction.MoveRight] = [InputBinding.Key("KeyD"), InputBinding.Key("ArrowRight")],
+        [InputAction.MoveUp] = [InputBinding.Key("KeyW"), InputBinding.Key("ArrowUp"), InputBinding.Btn(GpBtnDPadUp)],
+        [InputAction.MoveDown] = [InputBinding.Key("KeyS"), InputBinding.Key("ArrowDown"), InputBinding.Btn(GpBtnDPadDown)],
+        [InputAction.MoveLeft] = [InputBinding.Key("KeyA"), InputBinding.Key("ArrowLeft"), InputBinding.Btn(GpBtnDPadLeft)],
+        [InputAction.MoveRight] = [InputBinding.Key("KeyD"), InputBinding.Key("ArrowRight"), InputBinding.Btn(GpBtnDPadRight)],
         [InputAction.FireWeapon] = [InputBinding.Key("Space"), InputBinding.Mouse(0), InputBinding.Btn(GpBtnWest), InputBinding.Btn(GpBtnLTrigger), InputBinding.Btn(GpBtnRTrigger)],
         [InputAction.MapZoomOut] = [InputBinding.Btn(GpBtnLTrigger)],
         [InputAction.MapZoomIn] = [InputBinding.Btn(GpBtnRTrigger)],
@@ -80,6 +80,23 @@ public class WebInputManager : BaseInputManager
         [InputAction.ToggleMap] = [InputBinding.Key("KeyM"), InputBinding.Btn(GpBtnBack)],
         [InputAction.Screenshot] = [InputBinding.Key("F12")],
         [InputAction.DodgeRoll] = [InputBinding.Key("ShiftLeft")],
+
+        // Game-specific actions
+        [InputAction.Wait] = [InputBinding.Key("Space")],
+        [InputAction.Attack] = [InputBinding.Key("KeyF"), InputBinding.Btn(GpBtnWest)],
+        [InputAction.PickUp] = [InputBinding.Key("KeyG")],
+        [InputAction.OpenInventory] = [InputBinding.Key("KeyI"), InputBinding.Btn(GpBtnNorth)],
+        [InputAction.OpenChat] = [InputBinding.Key("KeyT")],
+        [InputAction.UseItem1] = [InputBinding.Key("Digit1")],
+        [InputAction.UseItem2] = [InputBinding.Key("Digit2")],
+        [InputAction.UseItem3] = [InputBinding.Key("Digit3")],
+        [InputAction.UseItem4] = [InputBinding.Key("Digit4")],
+        [InputAction.UseSkill1] = [InputBinding.Key("KeyQ"), InputBinding.Btn(GpBtnLTrigger)],
+        [InputAction.UseSkill2] = [InputBinding.Key("KeyE"), InputBinding.Btn(GpBtnLTrigger)],
+        [InputAction.Drop] = [InputBinding.Key("KeyX")],
+        [InputAction.Equip] = [InputBinding.Key("KeyE")],
+        [InputAction.UnequipSlot1] = [InputBinding.Key("KeyU")],
+        [InputAction.UnequipSlot2] = [InputBinding.Key("KeyR")],
     };
 
     private readonly record struct InputBinding(string? KeyCode, int? MouseBtn, int? GamepadBtn)
@@ -403,89 +420,4 @@ public class WebInputManager : BaseInputManager
         return string.Empty;
     }
 
-    // ── Raw key queries ───────────────────────────────────────────────
-
-    private static string MapKeyCode(KeyCode key) => key switch
-    {
-        KeyCode.A => "KeyA",
-        KeyCode.B => "KeyB",
-        KeyCode.C => "KeyC",
-        KeyCode.D => "KeyD",
-        KeyCode.E => "KeyE",
-        KeyCode.F => "KeyF",
-        KeyCode.G => "KeyG",
-        KeyCode.H => "KeyH",
-        KeyCode.I => "KeyI",
-        KeyCode.J => "KeyJ",
-        KeyCode.K => "KeyK",
-        KeyCode.L => "KeyL",
-        KeyCode.M => "KeyM",
-        KeyCode.N => "KeyN",
-        KeyCode.O => "KeyO",
-        KeyCode.P => "KeyP",
-        KeyCode.Q => "KeyQ",
-        KeyCode.R => "KeyR",
-        KeyCode.S => "KeyS",
-        KeyCode.T => "KeyT",
-        KeyCode.U => "KeyU",
-        KeyCode.V => "KeyV",
-        KeyCode.W => "KeyW",
-        KeyCode.X => "KeyX",
-        KeyCode.Y => "KeyY",
-        KeyCode.Z => "KeyZ",
-        KeyCode.D0 => "Digit0",
-        KeyCode.D1 => "Digit1",
-        KeyCode.D2 => "Digit2",
-        KeyCode.D3 => "Digit3",
-        KeyCode.D4 => "Digit4",
-        KeyCode.D5 => "Digit5",
-        KeyCode.D6 => "Digit6",
-        KeyCode.D7 => "Digit7",
-        KeyCode.D8 => "Digit8",
-        KeyCode.D9 => "Digit9",
-        KeyCode.Space => "Space",
-        KeyCode.Enter => "Enter",
-        KeyCode.Escape => "Escape",
-        KeyCode.Backspace => "Backspace",
-        KeyCode.Tab => "Tab",
-        KeyCode.Up => "ArrowUp",
-        KeyCode.Down => "ArrowDown",
-        KeyCode.Left => "ArrowLeft",
-        KeyCode.Right => "ArrowRight",
-        KeyCode.LeftShift => "ShiftLeft",
-        KeyCode.RightShift => "ShiftRight",
-        KeyCode.LeftControl => "ControlLeft",
-        KeyCode.RightControl => "ControlRight",
-        KeyCode.F1 => "F1",
-        KeyCode.F2 => "F2",
-        KeyCode.F3 => "F3",
-        KeyCode.F4 => "F4",
-        KeyCode.F5 => "F5",
-        KeyCode.F6 => "F6",
-        KeyCode.F7 => "F7",
-        KeyCode.F8 => "F8",
-        KeyCode.F9 => "F9",
-        KeyCode.F10 => "F10",
-        KeyCode.F11 => "F11",
-        KeyCode.F12 => "F12",
-        _ => string.Empty,
-    };
-
-    public override bool IsKeyDown(KeyCode key)
-    {
-        var code = MapKeyCode(key);
-        return code.Length > 0 && _keysDown.Contains(code);
-    }
-
-    public override bool IsKeyPressed(KeyCode key)
-    {
-        var code = MapKeyCode(key);
-        return code.Length > 0 && _keysPressed.Contains(code);
-    }
-
-    public override bool IsKeyReleased(KeyCode key)
-    {
-        var code = MapKeyCode(key);
-        return code.Length > 0 && _keysReleased.Contains(code);
-    }
 }

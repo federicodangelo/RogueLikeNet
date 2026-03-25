@@ -44,8 +44,4 @@ public interface IInputManager
     bool IsMouseDown(MouseButton button);
     bool IsMousePressed(MouseButton button);
     bool IsMouseReleased(MouseButton button);
-
-    bool IsKeyDown(KeyCode key);
-    bool IsKeyPressed(KeyCode key);
-    bool IsKeyReleased(KeyCode key);
 }

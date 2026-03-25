@@ -75,10 +75,6 @@ public abstract class BaseInputManager : IInputManager
     public abstract bool IsActionPressed(InputAction action);
     public abstract bool IsActionReleased(InputAction action);
 
-    public abstract bool IsKeyDown(KeyCode key);
-    public abstract bool IsKeyPressed(KeyCode key);
-    public abstract bool IsKeyReleased(KeyCode key);
-
     public Vector2 GetActionAxisDirection(InputActionAxis axis)
     {
         return axis switch

@@ -270,11 +270,11 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandleMainMenuInput(IInputManager input)
     {
-        if (input.IsKeyPressed(KeyCode.Up) || input.IsKeyPressed(KeyCode.W))
+        if (input.IsActionPressed(InputAction.MenuUp))
             _menuIndex = (_menuIndex + 3) % 4;
-        else if (input.IsKeyPressed(KeyCode.Down) || input.IsKeyPressed(KeyCode.S))
+        else if (input.IsActionPressed(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % 4;
-        else if (input.IsKeyPressed(KeyCode.Enter) || input.IsKeyPressed(KeyCode.Space))
+        else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
             {
@@ -294,21 +294,21 @@ public sealed class RogueLikeGame : GameBase
             return;
         }
 
-        if (input.IsKeyPressed(KeyCode.Escape))
+        if (input.IsActionPressed(InputAction.MenuBack))
         {
             _screenState = ScreenState.Paused;
             _pauseIndex = 0;
             return;
         }
 
-        if (input.IsKeyPressed(KeyCode.I))
+        if (input.IsActionPressed(InputAction.OpenInventory))
         {
             _screenState = ScreenState.Inventory;
             _inventoryIndex = 0;
             return;
         }
 
-        if (input.IsKeyPressed(KeyCode.T))
+        if (input.IsActionPressed(InputAction.OpenChat))
         {
             _chatInputActive = true;
             _chatInputText = "";
@@ -317,33 +317,33 @@ public sealed class RogueLikeGame : GameBase
 
         ClientInputMsg? msg = null;
 
-        if (input.IsKeyPressed(KeyCode.Up) || input.IsKeyPressed(KeyCode.W))
+        if (input.IsActionPressed(InputAction.MoveUp))
             msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = -1 };
-        else if (input.IsKeyPressed(KeyCode.Down) || input.IsKeyPressed(KeyCode.S))
+        else if (input.IsActionPressed(InputAction.MoveDown))
             msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = 1 };
-        else if (input.IsKeyPressed(KeyCode.Left) || input.IsKeyPressed(KeyCode.A))
+        else if (input.IsActionPressed(InputAction.MoveLeft))
             msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 };
-        else if (input.IsKeyPressed(KeyCode.Right) || input.IsKeyPressed(KeyCode.D))
+        else if (input.IsActionPressed(InputAction.MoveRight))
             msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 };
-        else if (input.IsKeyPressed(KeyCode.Space))
+        else if (input.IsActionPressed(InputAction.Wait))
             msg = new ClientInputMsg { ActionType = ActionTypes.Wait };
-        else if (input.IsKeyPressed(KeyCode.F))
+        else if (input.IsActionPressed(InputAction.Attack))
             msg = new ClientInputMsg { ActionType = ActionTypes.Attack, TargetX = 0, TargetY = 0 };
-        else if (input.IsKeyPressed(KeyCode.G))
+        else if (input.IsActionPressed(InputAction.PickUp))
             msg = new ClientInputMsg { ActionType = ActionTypes.PickUp };
-        else if (input.IsKeyPressed(KeyCode.D1))
+        else if (input.IsActionPressed(InputAction.UseItem1))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 0 };
-        else if (input.IsKeyPressed(KeyCode.D2))
+        else if (input.IsActionPressed(InputAction.UseItem2))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 1 };
-        else if (input.IsKeyPressed(KeyCode.D3))
+        else if (input.IsActionPressed(InputAction.UseItem3))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 2 };
-        else if (input.IsKeyPressed(KeyCode.D4))
+        else if (input.IsActionPressed(InputAction.UseItem4))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 3 };
-        else if (input.IsKeyPressed(KeyCode.Q))
+        else if (input.IsActionPressed(InputAction.UseSkill1))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
-        else if (input.IsKeyPressed(KeyCode.E))
+        else if (input.IsActionPressed(InputAction.UseSkill2))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
-        else if (input.IsKeyPressed(KeyCode.X))
+        else if (input.IsActionPressed(InputAction.Drop))
             msg = new ClientInputMsg { ActionType = ActionTypes.Drop, ItemSlot = 0 };
 
         if (msg != null && _connection != null)
@@ -355,17 +355,17 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandlePauseInput(IInputManager input)
     {
-        if (input.IsKeyPressed(KeyCode.Escape))
+        if (input.IsActionPressed(InputAction.MenuBack))
         {
             _screenState = ScreenState.Playing;
             return;
         }
 
-        if (input.IsKeyPressed(KeyCode.Up) || input.IsKeyPressed(KeyCode.W))
+        if (input.IsActionPressed(InputAction.MenuUp))
             _pauseIndex = (_pauseIndex + 2) % 3;
-        else if (input.IsKeyPressed(KeyCode.Down) || input.IsKeyPressed(KeyCode.S))
+        else if (input.IsActionPressed(InputAction.MenuDown))
             _pauseIndex = (_pauseIndex + 1) % 3;
-        else if (input.IsKeyPressed(KeyCode.Enter) || input.IsKeyPressed(KeyCode.Space))
+        else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_pauseIndex)
             {
@@ -378,7 +378,7 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandleConnectingInput(IInputManager input)
     {
-        if (_connectionError != null && input.IsKeyPressed(KeyCode.Enter))
+        if (_connectionError != null && input.IsActionPressed(InputAction.MenuConfirm))
         {
             _screenState = ScreenState.MainMenu;
             _menuIndex = 0;
@@ -391,39 +391,39 @@ public sealed class RogueLikeGame : GameBase
         int cap = _gameState.PlayerHud?.InventoryCapacity ?? 4;
         if (cap < 1) cap = 4;
 
-        if (input.IsKeyPressed(KeyCode.Escape))
+        if (input.IsActionPressed(InputAction.MenuBack))
         {
             _screenState = ScreenState.Playing;
             return;
         }
 
-        if (input.IsKeyPressed(KeyCode.Up) || input.IsKeyPressed(KeyCode.W))
+        if (input.IsActionPressed(InputAction.MenuUp))
             _inventoryIndex = (_inventoryIndex + cap - 1) % cap;
-        else if (input.IsKeyPressed(KeyCode.Down) || input.IsKeyPressed(KeyCode.S))
+        else if (input.IsActionPressed(InputAction.MenuDown))
             _inventoryIndex = (_inventoryIndex + 1) % cap;
-        else if (input.IsKeyPressed(KeyCode.D1))
+        else if (input.IsActionPressed(InputAction.UseItem1))
             SendInventoryAction(ActionTypes.UseItem, 0);
-        else if (input.IsKeyPressed(KeyCode.D2))
+        else if (input.IsActionPressed(InputAction.UseItem2))
             SendInventoryAction(ActionTypes.UseItem, 1);
-        else if (input.IsKeyPressed(KeyCode.D3))
+        else if (input.IsActionPressed(InputAction.UseItem3))
             SendInventoryAction(ActionTypes.UseItem, 2);
-        else if (input.IsKeyPressed(KeyCode.D4))
+        else if (input.IsActionPressed(InputAction.UseItem4))
             SendInventoryAction(ActionTypes.UseItem, 3);
-        else if (input.IsKeyPressed(KeyCode.Enter))
+        else if (input.IsActionPressed(InputAction.MenuConfirm))
             SendInventoryAction(ActionTypes.UseItem, _inventoryIndex);
-        else if (input.IsKeyPressed(KeyCode.E))
+        else if (input.IsActionPressed(InputAction.Equip))
             SendInventoryAction(ActionTypes.Equip, _inventoryIndex);
-        else if (input.IsKeyPressed(KeyCode.U))
+        else if (input.IsActionPressed(InputAction.UnequipSlot1))
             SendInventoryAction(ActionTypes.Unequip, 0);
-        else if (input.IsKeyPressed(KeyCode.R))
+        else if (input.IsActionPressed(InputAction.UnequipSlot2))
             SendInventoryAction(ActionTypes.Unequip, 1);
-        else if (input.IsKeyPressed(KeyCode.X))
+        else if (input.IsActionPressed(InputAction.Drop))
             SendInventoryAction(ActionTypes.Drop, _inventoryIndex);
     }
 
     private void HandleChatInput(IInputManager input)
     {
-        if (input.IsKeyPressed(KeyCode.Escape))
+        if (input.IsActionPressed(InputAction.MenuBack))
         {
             _chatInputActive = false;
             _chatInputText = "";
@@ -471,7 +471,7 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandleHelpInput(IInputManager input, ScreenState returnTo)
     {
-        if (input.IsKeyPressed(KeyCode.Escape) || input.IsKeyPressed(KeyCode.Enter))
+        if (input.IsActionPressed(InputAction.MenuBack) || input.IsActionPressed(InputAction.MenuConfirm))
             _screenState = returnTo;
     }
 

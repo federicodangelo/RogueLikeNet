@@ -46,10 +46,10 @@ public class SdlInputManager : BaseInputManager
         [InputAction.MenuBack] = [InputBinding.Key(SDL.Scancode.Escape), InputBinding.Gamepad(SDL.GamepadButton.East), InputBinding.Gamepad(SDL.GamepadButton.Start)],
         [InputAction.MenuSecondaryAction] = [InputBinding.Key(SDL.Scancode.X), InputBinding.Key(SDL.Scancode.Delete), InputBinding.Gamepad(SDL.GamepadButton.North)],
 
-        [InputAction.MoveUp] = [InputBinding.Key(SDL.Scancode.W), InputBinding.Key(SDL.Scancode.Up)],
-        [InputAction.MoveDown] = [InputBinding.Key(SDL.Scancode.S), InputBinding.Key(SDL.Scancode.Down)],
-        [InputAction.MoveLeft] = [InputBinding.Key(SDL.Scancode.A), InputBinding.Key(SDL.Scancode.Left)],
-        [InputAction.MoveRight] = [InputBinding.Key(SDL.Scancode.D), InputBinding.Key(SDL.Scancode.Right)],
+        [InputAction.MoveUp] = [InputBinding.Key(SDL.Scancode.W), InputBinding.Key(SDL.Scancode.Up), InputBinding.Gamepad(SDL.GamepadButton.DPadUp)],
+        [InputAction.MoveDown] = [InputBinding.Key(SDL.Scancode.S), InputBinding.Key(SDL.Scancode.Down), InputBinding.Gamepad(SDL.GamepadButton.DPadDown)],
+        [InputAction.MoveLeft] = [InputBinding.Key(SDL.Scancode.A), InputBinding.Key(SDL.Scancode.Left), InputBinding.Gamepad(SDL.GamepadButton.DPadLeft)],
+        [InputAction.MoveRight] = [InputBinding.Key(SDL.Scancode.D), InputBinding.Key(SDL.Scancode.Right), InputBinding.Gamepad(SDL.GamepadButton.DPadRight)],
         [InputAction.FireWeapon] = [
             InputBinding.Key(SDL.Scancode.Space),
             InputBinding.Mouse(SDL.ButtonLeft),
@@ -65,6 +65,23 @@ public class SdlInputManager : BaseInputManager
         [InputAction.ToggleMap] = [InputBinding.Key(SDL.Scancode.M), InputBinding.Gamepad(SDL.GamepadButton.Back)],
         [InputAction.Screenshot] = [InputBinding.Key(SDL.Scancode.F12)],
         [InputAction.DodgeRoll] = [InputBinding.Key(SDL.Scancode.LShift), InputBinding.Gamepad(SDL.GamepadButton.East)],
+
+        // Game-specific actions
+        [InputAction.Wait] = [InputBinding.Key(SDL.Scancode.Space)],
+        [InputAction.Attack] = [InputBinding.Key(SDL.Scancode.F), InputBinding.Gamepad(SDL.GamepadButton.West)],
+        [InputAction.PickUp] = [InputBinding.Key(SDL.Scancode.G)],
+        [InputAction.OpenInventory] = [InputBinding.Key(SDL.Scancode.I), InputBinding.Gamepad(SDL.GamepadButton.North)],
+        [InputAction.OpenChat] = [InputBinding.Key(SDL.Scancode.T)],
+        [InputAction.UseItem1] = [InputBinding.Key(SDL.Scancode.Alpha1)],
+        [InputAction.UseItem2] = [InputBinding.Key(SDL.Scancode.Alpha2)],
+        [InputAction.UseItem3] = [InputBinding.Key(SDL.Scancode.Alpha3)],
+        [InputAction.UseItem4] = [InputBinding.Key(SDL.Scancode.Alpha4)],
+        [InputAction.UseSkill1] = [InputBinding.Key(SDL.Scancode.Q), InputBinding.Axis(SDL.GamepadAxis.LeftTrigger)],
+        [InputAction.UseSkill2] = [InputBinding.Key(SDL.Scancode.E), InputBinding.Axis(SDL.GamepadAxis.LeftTrigger)],
+        [InputAction.Drop] = [InputBinding.Key(SDL.Scancode.X)],
+        [InputAction.Equip] = [InputBinding.Key(SDL.Scancode.E)],
+        [InputAction.UnequipSlot1] = [InputBinding.Key(SDL.Scancode.U)],
+        [InputAction.UnequipSlot2] = [InputBinding.Key(SDL.Scancode.R)],
     };
 
     private bool _quitRequested;
@@ -538,75 +555,4 @@ public class SdlInputManager : BaseInputManager
         return string.Empty;
     }
 
-    // ── Raw key queries ───────────────────────────────────────────────
-
-    private static SDL.Scancode MapKeyCode(KeyCode key) => key switch
-    {
-        KeyCode.A => SDL.Scancode.A,
-        KeyCode.B => SDL.Scancode.B,
-        KeyCode.C => SDL.Scancode.C,
-        KeyCode.D => SDL.Scancode.D,
-        KeyCode.E => SDL.Scancode.E,
-        KeyCode.F => SDL.Scancode.F,
-        KeyCode.G => SDL.Scancode.G,
-        KeyCode.H => SDL.Scancode.H,
-        KeyCode.I => SDL.Scancode.I,
-        KeyCode.J => SDL.Scancode.J,
-        KeyCode.K => SDL.Scancode.K,
-        KeyCode.L => SDL.Scancode.L,
-        KeyCode.M => SDL.Scancode.M,
-        KeyCode.N => SDL.Scancode.N,
-        KeyCode.O => SDL.Scancode.O,
-        KeyCode.P => SDL.Scancode.P,
-        KeyCode.Q => SDL.Scancode.Q,
-        KeyCode.R => SDL.Scancode.R,
-        KeyCode.S => SDL.Scancode.S,
-        KeyCode.T => SDL.Scancode.T,
-        KeyCode.U => SDL.Scancode.U,
-        KeyCode.V => SDL.Scancode.V,
-        KeyCode.W => SDL.Scancode.W,
-        KeyCode.X => SDL.Scancode.X,
-        KeyCode.Y => SDL.Scancode.Y,
-        KeyCode.Z => SDL.Scancode.Z,
-        KeyCode.D0 => SDL.Scancode.Alpha0,
-        KeyCode.D1 => SDL.Scancode.Alpha1,
-        KeyCode.D2 => SDL.Scancode.Alpha2,
-        KeyCode.D3 => SDL.Scancode.Alpha3,
-        KeyCode.D4 => SDL.Scancode.Alpha4,
-        KeyCode.D5 => SDL.Scancode.Alpha5,
-        KeyCode.D6 => SDL.Scancode.Alpha6,
-        KeyCode.D7 => SDL.Scancode.Alpha7,
-        KeyCode.D8 => SDL.Scancode.Alpha8,
-        KeyCode.D9 => SDL.Scancode.Alpha9,
-        KeyCode.Space => SDL.Scancode.Space,
-        KeyCode.Enter => SDL.Scancode.Return,
-        KeyCode.Escape => SDL.Scancode.Escape,
-        KeyCode.Backspace => SDL.Scancode.Backspace,
-        KeyCode.Tab => SDL.Scancode.Tab,
-        KeyCode.Up => SDL.Scancode.Up,
-        KeyCode.Down => SDL.Scancode.Down,
-        KeyCode.Left => SDL.Scancode.Left,
-        KeyCode.Right => SDL.Scancode.Right,
-        KeyCode.LeftShift => SDL.Scancode.LShift,
-        KeyCode.RightShift => SDL.Scancode.RShift,
-        KeyCode.LeftControl => SDL.Scancode.LCtrl,
-        KeyCode.RightControl => SDL.Scancode.RCtrl,
-        KeyCode.F1 => SDL.Scancode.F1,
-        KeyCode.F2 => SDL.Scancode.F2,
-        KeyCode.F3 => SDL.Scancode.F3,
-        KeyCode.F4 => SDL.Scancode.F4,
-        KeyCode.F5 => SDL.Scancode.F5,
-        KeyCode.F6 => SDL.Scancode.F6,
-        KeyCode.F7 => SDL.Scancode.F7,
-        KeyCode.F8 => SDL.Scancode.F8,
-        KeyCode.F9 => SDL.Scancode.F9,
-        KeyCode.F10 => SDL.Scancode.F10,
-        KeyCode.F11 => SDL.Scancode.F11,
-        KeyCode.F12 => SDL.Scancode.F12,
-        _ => SDL.Scancode.Unknown,
-    };
-
-    public override bool IsKeyDown(KeyCode key) => _keysDown.Contains(MapKeyCode(key));
-    public override bool IsKeyPressed(KeyCode key) => _keysPressed.Contains(MapKeyCode(key));
-    public override bool IsKeyReleased(KeyCode key) => _keysReleased.Contains(MapKeyCode(key));
 }

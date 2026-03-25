@@ -34,8 +34,4 @@ public sealed class NullInputManager : IInputManager
     public bool IsMouseDown(MouseButton button) => false;
     public bool IsMousePressed(MouseButton button) => false;
     public bool IsMouseReleased(MouseButton button) => false;
-
-    public bool IsKeyDown(KeyCode key) => false;
-    public bool IsKeyPressed(KeyCode key) => false;
-    public bool IsKeyReleased(KeyCode key) => false;
 }
