@@ -1,8 +1,11 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Rendering.SceneGraph;
+using Avalonia.Skia;
 using Avalonia.Threading;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.State;
@@ -24,12 +27,17 @@ public class GameRenderControl : Control
     private IGameServerConnection? _connection;
     private DispatcherTimer? _renderTimer;
     private bool _initialized;
+    private GameDrawOperation? _drawOp;
 
     private ScreenState _screenState = ScreenState.MainMenu;
     private int _menuIndex;
     private int _pauseIndex;
     private int _inventoryIndex;
     private string? _connectionError;
+
+    // Network message buffers — written from network thread, drained on UI thread during Render
+    private readonly ConcurrentQueue<WorldDeltaMsg> _pendingDeltas = new();
+    private volatile WorldSnapshotMsg? _pendingSnapshot;
 
     // Performance metrics
     private readonly Stopwatch _fpsStopwatch = Stopwatch.StartNew();
@@ -127,15 +135,17 @@ public class GameRenderControl : Control
     {
         base.Render(context);
 
-        var bounds = Bounds;
-        int totalCols = Math.Max(30, (int)(bounds.Width / TileRenderer.TileWidth));
-        int totalRows = Math.Max(15, (int)(bounds.Height / TileRenderer.TileHeight));
-        int pixelW = totalCols * TileRenderer.TileWidth;
-        int pixelH = totalRows * TileRenderer.TileHeight;
-
-        using var bitmap = new SKBitmap(pixelW, pixelH);
-        using var canvas = new SKCanvas(bitmap);
-        canvas.Clear(SKColors.Black);
+        // Drain buffered network messages so the render always sees the latest state
+        var snapshot = _pendingSnapshot;
+        if (snapshot != null)
+        {
+            _pendingSnapshot = null;
+            _gameState.ApplySnapshot(snapshot);
+            // Discard any deltas older than this snapshot
+            while (_pendingDeltas.TryDequeue(out _)) { }
+        }
+        while (_pendingDeltas.TryDequeue(out var delta))
+            _gameState.ApplyDelta(delta);
 
         // Update FPS counter
         _frameCount++;
@@ -146,43 +156,9 @@ public class GameRenderControl : Control
             _fpsStopwatch.Restart();
         }
 
-        switch (_screenState)
-        {
-            case ScreenState.MainMenu:
-                _tileRenderer.RenderMainMenu(canvas, totalCols, totalRows, _menuIndex);
-                break;
-            case ScreenState.MainMenuHelp:
-                _tileRenderer.RenderHelp(canvas, totalCols, totalRows);
-                break;
-            case ScreenState.Connecting:
-                _tileRenderer.RenderConnecting(canvas, totalCols, totalRows, _connectionError);
-                break;
-            case ScreenState.Playing:
-                _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows);
-                break;
-            case ScreenState.Inventory:
-                _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows, true, _inventoryIndex);
-                break;
-            case ScreenState.Paused:
-                _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows);
-                _tileRenderer.RenderPauseOverlay(canvas, totalCols, totalRows, _pauseIndex);
-                break;
-            case ScreenState.PausedHelp:
-                _tileRenderer.RenderGame(canvas, _gameState, totalCols, totalRows);
-                _tileRenderer.RenderHelp(canvas, totalCols, totalRows, isOverlay: true);
-                break;
-        }
-
-        // FPS/latency overlay on game screens
-        if (_screenState is ScreenState.Playing or ScreenState.Inventory or ScreenState.Paused or ScreenState.PausedHelp)
-            _tileRenderer.RenderPerformanceOverlay(canvas, _fps, _latencyMs);
-
-        using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
-        using var stream = new MemoryStream(data.ToArray());
-        var avaloniaBitmap = new Avalonia.Media.Imaging.Bitmap(stream);
-
-        // Draw at actual pixel size — no scaling
-        context.DrawImage(avaloniaBitmap, new Rect(0, 0, pixelW, pixelH));
+        _drawOp ??= new GameDrawOperation(this);
+        _drawOp.Bounds = new Rect(0, 0, Bounds.Width, Bounds.Height);
+        context.Custom(_drawOp);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -419,11 +395,7 @@ public class GameRenderControl : Control
 
     private void OnWorldSnapshot(WorldSnapshotMsg snapshot)
     {
-        Dispatcher.UIThread.Post(() =>
-        {
-            _gameState.ApplySnapshot(snapshot);
-            InvalidateVisual();
-        });
+        _pendingSnapshot = snapshot;
     }
 
     private void OnWorldDelta(WorldDeltaMsg delta)
@@ -433,9 +405,70 @@ public class GameRenderControl : Control
             _latencyMs = (int)((now - _lastDeltaTicks) * 1000 / Stopwatch.Frequency);
         _lastDeltaTicks = now;
 
-        Dispatcher.UIThread.Post(() =>
+        _pendingDeltas.Enqueue(delta);
+    }
+
+    // ── GPU-accelerated Draw Operation ─────────────────────────
+
+    private sealed class GameDrawOperation(GameRenderControl owner) : ICustomDrawOperation
+    {
+        public Rect Bounds { get; set; }
+        public void Dispose() { }
+        public bool Equals(ICustomDrawOperation? other) => false;
+        public bool HitTest(Point p) => Bounds.Contains(p);
+
+        public void Render(ImmediateDrawingContext context)
         {
-            _gameState.ApplyDelta(delta);
-        });
+            var feature = context.TryGetFeature(typeof(ISkiaSharpApiLeaseFeature))
+                as ISkiaSharpApiLeaseFeature;
+            if (feature == null) return;
+
+            using var lease = feature.Lease();
+            var canvas = lease.SkCanvas;
+
+            int totalCols = Math.Max(30, (int)(Bounds.Width / TileRenderer.TileWidth));
+            int totalRows = Math.Max(15, (int)(Bounds.Height / TileRenderer.TileHeight));
+
+            // Clip to our tile area so canvas.Clear() doesn't wipe other controls
+            canvas.Save();
+            canvas.ClipRect(SKRect.Create(0, 0,
+                totalCols * TileRenderer.TileWidth, totalRows * TileRenderer.TileHeight));
+            canvas.Clear(SKColors.Black);
+
+            var renderer = owner._tileRenderer;
+
+            switch (owner._screenState)
+            {
+                case ScreenState.MainMenu:
+                    renderer.RenderMainMenu(canvas, totalCols, totalRows, owner._menuIndex);
+                    break;
+                case ScreenState.MainMenuHelp:
+                    renderer.RenderHelp(canvas, totalCols, totalRows);
+                    break;
+                case ScreenState.Connecting:
+                    renderer.RenderConnecting(canvas, totalCols, totalRows, owner._connectionError);
+                    break;
+                case ScreenState.Playing:
+                    renderer.RenderGame(canvas, owner._gameState, totalCols, totalRows);
+                    break;
+                case ScreenState.Inventory:
+                    renderer.RenderGame(canvas, owner._gameState, totalCols, totalRows, true, owner._inventoryIndex);
+                    break;
+                case ScreenState.Paused:
+                    renderer.RenderGame(canvas, owner._gameState, totalCols, totalRows);
+                    renderer.RenderPauseOverlay(canvas, totalCols, totalRows, owner._pauseIndex);
+                    break;
+                case ScreenState.PausedHelp:
+                    renderer.RenderGame(canvas, owner._gameState, totalCols, totalRows);
+                    renderer.RenderHelp(canvas, totalCols, totalRows, isOverlay: true);
+                    break;
+            }
+
+            if (owner._screenState is ScreenState.Playing or ScreenState.Inventory
+                or ScreenState.Paused or ScreenState.PausedHelp)
+                renderer.RenderPerformanceOverlay(canvas, owner._fps, owner._latencyMs);
+
+            canvas.Restore();
+        }
     }
 }
