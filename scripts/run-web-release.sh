@@ -5,12 +5,12 @@ cd "$(dirname "$0")/.."
 
 PORT="${1:-8080}"
 echo "Publishing RogueLikeNet Web Client (WASM)..."
-dotnet publish src/RogueLikeNet.Client.Web -c Debug
+dotnet publish src/RogueLikeNet.Client.Web -c Release
 echo "Publish succeeded!"
 echo ""
 
 # Avalonia.Browser generates the servable bundle in AppBundle
-WWWROOT="src/RogueLikeNet.Client.Web/bin/Debug/net10.0/browser-wasm/AppBundle"
+WWWROOT="src/RogueLikeNet.Client.Web/bin/Release/net10.0/browser-wasm/AppBundle"
 if [ ! -d "$WWWROOT" ]; then
     echo "ERROR: AppBundle directory not found at $WWWROOT"
     exit 1

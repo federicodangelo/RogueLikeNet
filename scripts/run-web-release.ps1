@@ -8,13 +8,13 @@ $Port = if ($args.Count -gt 0) { $args[0] } else { 8080 }
 Push-Location "$PSScriptRoot/.."
 try {
     Write-Host "Publishing RogueLikeNet Web Client (WASM)..." -ForegroundColor Cyan
-    dotnet publish src/RogueLikeNet.Client.Web -c Debug
+    dotnet publish src/RogueLikeNet.Client.Web -c Release
     if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
     Write-Host "Publish succeeded!" -ForegroundColor Green
     Write-Host ""
 
     # Avalonia.Browser generates the servable bundle in AppBundle
-    $wwwroot = "src/RogueLikeNet.Client.Web/bin/Debug/net10.0/browser-wasm/AppBundle"
+    $wwwroot = "src/RogueLikeNet.Client.Web/bin/Release/net10.0/browser-wasm/AppBundle"
     if (-not (Test-Path $wwwroot)) {
         throw "AppBundle directory not found at $wwwroot"
     }
