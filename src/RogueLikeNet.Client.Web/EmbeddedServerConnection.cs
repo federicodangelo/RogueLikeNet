@@ -37,6 +37,9 @@ public class LocalGameConnection : IGameServerConnection
         var (sx, sy) = _engine.FindSpawnPosition();
         _playerEntity = _engine.SpawnPlayer(1, sx, sy);
 
+        // Run a tick so lighting is computed before the initial snapshot
+        _engine.Tick();
+
         // Send initial snapshot
         var snapshot = BuildSnapshot();
         OnWorldSnapshot?.Invoke(snapshot);
@@ -116,6 +119,19 @@ public class LocalGameConnection : IGameServerConnection
     private WorldDeltaMsg BuildDelta()
     {
         var delta = new WorldDeltaMsg { FromTick = _engine.CurrentTick - 1, ToTick = _engine.CurrentTick };
+
+        // Include chunks around the player with updated light levels
+        if (_engine.EcsWorld.IsAlive(_playerEntity))
+        {
+            ref var playerPos = ref _engine.EcsWorld.Get<Position>(_playerEntity);
+            var (cx, cy) = Chunk.WorldToChunkCoord(playerPos.X, playerPos.Y);
+            var chunks = new List<ChunkDataMsg>();
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+                chunks.Add(SerializeChunk(_engine.EnsureChunkLoaded(cx + dx, cy + dy)));
+            delta.Chunks = chunks.ToArray();
+        }
+
         var entities = new List<EntityUpdateMsg>();
         var query = new Arch.Core.QueryDescription().WithAll<Position, TileAppearance>();
         _engine.EcsWorld.Query(in query, (Arch.Core.Entity e, ref Position ePos, ref TileAppearance app) =>

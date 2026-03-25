@@ -47,6 +47,10 @@ public class ClientGameState
     {
         WorldTick = delta.ToTick;
 
+        // Update chunks (light levels change every tick)
+        foreach (var chunkMsg in delta.Chunks)
+            ApplyChunkData(chunkMsg);
+
         // Update tiles
         foreach (var tileUpdate in delta.TileUpdates)
         {

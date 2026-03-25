@@ -10,6 +10,7 @@ public class WorldDeltaMsg
     [Key(2)] public TileUpdateMsg[] TileUpdates { get; set; } = [];
     [Key(3)] public EntityUpdateMsg[] EntityUpdates { get; set; } = [];
     [Key(4)] public CombatEventMsg[] CombatEvents { get; set; } = [];
+    [Key(5)] public ChunkDataMsg[] Chunks { get; set; } = [];
 }
 
 [MessagePackObject]

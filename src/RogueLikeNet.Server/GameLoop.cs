@@ -72,6 +72,9 @@ public class GameLoop : IDisposable
         var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY);
         conn.PlayerEntity = entity;
 
+        // Run a tick so lighting is computed before the initial snapshot
+        _engine.Tick();
+
         // Send initial world snapshot
         var snapshot = BuildSnapshot(conn);
         var payload = NetSerializer.Serialize(snapshot);
@@ -200,6 +203,21 @@ public class GameLoop : IDisposable
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
         };
+
+        // Include chunks around the player with updated light levels
+        if (conn.PlayerEntity.HasValue && _engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+        {
+            ref var playerPos = ref _engine.EcsWorld.Get<Position>(conn.PlayerEntity.Value);
+            var (cx, cy) = Chunk.WorldToChunkCoord(playerPos.X, playerPos.Y);
+            var chunks = new List<ChunkDataMsg>();
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                var chunk = _engine.EnsureChunkLoaded(cx + dx, cy + dy);
+                chunks.Add(SerializeChunk(chunk));
+            }
+            delta.Chunks = chunks.ToArray();
+        }
 
         // Entity updates (send all visible entities each tick for now; optimize later with true delta tracking)
         var entities = new List<EntityUpdateMsg>();
