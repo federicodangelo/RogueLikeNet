@@ -51,7 +51,7 @@ public partial class WebMain
             var wsConnection = new WebSocketServerConnection();
             _connection = wsConnection;
             _game.SetConnection(_connection);
-            await _connection.ConnectAsync("ws://localhost:5000/ws");
+            await _connection.ConnectAsync("ws://localhost:5090/ws");
             _game.TransitionToPlaying();
         }
         catch (Exception ex)
