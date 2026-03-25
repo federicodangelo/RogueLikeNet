@@ -8,11 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\Engine.Sdl\Engine.Sdl.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Client.Core\RogueLikeNet.Client.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Server\RogueLikeNet.Server.csproj" />
   </ItemGroup>

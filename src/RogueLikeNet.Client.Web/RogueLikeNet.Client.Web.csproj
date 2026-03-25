@@ -6,16 +6,11 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.12" />
-    <PackageReference Include="Avalonia.Browser" Version="11.3.12" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
-    <PackageReference Include="Avalonia.Skia" Version="11.3.12" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\Engine.Web\Engine.Web.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Client.Core\RogueLikeNet.Client.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Core\RogueLikeNet.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Protocol\RogueLikeNet.Protocol.csproj" />
