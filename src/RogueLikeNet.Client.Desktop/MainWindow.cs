@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Server;
@@ -22,26 +21,51 @@ public class MainWindow : Window
         _gameControl = new GameRenderControl();
         Content = _gameControl;
 
-        Opened += async (_, _) => await StartGame();
+        _gameControl.StartOfflineRequested += OnStartOffline;
+        _gameControl.StartOnlineRequested += OnStartOnline;
+        _gameControl.ReturnToMenuRequested += OnReturnToMenu;
+        _gameControl.QuitRequested += () => Close();
+
         Closed += (_, _) => Cleanup();
     }
 
-    private async Task StartGame()
+    private async void OnStartOffline()
     {
-        // For now, start an embedded server in standalone mode
         _embeddedServer = new GameLoop(42);
         _embeddedServer.Start();
 
-        // Use embedded connection (in-process)
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
         _connection = embeddedConnection;
         _gameControl.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
+        _gameControl.TransitionToPlaying();
+    }
+
+    private async void OnStartOnline()
+    {
+        var wsConnection = new WebSocketServerConnection();
+        _connection = wsConnection;
+        _gameControl.SetConnection(_connection);
+        await _connection.ConnectAsync("ws://localhost:5000/ws");
+        _gameControl.TransitionToPlaying();
+    }
+
+    private void OnReturnToMenu()
+    {
+        _gameControl.TransitionToMainMenu();
+        CleanupConnection();
+    }
+
+    private void CleanupConnection()
+    {
+        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
+        _connection = null;
+        _embeddedServer?.Dispose();
+        _embeddedServer = null;
     }
 
     private void Cleanup()
     {
-        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
-        _embeddedServer?.Dispose();
+        CleanupConnection();
     }
 }

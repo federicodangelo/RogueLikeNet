@@ -1,7 +1,3 @@
-using Avalonia;
-using Avalonia.Media;
-using Avalonia.Platform;
-using Avalonia.Skia;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
@@ -11,24 +7,57 @@ namespace RogueLikeNet.Client.Core.Rendering;
 
 /// <summary>
 /// Renders the game world as an ASCII tile grid using SkiaSharp.
+/// Supports dynamic tile counts based on window size, game/HUD split, and menu screens.
 /// Floats are used here for pixel coordinates and visual effects — this is the ONLY layer that uses them.
 /// </summary>
 public class TileRenderer : IDisposable
 {
-    private const int TileWidth = 12;
-    private const int TileHeight = 16;
-    private const int ViewTilesX = 80;
-    private const int ViewTilesY = 50;
+    public const int TileWidth = 12;
+    public const int TileHeight = 16;
+    public const int HudColumns = 14;
 
     private SKFont? _font;
     private SKPaint? _bgPaint;
     private SKPaint? _fgPaint;
 
-    // CP437 character map (first 256 characters)
     private static readonly char[] Cp437 = CreateCp437Map();
 
-    public int PixelWidth => ViewTilesX * TileWidth;
-    public int PixelHeight => ViewTilesY * TileHeight;
+    // Colors used across menus and HUD
+    private static readonly SKColor ColorBorder = new(180, 180, 180);
+    private static readonly SKColor ColorTitle = new(255, 200, 50);
+    private static readonly SKColor ColorNormal = new(180, 180, 180);
+    private static readonly SKColor ColorSelected = new(255, 255, 255);
+    private static readonly SKColor ColorDim = new(100, 100, 100);
+    private static readonly SKColor ColorHpBar = new(220, 50, 50);
+    private static readonly SKColor ColorHpFill = new(0, 200, 0);
+    private static readonly SKColor ColorHpText = new(255, 80, 80);
+    private static readonly SKColor ColorStats = new(200, 200, 200);
+    private static readonly SKColor ColorLevel = new(255, 255, 100);
+    private static readonly SKColor ColorItem = new(200, 180, 100);
+    private static readonly SKColor ColorSkillReady = new(100, 255, 100);
+    private static readonly SKColor ColorSkillCd = new(128, 128, 128);
+    private static readonly SKColor ColorInv = new(150, 200, 255);
+    private static readonly SKColor ColorOverlay = new(0, 0, 0, 160);
+
+    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Help", "Quit"];
+    private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
+
+    private static readonly string[] HelpLines =
+    [
+        "CONTROLS",
+        "",
+        "W / \u2191    Move up",
+        "S / \u2193    Move down",
+        "A / \u2190    Move left",
+        "D / \u2192    Move right",
+        "Space    Wait a turn",
+        "G        Pick up item",
+        "1-4      Use item slot",
+        "Q        Use skill 1",
+        "E        Use skill 2",
+        "X        Drop item",
+        "Escape   Pause menu",
+    ];
 
     public void Initialize()
     {
@@ -41,168 +70,334 @@ public class TileRenderer : IDisposable
         _fgPaint = new SKPaint { Style = SKPaintStyle.Fill, IsAntialias = false };
     }
 
-    public void Render(SKCanvas canvas, ClientGameState state)
+    // ── Game Screen ────────────────────────────────────────────
+
+    public void RenderGame(SKCanvas canvas, ClientGameState state, int totalCols, int totalRows)
     {
         if (_font == null || _bgPaint == null || _fgPaint == null) return;
 
         canvas.Clear(SKColors.Black);
 
+        int gameCols = totalCols - HudColumns;
+        RenderGameWorld(canvas, state, gameCols, totalRows);
+        RenderHudPanel(canvas, state, gameCols, totalRows);
+    }
+
+    private void RenderGameWorld(SKCanvas canvas, ClientGameState state, int gameCols, int totalRows)
+    {
         int cameraCenterX = state.PlayerX;
         int cameraCenterY = state.PlayerY;
-        int halfW = ViewTilesX / 2;
-        int halfH = ViewTilesY / 2;
+        int halfW = gameCols / 2;
+        int halfH = totalRows / 2;
 
-        // Render tiles
-        for (int screenX = 0; screenX < ViewTilesX; screenX++)
-        for (int screenY = 0; screenY < ViewTilesY; screenY++)
+        for (int sx = 0; sx < gameCols; sx++)
+        for (int sy = 0; sy < totalRows; sy++)
         {
-            int worldX = cameraCenterX - halfW + screenX;
-            int worldY = cameraCenterY - halfH + screenY;
+            int worldX = cameraCenterX - halfW + sx;
+            int worldY = cameraCenterY - halfH + sy;
             var tile = state.GetTile(worldX, worldY);
 
-            float px = screenX * TileWidth;
-            float py = screenY * TileHeight;
+            float px = sx * TileWidth;
+            float py = sy * TileHeight;
 
-            // Background
             var bgColor = IntToSkColor(tile.BgColor, tile.LightLevel);
-            _bgPaint.Color = bgColor;
+            _bgPaint!.Color = bgColor;
             canvas.DrawRect(px, py, TileWidth, TileHeight, _bgPaint);
 
-            // Glyph
             if (tile.GlyphId > 0 && tile.LightLevel > 0)
             {
-                var fgColor = IntToSkColor(tile.FgColor, tile.LightLevel);
-                _fgPaint.Color = fgColor;
-
+                _fgPaint!.Color = IntToSkColor(tile.FgColor, tile.LightLevel);
                 char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
-                string text = ch.ToString();
-                canvas.DrawText(text, px + 1, py + TileHeight - 3, _font, _fgPaint);
+                canvas.DrawText(ch.ToString(), px + 1, py + TileHeight - 3, _font!, _fgPaint);
             }
         }
 
-        // Render entities
+        // Entities
         foreach (var entity in state.Entities.Values)
         {
-            int screenX = entity.X - (cameraCenterX - halfW);
-            int screenY = entity.Y - (cameraCenterY - halfH);
+            int sx = entity.X - (cameraCenterX - halfW);
+            int sy = entity.Y - (cameraCenterY - halfH);
 
-            if (screenX < 0 || screenX >= ViewTilesX || screenY < 0 || screenY >= ViewTilesY)
-                continue;
+            if (sx < 0 || sx >= gameCols || sy < 0 || sy >= totalRows) continue;
 
-            float px = screenX * TileWidth;
-            float py = screenY * TileHeight;
+            float px = sx * TileWidth;
+            float py = sy * TileHeight;
 
-            // Draw entity glyph
-            var entityColor = IntToSkColor(entity.FgColor, 10); // entities always fully lit
-            _fgPaint.Color = entityColor;
-
+            _fgPaint!.Color = IntToSkColor(entity.FgColor, 10);
             char ch = entity.GlyphId < 256 ? Cp437[entity.GlyphId] : '?';
-            canvas.DrawText(ch.ToString(), px + 1, py + TileHeight - 3, _font, _fgPaint);
+            canvas.DrawText(ch.ToString(), px + 1, py + TileHeight - 3, _font!, _fgPaint);
 
-            // Health bar for damaged entities
             if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
             {
-                float healthRatio = (float)entity.Health / entity.MaxHealth;
-                float barWidth = TileWidth * healthRatio;
+                float ratio = (float)entity.Health / entity.MaxHealth;
                 _fgPaint.Color = new SKColor(255, 0, 0, 180);
                 canvas.DrawRect(px, py - 2, TileWidth, 2, _fgPaint);
                 _fgPaint.Color = new SKColor(0, 255, 0, 180);
-                canvas.DrawRect(px, py - 2, barWidth, 2, _fgPaint);
+                canvas.DrawRect(px, py - 2, TileWidth * ratio, 2, _fgPaint);
             }
         }
-
-        // Render HUD
-        RenderHud(canvas, state);
     }
 
-    private void RenderHud(SKCanvas canvas, ClientGameState state)
+    private void RenderHudPanel(SKCanvas canvas, ClientGameState state, int hudStartCol, int totalRows)
     {
-        if (_font == null || _fgPaint == null || _bgPaint == null) return;
+        // Dark background for HUD area
+        float hx = hudStartCol * TileWidth;
+        _bgPaint!.Color = new SKColor(15, 15, 20);
+        canvas.DrawRect(hx, 0, HudColumns * TileWidth, totalRows * TileHeight, _bgPaint);
+
+        // Vertical separator
+        DrawChar(canvas, hudStartCol, 0, '┬', ColorBorder);
+        for (int y = 1; y < totalRows - 1; y++)
+            DrawChar(canvas, hudStartCol, y, '│', ColorBorder);
+        DrawChar(canvas, hudStartCol, totalRows - 1, '┴', ColorBorder);
+
+        int col = hudStartCol + 1;
+        int innerW = HudColumns - 2;
+        int row = 1;
 
         var hud = state.PlayerHud;
-        if (hud == null) return;
+        if (hud == null)
+        {
+            DrawString(canvas, col, row, "No data", ColorDim);
+            return;
+        }
 
-        // HUD background bar at bottom
-        float hudY = (ViewTilesY - 2) * TileHeight;
-        _bgPaint.Color = new SKColor(0, 0, 0, 200);
-        canvas.DrawRect(0, hudY, ViewTilesX * TileWidth, TileHeight * 2, _bgPaint);
+        // HP bar
+        DrawString(canvas, col, row, "HP", ColorHpText);
+        row++;
+        int barW = innerW;
+        float hpRatio = hud.MaxHealth > 0 ? (float)hud.Health / hud.MaxHealth : 0;
+        int filled = (int)(barW * hpRatio);
+        for (int i = 0; i < barW; i++)
+            DrawChar(canvas, col + i, row, i < filled ? '█' : '░', i < filled ? ColorHpFill : ColorHpBar);
+        row++;
+        string hpText = $"{hud.Health}/{hud.MaxHealth}";
+        DrawString(canvas, col, row, hpText, ColorHpText);
+        row += 2;
 
-        float x = 4;
-        float y = hudY + TileHeight - 2;
-
-        // HP
-        _fgPaint.Color = new SKColor(255, 80, 80);
-        string hpText = $"HP:{hud.Health}/{hud.MaxHealth}";
-        canvas.DrawText(hpText, x, y, _font, _fgPaint);
-        x += hpText.Length * 8 + 12;
-
-        // ATK/DEF
-        _fgPaint.Color = new SKColor(200, 200, 200);
-        string statsText = $"ATK:{hud.Attack} DEF:{hud.Defense}";
-        canvas.DrawText(statsText, x, y, _font, _fgPaint);
-        x += statsText.Length * 8 + 12;
-
-        // Level
-        _fgPaint.Color = new SKColor(255, 255, 100);
-        string lvlText = $"Lv:{hud.Level}";
-        canvas.DrawText(lvlText, x, y, _font, _fgPaint);
-        x += lvlText.Length * 8 + 12;
-
-        // Inventory count
-        _fgPaint.Color = new SKColor(150, 200, 255);
-        string invText = $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}";
-        canvas.DrawText(invText, x, y, _font, _fgPaint);
-
-        // Second line: skills and inventory items
-        float x2 = 4;
-        float y2 = hudY + TileHeight * 2 - 2;
+        // Stats
+        DrawString(canvas, col, row, $"ATK: {hud.Attack}", ColorStats);
+        row++;
+        DrawString(canvas, col, row, $"DEF: {hud.Defense}", ColorStats);
+        row++;
+        DrawString(canvas, col, row, $"Lv:  {hud.Level}", ColorLevel);
+        row += 2;
 
         // Skills
-        if (hud.SkillIds.Length > 0)
+        DrawString(canvas, col, row, "Skills", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+        for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2); i++)
         {
-            for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2); i++)
-            {
-                if (hud.SkillIds[i] == 0) continue;
-                string key = i == 0 ? "Q" : "E";
-                int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
-                _fgPaint.Color = cd > 0 ? new SKColor(128, 128, 128) : new SKColor(100, 255, 100);
-                string skillText = cd > 0 ? $"[{key}]Skill{i}({cd})" : $"[{key}]Skill{i}";
-                canvas.DrawText(skillText, x2, y2, _font, _fgPaint);
-                x2 += skillText.Length * 8 + 8;
-            }
+            if (hud.SkillIds[i] == 0) continue;
+            string key = i == 0 ? "Q" : "E";
+            int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
+            string text = cd > 0 ? $"[{key}] cd:{cd}" : $"[{key}] ready";
+            DrawString(canvas, col, row, text, cd > 0 ? ColorSkillCd : ColorSkillReady);
+            row++;
+        }
+        row++;
+
+        // Inventory
+        DrawString(canvas, col, row, "Items", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+        int itemsToShow = Math.Min(hud.InventoryNames.Length, 4);
+        for (int i = 0; i < 4; i++)
+        {
+            if (i < itemsToShow && !string.IsNullOrEmpty(hud.InventoryNames[i]))
+                DrawString(canvas, col, row, $"[{i + 1}]{hud.InventoryNames[i]}", ColorItem);
+            else
+                DrawString(canvas, col, row, $"[{i + 1}] ---", ColorDim);
+            row++;
+        }
+        row++;
+
+        DrawString(canvas, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
+
+        // Controls reminder at bottom
+        int bottom = totalRows - 2;
+        DrawString(canvas, col, bottom, "[Esc] Menu", ColorDim);
+    }
+
+    private void DrawHudSeparator(SKCanvas canvas, int col, int row, int width)
+    {
+        for (int i = 0; i < width; i++)
+            DrawChar(canvas, col + i, row, '─', ColorDim);
+    }
+
+    // ── Main Menu ──────────────────────────────────────────────
+
+    public void RenderMainMenu(SKCanvas canvas, int totalCols, int totalRows, int selectedIndex)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        canvas.Clear(SKColors.Black);
+
+        int boxW = 40;
+        int boxH = 18;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        DrawBox(canvas, bx, by, boxW, boxH, ColorBorder);
+
+        // Title
+        int titleY = by + 2;
+        DrawCentered(canvas, totalCols, titleY, "R o g u e L i k e", ColorTitle);
+        DrawCentered(canvas, totalCols, titleY + 1, ". N E T .", ColorTitle);
+
+        // Decorative line
+        int sepY = titleY + 3;
+        for (int i = bx + 2; i < bx + boxW - 2; i++)
+            DrawChar(canvas, i, sepY, '─', ColorDim);
+
+        // Menu items
+        int itemStartY = sepY + 2;
+        for (int i = 0; i < MainMenuItems.Length; i++)
+        {
+            bool sel = i == selectedIndex;
+            string prefix = sel ? " \u25ba " : "   ";
+            string text = prefix + MainMenuItems[i];
+            int tx = bx + 6;
+            DrawString(canvas, tx, itemStartY + i, text, sel ? ColorSelected : ColorNormal);
         }
 
-        // Inventory items (first 4)
-        if (hud.InventoryNames.Length > 0)
+        // Footer
+        DrawCentered(canvas, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", ColorDim);
+    }
+
+    // ── Help Screen ────────────────────────────────────────────
+
+    public void RenderHelp(SKCanvas canvas, int totalCols, int totalRows, bool isOverlay = false)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        int boxW = 36;
+        int boxH = HelpLines.Length + 6;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        if (isOverlay)
+            FillOverlay(canvas, totalCols, totalRows);
+        else
+            canvas.Clear(SKColors.Black);
+
+        DrawBox(canvas, bx, by, boxW, boxH, ColorBorder, new SKColor(10, 10, 15));
+
+        int row = by + 2;
+        for (int i = 0; i < HelpLines.Length; i++)
         {
-            for (int i = 0; i < Math.Min(hud.InventoryNames.Length, 4); i++)
+            var color = i == 0 ? ColorTitle : ColorNormal;
+            if (string.IsNullOrEmpty(HelpLines[i]))
             {
-                _fgPaint.Color = new SKColor(200, 180, 100);
-                string itemText = $"[{i + 1}]{hud.InventoryNames[i]}";
-                canvas.DrawText(itemText, x2, y2, _font, _fgPaint);
-                x2 += itemText.Length * 8 + 8;
+                row++;
+                continue;
             }
+            DrawString(canvas, bx + 3, row, HelpLines[i], color);
+            row++;
         }
 
-        // HP bar visual
-        float barX = 4;
-        float barY = hudY - 4;
-        float barWidth = 200;
-        float barHeight = 3;
-        _bgPaint.Color = new SKColor(100, 0, 0);
-        canvas.DrawRect(barX, barY, barWidth, barHeight, _bgPaint);
-        if (hud.MaxHealth > 0)
+        DrawCentered(canvas, totalCols, by + boxH - 2, "Press Esc to go back", ColorDim);
+    }
+
+    // ── Pause Menu ─────────────────────────────────────────────
+
+    public void RenderPauseOverlay(SKCanvas canvas, int totalCols, int totalRows, int selectedIndex)
+    {
+        if (_font == null || _bgPaint == null || _fgPaint == null) return;
+
+        FillOverlay(canvas, totalCols, totalRows);
+
+        int boxW = 30;
+        int boxH = PauseMenuItems.Length + 8;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        DrawBox(canvas, bx, by, boxW, boxH, ColorBorder, new SKColor(10, 10, 15));
+
+        DrawCentered(canvas, totalCols, by + 2, "PAUSED", ColorTitle);
+
+        int sepY = by + 3;
+        for (int i = bx + 2; i < bx + boxW - 2; i++)
+            DrawChar(canvas, i, sepY, '─', ColorDim);
+
+        int itemY = sepY + 2;
+        for (int i = 0; i < PauseMenuItems.Length; i++)
         {
-            float hpRatio = (float)hud.Health / hud.MaxHealth;
-            _bgPaint.Color = new SKColor(0, 200, 0);
-            canvas.DrawRect(barX, barY, barWidth * hpRatio, barHeight, _bgPaint);
+            bool sel = i == selectedIndex;
+            string prefix = sel ? " \u25ba " : "   ";
+            string text = prefix + PauseMenuItems[i];
+            int tx = bx + 4;
+            DrawString(canvas, tx, itemY + i, text, sel ? ColorSelected : ColorNormal);
+        }
+
+        DrawCentered(canvas, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", ColorDim);
+    }
+
+    // ── Drawing Helpers ────────────────────────────────────────
+
+    private void DrawChar(SKCanvas canvas, int tileX, int tileY, char ch, SKColor color)
+    {
+        float px = tileX * TileWidth;
+        float py = tileY * TileHeight;
+        _fgPaint!.Color = color;
+        canvas.DrawText(ch.ToString(), px + 1, py + TileHeight - 3, _font!, _fgPaint);
+    }
+
+    private void DrawString(SKCanvas canvas, int tileX, int tileY, string text, SKColor color)
+    {
+        _fgPaint!.Color = color;
+        for (int i = 0; i < text.Length; i++)
+        {
+            float px = (tileX + i) * TileWidth;
+            float py = tileY * TileHeight;
+            canvas.DrawText(text[i].ToString(), px + 1, py + TileHeight - 3, _font!, _fgPaint);
         }
     }
 
-    /// <summary>
-    /// Converts packed int color (0xRRGGBB) + light level (0-10) to SKColor.
-    /// This is the visualization boundary: int game data → float visual brightness.
-    /// </summary>
+    private void DrawCentered(SKCanvas canvas, int totalCols, int tileY, string text, SKColor color)
+    {
+        int tx = (totalCols - text.Length) / 2;
+        DrawString(canvas, tx, tileY, text, color);
+    }
+
+    private void DrawBox(SKCanvas canvas, int x, int y, int w, int h, SKColor borderColor, SKColor? fillColor = null)
+    {
+        if (fillColor.HasValue)
+        {
+            _bgPaint!.Color = fillColor.Value;
+            for (int bx = x + 1; bx < x + w - 1; bx++)
+            for (int by = y + 1; by < y + h - 1; by++)
+                canvas.DrawRect(bx * TileWidth, by * TileHeight, TileWidth, TileHeight, _bgPaint);
+        }
+
+        DrawChar(canvas, x, y, '┌', borderColor);
+        DrawChar(canvas, x + w - 1, y, '┐', borderColor);
+        DrawChar(canvas, x, y + h - 1, '└', borderColor);
+        DrawChar(canvas, x + w - 1, y + h - 1, '┘', borderColor);
+
+        for (int i = 1; i < w - 1; i++)
+        {
+            DrawChar(canvas, x + i, y, '─', borderColor);
+            DrawChar(canvas, x + i, y + h - 1, '─', borderColor);
+        }
+        for (int i = 1; i < h - 1; i++)
+        {
+            DrawChar(canvas, x, y + i, '│', borderColor);
+            DrawChar(canvas, x + w - 1, y + i, '│', borderColor);
+        }
+    }
+
+    private void FillOverlay(SKCanvas canvas, int totalCols, int totalRows)
+    {
+        _bgPaint!.Color = ColorOverlay;
+        canvas.DrawRect(0, 0, totalCols * TileWidth, totalRows * TileHeight, _bgPaint);
+    }
+
+    // ── Utilities ──────────────────────────────────────────────
+
     private static SKColor IntToSkColor(int packedRgb, int lightLevel)
     {
         if (lightLevel <= 0) return SKColors.Black;
@@ -216,9 +411,7 @@ public class TileRenderer : IDisposable
 
     private static char[] CreateCp437Map()
     {
-        // Standard Code Page 437 character mapping
         var map = new char[256];
-        // Control characters mapped to special symbols
         string cp437 = "\0☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼" +
                         " !\"#$%&'()*+,-./0123456789:;<=>?" +
                         "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_" +

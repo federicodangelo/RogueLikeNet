@@ -18,6 +18,16 @@ public class ClientGameState
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
     public PlayerHudMsg? PlayerHud { get; set; }
 
+    public void Clear()
+    {
+        _chunks.Clear();
+        _entities.Clear();
+        PlayerX = 0;
+        PlayerY = 0;
+        WorldTick = 0;
+        PlayerHud = null;
+    }
+
     public void ApplySnapshot(WorldSnapshotMsg snapshot)
     {
         WorldTick = snapshot.WorldTick;
