@@ -14,7 +14,7 @@ public partial class WebMain
     public static async Task Main()
     {
         var platform = new WebPlatform(
-            "RogueLikeNet", 960, 800,
+            "RogueLikeNet", 1280, 960,
             new NullMusicProvider(), new NullSfxProvider());
 
         _game = new RogueLikeGame();

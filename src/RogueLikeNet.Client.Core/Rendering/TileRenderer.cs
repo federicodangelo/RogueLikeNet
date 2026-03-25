@@ -13,10 +13,10 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public class TileRenderer
 {
-    public const int TileWidth = 9;   // 8px glyph + 1px advance
-    public const int TileHeight = 16;
+    public const int TileWidth = 18;  // (8px glyph + 1px advance) * 2
+    public const int TileHeight = 32;
     public const int HudColumns = 20;
-    private const float FontScale = 1f;
+    private const float FontScale = 2f;
 
     // Colors used across menus and HUD
     private static readonly Color4 ColorBorder = new(180, 180, 180, 255);
@@ -640,7 +640,7 @@ public class TileRenderer
     public void RenderMinimap(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows)
     {
         int mapSize = 40; // tiles to show in each direction from player
-        int pixelSize = 2; // pixels per tile on the minimap
+        int pixelSize = 3; // pixels per tile on the minimap
         int minimapPx = mapSize * pixelSize;
 
         // Position: top-right corner of the gameplay area (left of the HUD)

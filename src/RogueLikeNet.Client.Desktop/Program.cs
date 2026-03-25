@@ -17,7 +17,7 @@ public class Program
     public static void Main(string[] args)
     {
         using var platform = new SdlPlatform(
-            "RogueLikeNet", 960, 800,
+            "RogueLikeNet", 1280, 960,
             new NullMusicProvider(), new NullSfxProvider());
 
         _game = new RogueLikeGame();

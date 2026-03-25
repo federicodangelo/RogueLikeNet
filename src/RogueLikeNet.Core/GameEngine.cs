@@ -37,7 +37,7 @@ public class GameEngine : IDisposable
     {
         _ecsWorld = Arch.Core.World.Create();
         _worldMap = new WorldMap(worldSeed);
-        _generator = new BspDungeonGenerator();
+        _generator = new BiomeDungeonGenerator();
         _movementSystem = new MovementSystem();
         _fovSystem = new FOVSystem();
         _lightingSystem = new LightingSystem();
