@@ -3,7 +3,6 @@ using Engine.Platform;
 using Engine.Rendering.Base;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Definitions;
-using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -44,17 +43,7 @@ public class TileRenderer
     private static readonly Color4 ColorChatText = new(200, 200, 200, 255);
     private static readonly Color4 ColorChatInput = new(255, 255, 100, 255);
 
-    // Biome palette tints (R, G, B multipliers as percentages)
-    private static readonly (int r, int g, int b, string name)[] BiomePalettes =
-    [
-        (100, 100, 100, "Stone"),    // neutral — no tint
-        (110, 85, 75, "Lava"),       // warm red/orange
-        (80, 95, 115, "Ice"),        // cool blue
-        (85, 110, 80, "Forest"),     // green
-        (90, 80, 110, "Arcane"),     // purple
-    ];
-
-    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Randomize Seed", "Help", "Quit"];
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
 
     private static readonly string[] HelpLines =
@@ -113,12 +102,12 @@ public class TileRenderer
             float px = sx * TileWidth + shakeX;
             float py = sy * TileHeight + shakeY;
 
-            var bgColor = ApplyBiomeTint(IntToColor4(tile.BgColor, tile.LightLevel), worldX, worldY);
+            var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
             r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
 
             if (tile.GlyphId > 0 && tile.LightLevel > 0)
             {
-                var fgColor = ApplyBiomeTint(IntToColor4(tile.FgColor, tile.LightLevel), worldX, worldY);
+                var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
                 char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
                 r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
             }
@@ -414,12 +403,13 @@ public class TileRenderer
 
     // ── Main Menu ──────────────────────────────────────────────
 
-    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex)
+    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
+        long worldSeed, bool seedEditing, string seedEditText)
     {
         r.DrawRectScreen(0, 0, totalCols * TileWidth, totalRows * TileHeight, ColorBlack);
 
         int boxW = 40;
-        int boxH = 18;
+        int boxH = 22;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -441,13 +431,27 @@ public class TileRenderer
         {
             bool sel = i == selectedIndex;
             string prefix = sel ? " \u25ba " : "   ";
-            string text = prefix + MainMenuItems[i];
+
+            string label;
+            if (i == 2) // Seed item
+            {
+                string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
+                label = prefix + "Seed: " + seedDisplay;
+            }
+            else
+            {
+                label = prefix + MainMenuItems[i];
+            }
+
             int tx = bx + 6;
-            DrawString(r, tx, itemStartY + i, text, sel ? ColorSelected : ColorNormal);
+            DrawString(r, tx, itemStartY + i, label, sel ? ColorSelected : ColorNormal);
         }
 
         // Footer
-        DrawCentered(r, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", ColorDim);
+        string footer = seedEditing
+            ? "Type seed   Enter Confirm   Esc Cancel"
+            : "\u2191\u2193 Navigate   Enter Select";
+        DrawCentered(r, totalCols, by + boxH - 2, footer, ColorDim);
     }
 
     // ── Help Screen ────────────────────────────────────────────
@@ -628,21 +632,6 @@ public class TileRenderer
         return new Color4(cr, cg, cb, 255);
     }
 
-    private static Color4 ApplyBiomeTint(Color4 color, int worldX, int worldY)
-    {
-        if (color.A == 0) return color;
-
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
-        // Deterministic biome from chunk coords
-        int hash = cx * 73856093 ^ cy * 19349663;
-        int biomeIdx = ((hash & 0x7FFFFFFF) % BiomePalettes.Length);
-        var (rr, gg, bb, _) = BiomePalettes[biomeIdx];
-
-        byte r = (byte)Math.Clamp(color.R * rr / 100, 0, 255);
-        byte g = (byte)Math.Clamp(color.G * gg / 100, 0, 255);
-        byte b = (byte)Math.Clamp(color.B * bb / 100, 0, 255);
-        return new Color4(r, g, b, color.A);
-    }
 
     /// <summary>
     /// Render a minimap in the bottom-right of the HUD panel showing nearby explored tiles.
@@ -712,14 +701,6 @@ public class TileRenderer
             pixelSize, pixelSize, new Color4(255, 255, 255, 255));
     }
 
-    /// <summary>Returns the biome name for a given world position (for display).</summary>
-    public static string GetBiomeName(int worldX, int worldY)
-    {
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
-        int hash = cx * 73856093 ^ cy * 19349663;
-        int biomeIdx = ((hash & 0x7FFFFFFF) % BiomePalettes.Length);
-        return BiomePalettes[biomeIdx].name;
-    }
 
 
 }

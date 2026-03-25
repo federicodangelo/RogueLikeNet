@@ -26,6 +26,11 @@ public sealed class RogueLikeGame : GameBase
     private int _inventoryIndex;
     private string? _connectionError;
 
+    // World seed — randomized each game start, editable in main menu
+    private long _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
+    private bool _seedEditing;
+    private string _seedEditText = "";
+
     // Network message buffers — written from network thread, drained each frame
     private readonly ConcurrentQueue<WorldDeltaMsg> _pendingDeltas = new();
     private volatile WorldSnapshotMsg? _pendingSnapshot;
@@ -55,10 +60,10 @@ public sealed class RogueLikeGame : GameBase
     public ScreenState CurrentScreen => _screenState;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu.</summary>
-    public event Action? StartOfflineRequested;
+    public event Action<long>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
-    public event Action? StartOnlineRequested;
+    public event Action<long>? StartOnlineRequested;
 
     /// <summary>Fired when the player selects "Return to Main Menu" from the pause menu.</summary>
     public event Action? ReturnToMenuRequested;
@@ -195,7 +200,7 @@ public sealed class RogueLikeGame : GameBase
         switch (_screenState)
         {
             case ScreenState.MainMenu:
-                _tileRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex);
+                _tileRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _seedEditing, _seedEditText);
                 break;
             case ScreenState.MainMenuHelp:
                 _tileRenderer.RenderHelp(renderer, totalCols, totalRows);
@@ -299,19 +304,62 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandleMainMenuInput(IInputManager input)
     {
+        // Seed editing mode — captures text input
+        if (_seedEditing)
+        {
+            HandleSeedEditing(input);
+            return;
+        }
+
+        int itemCount = 6; // Offline, Online, Seed, Randomize, Help, Quit
         if (input.IsActionPressed(InputAction.MenuUp))
-            _menuIndex = (_menuIndex + 3) % 4;
+            _menuIndex = (_menuIndex + itemCount - 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuDown))
-            _menuIndex = (_menuIndex + 1) % 4;
+            _menuIndex = (_menuIndex + 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
             {
-                case 0: StartOfflineRequested?.Invoke(); break;
-                case 1: StartOnlineRequested?.Invoke(); break;
-                case 2: _screenState = ScreenState.MainMenuHelp; break;
-                case 3: QuitRequested?.Invoke(); break;
+                case 0: StartOfflineRequested?.Invoke(_worldSeed); break;
+                case 1: StartOnlineRequested?.Invoke(_worldSeed); break;
+                case 2:
+                    _seedEditing = true;
+                    _seedEditText = _worldSeed.ToString();
+                    break;
+                case 3: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
+                case 4: _screenState = ScreenState.MainMenuHelp; break;
+                case 5: QuitRequested?.Invoke(); break;
             }
+        }
+    }
+
+    private void HandleSeedEditing(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _seedEditing = false;
+            return;
+        }
+
+        for (int i = 0; i < input.TextInputBackspacesCount; i++)
+        {
+            if (_seedEditText.Length > 0)
+                _seedEditText = _seedEditText[..^1];
+        }
+
+        if (input.TextInputReturnsCount > 0)
+        {
+            if (long.TryParse(_seedEditText, out long parsed))
+                _worldSeed = parsed;
+            _seedEditing = false;
+            return;
+        }
+
+        string typed = input.TextInput;
+        foreach (char c in typed)
+        {
+            if (char.IsAsciiDigit(c) && _seedEditText.Length < 18)
+                _seedEditText += c;
         }
     }
 

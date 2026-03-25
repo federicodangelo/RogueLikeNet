@@ -20,8 +20,8 @@ public partial class WebMain
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += OnStartOffline;
-        _game.StartOnlineRequested += OnStartOnline;
+        _game.StartOfflineRequested += seed => OnStartOffline(seed);
+        _game.StartOnlineRequested += seed => OnStartOnline(seed);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         // Web platform cannot quit — QuitRequested is ignored
 
@@ -34,15 +34,15 @@ public partial class WebMain
         _game?.RunFrame();
     }
 
-    private static async void OnStartOffline()
+    private static async void OnStartOffline(long seed)
     {
-        _connection = new LocalGameConnection(42);
+        _connection = new LocalGameConnection(seed);
         _game!.SetConnection(_connection);
         await _connection.ConnectAsync("local://");
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline()
+    private static async void OnStartOnline(long seed)
     {
         _game!.TransitionToConnecting();
 

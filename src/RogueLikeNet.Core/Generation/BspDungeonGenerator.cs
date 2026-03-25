@@ -60,6 +60,16 @@ public class BspDungeonGenerator : IDungeonGenerator
         for (int i = 1; i < rooms.Count; i++)
             PopulateRoom(rooms[i], rng, result);
 
+        // Apply biome tint to all tile colors
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            ref var tile = ref chunk.Tiles[x, y];
+            tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
+            tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+        }
+
         return result;
     }
 

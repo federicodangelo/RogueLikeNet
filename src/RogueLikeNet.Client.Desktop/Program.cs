@@ -23,8 +23,8 @@ public class Program
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += OnStartOffline;
-        _game.StartOnlineRequested += OnStartOnline;
+        _game.StartOfflineRequested += seed => OnStartOffline(seed);
+        _game.StartOnlineRequested += seed => OnStartOnline(seed);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         _game.QuitRequested += () => _running = false;
 
@@ -37,9 +37,9 @@ public class Program
         _game.Dispose();
     }
 
-    private static async void OnStartOffline()
+    private static async void OnStartOffline(long seed)
     {
-        _embeddedServer = new GameLoop(42);
+        _embeddedServer = new GameLoop(seed);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
@@ -49,7 +49,7 @@ public class Program
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline()
+    private static async void OnStartOnline(long seed)
     {
         _game!.TransitionToConnecting();
 
