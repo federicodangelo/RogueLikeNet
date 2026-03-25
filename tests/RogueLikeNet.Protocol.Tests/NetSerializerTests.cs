@@ -58,7 +58,6 @@ public class NetSerializerTests
                 TileGlyphs = [250, 219, 43],
                 TileFgColors = [0xFFFFFF, 0x808080, 0],
                 TileBgColors = [0, 0, 0],
-                TileLightLevels = [100, 50, 0],
             }],
             Entities = [new EntityMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
         };

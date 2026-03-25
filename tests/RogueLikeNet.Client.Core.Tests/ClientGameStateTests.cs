@@ -27,7 +27,7 @@ public class ClientGameStateTests
         {
             ChunkX = cx, ChunkY = cy,
             TileTypes = types, TileGlyphs = glyphs,
-            TileFgColors = fg, TileBgColors = bg, TileLightLevels = light,
+            TileFgColors = fg, TileBgColors = bg,
         };
     }
 
@@ -144,7 +144,6 @@ public class ClientGameStateTests
                     TileGlyphs = new int[64 * 64],
                     TileFgColors = new int[64 * 64],
                     TileBgColors = new int[64 * 64],
-                    TileLightLevels = new int[64 * 64],
                 }
             ],
             Entities = [],
@@ -296,7 +295,8 @@ public class ClientGameStateTests
         var tile = state.GetTile(32, 32);
         Assert.Equal(TileType.Wall, tile.Type);
         Assert.Equal('#', tile.GlyphId);
-        Assert.Equal(3, tile.LightLevel);
+        // LightLevel is now computed client-side (player at 32,32 illuminates this tile)
+        Assert.True(tile.LightLevel > 0);
     }
 
     [Fact]

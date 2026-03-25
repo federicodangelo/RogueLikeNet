@@ -24,7 +24,6 @@ public class ChunkDataMsg
     [Key(3)] public int[] TileGlyphs { get; set; } = [];
     [Key(4)] public int[] TileFgColors { get; set; } = [];
     [Key(5)] public int[] TileBgColors { get; set; } = [];
-    [Key(6)] public int[] TileLightLevels { get; set; } = [];
 }
 
 [MessagePackObject]
@@ -37,4 +36,5 @@ public class EntityMsg
     [Key(4)] public int FgColor { get; set; }
     [Key(5)] public int Health { get; set; }
     [Key(6)] public int MaxHealth { get; set; }
+    [Key(7)] public int LightRadius { get; set; }
 }

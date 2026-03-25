@@ -60,18 +60,20 @@ public class ClientGameState
                 FgColor = entityMsg.FgColor,
                 Health = entityMsg.Health,
                 MaxHealth = entityMsg.MaxHealth,
+                LightRadius = entityMsg.LightRadius,
             };
         }
 
         PlayerHud = snapshot.PlayerHud;
         ComputeVisibility();
+        ComputeLighting();
     }
 
     public void ApplyDelta(WorldDeltaMsg delta)
     {
         WorldTick = delta.ToTick;
 
-        // Update chunks (light levels change every tick)
+        // Update chunks (full data for newly discovered chunks)
         foreach (var chunkMsg in delta.Chunks)
             ApplyChunkData(chunkMsg);
 
@@ -117,6 +119,7 @@ public class ClientGameState
             entity.FgColor = entityUpdate.FgColor;
             entity.Health = entityUpdate.Health;
             entity.MaxHealth = entityUpdate.MaxHealth;
+            entity.LightRadius = entityUpdate.LightRadius;
         }
 
         // Find player entity and update position
@@ -139,6 +142,7 @@ public class ClientGameState
             _pendingCombatEvents.AddRange(delta.CombatEvents);
 
         ComputeVisibility();
+        ComputeLighting();
     }
 
     public void DrainCombatEvents()
@@ -158,7 +162,6 @@ public class ClientGameState
             tile.GlyphId = msg.TileGlyphs[idx];
             tile.FgColor = msg.TileFgColors[idx];
             tile.BgColor = msg.TileBgColors[idx];
-            tile.LightLevel = msg.TileLightLevels[idx];
         }
         long key = Chunk.PackChunkKey(msg.ChunkX, msg.ChunkY);
         _chunks[key] = chunk;
@@ -195,6 +198,48 @@ public class ClientGameState
                 _exploredTiles.Add(key);
             });
     }
+
+    private void ComputeLighting()
+    {
+        // Reset all loaded chunk light to 0
+        foreach (var chunk in _chunks.Values)
+            for (int x = 0; x < Chunk.Size; x++)
+            for (int y = 0; y < Chunk.Size; y++)
+                chunk.Tiles[x, y].LightLevel = 0;
+
+        // Player emits light at FOV radius
+        FloodLight(PlayerX, PlayerY, FovRadius);
+
+        // Light source entities
+        foreach (var entity in _entities.Values)
+            if (entity.LightRadius > 0)
+                FloodLight(entity.X, entity.Y, entity.LightRadius);
+    }
+
+    private void FloodLight(int originX, int originY, int radius)
+    {
+        ShadowCastFov.Compute(originX, originY, radius,
+            isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
+            markVisible: (x, y) =>
+            {
+                int dx = x - originX;
+                int dy = y - originY;
+                int dist = Math.Max(Math.Abs(dx), Math.Abs(dy));
+                int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
+                if (lightAmount <= 0) return;
+
+                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
+                long key = Chunk.PackChunkKey(cx, cy);
+                if (!_chunks.TryGetValue(key, out var chunk)) return;
+
+                int lx = x - cx * Chunk.Size;
+                int ly = y - cy * Chunk.Size;
+                if (!chunk.InBounds(lx, ly)) return;
+
+                ref var tile = ref chunk.Tiles[lx, ly];
+                tile.LightLevel = Math.Max(tile.LightLevel, lightAmount);
+            });
+    }
 }
 
 public class ClientEntity
@@ -206,4 +251,5 @@ public class ClientEntity
     public int FgColor { get; set; }
     public int Health { get; set; }
     public int MaxHealth { get; set; }
+    public int LightRadius { get; set; }
 }

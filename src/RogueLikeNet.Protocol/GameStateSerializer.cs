@@ -10,7 +10,7 @@ namespace RogueLikeNet.Protocol;
 /// <summary>
 /// Compact snapshot of entity state for delta comparison.
 /// </summary>
-public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth);
+public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius);
 
 /// <summary>
 /// Shared helpers for building snapshot/delta/HUD messages from game state.
@@ -29,7 +29,6 @@ public static class GameStateSerializer
             TileGlyphs = new int[total],
             TileFgColors = new int[total],
             TileBgColors = new int[total],
-            TileLightLevels = new int[total],
         };
 
         for (int x = 0; x < Chunk.Size; x++)
@@ -41,7 +40,6 @@ public static class GameStateSerializer
             msg.TileGlyphs[idx] = tile.GlyphId;
             msg.TileFgColors[idx] = tile.FgColor;
             msg.TileBgColors[idx] = tile.BgColor;
-            msg.TileLightLevels[idx] = tile.LightLevel;
         }
 
         return msg;
@@ -58,6 +56,42 @@ public static class GameStateSerializer
             chunks.Add(SerializeChunk(chunk));
         }
         return chunks.ToArray();
+    }
+
+    /// <summary>
+    /// Delta-aware chunk serialization: sends full ChunkDataMsg only for new chunks.
+    /// Already-sent chunks are skipped since static data doesn't change and
+    /// lighting is computed client-side.
+    /// </summary>
+    public static ChunkDataMsg[] SerializeChunksDelta(
+        GameEngine engine, int worldX, int worldY, HashSet<long> sentChunkKeys)
+    {
+        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        var newChunks = new List<ChunkDataMsg>();
+
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            int ccx = cx + dx, ccy = cy + dy;
+            long key = Chunk.PackChunkKey(ccx, ccy);
+
+            if (!sentChunkKeys.Contains(key))
+            {
+                var chunk = engine.EnsureChunkLoaded(ccx, ccy);
+                newChunks.Add(SerializeChunk(chunk));
+                sentChunkKeys.Add(key);
+            }
+        }
+
+        // Prune chunk keys far from current position (5×5 around player chunk)
+        sentChunkKeys.RemoveWhere(key =>
+        {
+            int kx = (int)(key >> 32);
+            int ky = (int)(key & 0xFFFFFFFF);
+            return Math.Abs(kx - cx) > 2 || Math.Abs(ky - cy) > 2;
+        });
+
+        return newChunks.ToArray();
     }
 
     public static EntityMsg[] SerializeEntities(World world)
@@ -80,6 +114,8 @@ public static class GameStateSerializer
                 msg.Health = health.Current;
                 msg.MaxHealth = health.Max;
             }
+            if (world.Has<LightSource>(e))
+                msg.LightRadius = world.Get<LightSource>(e).Radius;
             entities.Add(msg);
         });
         return entities.ToArray();
@@ -106,6 +142,8 @@ public static class GameStateSerializer
                 msg.Health = health.Current;
                 msg.MaxHealth = health.Max;
             }
+            if (world.Has<LightSource>(e))
+                msg.LightRadius = world.Get<LightSource>(e).Radius;
             entities.Add(msg);
         });
         return entities.ToArray();
@@ -131,6 +169,8 @@ public static class GameStateSerializer
                 update.Health = health.Current;
                 update.MaxHealth = health.Max;
             }
+            if (world.Has<LightSource>(e))
+                update.LightRadius = world.Get<LightSource>(e).Radius;
             entities.Add(update);
         });
         return entities.ToArray();
@@ -164,8 +204,9 @@ public static class GameStateSerializer
                 hp = health.Current;
                 maxHp = health.Max;
             }
+            int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
 
-            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp);
+            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius);
 
             // Only send if changed or new
             if (!previousState.TryGetValue(id, out var prev) || prev != snap)
@@ -179,6 +220,7 @@ public static class GameStateSerializer
                     FgColor = appearance.FgColor,
                     Health = hp,
                     MaxHealth = maxHp,
+                    LightRadius = lightRadius,
                 });
             }
 

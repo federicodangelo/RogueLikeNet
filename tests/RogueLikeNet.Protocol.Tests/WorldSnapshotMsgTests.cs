@@ -48,7 +48,6 @@ public class WorldSnapshotMsgTests
         Assert.Empty(msg.TileGlyphs);
         Assert.Empty(msg.TileFgColors);
         Assert.Empty(msg.TileBgColors);
-        Assert.Empty(msg.TileLightLevels);
     }
 
     [Fact]

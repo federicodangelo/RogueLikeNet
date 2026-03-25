@@ -1,6 +1,7 @@
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -17,6 +18,7 @@ public class LocalGameConnection : IGameServerConnection
     private CancellationTokenSource? _loopCts;
     private bool _connected;
     private readonly Dictionary<long, EntitySnapshot> _lastSentEntities = new();
+    private readonly HashSet<long> _sentChunkKeys = new();
 
     public bool IsConnected => _connected;
     public long BytesSent => 0;
@@ -106,7 +108,18 @@ public class LocalGameConnection : IGameServerConnection
 
             _lastSentEntities.Clear();
             foreach (var e in snapshot.Entities)
-                _lastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth);
+                _lastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth, e.LightRadius);
+
+            // Seed chunk tracking
+            _sentChunkKeys.Clear();
+            var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int ccx = cx + dx, ccy = cy + dy;
+                long key = Chunk.PackChunkKey(ccx, ccy);
+                _sentChunkKeys.Add(key);
+            }
         }
 
         snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
@@ -121,7 +134,9 @@ public class LocalGameConnection : IGameServerConnection
         {
             ref var playerPos = ref _engine.EcsWorld.Get<Position>(_playerEntity);
             ref var fov = ref _engine.EcsWorld.Get<FOVData>(_playerEntity);
-            delta.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y);
+            var newChunks = GameStateSerializer.SerializeChunksDelta(
+                _engine, playerPos.X, playerPos.Y, _sentChunkKeys);
+            delta.Chunks = newChunks;
             delta.EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, _lastSentEntities);
         }
 

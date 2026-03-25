@@ -16,6 +16,12 @@ public class PlayerConnection
     /// <summary>Tracks last-sent entity state per entity ID for delta compression.</summary>
     public Dictionary<long, EntitySnapshot> LastSentEntities { get; } = new();
 
+    /// <summary>Chunks whose full static data has already been sent.</summary>
+    public HashSet<long> SentChunkKeys { get; } = new();
+
+    /// <summary>Last serialized HUD bytes for delta compression.</summary>
+    public byte[]? LastSentHudBytes { get; set; }
+
     private readonly Func<byte[], Task> _sendFunc;
     private long _bytesSent;
     private long _bytesReceived;

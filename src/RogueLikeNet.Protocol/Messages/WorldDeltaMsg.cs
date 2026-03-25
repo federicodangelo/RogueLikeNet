@@ -37,6 +37,7 @@ public class EntityUpdateMsg
     [Key(5)] public int Health { get; set; }
     [Key(6)] public int MaxHealth { get; set; }
     [Key(7)] public bool Removed { get; set; }
+    [Key(8)] public int LightRadius { get; set; }
 }
 
 [MessagePackObject]

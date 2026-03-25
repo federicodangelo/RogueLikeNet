@@ -10,9 +10,9 @@ public class GameStateSerializerTests
     [Fact]
     public void EntitySnapshot_EqualityWorks()
     {
-        var a = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10);
-        var b = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10);
-        var c = new EntitySnapshot(1, 3, 64, 0xFFFFFF, 10, 10);
+        var a = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0);
+        var b = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0);
+        var c = new EntitySnapshot(1, 3, 64, 0xFFFFFF, 10, 10, 0);
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, c);

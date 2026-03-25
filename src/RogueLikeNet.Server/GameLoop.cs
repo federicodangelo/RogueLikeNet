@@ -1,11 +1,14 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Arch.Core;
+using MessagePack;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
+
+using Chunk = RogueLikeNet.Core.World.Chunk;
 
 namespace RogueLikeNet.Server;
 
@@ -194,10 +197,26 @@ public class GameLoop : IDisposable
         snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov);
         snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, entity);
 
+        // Seed chunk tracking from snapshot so first delta only sends new chunks
+        conn.SentChunkKeys.Clear();
+        var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
+        for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            int ccx = cx + dx, ccy = cy + dy;
+            long key = Chunk.PackChunkKey(ccx, ccy);
+            conn.SentChunkKeys.Add(key);
+        }
+
+        // Seed HUD tracking
+        conn.LastSentHudBytes = snapshot.PlayerHud != null
+            ? NetSerializer.Serialize(snapshot.PlayerHud)
+            : null;
+
         // Seed delta tracking from snapshot so first delta is already compressed
         conn.LastSentEntities.Clear();
         foreach (var e in snapshot.Entities)
-            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth);
+            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth, e.LightRadius);
 
         return snapshot;
     }
@@ -209,14 +228,32 @@ public class GameLoop : IDisposable
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
 
+        var newChunks = GameStateSerializer.SerializeChunksDelta(
+            _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys);
+
+        // HUD delta compression: only send when changed
+        var hud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity);
+        byte[]? hudBytes = hud != null ? NetSerializer.Serialize(hud) : null;
+        PlayerHudMsg? deltaHud;
+        if (hudBytes != null && conn.LastSentHudBytes != null
+            && hudBytes.AsSpan().SequenceEqual(conn.LastSentHudBytes))
+        {
+            deltaHud = null;
+        }
+        else
+        {
+            deltaHud = hud;
+            conn.LastSentHudBytes = hudBytes;
+        }
+
         var delta = new WorldDeltaMsg
         {
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y),
+            Chunks = newChunks,
             EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
-            PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity)
+            PlayerHud = deltaHud,
         };
         return delta;
     }
