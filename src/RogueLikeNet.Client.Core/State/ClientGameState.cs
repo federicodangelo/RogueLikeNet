@@ -11,17 +11,21 @@ public class ClientGameState
 {
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
+    private readonly List<CombatEventMsg> _pendingCombatEvents = new();
 
     public int PlayerX { get; set; }
     public int PlayerY { get; set; }
     public long WorldTick { get; set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
+    public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
     public PlayerHudMsg? PlayerHud { get; set; }
+    public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
 
     public void Clear()
     {
         _chunks.Clear();
         _entities.Clear();
+        _pendingCombatEvents.Clear();
         PlayerX = 0;
         PlayerY = 0;
         WorldTick = 0;
@@ -122,6 +126,15 @@ public class ClientGameState
 
         if (delta.PlayerHud != null)
             PlayerHud = delta.PlayerHud;
+
+        // Queue combat events for particle system
+        if (delta.CombatEvents.Length > 0)
+            _pendingCombatEvents.AddRange(delta.CombatEvents);
+    }
+
+    public void DrainCombatEvents()
+    {
+        _pendingCombatEvents.Clear();
     }
 
     private void ApplyChunkData(ChunkDataMsg msg)

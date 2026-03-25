@@ -11,6 +11,7 @@
     <Project Path="src/RogueLikeNet.Server/RogueLikeNet.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/RogueLikeNet.Client.Core.Tests/RogueLikeNet.Client.Core.Tests.csproj" />
     <Project Path="tests/RogueLikeNet.Core.Tests/RogueLikeNet.Core.Tests.csproj" />
     <Project Path="tests/RogueLikeNet.Protocol.Tests/RogueLikeNet.Protocol.Tests.csproj" />
     <Project Path="tests/RogueLikeNet.Server.Tests/RogueLikeNet.Server.Tests.csproj" />

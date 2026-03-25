@@ -39,19 +39,21 @@ public static class ShadowCastFov
     /// <summary>
     /// Slopes are represented as pairs (numerator, denominator) to avoid floats.
     /// startSlopeNum/startSlopeDen and endSlopeNum/endSlopeDen define the visible arc.
-    /// Comparison: slopeA > slopeB ⟺ slopeANum * slopeBDen > slopeBNum * slopeADen
+    /// Slopes are represented as pairs (numerator, denominator) to avoid floats.
+    /// startSlope (initially 1/1) is the high boundary (diagonal side).
+    /// endSlope (initially 0/1) is the low boundary (cardinal side).
+    /// Scan order: HIGH-to-LOW (from diagonal toward cardinal).
     /// </summary>
     private static void CastLight(
         int ox, int oy, int radius, int row,
-        int startNum, int startDen,     // start slope = startNum / startDen (initially 1/1)
-        int endNum, int endDen,         // end slope = endNum / endDen (initially 0/1)
+        int startNum, int startDen,
+        int endNum, int endDen,
         int xx, int xy, int yx, int yy,
         Func<int, int, bool> isOpaque,
         Action<int, int> markVisible)
     {
         if (row > radius) return;
         // If start slope <= end slope, the arc is empty
-        // start <= end ⟺ startNum * endDen <= endNum * startDen
         if ((long)startNum * endDen <= (long)endNum * startDen) return;
 
         int sn = startNum, sd = startDen;
@@ -61,48 +63,47 @@ public static class ShadowCastFov
             bool blocked = false;
             int newStartNum = sn, newStartDen = sd;
 
-            for (int dx = -j; dx <= 0; dx++)
+            // Scan from diagonal (col=j) toward cardinal (col=0) — HIGH slope to LOW slope.
+            // dx is negative: dx=-col, so the octant transform produces correct world coords.
+            for (int col = j; col >= 0; col--)
             {
+                int dx = -col;
                 int dy = j;
-                // Map to actual coordinates via octant transform
                 int mapX = ox + dx * xx + dy * xy;
                 int mapY = oy + dx * yx + dy * yy;
 
-                // Slope of the left edge of this cell = (dx - 0.5) / (dy + 0.5)
-                // Using integers: leftNum = 2*dx - 1, leftDen = 2*dy + 1
-                int leftNum = 2 * dx - 1;
-                int leftDen = 2 * dy + 1;
+                // Low-slope edge (cardinal side): (col - 0.5) / (row + 0.5)
+                int loNum = 2 * col - 1;
+                int loDen = 2 * dy + 1;
 
-                // Slope of the right edge = (dx + 0.5) / (dy - 0.5)
-                // rightNum = 2*dx + 1, rightDen = 2*dy - 1
-                int rightNum = 2 * dx + 1;
-                int rightDen = 2 * dy - 1;
-                if (rightDen <= 0) rightDen = 1; // avoid division issues at row 0
+                // High-slope edge (diagonal side): (col + 0.5) / (row - 0.5)
+                int hiNum = 2 * col + 1;
+                int hiDen = 2 * dy - 1;
+                if (hiDen <= 0) hiDen = 1;
 
-                // If right edge < end slope, skip (not in visible arc yet)
-                // right < end ⟺ rightNum * endDen < endNum * rightDen
-                if ((long)rightNum * endDen < (long)endNum * rightDen)
+                // If low edge > start slope, this cell is above our arc — skip
+                if (loDen > 0 && (long)loNum * sd > (long)sn * loDen)
                     continue;
 
-                // If left edge > start slope, we've gone past the visible arc
-                // left > start ⟺ leftNum * startDen > startNum * leftDen  (absolute comparison, note leftNum is negative)
-                if (leftDen > 0 && (long)leftNum * sd > (long)sn * leftDen)
+                // If high edge < end slope, this cell is below our arc — done with this row
+                if ((long)hiNum * endDen < (long)endNum * hiDen)
                     break;
 
-                // Distance check (squared, to avoid sqrt)
-                if (dx * dx + dy * dy <= radius * radius)
+                // Distance check (Euclidean)
+                if (col * col + dy * dy <= radius * radius)
                     markVisible(mapX, mapY);
 
                 if (blocked)
                 {
                     if (isOpaque(mapX, mapY))
                     {
-                        // Still in shadow — update new start slope
-                        newStartNum = rightNum;
-                        newStartDen = rightDen;
+                        // Still in shadow — track the cardinal-side edge
+                        newStartNum = loNum;
+                        newStartDen = loDen;
                     }
                     else
                     {
+                        // Leaving shadow — narrow start to the shadow's cardinal edge
                         blocked = false;
                         sn = newStartNum;
                         sd = newStartDen;
@@ -111,12 +112,12 @@ public static class ShadowCastFov
                 else if (isOpaque(mapX, mapY))
                 {
                     blocked = true;
-                    newStartNum = rightNum;
-                    newStartDen = rightDen;
+                    newStartNum = loNum;
+                    newStartDen = loDen;
 
-                    // Recurse with narrowed arc
+                    // Recurse for the arc above this wall (from current start to wall's diagonal edge)
                     CastLight(ox, oy, radius, j + 1,
-                        sn, sd, leftNum, leftDen,
+                        sn, sd, hiNum, hiDen,
                         xx, xy, yx, yy, isOpaque, markVisible);
                 }
             }

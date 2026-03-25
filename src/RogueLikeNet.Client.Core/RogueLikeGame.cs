@@ -17,6 +17,7 @@ public sealed class RogueLikeGame : GameBase
 {
     private readonly TileRenderer _tileRenderer;
     private readonly ClientGameState _gameState = new();
+    private readonly ParticleSystem _particles = new();
     private IGameServerConnection? _connection;
 
     private ScreenState _screenState = ScreenState.MainMenu;
@@ -46,6 +47,9 @@ public sealed class RogueLikeGame : GameBase
     private int _lastKnownHealth;
     private long _shakeUntilTicks;
     private readonly Random _shakeRng = new();
+
+    // Frame timing for particle update
+    private long _lastFrameTicks;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenState;
@@ -150,6 +154,15 @@ public sealed class RogueLikeGame : GameBase
             _shakeUntilTicks = Stopwatch.GetTimestamp() + Stopwatch.Frequency / 4; // 250ms
         _lastKnownHealth = currentHealth;
 
+        // Update particles with frame delta time
+        long nowTicks = Stopwatch.GetTimestamp();
+        float dt = _lastFrameTicks > 0
+            ? (float)(nowTicks - _lastFrameTicks) / Stopwatch.Frequency
+            : 1f / 60f;
+        _lastFrameTicks = nowTicks;
+        dt = Math.Clamp(dt, 0.001f, 0.1f); // guard against huge spikes
+        _particles.Update(dt);
+
         // Update FPS counter
         _frameCount++;
         if (_fpsStopwatch.ElapsedMilliseconds >= 1000)
@@ -210,6 +223,14 @@ public sealed class RogueLikeGame : GameBase
         if (_screenState is ScreenState.Playing or ScreenState.Inventory
             or ScreenState.Paused or ScreenState.PausedHelp)
         {
+            // Render particles and minimap over the game world
+            int gameCols = totalCols - TileRenderer.HudColumns;
+            int halfW = gameCols / 2;
+            int halfH = totalRows / 2;
+            _particles.Render(renderer, _gameState.PlayerX, _gameState.PlayerY,
+                halfW, halfH, shakeX, shakeY);
+            _tileRenderer.RenderMinimap(renderer, _gameState, gameCols, totalRows);
+
             _tileRenderer.RenderChatOverlay(renderer, totalCols, totalRows,
                 _chatLog, _chatInputActive, _chatInputText);
             _tileRenderer.RenderPerformanceOverlay(renderer, _fps, _latencyMs);
@@ -230,6 +251,14 @@ public sealed class RogueLikeGame : GameBase
         }
         while (_pendingDeltas.TryDequeue(out var delta))
             _gameState.ApplyDelta(delta);
+
+        // Feed combat events to particle system
+        foreach (var evt in _gameState.PendingCombatEvents)
+        {
+            _particles.SpawnDamageNumber(evt.TargetX, evt.TargetY, evt.Damage, evt.TargetDied);
+            _particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
+        }
+        _gameState.DrainCombatEvents();
 
         while (_pendingChats.TryDequeue(out var chat))
         {

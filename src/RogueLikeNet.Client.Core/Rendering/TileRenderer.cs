@@ -2,6 +2,8 @@ using Engine.Core;
 using Engine.Platform;
 using Engine.Rendering.Base;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -41,6 +43,16 @@ public class TileRenderer
     private static readonly Color4 ColorChatBg = new(0, 0, 0, 160);
     private static readonly Color4 ColorChatText = new(200, 200, 200, 255);
     private static readonly Color4 ColorChatInput = new(255, 255, 100, 255);
+
+    // Biome palette tints (R, G, B multipliers as percentages)
+    private static readonly (int r, int g, int b, string name)[] BiomePalettes =
+    [
+        (100, 100, 100, "Stone"),    // neutral — no tint
+        (110, 85, 75, "Lava"),       // warm red/orange
+        (80, 95, 115, "Ice"),        // cool blue
+        (85, 110, 80, "Forest"),     // green
+        (90, 80, 110, "Arcane"),     // purple
+    ];
 
     private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Help", "Quit"];
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
@@ -90,6 +102,7 @@ public class TileRenderer
         int halfW = gameCols / 2;
         int halfH = totalRows / 2;
 
+        // Pass 1: tile backgrounds and foreground glyphs
         for (int sx = 0; sx < gameCols; sx++)
         for (int sy = 0; sy < totalRows; sy++)
         {
@@ -100,18 +113,50 @@ public class TileRenderer
             float px = sx * TileWidth + shakeX;
             float py = sy * TileHeight + shakeY;
 
-            var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
+            var bgColor = ApplyBiomeTint(IntToColor4(tile.BgColor, tile.LightLevel), worldX, worldY);
             r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
 
             if (tile.GlyphId > 0 && tile.LightLevel > 0)
             {
-                var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
+                var fgColor = ApplyBiomeTint(IntToColor4(tile.FgColor, tile.LightLevel), worldX, worldY);
                 char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
                 r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
             }
         }
 
-        // Entities
+        // Pass 2: glow effects behind torches and light-emitting tiles
+        for (int sx = 0; sx < gameCols; sx++)
+        for (int sy = 0; sy < totalRows; sy++)
+        {
+            int worldX = cameraCenterX - halfW + sx;
+            int worldY = cameraCenterY - halfH + sy;
+            var tile = state.GetTile(worldX, worldY);
+
+            if (tile.LightLevel < 5) continue;
+
+            // Glow behind torches
+            if (tile.GlyphId == TileDefinitions.GlyphTorch)
+            {
+                float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
+                float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
+                float radius = TileWidth * 2.5f;
+                var inner = new Color4(255, 200, 100, 40);
+                var outer = new Color4(255, 150, 50, 0);
+                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+            }
+            // Subtle glow behind lava tiles
+            else if (tile.GlyphId == TileDefinitions.GlyphLava && tile.FgColor == TileDefinitions.ColorLavaFg)
+            {
+                float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
+                float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
+                float radius = TileWidth * 1.5f;
+                var inner = new Color4(255, 80, 20, 25);
+                var outer = new Color4(255, 40, 0, 0);
+                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
+            }
+        }
+
+        // Pass 3: entities
         foreach (var entity in state.Entities.Values)
         {
             int sx = entity.X - (cameraCenterX - halfW);
@@ -581,6 +626,99 @@ public class TileRenderer
         byte cg = (byte)((packedRgb >> 8 & 0xFF) * brightness);
         byte cb = (byte)((packedRgb & 0xFF) * brightness);
         return new Color4(cr, cg, cb, 255);
+    }
+
+    private static Color4 ApplyBiomeTint(Color4 color, int worldX, int worldY)
+    {
+        if (color.A == 0) return color;
+
+        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        // Deterministic biome from chunk coords
+        int hash = cx * 73856093 ^ cy * 19349663;
+        int biomeIdx = ((hash & 0x7FFFFFFF) % BiomePalettes.Length);
+        var (rr, gg, bb, _) = BiomePalettes[biomeIdx];
+
+        byte r = (byte)Math.Clamp(color.R * rr / 100, 0, 255);
+        byte g = (byte)Math.Clamp(color.G * gg / 100, 0, 255);
+        byte b = (byte)Math.Clamp(color.B * bb / 100, 0, 255);
+        return new Color4(r, g, b, color.A);
+    }
+
+    /// <summary>
+    /// Render a minimap in the bottom-right of the HUD panel showing nearby explored tiles.
+    /// </summary>
+    public void RenderMinimap(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows)
+    {
+        int mapSize = 40; // tiles to show in each direction from player
+        int pixelSize = 2; // pixels per tile on the minimap
+        int minimapPx = mapSize * pixelSize;
+
+        // Position: top-right corner of the gameplay area (left of the HUD)
+        float baseX = gameCols * TileWidth - minimapPx - 4;
+        float baseY = 4;
+
+        // Background
+        r.DrawRectScreen(baseX - 1, baseY - 1, minimapPx + 2, minimapPx + 2, new Color4(40, 40, 50, 200));
+
+        int cx = state.PlayerX;
+        int cy = state.PlayerY;
+        int half = mapSize / 2;
+
+        for (int dx = 0; dx < mapSize; dx++)
+        for (int dy = 0; dy < mapSize; dy++)
+        {
+            int wx = cx - half + dx;
+            int wy = cy - half + dy;
+            var tile = state.GetTile(wx, wy);
+
+            Color4 dotColor;
+            if (tile.GlyphId == 0 || tile.LightLevel == 0)
+                continue; // unexplored/dark — skip
+            else if (tile.GlyphId == TileDefinitions.GlyphWall)
+                dotColor = new Color4(120, 120, 140, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphFloor)
+                dotColor = new Color4(60, 60, 70, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                dotColor = new Color4(255, 200, 100, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphLava)
+                dotColor = new Color4(255, 80, 20, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphWater)
+                dotColor = new Color4(70, 130, 255, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphDoor)
+                dotColor = new Color4(180, 130, 60, 255);
+            else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
+                dotColor = new Color4(255, 255, 80, 255);
+            else
+                dotColor = new Color4(50, 50, 60, 255);
+
+            r.DrawRectScreen(baseX + dx * pixelSize, baseY + dy * pixelSize, pixelSize, pixelSize, dotColor);
+        }
+
+        // Entities on minimap
+        foreach (var entity in state.Entities.Values)
+        {
+            int dx = entity.X - (cx - half);
+            int dy = entity.Y - (cy - half);
+            if (dx < 0 || dx >= mapSize || dy < 0 || dy >= mapSize) continue;
+
+            Color4 entityColor = entity.GlyphId == TileDefinitions.GlyphPlayer
+                ? new Color4(100, 255, 100, 255)
+                : new Color4(255, 80, 80, 255);
+            r.DrawRectScreen(baseX + dx * pixelSize, baseY + dy * pixelSize, pixelSize, pixelSize, entityColor);
+        }
+
+        // Player dot (always center, drawn last)
+        r.DrawRectScreen(baseX + half * pixelSize, baseY + half * pixelSize,
+            pixelSize, pixelSize, new Color4(255, 255, 255, 255));
+    }
+
+    /// <summary>Returns the biome name for a given world position (for display).</summary>
+    public static string GetBiomeName(int worldX, int worldY)
+    {
+        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        int hash = cx * 73856093 ^ cy * 19349663;
+        int biomeIdx = ((hash & 0x7FFFFFFF) % BiomePalettes.Length);
+        return BiomePalettes[biomeIdx].name;
     }
 
 
