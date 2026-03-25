@@ -86,8 +86,8 @@ public class GameEngine : IDisposable
                     break;
 
                 case SpawnType.Item:
-                    var (itemTemplate, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                    SpawnItemOnGround(itemTemplate, rarity, wx, wy);
+                    var (itemDef, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                    SpawnItemOnGround(itemDef, rarity, wx, wy);
                     break;
 
                 case SpawnType.Torch:
@@ -140,22 +140,22 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public Entity SpawnItemOnGround(ItemTemplate template, int rarity, int x, int y)
+    public Entity SpawnItemOnGround(ItemTypeDefinition def, int rarity, int x, int y)
     {
         // Rarity multiplier: each tier adds 50% to base stats
         int rarityMult = 100 + rarity * 50;
         return _ecsWorld.Create(
             new Position(x, y),
-            new TileAppearance(template.GlyphId, template.Color),
+            new TileAppearance(def.GlyphId, def.Color),
             new ItemData
             {
-                ItemTypeId = template.TypeId,
+                ItemTypeId = def.TypeId,
                 Rarity = rarity,
-                BonusAttack = template.BaseAttack * rarityMult / 100,
-                BonusDefense = template.BaseDefense * rarityMult / 100,
-                BonusHealth = template.BaseHealth * rarityMult / 100,
-                StackCount = template.Category == ItemDefinitions.CategoryGold
-                    ? 10 + _worldRng.Next(50)
+                BonusAttack = def.BaseAttack * rarityMult / 100,
+                BonusDefense = def.BaseDefense * rarityMult / 100,
+                BonusHealth = def.BaseHealth * rarityMult / 100,
+                StackCount = def.Stackable
+                    ? (def.Category == ItemDefinitions.CategoryGold ? 10 + _worldRng.Next(50) : 1)
                     : 1,
             },
             new GroundItemTag()
@@ -318,17 +318,32 @@ public class GameEngine : IDisposable
             hud.InventoryCount = inv.Items?.Count ?? 0;
             hud.InventoryCapacity = inv.Capacity;
 
-            // Build inventory item names
+            // Build inventory item names, stack counts, rarities
             if (inv.Items != null)
             {
                 var names = new List<string>();
+                var stacks = new List<int>();
+                var rarities = new List<int>();
                 foreach (var item in inv.Items)
                 {
-                    var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == item.ItemTypeId);
-                    names.Add(template.Name ?? "Unknown");
+                    var def = ItemDefinitions.Get(item.ItemTypeId);
+                    names.Add(def.Name ?? "Unknown");
+                    stacks.Add(item.StackCount);
+                    rarities.Add(item.Rarity);
                 }
                 hud.InventoryNames = names.ToArray();
+                hud.InventoryStackCounts = stacks.ToArray();
+                hud.InventoryRarities = rarities.ToArray();
             }
+        }
+
+        if (_ecsWorld.Has<Equipment>(playerEntity))
+        {
+            ref var equip = ref _ecsWorld.Get<Equipment>(playerEntity);
+            if (equip.HasWeapon)
+                hud.EquippedWeaponName = ItemDefinitions.Get(equip.Weapon!.Value.ItemTypeId).Name ?? "";
+            if (equip.HasArmor)
+                hud.EquippedArmorName = ItemDefinitions.Get(equip.Armor!.Value.ItemTypeId).Name ?? "";
         }
 
         if (_ecsWorld.Has<SkillSlots>(playerEntity))
@@ -336,6 +351,12 @@ public class GameEngine : IDisposable
             ref var skills = ref _ecsWorld.Get<SkillSlots>(playerEntity);
             hud.SkillIds = [skills.Skill0, skills.Skill1, skills.Skill2, skills.Skill3];
             hud.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
+            hud.SkillNames = [
+                SkillDefinitions.GetName(skills.Skill0),
+                SkillDefinitions.GetName(skills.Skill1),
+                SkillDefinitions.GetName(skills.Skill2),
+                SkillDefinitions.GetName(skills.Skill3),
+            ];
         }
 
         // Floor items at player position
@@ -349,9 +370,8 @@ public class GameEngine : IDisposable
             {
                 if (iPos.X == px && iPos.Y == py)
                 {
-                    int typeId = itemData.ItemTypeId;
-                    var template = Array.Find(ItemDefinitions.Templates, t => t.TypeId == typeId);
-                    floorNames.Add(template.Name ?? "Unknown");
+                    var def = ItemDefinitions.Get(itemData.ItemTypeId);
+                    floorNames.Add(def.Name ?? "Unknown");
                 }
             });
             hud.FloorItemNames = floorNames.ToArray();
@@ -373,6 +393,11 @@ public class PlayerHudData
     public int InventoryCapacity;
     public int[] SkillIds = [];
     public int[] SkillCooldowns = [];
+    public string[] SkillNames = [];
     public string[] InventoryNames = [];
+    public int[] InventoryStackCounts = [];
+    public int[] InventoryRarities = [];
     public string[] FloorItemNames = [];
+    public string EquippedWeaponName = "";
+    public string EquippedArmorName = "";
 }

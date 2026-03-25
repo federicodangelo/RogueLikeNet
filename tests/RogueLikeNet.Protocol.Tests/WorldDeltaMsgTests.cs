@@ -174,4 +174,47 @@ public class WorldDeltaMsgTests
         Assert.Equal(25, result.Damage);
         Assert.True(result.TargetDied);
     }
+
+    [Fact]
+    public void PlayerHudMsg_NewFields_RoundTrip()
+    {
+        var msg = new PlayerHudMsg
+        {
+            Health = 80,
+            MaxHealth = 100,
+            Attack = 15,
+            Defense = 10,
+            Level = 5,
+            Experience = 500,
+            InventoryCount = 2,
+            InventoryCapacity = 20,
+            SkillIds = [1, 2, 3, 4],
+            SkillCooldowns = [0, 5, 10, 0],
+            SkillNames = ["Power Strike", "Shield Bash", "Backstab", "Dodge"],
+            InventoryNames = ["Sword", "Potion"],
+            FloorItemNames = ["Gold"],
+            EquippedWeaponName = "Long Sword",
+            EquippedArmorName = "Chain Mail",
+            InventoryStackCounts = [1, 5],
+            InventoryRarities = [2, 0],
+        };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<PlayerHudMsg>(data);
+        Assert.Equal(["Power Strike", "Shield Bash", "Backstab", "Dodge"], result.SkillNames);
+        Assert.Equal("Long Sword", result.EquippedWeaponName);
+        Assert.Equal("Chain Mail", result.EquippedArmorName);
+        Assert.Equal([1, 5], result.InventoryStackCounts);
+        Assert.Equal([2, 0], result.InventoryRarities);
+    }
+
+    [Fact]
+    public void PlayerHudMsg_NewFields_DefaultValues()
+    {
+        var msg = new PlayerHudMsg();
+        Assert.Empty(msg.SkillNames);
+        Assert.Equal("", msg.EquippedWeaponName);
+        Assert.Equal("", msg.EquippedArmorName);
+        Assert.Empty(msg.InventoryStackCounts);
+        Assert.Empty(msg.InventoryRarities);
+    }
 }

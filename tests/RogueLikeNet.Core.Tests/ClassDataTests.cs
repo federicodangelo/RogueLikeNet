@@ -43,4 +43,34 @@ public class ClassDataTests
     {
         Assert.Equal(expected, SkillDefinitions.GetRange(skillId));
     }
+
+    [Fact]
+    public void All_ContainsAllSkills()
+    {
+        Assert.Equal(8, SkillDefinitions.All.Length);
+    }
+
+    [Theory]
+    [InlineData(SkillIds.PowerStrike, "Power Strike", 5, 200, 1)]
+    [InlineData(SkillIds.Fireball, "Fireball", 8, 150, 5)]
+    [InlineData(SkillIds.Trap, "Trap", 15, 100, 3)]
+    public void Get_ReturnsCorrectSkill(int skillId, string name, int cooldown, int dmgMult, int range)
+    {
+        var skill = SkillDefinitions.Get(skillId);
+        Assert.Equal(skillId, skill.SkillId);
+        Assert.Equal(name, skill.Name);
+        Assert.Equal(cooldown, skill.Cooldown);
+        Assert.Equal(dmgMult, skill.DamageMultiplier);
+        Assert.Equal(range, skill.Range);
+    }
+
+    [Theory]
+    [InlineData(SkillIds.PowerStrike, "Power Strike")]
+    [InlineData(SkillIds.Backstab, "Backstab")]
+    [InlineData(SkillIds.Heal, "Heal")]
+    [InlineData(SkillIds.None, "")]
+    public void GetName_ReturnsCorrectName(int skillId, string expectedName)
+    {
+        Assert.Equal(expectedName, SkillDefinitions.GetName(skillId));
+    }
 }

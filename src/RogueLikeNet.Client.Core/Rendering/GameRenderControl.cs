@@ -348,6 +348,22 @@ public class GameRenderControl : Control
                 SendInventoryAction(ActionTypes.UseItem, 3);
                 e.Handled = true;
                 break;
+            case Key.Enter:
+                SendInventoryAction(ActionTypes.UseItem, _inventoryIndex);
+                e.Handled = true;
+                break;
+            case Key.E:
+                SendInventoryAction(ActionTypes.Equip, _inventoryIndex);
+                e.Handled = true;
+                break;
+            case Key.U:
+                SendInventoryAction(ActionTypes.Unequip, 0); // 0 = weapon
+                e.Handled = true;
+                break;
+            case Key.R:
+                SendInventoryAction(ActionTypes.Unequip, 1); // 1 = armor
+                e.Handled = true;
+                break;
             case Key.X:
                 SendInventoryAction(ActionTypes.Drop, _inventoryIndex);
                 e.Handled = true;

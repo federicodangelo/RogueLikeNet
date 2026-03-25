@@ -69,4 +69,125 @@ public class PlayerHudDataTests
         Assert.NotNull(hud);
         Assert.Empty(hud!.FloorItemNames);
     }
+
+    [Fact]
+    public void GetPlayerHudData_SkillNames_Populated()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal(4, hud!.SkillNames.Length);
+        Assert.Equal("Power Strike", hud.SkillNames[0]);
+        Assert.Equal("Shield Bash", hud.SkillNames[1]);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_EquippedWeaponName_AfterEquip()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LongSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.UseItem;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal("Long Sword", hud!.EquippedWeaponName);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_EquippedArmorName_AfterEquip()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ChainMail);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.UseItem;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal("Chain Mail", hud!.EquippedArmorName);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_InventoryStackCounts_Populated()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Single(hud!.InventoryStackCounts);
+        Assert.True(hud.InventoryStackCounts[0] >= 1);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_InventoryRarities_Populated()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        engine.SpawnItemOnGround(swordTemplate, 2, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Single(hud!.InventoryRarities);
+        Assert.Equal(2, hud.InventoryRarities[0]);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_NoEquipment_EmptyNames()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal("", hud!.EquippedWeaponName);
+        Assert.Equal("", hud.EquippedArmorName);
+    }
 }

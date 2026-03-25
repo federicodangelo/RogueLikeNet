@@ -16,6 +16,9 @@ public class InventorySystem
         ProcessPickups(world);
         ProcessDrops(world);
         ProcessUseItem(world);
+        ProcessSwapItems(world);
+        ProcessUnequip(world);
+        ProcessEquip(world);
     }
 
     private void ProcessPickups(Arch.Core.World world)
@@ -45,12 +48,44 @@ public class InventorySystem
             if (!world.IsAlive(item) || !world.IsAlive(player)) continue;
 
             ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null || inv.IsFull) continue;
+            if (inv.Items == null) continue;
 
             // Copy item data to inventory, then destroy the floor entity
             var itemData = world.Get<ItemData>(item);
-            inv.Items.Add(itemData);
-            world.Destroy(item);
+            var def = ItemDefinitions.Get(itemData.ItemTypeId);
+
+            // Try auto-stack if stackable
+            if (def.Stackable)
+            {
+                bool stacked = false;
+                for (int i = 0; i < inv.Items.Count; i++)
+                {
+                    if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
+                        inv.Items[i].StackCount < def.MaxStackSize)
+                    {
+                        var existing = inv.Items[i];
+                        int canAdd = def.MaxStackSize - existing.StackCount;
+                        int toAdd = Math.Min(canAdd, itemData.StackCount);
+                        existing.StackCount += toAdd;
+                        inv.Items[i] = existing;
+                        itemData.StackCount -= toAdd;
+                        if (itemData.StackCount <= 0) { stacked = true; break; }
+                    }
+                }
+                if (stacked) { world.Destroy(item); continue; }
+                // Remaining stack goes into new slot
+                if (itemData.StackCount > 0 && !inv.IsFull)
+                {
+                    inv.Items.Add(itemData);
+                    world.Destroy(item);
+                }
+            }
+            else
+            {
+                if (inv.IsFull) continue;
+                inv.Items.Add(itemData);
+                world.Destroy(item);
+            }
         }
     }
 
@@ -181,5 +216,100 @@ public class InventorySystem
         // Equip new armor
         equip.Armor = newArmor;
         stats.Defense += newArmor.BonusDefense;
+    }
+
+    private void ProcessSwapItems(Arch.Core.World world)
+    {
+        var swaps = new List<(Entity Player, int SlotA, int SlotB)>();
+
+        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory>();
+        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        {
+            if (input.ActionType != ActionTypes.SwapItems) return;
+            swaps.Add((player, input.ItemSlot, input.TargetSlot));
+            input.ActionType = ActionTypes.None;
+        });
+
+        foreach (var (player, slotA, slotB) in swaps)
+        {
+            if (!world.IsAlive(player)) continue;
+            ref var inv = ref world.Get<Inventory>(player);
+            if (inv.Items == null) continue;
+            if (slotA < 0 || slotA >= inv.Items.Count) continue;
+            if (slotB < 0 || slotB >= inv.Items.Count) continue;
+            if (slotA == slotB) continue;
+
+            (inv.Items[slotA], inv.Items[slotB]) = (inv.Items[slotB], inv.Items[slotA]);
+        }
+    }
+
+    private void ProcessUnequip(Arch.Core.World world)
+    {
+        var actions = new List<(Entity Player, int EquipSlot)>();
+
+        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, Equipment, CombatStats>();
+        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        {
+            if (input.ActionType != ActionTypes.Unequip) return;
+            actions.Add((player, input.ItemSlot)); // 0 = weapon, 1 = armor
+            input.ActionType = ActionTypes.None;
+        });
+
+        foreach (var (player, equipSlot) in actions)
+        {
+            if (!world.IsAlive(player)) continue;
+            ref var equip = ref world.Get<Equipment>(player);
+            ref var inv = ref world.Get<Inventory>(player);
+            ref var stats = ref world.Get<CombatStats>(player);
+            if (inv.Items == null || inv.IsFull) continue;
+
+            if (equipSlot == 0 && equip.HasWeapon)
+            {
+                var old = equip.Weapon!.Value;
+                stats.Attack -= old.BonusAttack;
+                inv.Items.Add(old);
+                equip.Weapon = null;
+            }
+            else if (equipSlot == 1 && equip.HasArmor)
+            {
+                var old = equip.Armor!.Value;
+                stats.Defense -= old.BonusDefense;
+                inv.Items.Add(old);
+                equip.Armor = null;
+            }
+        }
+    }
+
+    private void ProcessEquip(Arch.Core.World world)
+    {
+        var actions = new List<(Entity Player, int Slot)>();
+
+        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, Equipment, Health, CombatStats>();
+        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        {
+            if (input.ActionType != ActionTypes.Equip) return;
+            actions.Add((player, input.ItemSlot));
+            input.ActionType = ActionTypes.None;
+        });
+
+        foreach (var (player, slot) in actions)
+        {
+            if (!world.IsAlive(player)) continue;
+            ref var inv = ref world.Get<Inventory>(player);
+            if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
+
+            var itemData = inv.Items[slot];
+            var def = ItemDefinitions.Get(itemData.ItemTypeId);
+
+            switch (def.Category)
+            {
+                case ItemDefinitions.CategoryWeapon:
+                    EquipWeapon(world, player, slot);
+                    break;
+                case ItemDefinitions.CategoryArmor:
+                    EquipArmor(world, player, slot);
+                    break;
+            }
+        }
     }
 }

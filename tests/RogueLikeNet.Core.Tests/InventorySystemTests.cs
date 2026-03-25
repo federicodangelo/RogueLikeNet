@@ -358,4 +358,335 @@ public class InventorySystemTests
         ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
         Assert.True(statsAfter.Attack > atkBefore, $"Attack {statsAfter.Attack} should be > {atkBefore} after strength potion");
     }
+
+    [Fact]
+    public void PickUp_StackableItem_AutoStacks()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Pick up first health potion
+        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        // Pick up second health potion (should auto-stack)
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        // Should be one slot (stacked), not two
+        Assert.Single(inv.Items!);
+        Assert.True(inv.Items[0].StackCount > 1, "Stack count should be > 1 after auto-stacking");
+    }
+
+    [Fact]
+    public void SwapItems_SwapsSlots()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Pick up two different items
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invBefore = ref engine.EcsWorld.Get<Inventory>(player);
+        int typeAtSlot0 = invBefore.Items![0].ItemTypeId;
+        int typeAtSlot1 = invBefore.Items[1].ItemTypeId;
+
+        // Swap slots 0 and 1
+        ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input3.ActionType = ActionTypes.SwapItems;
+        input3.ItemSlot = 0;
+        input3.TargetSlot = 1;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Equal(typeAtSlot1, invAfter.Items![0].ItemTypeId);
+        Assert.Equal(typeAtSlot0, invAfter.Items[1].ItemTypeId);
+    }
+
+    [Fact]
+    public void SwapItems_InvalidSlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.SwapItems;
+        input.ItemSlot = 0;
+        input.TargetSlot = 99;
+        engine.Tick(); // Should not crash
+    }
+
+    [Fact]
+    public void UnequipWeapon_MovesToInventory()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Pick up and equip a weapon
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LongSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.UseItem;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        ref var equipBefore = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.True(equipBefore.HasWeapon);
+
+        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
+        int atkWithWeapon = statsBefore.Attack;
+
+        // Unequip weapon (slot 0 = weapon)
+        ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input3.ActionType = ActionTypes.Unequip;
+        input3.ItemSlot = 0;
+        engine.Tick();
+
+        ref var equipAfter = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.False(equipAfter.HasWeapon);
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Single(inv.Items!);
+        Assert.Equal(ItemDefinitions.LongSword, inv.Items[0].ItemTypeId);
+
+        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
+        Assert.True(statsAfter.Attack < atkWithWeapon);
+    }
+
+    [Fact]
+    public void UnequipArmor_MovesToInventory()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Pick up and equip armor
+        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ChainMail);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.UseItem;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        ref var equipBefore = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.True(equipBefore.HasArmor);
+
+        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
+        int defWithArmor = statsBefore.Defense;
+
+        // Unequip armor (slot 1 = armor)
+        ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input3.ActionType = ActionTypes.Unequip;
+        input3.ItemSlot = 1;
+        engine.Tick();
+
+        ref var equipAfter = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.False(equipAfter.HasArmor);
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Single(inv.Items!);
+        Assert.Equal(ItemDefinitions.ChainMail, inv.Items[0].ItemTypeId);
+
+        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
+        Assert.True(statsAfter.Defense < defWithArmor);
+    }
+
+    [Fact]
+    public void Equip_WeaponFromInventory()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
+        int baseAtk = statsBefore.Attack;
+
+        // Pick up a weapon
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LongSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        // Equip via Equip action (not UseItem)
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.Equip;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        ref var equipAfter = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.True(equipAfter.HasWeapon);
+
+        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
+        Assert.True(statsAfter.Attack > baseAtk);
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Empty(inv.Items!);
+    }
+
+    [Fact]
+    public void Equip_ArmorFromInventory()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
+        int baseDef = statsBefore.Defense;
+
+        // Pick up armor
+        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ChainMail);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        // Equip via Equip action
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.Equip;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        ref var equipAfter = ref engine.EcsWorld.Get<Equipment>(player);
+        Assert.True(equipAfter.HasArmor);
+
+        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
+        Assert.True(statsAfter.Defense > baseDef);
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Empty(inv.Items!);
+    }
+
+    [Fact]
+    public void PickUp_StackableItem_OverflowToNewSlot()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        // Manually add a potion at max stack size to inventory
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        inv.Items!.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            StackCount = potionDef.MaxStackSize // Full stack (10)
+        });
+
+        // Pickup another potion — can't merge into full stack, should go to new slot
+        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Equal(2, invAfter.Items!.Count); // Original full stack + new slot
+        Assert.Equal(potionDef.MaxStackSize, invAfter.Items[0].StackCount);
+        Assert.Equal(1, invAfter.Items[1].StackCount);
+    }
+
+    [Fact]
+    public void PickUp_StackableItem_SkipsFullStack_MergesIntoPartial()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+
+        // Add a non-matching item, a FULL potion stack, and a partial potion stack
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.ShortSword, // Different item — forces "if" false branch
+            StackCount = 1
+        });
+        inv.Items.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            StackCount = potionDef.MaxStackSize // Full stack
+        });
+        inv.Items.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            StackCount = 3 // Partial stack
+        });
+
+        // Pickup another potion — should skip non-matching + full stack, merge into partial
+        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Equal(3, invAfter.Items!.Count);
+        Assert.Equal(ItemDefinitions.ShortSword, invAfter.Items[0].ItemTypeId);
+        Assert.Equal(potionDef.MaxStackSize, invAfter.Items[1].StackCount);
+        Assert.Equal(4, invAfter.Items[2].StackCount); // 3 + 1
+    }
+
+    [Fact]
+    public void PickUp_StackableItem_PartialMerge_ContinuesLoop()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy);
+
+        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        // MaxStackSize for potions is 10
+
+        // Inventory: slot 0 has potion at 9 (can absorb 1 more), slot 1 has potion at 5
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 9 });
+        inv.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5 });
+
+        // Spawn potion and manually increase its StackCount to 3
+        var potionTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var groundItem = engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+        ref var groundData = ref engine.EcsWorld.Get<ItemData>(groundItem);
+        groundData.StackCount = 3; // Slot 0 absorbs 1 (9→10), leaves 2 → slot 1 absorbs 2 (5→7)
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.Equal(2, invAfter.Items!.Count);
+        Assert.Equal(10, invAfter.Items[0].StackCount); // Was 9, absorbed 1
+        Assert.Equal(7, invAfter.Items[1].StackCount); // Was 5, absorbed 2
+    }
 }

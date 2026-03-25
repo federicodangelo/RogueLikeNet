@@ -46,34 +46,27 @@ public static class SkillIds
 
 public static class SkillDefinitions
 {
-    public static int GetCooldown(int skillId) => skillId switch
-    {
-        SkillIds.PowerStrike => 5,
-        SkillIds.ShieldBash => 8,
-        SkillIds.Backstab => 6,
-        SkillIds.Dodge => 10,
-        SkillIds.Fireball => 8,
-        SkillIds.Heal => 12,
-        SkillIds.PowerShot => 6,
-        SkillIds.Trap => 15,
-        _ => 0,
-    };
+    public static readonly SkillDefinition[] All =
+    [
+        new(SkillIds.PowerStrike, "Power Strike", 5, 200, 1),
+        new(SkillIds.ShieldBash,  "Shield Bash",  8, 50,  1),
+        new(SkillIds.Backstab,    "Backstab",     6, 300, 1),
+        new(SkillIds.Dodge,       "Dodge",       10, 100, 1),
+        new(SkillIds.Fireball,    "Fireball",     8, 150, 5),
+        new(SkillIds.Heal,        "Heal",        12, 100, 1),
+        new(SkillIds.PowerShot,   "Power Shot",   6, 180, 5),
+        new(SkillIds.Trap,        "Trap",        15, 100, 3),
+    ];
 
-    public static int GetDamageMultiplier(int skillId) => skillId switch
-    {
-        SkillIds.PowerStrike => 200, // percent
-        SkillIds.ShieldBash => 50,
-        SkillIds.Backstab => 300,
-        SkillIds.Fireball => 150,
-        SkillIds.PowerShot => 180,
-        _ => 100,
-    };
+    public static SkillDefinition Get(int skillId) =>
+        Array.Find(All, d => d.SkillId == skillId);
 
-    public static int GetRange(int skillId) => skillId switch
-    {
-        SkillIds.Fireball => 5,
-        SkillIds.PowerShot => 5,
-        SkillIds.Trap => 3,
-        _ => 1,
-    };
+    public static string GetName(int skillId) => Get(skillId).Name ?? "";
+
+    public static int GetCooldown(int skillId) => Get(skillId).Cooldown;
+    public static int GetDamageMultiplier(int skillId) => Get(skillId).DamageMultiplier is 0 ? 100 : Get(skillId).DamageMultiplier;
+    public static int GetRange(int skillId) => Get(skillId).Range is 0 ? 1 : Get(skillId).Range;
 }
+
+public readonly record struct SkillDefinition(
+    int SkillId, string Name, int Cooldown, int DamageMultiplier, int Range);

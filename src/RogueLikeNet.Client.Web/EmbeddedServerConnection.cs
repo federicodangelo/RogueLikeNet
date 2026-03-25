@@ -1,7 +1,6 @@
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -60,6 +59,7 @@ public class LocalGameConnection : IGameServerConnection
         playerInput.TargetX = input.TargetX;
         playerInput.TargetY = input.TargetY;
         playerInput.ItemSlot = input.ItemSlot;
+        playerInput.TargetSlot = input.TargetSlot;
 
         return Task.CompletedTask;
     }
@@ -90,31 +90,11 @@ public class LocalGameConnection : IGameServerConnection
             snapshot.PlayerX = pos.X;
             snapshot.PlayerY = pos.Y;
             snapshot.PlayerEntityId = _playerEntity.Id;
-
-            var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
-            var chunks = new List<ChunkDataMsg>();
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-                chunks.Add(SerializeChunk(_engine.EnsureChunkLoaded(cx + dx, cy + dy)));
-            snapshot.Chunks = chunks.ToArray();
-
-            var entities = new List<EntityMsg>();
-            var query = new Arch.Core.QueryDescription().WithAll<Position, TileAppearance>();
-            _engine.EcsWorld.Query(in query, (Arch.Core.Entity e, ref Position ePos, ref TileAppearance app) =>
-            {
-                var msg = new EntityMsg { Id = e.Id, X = ePos.X, Y = ePos.Y, GlyphId = app.GlyphId, FgColor = app.FgColor };
-                if (_engine.EcsWorld.Has<Health>(e))
-                {
-                    ref var h = ref _engine.EcsWorld.Get<Health>(e);
-                    msg.Health = h.Current;
-                    msg.MaxHealth = h.Max;
-                }
-                entities.Add(msg);
-            });
-            snapshot.Entities = entities.ToArray();
+            snapshot.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y);
+            snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld);
         }
 
-        snapshot.PlayerHud = BuildPlayerHud();
+        snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
         return snapshot;
     }
 
@@ -122,90 +102,16 @@ public class LocalGameConnection : IGameServerConnection
     {
         var delta = new WorldDeltaMsg { FromTick = _engine.CurrentTick - 1, ToTick = _engine.CurrentTick };
 
-        // Include chunks around the player with updated light levels
         if (_engine.EcsWorld.IsAlive(_playerEntity))
         {
             ref var playerPos = ref _engine.EcsWorld.Get<Position>(_playerEntity);
-            var (cx, cy) = Chunk.WorldToChunkCoord(playerPos.X, playerPos.Y);
-            var chunks = new List<ChunkDataMsg>();
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-                chunks.Add(SerializeChunk(_engine.EnsureChunkLoaded(cx + dx, cy + dy)));
-            delta.Chunks = chunks.ToArray();
+            delta.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, playerPos.X, playerPos.Y);
         }
 
-        var entities = new List<EntityUpdateMsg>();
-        var query = new Arch.Core.QueryDescription().WithAll<Position, TileAppearance>();
-        _engine.EcsWorld.Query(in query, (Arch.Core.Entity e, ref Position ePos, ref TileAppearance app) =>
-        {
-            var u = new EntityUpdateMsg { Id = e.Id, X = ePos.X, Y = ePos.Y, GlyphId = app.GlyphId, FgColor = app.FgColor };
-            if (_engine.EcsWorld.Has<Health>(e))
-            {
-                ref var h = ref _engine.EcsWorld.Get<Health>(e);
-                u.Health = h.Current;
-                u.MaxHealth = h.Max;
-            }
-            entities.Add(u);
-        });
-        delta.EntityUpdates = entities.ToArray();
-
-        var combatEvents = _engine.Combat.LastTickEvents;
-        if (combatEvents.Count > 0)
-        {
-            delta.CombatEvents = combatEvents.Select(ev => new CombatEventMsg
-            {
-                AttackerX = ev.AttackerX, AttackerY = ev.AttackerY,
-                TargetX = ev.TargetX, TargetY = ev.TargetY,
-                Damage = ev.Damage, TargetDied = ev.TargetDied,
-            }).ToArray();
-        }
-
-        delta.PlayerHud = BuildPlayerHud();
+        delta.EntityUpdates = GameStateSerializer.SerializeEntityUpdates(_engine.EcsWorld);
+        delta.CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine);
+        delta.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
         return delta;
-    }
-
-    private PlayerHudMsg? BuildPlayerHud()
-    {
-        var hudData = _engine.GetPlayerHudData(_playerEntity);
-        if (hudData == null) return null;
-        return new PlayerHudMsg
-        {
-            Health = hudData.Health,
-            MaxHealth = hudData.MaxHealth,
-            Attack = hudData.Attack,
-            Defense = hudData.Defense,
-            Level = hudData.Level,
-            Experience = hudData.Experience,
-            InventoryCount = hudData.InventoryCount,
-            InventoryCapacity = hudData.InventoryCapacity,
-            SkillIds = hudData.SkillIds,
-            SkillCooldowns = hudData.SkillCooldowns,
-            InventoryNames = hudData.InventoryNames,
-        };
-    }
-
-    private static ChunkDataMsg SerializeChunk(Chunk chunk)
-    {
-        int total = Chunk.Size * Chunk.Size;
-        var msg = new ChunkDataMsg
-        {
-            ChunkX = chunk.ChunkX, ChunkY = chunk.ChunkY,
-            TileTypes = new byte[total], TileGlyphs = new int[total],
-            TileFgColors = new int[total], TileBgColors = new int[total],
-            TileLightLevels = new int[total],
-        };
-        for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            int idx = y * Chunk.Size + x;
-            ref var tile = ref chunk.Tiles[x, y];
-            msg.TileTypes[idx] = (byte)tile.Type;
-            msg.TileGlyphs[idx] = tile.GlyphId;
-            msg.TileFgColors[idx] = tile.FgColor;
-            msg.TileBgColors[idx] = tile.BgColor;
-            msg.TileLightLevels[idx] = tile.LightLevel;
-        }
-        return msg;
     }
 
     public ValueTask DisposeAsync()

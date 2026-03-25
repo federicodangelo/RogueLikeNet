@@ -35,4 +35,29 @@ public class ClientInputMsgTests
         Assert.Equal(2, result.TargetY);
         Assert.Equal(5, result.ItemSlot);
     }
+
+    [Fact]
+    public void ClientInputMsg_TargetSlot_DefaultValue()
+    {
+        var msg = new ClientInputMsg();
+        Assert.Equal(0, msg.TargetSlot);
+    }
+
+    [Fact]
+    public void ClientInputMsg_TargetSlot_RoundTrip()
+    {
+        var msg = new ClientInputMsg
+        {
+            Tick = 50,
+            ActionType = 8, // SwapItems
+            ItemSlot = 2,
+            TargetSlot = 5
+        };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<ClientInputMsg>(data);
+        Assert.Equal(50, result.Tick);
+        Assert.Equal(8, result.ActionType);
+        Assert.Equal(2, result.ItemSlot);
+        Assert.Equal(5, result.TargetSlot);
+    }
 }

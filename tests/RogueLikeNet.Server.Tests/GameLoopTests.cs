@@ -605,4 +605,71 @@ public class GameLoopTests
         }
         Assert.True(hasFloorItems, "Delta should contain floor item names in PlayerHud");
     }
+
+    [Fact]
+    public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
+    {
+        using var loop = new GameLoop(42);
+        var chunk = loop.Engine.EnsureChunkLoaded(0, 0);
+
+        var msg = GameStateSerializer.SerializeChunk(chunk);
+
+        Assert.Equal(0, msg.ChunkX);
+        Assert.Equal(0, msg.ChunkY);
+        int total = RogueLikeNet.Core.World.Chunk.Size * RogueLikeNet.Core.World.Chunk.Size;
+        Assert.Equal(total, msg.TileTypes.Length);
+        Assert.Equal(total, msg.TileGlyphs.Length);
+        Assert.Equal(total, msg.TileFgColors.Length);
+        Assert.Equal(total, msg.TileBgColors.Length);
+        Assert.Equal(total, msg.TileLightLevels.Length);
+    }
+
+    [Fact]
+    public async Task GameStateSerializer_SerializeEntities_IncludesPlayer()
+    {
+        using var loop = new GameLoop(42);
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        var entities = GameStateSerializer.SerializeEntities(loop.Engine.EcsWorld);
+        Assert.True(entities.Length > 0);
+        // Player entity should be present
+        var playerEntity = entities.FirstOrDefault(e => e.Id == conn.PlayerEntity!.Value.Id);
+        Assert.NotNull(playerEntity);
+        Assert.True(playerEntity.MaxHealth > 0);
+    }
+
+    [Fact]
+    public async Task GameStateSerializer_BuildPlayerHud_PopulatesAllFields()
+    {
+        using var loop = new GameLoop(42);
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        var hudMsg = GameStateSerializer.BuildPlayerHud(loop.Engine, conn.PlayerEntity!.Value);
+        Assert.NotNull(hudMsg);
+        Assert.True(hudMsg!.MaxHealth > 0);
+        Assert.True(hudMsg.Attack > 0);
+        Assert.True(hudMsg.Defense > 0);
+        Assert.Equal(4, hudMsg.SkillIds.Length);
+        Assert.Equal(4, hudMsg.SkillNames.Length);
+        Assert.Equal("", hudMsg.EquippedWeaponName); // Nothing equipped yet
+        Assert.Equal("", hudMsg.EquippedArmorName);
+        Assert.Empty(hudMsg.InventoryStackCounts);
+        Assert.Empty(hudMsg.InventoryRarities);
+    }
+
+    [Fact]
+    public async Task GameStateSerializer_BuildPlayerHud_NullForDeadEntity()
+    {
+        using var loop = new GameLoop(42);
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        var entity = conn.PlayerEntity!.Value;
+        loop.Engine.EcsWorld.Destroy(entity);
+
+        var hudMsg = GameStateSerializer.BuildPlayerHud(loop.Engine, entity);
+        Assert.Null(hudMsg);
+    }
 }

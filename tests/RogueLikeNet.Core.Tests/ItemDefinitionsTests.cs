@@ -63,4 +63,46 @@ public class ItemDefinitionsTests
         Assert.Contains(0, rarities);
         Assert.Contains(1, rarities);
     }
+
+    [Fact]
+    public void All_ContainsAllDefinedItems()
+    {
+        Assert.Equal(11, ItemDefinitions.All.Length);
+        Assert.Same(ItemDefinitions.Templates, ItemDefinitions.All);
+    }
+
+    [Theory]
+    [InlineData(ItemDefinitions.ShortSword, "Short Sword", ItemDefinitions.CategoryWeapon)]
+    [InlineData(ItemDefinitions.LongSword, "Long Sword", ItemDefinitions.CategoryWeapon)]
+    [InlineData(ItemDefinitions.LeatherArmor, "Leather Armor", ItemDefinitions.CategoryArmor)]
+    [InlineData(ItemDefinitions.HealthPotion, "Health Potion", ItemDefinitions.CategoryPotion)]
+    [InlineData(ItemDefinitions.Gold, "Gold", ItemDefinitions.CategoryGold)]
+    public void Get_ReturnsCorrectDefinition(int typeId, string expectedName, int expectedCategory)
+    {
+        var def = ItemDefinitions.Get(typeId);
+        Assert.Equal(typeId, def.TypeId);
+        Assert.Equal(expectedName, def.Name);
+        Assert.Equal(expectedCategory, def.Category);
+    }
+
+    [Fact]
+    public void Get_InvalidTypeId_ReturnsDefault()
+    {
+        var def = ItemDefinitions.Get(9999);
+        Assert.Equal(0, def.TypeId);
+        Assert.Null(def.Name);
+    }
+
+    [Theory]
+    [InlineData(ItemDefinitions.HealthPotion, true, 10)]
+    [InlineData(ItemDefinitions.StrengthPotion, true, 10)]
+    [InlineData(ItemDefinitions.Gold, true, 999)]
+    [InlineData(ItemDefinitions.ShortSword, false, 1)]
+    [InlineData(ItemDefinitions.LeatherArmor, false, 1)]
+    public void Stackable_And_MaxStackSize(int typeId, bool expectedStackable, int expectedMaxStack)
+    {
+        var def = ItemDefinitions.Get(typeId);
+        Assert.Equal(expectedStackable, def.Stackable);
+        Assert.Equal(expectedMaxStack, def.MaxStackSize);
+    }
 }

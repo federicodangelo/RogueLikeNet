@@ -236,4 +236,78 @@ public class GameEngineTests
         Assert.NotEmpty(hud!.FloorItemNames);
         Assert.Equal("Short Sword", hud.FloorItemNames[0]);
     }
+
+    [Fact]
+    public void GetPlayerHudData_SkillNames_MatchSkillDefinitions()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Mage);
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal(4, hud!.SkillNames.Length);
+        // Mage skills: Fireball, Heal, and two more
+        Assert.Equal(SkillDefinitions.GetName(hud.SkillIds[0]), hud.SkillNames[0]);
+        Assert.Equal(SkillDefinitions.GetName(hud.SkillIds[1]), hud.SkillNames[1]);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_EquippedNames_AfterEquip()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        // Equip weapon
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+        ref var input1 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input1.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.UseItem;
+        input2.ItemSlot = 0;
+        engine.Tick();
+
+        // Equip armor
+        var armorTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+        ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input3.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        ref var input4 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input4.ActionType = ActionTypes.UseItem;
+        input4.ItemSlot = 0;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal("Short Sword", hud!.EquippedWeaponName);
+        Assert.Equal("Leather Armor", hud.EquippedArmorName);
+    }
+
+    [Fact]
+    public void GetPlayerHudData_InventoryStackCountsAndRarities()
+    {
+        using var engine = new GameEngine(42);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassIds.Warrior);
+
+        var swordTemplate = Array.Find(ItemDefinitions.Templates, t => t.TypeId == ItemDefinitions.ShortSword);
+        engine.SpawnItemOnGround(swordTemplate, 1, sx, sy);
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        var hud = engine.GetPlayerHudData(player);
+        Assert.NotNull(hud);
+        Assert.Equal(1, hud!.InventoryStackCounts.Length);
+        Assert.Equal(1, hud.InventoryStackCounts[0]); // Sword is not stackable
+        Assert.Equal(1, hud.InventoryRarities.Length);
+        Assert.Equal(1, hud.InventoryRarities[0]); // Rarity 1 (Uncommon)
+    }
 }

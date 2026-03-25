@@ -6,6 +6,7 @@ public struct PlayerInput
     public int TargetX;
     public int TargetY;
     public int ItemSlot;
+    public int TargetSlot;
 }
 
 public static class ActionTypes
@@ -18,4 +19,7 @@ public static class ActionTypes
     public const int PickUp = 5;
     public const int Drop = 6;
     public const int Wait = 7;
+    public const int SwapItems = 8;
+    public const int Unequip = 9;
+    public const int Equip = 10;
 }

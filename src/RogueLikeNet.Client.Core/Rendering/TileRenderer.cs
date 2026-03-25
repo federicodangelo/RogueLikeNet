@@ -66,13 +66,31 @@ public class TileRenderer : IDisposable
 
     public void Initialize()
     {
-        var typeface = SKTypeface.FromFamilyName("Consolas", SKFontStyle.Normal)
-            ?? SKTypeface.FromFamilyName("Courier New", SKFontStyle.Normal)
+        // Try fonts in order: Consolas (Windows), DejaVu Sans Mono (Linux/WASM),
+        // Courier New (cross-platform), monospace (generic/CSS fallback)
+        var typeface = TryLoadTypeface("Consolas")
+            ?? TryLoadTypeface("DejaVu Sans Mono")
+            ?? TryLoadTypeface("Courier New")
+            ?? TryLoadTypeface("monospace")
             ?? SKTypeface.Default;
 
         _font = new SKFont(typeface, TileHeight - 2);
         _bgPaint = new SKPaint { Style = SKPaintStyle.Fill };
         _fgPaint = new SKPaint { Style = SKPaintStyle.Fill, IsAntialias = false };
+    }
+
+    private static SKTypeface? TryLoadTypeface(string familyName)
+    {
+        var tf = SKTypeface.FromFamilyName(familyName, SKFontStyle.Normal);
+        // SkiaSharp may return a substitute rather than null — check the actual family matches
+        if (tf != null && tf.FamilyName.Equals(familyName, StringComparison.OrdinalIgnoreCase))
+            return tf;
+        // In some environments (WASM), the family name check may not match exactly,
+        // but we still want to use it if it's not just the default fallback
+        if (tf != null && !tf.FamilyName.Equals(SKTypeface.Default.FamilyName, StringComparison.OrdinalIgnoreCase))
+            return tf;
+        tf?.Dispose();
+        return null;
     }
 
     // ── Game Screen ────────────────────────────────────────────
@@ -201,15 +219,29 @@ public class TileRenderer : IDisposable
         {
             if (hud.SkillIds[i] == 0) continue;
             string key = i == 0 ? "Q" : "E";
+            string name = i < hud.SkillNames.Length && !string.IsNullOrEmpty(hud.SkillNames[i])
+                ? hud.SkillNames[i] : $"Skill {i + 1}";
             int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
-            string text = cd > 0 ? $"[{key}] cd:{cd}" : $"[{key}] ready";
+            string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
             DrawString(canvas, col, row, text, cd > 0 ? ColorSkillCd : ColorSkillReady);
             row++;
         }
         row++;
 
-        // Inventory
-        DrawString(canvas, col, row, "Items", ColorTitle);
+        // Equipment
+        DrawString(canvas, col, row, "Equipment", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+        string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
+        string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
+        DrawString(canvas, col, row, $"W: {wpn}", ColorItem);
+        row++;
+        DrawString(canvas, col, row, $"A: {arm}", ColorItem);
+        row += 2;
+
+        // Quick Use Slots
+        DrawString(canvas, col, row, "Quick Use Slots", ColorTitle);
         row++;
         DrawHudSeparator(canvas, col, row, innerW);
         row++;
@@ -217,7 +249,11 @@ public class TileRenderer : IDisposable
         for (int i = 0; i < 4; i++)
         {
             if (i < itemsToShow && !string.IsNullOrEmpty(hud.InventoryNames[i]))
-                DrawString(canvas, col, row, $"[{i + 1}]{hud.InventoryNames[i]}", ColorItem);
+            {
+                int stack = i < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[i] : 1;
+                string stackStr = stack > 1 ? $"x{stack}" : "";
+                DrawString(canvas, col, row, $"[{i + 1}]{hud.InventoryNames[i]}{stackStr}", ColorItem);
+            }
             else
                 DrawString(canvas, col, row, $"[{i + 1}] ---", ColorDim);
             row++;
@@ -284,15 +320,32 @@ public class TileRenderer : IDisposable
         for (int i = 0; i < cap; i++)
         {
             bool sel = i == selectedIndex;
+            bool isQuickSlot = i < 4;
             string prefix = sel ? "\u25ba" : " ";
+            string slotTag = isQuickSlot ? $"[{i + 1}]" : $"   ";
             string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
                 ? hud.InventoryNames[i]
                 : "---";
-            string text = $"{prefix}[{i + 1}]{name}";
-            DrawString(canvas, col, row, text, sel ? ColorInvSel : ColorItem);
+            int stack = i < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[i] : 1;
+            string stackStr = stack > 1 ? $" x{stack}" : "";
+            string text = $"{prefix}{slotTag}{name}{stackStr}";
+            var color = sel ? ColorInvSel : isQuickSlot ? ColorItem : ColorInv;
+            DrawString(canvas, col, row, text, color);
             row++;
         }
         row++;
+
+        // Equipped items section
+        DrawString(canvas, col, row, "Equipped", ColorTitle);
+        row++;
+        DrawHudSeparator(canvas, col, row, innerW);
+        row++;
+        string eq_wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
+        string eq_arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
+        DrawString(canvas, col, row, $"W: {eq_wpn}", ColorItem);
+        row++;
+        DrawString(canvas, col, row, $"A: {eq_arm}", ColorItem);
+        row += 2;
 
         DrawString(canvas, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
         row += 2;
@@ -302,11 +355,17 @@ public class TileRenderer : IDisposable
         row++;
         DrawHudSeparator(canvas, col, row, innerW);
         row++;
-        DrawString(canvas, col, row, "[1-4]  Use item", ColorDim);
+        DrawString(canvas, col, row, "[Enter] Use item", ColorDim);
         row++;
-        DrawString(canvas, col, row, "[X]    Drop item", ColorDim);
+        DrawString(canvas, col, row, "[E]     Equip", ColorDim);
         row++;
-        DrawString(canvas, col, row, "[Esc]  Close", ColorDim);
+        DrawString(canvas, col, row, "[U]     Unequip wpn", ColorDim);
+        row++;
+        DrawString(canvas, col, row, "[R]     Unequip arm", ColorDim);
+        row++;
+        DrawString(canvas, col, row, "[X]     Drop item", ColorDim);
+        row++;
+        DrawString(canvas, col, row, "[Esc]   Close", ColorDim);
     }
 
     // ── Connecting Screen ──────────────────────────────────────
