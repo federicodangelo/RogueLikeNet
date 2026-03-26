@@ -1,5 +1,8 @@
+using Arch.AOT.SourceGenerator;
+
 namespace RogueLikeNet.Core.Components;
 
+[Component]
 public struct Inventory
 {
     public List<ItemData>? Items;
@@ -14,6 +17,7 @@ public struct Inventory
     public bool IsFull => Items != null && Items.Count >= Capacity;
 }
 
+[Component]
 public struct Equipment
 {
     public ItemData? Weapon;
@@ -23,6 +27,7 @@ public struct Equipment
     public bool HasArmor => Armor.HasValue;
 }
 
+[Component]
 public struct ItemData
 {
     public int ItemTypeId;

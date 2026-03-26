@@ -1,5 +1,8 @@
+using Arch.AOT.SourceGenerator;
+
 namespace RogueLikeNet.Core.Components;
 
+[Component]
 public struct FOVData
 {
     public int Radius;

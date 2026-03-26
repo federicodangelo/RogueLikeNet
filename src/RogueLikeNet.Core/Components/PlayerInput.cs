@@ -1,5 +1,8 @@
+using Arch.AOT.SourceGenerator;
+
 namespace RogueLikeNet.Core.Components;
 
+[Component]
 public struct PlayerInput
 {
     public int ActionType;
