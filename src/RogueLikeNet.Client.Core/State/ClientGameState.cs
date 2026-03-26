@@ -207,11 +207,15 @@ public class ClientGameState
 
     private void ComputeLighting()
     {
-        // Reset all loaded chunk light to 0
+        // Reset light only for chunks within FOV range of the player
+        var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - FovRadius, PlayerY - FovRadius);
+        var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + FovRadius, PlayerY + FovRadius);
         foreach (var chunk in _chunks.Values)
-            for (int x = 0; x < Chunk.Size; x++)
-                for (int y = 0; y < Chunk.Size; y++)
-                    chunk.Tiles[x, y].LightLevel = 0;
+            if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx &&
+                chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
+                for (int x = 0; x < Chunk.Size; x++)
+                    for (int y = 0; y < Chunk.Size; y++)
+                        chunk.Tiles[x, y].LightLevel = 0;
 
         // Player emits light at FOV radius
         FloodLight(PlayerX, PlayerY, FovRadius);
