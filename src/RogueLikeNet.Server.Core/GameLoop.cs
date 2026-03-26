@@ -200,12 +200,11 @@ public class GameLoop : IDisposable
             WorldTick = _engine.CurrentTick,
             PlayerX = pos.X,
             PlayerY = pos.Y,
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y),
+            Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov),
+            PlayerState = GameStateSerializer.BuildPlayerState(_engine, entity),
+            FloorItems = GameStateSerializer.BuildFloorItems(_engine, entity)
         };
-
-        snapshot.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y);
-        snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov);
-        snapshot.PlayerState = GameStateSerializer.BuildPlayerState(_engine, entity);
-        snapshot.FloorItems = GameStateSerializer.BuildFloorItems(_engine, entity);
 
         // Seed chunk tracking from snapshot so first delta only sends new chunks
         conn.SentChunkKeys.Clear();

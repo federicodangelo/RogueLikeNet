@@ -74,6 +74,7 @@ public class PlayerStateMsg
     [Key(16)] public int[] InventoryRarities { get; set; } = [];
     [Key(17)] public int[] InventoryCategories { get; set; } = [];
     [Key(18)] public int[] QuickSlotIndices { get; set; } = [];
+    [Key(19)] public long PlayerEntityId { get; set; }
 }
 
 [MessagePackObject]

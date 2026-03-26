@@ -136,19 +136,6 @@ public class GameStateSerializerTests
     }
 
     [Fact]
-    public void SerializeEntities_WithoutFOV_ReturnsAllEntities()
-    {
-        var world = World.Create();
-        world.Create(new Position(1, 1), new TileAppearance(64, 0xFFFFFF));
-        world.Create(new Position(99, 99), new TileAppearance(65, 0xFFFFFF));
-
-        var result = GameStateSerializer.SerializeEntities(world);
-        Assert.Equal(2, result.Length);
-
-        World.Destroy(world);
-    }
-
-    [Fact]
     public void ChatMsg_RoundTrip()
     {
         var msg = new ChatMsg

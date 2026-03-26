@@ -636,21 +636,6 @@ public class GameLoopTests
     }
 
     [Fact]
-    public async Task GameStateSerializer_SerializeEntities_IncludesPlayer()
-    {
-        using var loop = new GameLoop(42, _gen);
-        var conn = loop.AddConnection(_ => Task.CompletedTask);
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
-
-        var entities = GameStateSerializer.SerializeEntities(loop.Engine.EcsWorld);
-        Assert.True(entities.Length > 0);
-        // Player entity should be present
-        var playerEntity = entities.FirstOrDefault(e => e.Id == conn.PlayerEntity!.Value.Id);
-        Assert.NotNull(playerEntity);
-        Assert.True(playerEntity.MaxHealth > 0);
-    }
-
-    [Fact]
     public async Task GameStateSerializer_BuildPlayerState_PopulatesAllFields()
     {
         using var loop = new GameLoop(42, _gen);

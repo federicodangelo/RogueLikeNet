@@ -17,8 +17,9 @@ public class ClientGameState
     private readonly HashSet<long> _exploredTiles = new();
     private readonly HashSet<long> _visibleTiles = new();
 
-    public int PlayerX { get; set; }
-    public int PlayerY { get; set; }
+    public int PlayerX { get; private set; }
+    public int PlayerY { get; private set; }
+    public long PlayerEntityId { get; private set; }
     public long WorldTick { get; set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
@@ -45,6 +46,7 @@ public class ClientGameState
         WorldTick = snapshot.WorldTick;
         PlayerX = snapshot.PlayerX;
         PlayerY = snapshot.PlayerY;
+        PlayerEntityId = snapshot.PlayerEntityId;
 
         _chunks.Clear();
         foreach (var chunkMsg in snapshot.Chunks)
@@ -125,18 +127,6 @@ public class ClientGameState
             entity.LightRadius = entityUpdate.LightRadius;
         }
 
-        // Find player entity and update position
-        foreach (var entity in _entities.Values)
-        {
-            // The player entity has a specific glyph (@ = 64)
-            if (entity.GlyphId == 64)
-            {
-                PlayerX = entity.X;
-                PlayerY = entity.Y;
-                break;
-            }
-        }
-
         if (delta.PlayerState != null)
             PlayerState = delta.PlayerState;
 
@@ -146,6 +136,16 @@ public class ClientGameState
         // Queue combat events for particle system
         if (delta.CombatEvents.Length > 0)
             _pendingCombatEvents.AddRange(delta.CombatEvents);
+
+        // Update player data (entity id, X, Y) and recompute visibility/lighting since it may have changed
+        if (PlayerState != null)
+            PlayerEntityId = PlayerState.PlayerEntityId;
+
+        if (_entities.TryGetValue(PlayerEntityId, out var playerEntity))
+        {
+            PlayerX = playerEntity.X;
+            PlayerY = playerEntity.Y;
+        }
 
         ComputeVisibility();
         ComputeLighting();

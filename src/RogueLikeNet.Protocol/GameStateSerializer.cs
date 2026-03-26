@@ -94,33 +94,6 @@ public static class GameStateSerializer
         return newChunks.ToArray();
     }
 
-    public static EntityMsg[] SerializeEntities(World world)
-    {
-        var entities = new List<EntityMsg>();
-        var query = new QueryDescription().WithAll<Position, TileAppearance>();
-        world.Query(in query, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
-        {
-            var msg = new EntityMsg
-            {
-                Id = e.Id,
-                X = ePos.X,
-                Y = ePos.Y,
-                GlyphId = appearance.GlyphId,
-                FgColor = appearance.FgColor,
-            };
-            if (world.Has<Health>(e))
-            {
-                ref var health = ref world.Get<Health>(e);
-                msg.Health = health.Current;
-                msg.MaxHealth = health.Max;
-            }
-            if (world.Has<LightSource>(e))
-                msg.LightRadius = world.Get<LightSource>(e).Radius;
-            entities.Add(msg);
-        });
-        return entities.ToArray();
-    }
-
     public static EntityMsg[] SerializeEntities(World world, FOVData fov)
     {
         var entities = new List<EntityMsg>();
@@ -145,33 +118,6 @@ public static class GameStateSerializer
             if (world.Has<LightSource>(e))
                 msg.LightRadius = world.Get<LightSource>(e).Radius;
             entities.Add(msg);
-        });
-        return entities.ToArray();
-    }
-
-    public static EntityUpdateMsg[] SerializeEntityUpdates(World world)
-    {
-        var entities = new List<EntityUpdateMsg>();
-        var query = new QueryDescription().WithAll<Position, TileAppearance>();
-        world.Query(in query, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
-        {
-            var update = new EntityUpdateMsg
-            {
-                Id = e.Id,
-                X = ePos.X,
-                Y = ePos.Y,
-                GlyphId = appearance.GlyphId,
-                FgColor = appearance.FgColor,
-            };
-            if (world.Has<Health>(e))
-            {
-                ref var health = ref world.Get<Health>(e);
-                update.Health = health.Current;
-                update.MaxHealth = health.Max;
-            }
-            if (world.Has<LightSource>(e))
-                update.LightRadius = world.Get<LightSource>(e).Radius;
-            entities.Add(update);
         });
         return entities.ToArray();
     }
@@ -277,6 +223,7 @@ public static class GameStateSerializer
             EquippedWeaponName = hudData.EquippedWeaponName,
             EquippedArmorName = hudData.EquippedArmorName,
             QuickSlotIndices = hudData.QuickSlotIndices,
+            PlayerEntityId = playerEntity.Id,
         };
     }
 

@@ -39,6 +39,7 @@ public class ClientGameStateTests
         return new WorldSnapshotMsg
         {
             WorldTick = 1,
+            PlayerEntityId = 1,
             PlayerX = playerX,
             PlayerY = playerY,
             Chunks = [MakeFloorChunk(0, 0)],
@@ -429,6 +430,7 @@ public class ClientGameStateTests
             TileUpdates = [],
             CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         });
 
         // Old position no longer visible, new is
