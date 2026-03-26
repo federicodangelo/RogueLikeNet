@@ -7,7 +7,7 @@ namespace RogueLikeNet.Server;
 /// <summary>
 /// ASP.NET Core WebSocket middleware that handles game connections.
 /// </summary>
-public static class WebSocketHandler
+public static class ServerWebSocketHandler
 {
     public static async Task HandleConnection(WebSocket socket, GameServer gameServer)
     {

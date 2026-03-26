@@ -6,7 +6,7 @@ using RogueLikeNet.Server;
 
 namespace RogueLikeNet.Server.Tests;
 
-public class WebSocketHandlerTests
+public class ServerWebSocketHandlerTests
 {
     private static readonly BspDungeonGenerator _gen = new();
 
@@ -25,7 +25,7 @@ public class WebSocketHandlerTests
         socket.EnqueueReceive(MakeLoginMessage());
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         Assert.True(socket.SentMessages.Count > 0);
         var first = socket.SentMessages[0];
@@ -49,7 +49,7 @@ public class WebSocketHandlerTests
         socket.EnqueueReceive(wrapped);
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Should have processed without errors and sent snapshot
         Assert.True(socket.SentMessages.Count > 0);
@@ -70,7 +70,7 @@ public class WebSocketHandlerTests
         socket.EnqueueReceive(wrapped);
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Chat is currently a no-op; should not crash
         Assert.True(socket.SentMessages.Count > 0);
@@ -83,7 +83,7 @@ public class WebSocketHandlerTests
         var socket = new FakeWebSocket();
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         Assert.Equal(WebSocketState.Closed, socket.State);
     }
@@ -94,7 +94,7 @@ public class WebSocketHandlerTests
         using var loop = new GameServer(42, _gen);
         var socket = new FakeWebSocket { ThrowOnReceive = true };
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Socket state should be Aborted (set by FakeWebSocket before throw)
         Assert.Equal(WebSocketState.Aborted, socket.State);
@@ -110,7 +110,7 @@ public class WebSocketHandlerTests
         socket.EnqueueReceive([0xFF, 0xFE, 0x01]);
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Should handle the error in ProcessMessage and continue without crashing
         // No snapshot expected since login was never sent
@@ -124,7 +124,7 @@ public class WebSocketHandlerTests
         var socket = new FakeWebSocket();
         socket.EnqueueClose();
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Connection should be removed — adding new connections should still work
         var conn = loop.AddConnection(_ => Task.CompletedTask);
@@ -137,7 +137,7 @@ public class WebSocketHandlerTests
         using var loop = new GameServer(42, _gen);
         var socket = new FakeWebSocket { ThrowOnReceive = true };
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Socket was set to Aborted before throwing — CloseAsync should NOT be called
         Assert.Equal(WebSocketState.Aborted, socket.State);
@@ -151,7 +151,7 @@ public class WebSocketHandlerTests
         // Socket starts already closed — the send callback checks state before sending
         var socket = new FakeWebSocket { StartClosed = true };
 
-        await WebSocketHandler.HandleConnection(socket, loop);
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
 
         // Send should have been skipped since socket reports as closed
         Assert.Empty(socket.SentMessages);

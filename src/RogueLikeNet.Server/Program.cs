@@ -15,7 +15,7 @@ app.Map("/ws", async context =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         var socket = await context.WebSockets.AcceptWebSocketAsync();
-        await WebSocketHandler.HandleConnection(socket, gameServer);
+        await ServerWebSocketHandler.HandleConnection(socket, gameServer);
     }
     else
     {
