@@ -12,7 +12,6 @@ public class WorldDeltaMsg
     [Key(4)] public CombatEventMsg[] CombatEvents { get; set; } = [];
     [Key(5)] public ChunkDataMsg[] Chunks { get; set; } = [];
     [Key(6)] public PlayerStateMsg? PlayerState { get; set; }
-    // Key(7) reserved (was FloorItems, now derived from EntityUpdates)
 }
 
 [MessagePackObject]
