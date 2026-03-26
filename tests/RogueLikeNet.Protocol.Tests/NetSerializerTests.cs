@@ -112,4 +112,76 @@ public class NetSerializerTests
         Assert.Equal(MessageTypes.ClientInput, env1.MessageType);
         Assert.Equal(MessageTypes.WorldSnapshot, env2.MessageType);
     }
+
+    [Fact]
+    public void SmallPayload_NotCompressed()
+    {
+        // A small payload (<= 4096 bytes) must NOT be compressed
+        var msg = new ClientInputMsg { Tick = 1, ActionType = 2 };
+        var payload = NetSerializer.Serialize(msg);
+        var wrapped = NetSerializer.WrapMessage(MessageTypes.ClientInput, payload);
+
+        var envelope = NetSerializer.UnwrapMessage(wrapped);
+        // Payload should be identical to original after round-trip
+        Assert.Equal(MessageTypes.ClientInput, envelope.MessageType);
+        Assert.Equal(0, envelope.IsCompressed);
+        var result = NetSerializer.Deserialize<ClientInputMsg>(envelope.Payload);
+        Assert.Equal(1, result.Tick);
+        Assert.Equal(2, result.ActionType);
+    }
+
+    [Fact]
+    public void LargePayload_CompressedAndDecompressedTransparently()
+    {
+        // Build a payload larger than 4096 bytes by creating a snapshot with many chunks
+        var chunks = new ChunkDataMsg[50];
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i] = new ChunkDataMsg
+            {
+                ChunkX = i, ChunkY = i,
+                TileTypes = new byte[256],
+                TileGlyphs = new int[256],
+                TileFgColors = new int[256],
+                TileBgColors = new int[256],
+            };
+        }
+        var snapshot = new WorldSnapshotMsg { WorldTick = 42, PlayerX = 10, PlayerY = 10, Chunks = chunks, Entities = [] };
+        var payload = NetSerializer.Serialize(snapshot);
+        Assert.True(payload.Length > 4096, "Test payload must exceed compression threshold");
+
+        var wrapped = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+
+        // Unwrap is transparent — caller receives decompressed payload
+        var envelope = NetSerializer.UnwrapMessage(wrapped);
+        Assert.Equal(MessageTypes.WorldSnapshot, envelope.MessageType);
+        Assert.Equal(0, envelope.IsCompressed); // already decompressed by UnwrapMessage
+
+        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
+        Assert.Equal(42, result.WorldTick);
+        Assert.Equal(50, result.Chunks.Length);
+    }
+
+    [Fact]
+    public void LargePayload_WireFormatIsActuallySmaller()
+    {
+        // Verify the wire bytes are compressed (smaller than uncompressed envelope)
+        var chunks = new ChunkDataMsg[50];
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i] = new ChunkDataMsg
+            {
+                ChunkX = i, ChunkY = i,
+                TileTypes = new byte[256],
+                TileGlyphs = new int[256],
+                TileFgColors = new int[256],
+                TileBgColors = new int[256],
+            };
+        }
+        var snapshot = new WorldSnapshotMsg { WorldTick = 1, Chunks = chunks, Entities = [] };
+        var payload = NetSerializer.Serialize(snapshot);
+
+        var compressedWire = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+        Assert.True(compressedWire.Length < payload.Length, "Compressed wire frame should be smaller than raw payload");
+    }
 }

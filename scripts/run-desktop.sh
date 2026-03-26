@@ -4,6 +4,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "Launching RogueLikeNet Desktop Client (standalone mode)..."
-echo "  Controls: WASD or Arrow keys to move, Space to wait"
 echo ""
 dotnet run --project src/RogueLikeNet.Client.Desktop
