@@ -14,7 +14,6 @@ public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgCo
 
 /// <summary>
 /// Shared helpers for building snapshot/delta/HUD messages from game state.
-/// Used by both GameLoop (server) and LocalGameConnection (web client).
 /// </summary>
 public static class GameStateSerializer
 {

@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Arch.Core;
-using MessagePack;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
@@ -13,24 +11,24 @@ using Chunk = RogueLikeNet.Core.World.Chunk;
 namespace RogueLikeNet.Server;
 
 /// <summary>
-/// The authoritative game loop. Runs at 20 ticks/sec.
+/// The authoritative game server. Runs at 20 ticks/sec.
 /// Processes client inputs, runs game systems, broadcasts deltas.
 /// </summary>
-public class GameLoop : IDisposable
+public class GameServer : IDisposable
 {
     private const int TickRateMs = 50; // 20 ticks/sec
 
     private readonly GameEngine _engine;
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
     private readonly CancellationTokenSource _cts = new();
-    private Task? _loopTask;
+    private Task? _serverTask;
     private long _nextConnectionId = 1;
 
     public GameEngine Engine => _engine;
-    public bool IsRunning => _loopTask != null && !_loopTask.IsCompleted;
+    public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
 
-    public GameLoop(long worldSeed, IDungeonGenerator? generator = null)
+    public GameServer(long worldSeed, IDungeonGenerator? generator = null)
     {
         _engine = new GameEngine(worldSeed, generator);
         // Pre-generate spawn chunk
@@ -39,7 +37,7 @@ public class GameLoop : IDisposable
 
     public void Start()
     {
-        _loopTask = Task.Run(() => RunLoop(_cts.Token));
+        _serverTask = Task.Run(() => RunServer(_cts.Token));
     }
 
     public PlayerConnection AddConnection(Func<byte[], Task> sendFunc)
@@ -108,7 +106,7 @@ public class GameLoop : IDisposable
         await conn.SendAsync(data);
     }
 
-    private async Task RunLoop(CancellationToken ct)
+    private async Task RunServer(CancellationToken ct)
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickRateMs));
         var statsStopwatch = Stopwatch.StartNew();
@@ -271,7 +269,7 @@ public class GameLoop : IDisposable
     public void Dispose()
     {
         try { _cts.Cancel(); } catch (ObjectDisposedException) { }
-        try { _loopTask?.Wait(TimeSpan.FromSeconds(2)); } catch (AggregateException) { }
+        try { _serverTask?.Wait(TimeSpan.FromSeconds(2)); } catch (AggregateException) { }
         _engine.Dispose();
         try { _cts.Dispose(); } catch (ObjectDisposedException) { }
     }

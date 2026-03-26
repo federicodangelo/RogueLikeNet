@@ -47,7 +47,7 @@ This project was created as an experiment to push the boundaries of what's possi
 │              ┌───────┴────────┐                         │
 │              │    Server      │                         │
 │              │  ASP.NET Core  │                         │
-│              │  GameLoop 20Hz │                         │
+│              │ GameServer 20Hz│                         │
 │              │  SQLite persist│                         │
 │              └───────┬────────┘                         │
 │              ┌───────┴────────┐                         │
@@ -64,37 +64,37 @@ This project was created as an experiment to push the boundaries of what's possi
 
 Platform abstraction library. Zero external dependencies, AOT-compatible. Defines interfaces for all cross-platform capabilities.
 
-| Folder / File | Description |
-|---------------|-------------|
-| `Platform/IPlatform.cs` | Top-level platform interface: window, renderer, input, audio, settings, save game |
-| `Platform/ISpriteRenderer.cs` | 2D rendering interface: rectangles, circles, lines, text, textures, tile grids, glyph grids |
-| `Platform/IFontRenderer.cs` | Bitmap font rendering interface |
-| `Platform/IInputManager.cs` | Keyboard and pointer input abstraction |
-| `Platform/IAudioManager.cs` | Audio playback abstraction |
-| `Platform/ITextureManager.cs` | Texture loading and management abstraction |
-| `Platform/ISaveGame.cs` | Persistent save data abstraction |
-| `Platform/GameBase.cs` | Base class for games — holds `IPlatform` and exposes subsystem accessors |
-| `Platform/Base/` | Shared base implementations of all platform interfaces |
-| `Platform/Null/` | Null (no-op) implementations for testing and headless use |
-| `Rendering/Base/` | Shared rendering utilities: `BaseFontRenderer`, `BufferedFontRenderer`, `MiniBitmapFont`, `RenderCommandBuffer` |
-| `Core/EngineTypes.cs` | Value types used across the engine: `Color3`, `Color4`, `Rect`, `GlyphTile`, etc. |
-| `Core/Camera.cs` | 2D camera (world→screen transform) |
+| Folder / File                 | Description                                                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `Platform/IPlatform.cs`       | Top-level platform interface: window, renderer, input, audio, settings, save game                               |
+| `Platform/ISpriteRenderer.cs` | 2D rendering interface: rectangles, circles, lines, text, textures, tile grids, glyph grids                     |
+| `Platform/IFontRenderer.cs`   | Bitmap font rendering interface                                                                                 |
+| `Platform/IInputManager.cs`   | Keyboard and pointer input abstraction                                                                          |
+| `Platform/IAudioManager.cs`   | Audio playback abstraction                                                                                      |
+| `Platform/ITextureManager.cs` | Texture loading and management abstraction                                                                      |
+| `Platform/ISaveGame.cs`       | Persistent save data abstraction                                                                                |
+| `Platform/GameBase.cs`        | Base class for games — holds `IPlatform` and exposes subsystem accessors                                        |
+| `Platform/Base/`              | Shared base implementations of all platform interfaces                                                          |
+| `Platform/Null/`              | Null (no-op) implementations for testing and headless use                                                       |
+| `Rendering/Base/`             | Shared rendering utilities: `BaseFontRenderer`, `BufferedFontRenderer`, `MiniBitmapFont`, `RenderCommandBuffer` |
+| `Core/EngineTypes.cs`         | Value types used across the engine: `Color3`, `Color4`, `Rect`, `GlyphTile`, etc.                               |
+| `Core/Camera.cs`              | 2D camera (world→screen transform)                                                                              |
 
 ### `src/Engine.Sdl`
 
 SDL3 desktop implementation of the Engine platform interfaces. Used by the desktop client.
 
-| File | Description |
-|------|-------------|
-| `Platform/Sdl/SdlPlatform.cs` | SDL3 window, event loop, and subsystem wiring |
-| `Platform/Sdl/SdlSpriteRenderer.cs` | SDL3 GPU-accelerated 2D renderer |
-| `Platform/Sdl/SdlFontRenderer.cs` | Bitmap font rendering via SDL3 |
-| `Platform/Sdl/SdlTextureManager.cs` | SDL3 texture loading |
-| `Platform/Sdl/SdlInputManager.cs` | SDL3 keyboard and mouse input |
-| `Platform/Sdl/SdlAudioManager.cs` | SDL3 audio |
-| `Platform/Sdl/SdlTileMapRenderer.cs` | Optimised CP437 tile-grid renderer |
-| `Platform/Sdl/SdlSaveGame.cs` | File-based save/load |
-| `Platform/Sdl/SdlSettings.cs` | SDL3 platform settings |
+| File                                 | Description                                   |
+| ------------------------------------ | --------------------------------------------- |
+| `Platform/Sdl/SdlPlatform.cs`        | SDL3 window, event loop, and subsystem wiring |
+| `Platform/Sdl/SdlSpriteRenderer.cs`  | SDL3 GPU-accelerated 2D renderer              |
+| `Platform/Sdl/SdlFontRenderer.cs`    | Bitmap font rendering via SDL3                |
+| `Platform/Sdl/SdlTextureManager.cs`  | SDL3 texture loading                          |
+| `Platform/Sdl/SdlInputManager.cs`    | SDL3 keyboard and mouse input                 |
+| `Platform/Sdl/SdlAudioManager.cs`    | SDL3 audio                                    |
+| `Platform/Sdl/SdlTileMapRenderer.cs` | Optimised CP437 tile-grid renderer            |
+| `Platform/Sdl/SdlSaveGame.cs`        | File-based save/load                          |
+| `Platform/Sdl/SdlSettings.cs`        | SDL3 platform settings                        |
 
 **Package:** SDL3-CS 3.4.2
 
@@ -102,59 +102,59 @@ SDL3 desktop implementation of the Engine platform interfaces. Used by the deskt
 
 Browser / WebAssembly implementation of the Engine platform interfaces. Used by the web client.
 
-| File | Description |
-|------|-------------|
-| `Platform/Web/WebPlatform.cs` | Browser platform wiring |
-| `Platform/Web/WebSpriteRenderer.cs` | Canvas 2D rendering via JS interop |
-| `Platform/Web/WebFontRenderer.cs` | Bitmap font rendering in the browser |
-| `Platform/Web/WebTextureManager.cs` | Image loading via JS interop |
-| `Platform/Web/WebInputManager.cs` | Keyboard/pointer input via JS events |
-| `Platform/Web/WebAudioManager.cs` | Web Audio API via JS interop |
-| `Platform/Web/JsInterop.cs` | `[JSImport]`/`[JSExport]` bridge to JavaScript |
-| `Platform/Web/WebSaveGame.cs` | `localStorage`-backed save/load |
-| `Platform/Web/WebSettings.cs` | Browser-side settings |
+| File                                | Description                                    |
+| ----------------------------------- | ---------------------------------------------- |
+| `Platform/Web/WebPlatform.cs`       | Browser platform wiring                        |
+| `Platform/Web/WebSpriteRenderer.cs` | Canvas 2D rendering via JS interop             |
+| `Platform/Web/WebFontRenderer.cs`   | Bitmap font rendering in the browser           |
+| `Platform/Web/WebTextureManager.cs` | Image loading via JS interop                   |
+| `Platform/Web/WebInputManager.cs`   | Keyboard/pointer input via JS events           |
+| `Platform/Web/WebAudioManager.cs`   | Web Audio API via JS interop                   |
+| `Platform/Web/JsInterop.cs`         | `[JSImport]`/`[JSExport]` bridge to JavaScript |
+| `Platform/Web/WebSaveGame.cs`       | `localStorage`-backed save/load                |
+| `Platform/Web/WebSettings.cs`       | Browser-side settings                          |
 
 ### `src/RogueLikeNet.Core`
 
 The pure game logic library. Zero dependencies on networking, rendering, or persistence. Uses the [Arch](https://github.com/genaray/Arch) ECS framework.
 
-| Folder | Description |
-|--------|-------------|
-| `Components/` | ECS components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots` |
-| `Algorithms/` | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS |
-| `Systems/` | ECS systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `SkillSystem` |
-| `Generation/` | Procedural content: `BspDungeonGenerator` (BSP rooms+corridors), `BiomeDungeonGenerator` (biome-themed floors), `CellularAutomataCaveGenerator` (organic caves), `DirectionalTunnelGenerator` (winding tunnels), `OverworldGenerator` (world map with biome climate), `PerlinNoise`, `SeededRandom` (xoshiro256\*\*) |
-| `World/` | World structure: `Chunk` (64×64 tiles), `WorldMap` (chunk dictionary), `TileInfo` |
-| `Definitions/` | Data-driven definitions: `ItemTypeDefinition` (stackable items), `SkillDefinition` (array-based lookup), `NpcDefinition` (NPC templates) |
-| `GameEngine.cs` | Orchestrates all systems, manages the ECS world and world map |
+| Folder          | Description                                                                                                                                                                                                                                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Components/`   | ECS components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots`                                                                                                 |
+| `Algorithms/`   | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS                                                                                                                                                                           |
+| `Systems/`      | ECS systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `SkillSystem`                                                                                                                                                                                           |
+| `Generation/`   | Procedural content: `BspDungeonGenerator` (BSP rooms+corridors), `BiomeDungeonGenerator` (biome-themed floors), `CellularAutomataCaveGenerator` (organic caves), `DirectionalTunnelGenerator` (winding tunnels), `OverworldGenerator` (world map with biome climate), `PerlinNoise`, `SeededRandom` (xoshiro256\*\*) |
+| `World/`        | World structure: `Chunk` (64×64 tiles), `WorldMap` (chunk dictionary), `TileInfo`                                                                                                                                                                                                                                    |
+| `Definitions/`  | Data-driven definitions: `ItemTypeDefinition` (stackable items), `SkillDefinition` (array-based lookup), `NpcDefinition` (NPC templates)                                                                                                                                                                             |
+| `GameEngine.cs` | Orchestrates all systems, manages the ECS world and world map                                                                                                                                                                                                                                                        |
 
 ### `src/RogueLikeNet.Protocol`
 
 Network message definitions using [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) binary serialization.
 
-| File | Description |
-|------|-------------|
-| `Messages/NetworkEnvelope.cs` | Type-discriminated message wrapper + `MessageTypes` constants |
-| `Messages/ClientInputMsg.cs` | Client → Server: player actions (move, attack, use item) |
-| `Messages/WorldSnapshotMsg.cs` | Server → Client: full world state (chunks + entities) |
-| `Messages/WorldDeltaMsg.cs` | Server → Client: incremental updates (entity moves, combat events) |
-| `Messages/PlayerHudMsg.cs` | Server → Client: player HUD data (HP, stats, inventory, equipment, skills) |
-| `Messages/AuthMsg.cs` | Authentication request/response + chat messages |
-| `NetSerializer.cs` | Serialize/deserialize helpers with `UntrustedData` security |
-| `GameStateSerializer.cs` | Shared helpers for entity/chunk/HUD serialization |
+| File                           | Description                                                                |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `Messages/NetworkEnvelope.cs`  | Type-discriminated message wrapper + `MessageTypes` constants              |
+| `Messages/ClientInputMsg.cs`   | Client → Server: player actions (move, attack, use item)                   |
+| `Messages/WorldSnapshotMsg.cs` | Server → Client: full world state (chunks + entities)                      |
+| `Messages/WorldDeltaMsg.cs`    | Server → Client: incremental updates (entity moves, combat events)         |
+| `Messages/PlayerHudMsg.cs`     | Server → Client: player HUD data (HP, stats, inventory, equipment, skills) |
+| `Messages/AuthMsg.cs`          | Authentication request/response + chat messages                            |
+| `NetSerializer.cs`             | Serialize/deserialize helpers with `UntrustedData` security                |
+| `GameStateSerializer.cs`       | Shared helpers for entity/chunk/HUD serialization                          |
 
 ### `src/RogueLikeNet.Server`
 
 Authoritative game server built on ASP.NET Core with WebSocket transport.
 
-| File | Description |
-|------|-------------|
-| `Program.cs` | Server entry point — WebSocket endpoint at `/ws`, health check at `/` |
-| `GameLoop.cs` | 20 tick/sec authoritative loop, manages connections, processes inputs, broadcasts deltas |
-| `PlayerConnection.cs` | Per-player server state with concurrent input queue |
-| `WebSocketHandler.cs` | WebSocket middleware — read loop, message dispatch |
-| `Persistence/GameDbContext.cs` | EF Core context with SQLite — player accounts, characters, world chunks |
-| `Persistence/GamePersistence.cs` | Save/load operations for player and world data |
+| File                             | Description                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `Program.cs`                     | Server entry point — WebSocket endpoint at `/ws`, health check at `/`                    |
+| `GameServer.cs`                  | 20 tick/sec authoritative loop, manages connections, processes inputs, broadcasts deltas |
+| `PlayerConnection.cs`            | Per-player server state with concurrent input queue                                      |
+| `WebSocketHandler.cs`            | WebSocket middleware — read loop, message dispatch                                       |
+| `Persistence/GameDbContext.cs`   | EF Core context with SQLite — player accounts, characters, world chunks                  |
+| `Persistence/GamePersistence.cs` | Save/load operations for player and world data                                           |
 
 **Default URL:** `http://localhost:5090` (WebSocket at `ws://localhost:5090/ws`)
 
@@ -162,44 +162,43 @@ Authoritative game server built on ASP.NET Core with WebSocket transport.
 
 Shared client library — the **only** layer that contains rendering code and float operations. Renders through the `Engine` abstraction layer (`ISpriteRenderer`), not directly to any platform API.
 
-| File | Description |
-|------|-------------|
-| `RogueLikeGame.cs` | Main game class — state machine (`MainMenu` → `Connecting` → `Playing`), events for `StartOfflineRequested`, `StartOnlineRequested`, `ReturnToMenuRequested`, `QuitRequested` |
-| `Rendering/TileRenderer.cs` | CP437 tile renderer — uses `ISpriteRenderer.DrawGlyphGridScreen` for tiles, HUD drawing, menus, FPS/latency overlay |
-| `Rendering/HudLayout.cs` | HUD layout calculations |
-| `Rendering/ParticleSystem.cs` | Particle effects |
-| `Rendering/ScreenState.cs` | Shared state for render passes |
-| `Networking/IGameServerConnection.cs` | Connection abstraction (`ConnectAsync`, `SendInputAsync`, events) |
-| `Networking/WebSocketServerConnection.cs` | WebSocket client implementation for remote server play |
-| `State/ClientGameState.cs` | Client-side world state — applies snapshots and deltas |
+| File                                      | Description                                                                                                                                                                   |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RogueLikeGame.cs`                        | Main game class — state machine (`MainMenu` → `Connecting` → `Playing`), events for `StartOfflineRequested`, `StartOnlineRequested`, `ReturnToMenuRequested`, `QuitRequested` |
+| `Rendering/TileRenderer.cs`               | CP437 tile renderer — uses `ISpriteRenderer.DrawGlyphGridScreen` for tiles, HUD drawing, menus, FPS/latency overlay                                                           |
+| `Rendering/HudLayout.cs`                  | HUD layout calculations                                                                                                                                                       |
+| `Rendering/ParticleSystem.cs`             | Particle effects                                                                                                                                                              |
+| `Rendering/ScreenState.cs`                | Shared state for render passes                                                                                                                                                |
+| `Networking/IGameServerConnection.cs`     | Connection abstraction (`ConnectAsync`, `SendInputAsync`, events)                                                                                                             |
+| `Networking/WebSocketServerConnection.cs` | WebSocket client implementation for remote server play                                                                                                                        |
+| `Networking/EmbeddedServerConnection.cs`  | In-process bridge to an embedded `GameLoop` for standalone/offline play — shared by Desktop and Web                                                                           |
+| `State/ClientGameState.cs`                | Client-side world state — applies snapshots and deltas                                                                                                                        |
 
 ### `src/RogueLikeNet.Client.Desktop`
 
 Native SDL3 desktop application compiled with **Native AOT** (`PublishAot=true`, full trimming). Can run in **standalone mode** (embedded server) or connect to a remote server.
 
-| File | Description |
-|------|-------------|
+| File         | Description                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
 | `Program.cs` | Entry point — creates `SdlPlatform` (1280×960), initialises `RogueLikeGame`, and drives the game loop |
-| `EmbeddedServerConnection.cs` | In-process bridge between `GameLoop` and `IGameServerConnection` for offline play |
 
 ### `src/RogueLikeNet.Client.Web`
 
 Browser WebAssembly client (`RuntimeIdentifier: browser-wasm`). Runs the game engine **locally in the browser** for offline play (PWA). Can also connect to a remote server via WebSocket.
 
-| File | Description |
-|------|-------------|
+| File         | Description                                                                                                                               |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `Program.cs` | WASM entry point — creates `WebPlatform`, initialises `RogueLikeGame`; exports `RunOneFrame()` via `[JSExport]` for the JS animation loop |
-| `EmbeddedServerConnection.cs` | Local `GameEngine` running inside WASM — no server dependency for offline play |
-| `wwwroot/` | Static files: `index.html`, `manifest.json`, service workers for offline caching (PWA) |
+| `wwwroot/`   | Static files: `index.html`, `manifest.json`, service workers for offline caching (PWA)                                                    |
 
 ### `tests/`
 
-| Project | Tests | Coverage |
-|---------|-------|----------|
-| `RogueLikeNet.Core.Tests` | 276 | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, SkillSystem, ItemTypeDefinition, SkillDefinition, NpcDefinition, ClassData, Loot, QuickSlots |
-| `RogueLikeNet.Client.Core.Tests` | 64 | BiomePalette, ClientGameState, HudLayout, ParticleSystem |
-| `RogueLikeNet.Protocol.Tests` | 45 | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer |
-| `RogueLikeNet.Server.Tests` | 73 | GameLoop lifecycle, connections, player spawning, input queuing |
+| Project                          | Tests | Coverage                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RogueLikeNet.Core.Tests`        | 276   | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, SkillSystem, ItemTypeDefinition, SkillDefinition, NpcDefinition, ClassData, Loot, QuickSlots |
+| `RogueLikeNet.Client.Core.Tests` | 64    | BiomePalette, ClientGameState, HudLayout, ParticleSystem                                                                                                                                                                                                                     |
+| `RogueLikeNet.Protocol.Tests`    | 45    | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer                                                                                                                                                                             |
+| `RogueLikeNet.Server.Tests`      | 73    | GameLoop lifecycle, connections, player spawning, input queuing                                                                                                                                                                                                              |
 
 ## Prerequisites
 
@@ -258,57 +257,57 @@ Or use the provided script which handles publishing and serving in one step:
 
 Platform-specific scripts are provided in the `scripts/` folder:
 
-| Script | Description |
-|--------|-------------|
-| `scripts/build.ps1` / `scripts/build.sh` | Build the entire solution |
-| `scripts/test.ps1` / `scripts/test.sh` | Run all unit tests |
-| `scripts/run-server.ps1` / `scripts/run-server.sh` | Start the dedicated multiplayer server |
-| `scripts/run-desktop.ps1` / `scripts/run-desktop.sh` | Launch the desktop client (standalone) |
-| `scripts/run-web.ps1` / `scripts/run-web.sh` | Publish and serve the web client locally |
+| Script                                               | Description                              |
+| ---------------------------------------------------- | ---------------------------------------- |
+| `scripts/build.ps1` / `scripts/build.sh`             | Build the entire solution                |
+| `scripts/test.ps1` / `scripts/test.sh`               | Run all unit tests                       |
+| `scripts/run-server.ps1` / `scripts/run-server.sh`   | Start the dedicated multiplayer server   |
+| `scripts/run-desktop.ps1` / `scripts/run-desktop.sh` | Launch the desktop client (standalone)   |
+| `scripts/run-web.ps1` / `scripts/run-web.sh`         | Publish and serve the web client locally |
 
 ## Controls
 
-| Key | Action |
-|-----|--------|
-| `W` / `↑` | Move north |
-| `S` / `↓` | Move south |
-| `A` / `←` | Move west |
-| `D` / `→` | Move east |
-| `Space` | Wait one turn |
-| `F` | Attack nearest enemy |
-| `G` | Pick up item |
-| `1`-`4` | Use item in slot |
-| `Q` | Use skill 1 |
-| `E` | Use skill 2 |
-| `X` | Drop item |
-| `I` | Open inventory |
-| `Escape` | Pause / Back |
+| Key       | Action               |
+| --------- | -------------------- |
+| `W` / `↑` | Move north           |
+| `S` / `↓` | Move south           |
+| `A` / `←` | Move west            |
+| `D` / `→` | Move east            |
+| `Space`   | Wait one turn        |
+| `F`       | Attack nearest enemy |
+| `G`       | Pick up item         |
+| `1`-`4`   | Use item in slot     |
+| `Q`       | Use skill 1          |
+| `E`       | Use skill 2          |
+| `X`       | Drop item            |
+| `I`       | Open inventory       |
+| `Escape`  | Pause / Back         |
 
 ### Inventory Controls
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Navigate slots |
-| `Enter` | Use selected item |
-| `E` | Equip selected item |
-| `U` | Unequip weapon |
-| `R` | Unequip armor |
-| `X` | Drop selected item |
-| `Escape` | Close inventory |
+| Key       | Action              |
+| --------- | ------------------- |
+| `↑` / `↓` | Navigate slots      |
+| `Enter`   | Use selected item   |
+| `E`       | Equip selected item |
+| `U`       | Unequip weapon      |
+| `R`       | Unequip armor       |
+| `X`       | Drop selected item  |
+| `Escape`  | Close inventory     |
 
 ## Technology Stack
 
-| Component | Technology |
-|-----------|------------|
-| Game Logic | [Arch ECS](https://github.com/genaray/Arch) 2.0 — Entity Component System |
-| Serialization | [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp) 3.1 — binary protocol |
-| Platform Abstraction | Custom `Engine` library — `IPlatform`, `ISpriteRenderer`, `IInputManager`, `IAudioManager` |
-| Desktop Rendering | [SDL3-CS](https://github.com/flibitijibibo/SDL3-CS) 3.4.2 — GPU-accelerated 2D via SDL3 |
-| Web Rendering | Browser Canvas 2D via `[JSImport]`/`[JSExport]` interop (`browser-wasm` runtime) |
-| Desktop Compilation | Native AOT — full-trimmed native executable, no JIT |
-| Persistence | EF Core 10 + SQLite — player accounts, characters, world chunks |
-| Server | ASP.NET Core (Kestrel) — WebSocket transport |
-| PRNG | xoshiro256\*\* — deterministic seeded generation |
+| Component            | Technology                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| Game Logic           | [Arch ECS](https://github.com/genaray/Arch) 2.0 — Entity Component System                            |
+| Serialization        | [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp) 3.1 — binary protocol |
+| Platform Abstraction | Custom `Engine` library — `IPlatform`, `ISpriteRenderer`, `IInputManager`, `IAudioManager`           |
+| Desktop Rendering    | [SDL3-CS](https://github.com/flibitijibibo/SDL3-CS) 3.4.2 — GPU-accelerated 2D via SDL3              |
+| Web Rendering        | Browser Canvas 2D via `[JSImport]`/`[JSExport]` interop (`browser-wasm` runtime)                     |
+| Desktop Compilation  | Native AOT — full-trimmed native executable, no JIT                                                  |
+| Persistence          | EF Core 10 + SQLite — player accounts, characters, world chunks                                      |
+| Server               | ASP.NET Core (Kestrel) — WebSocket transport                                                         |
+| PRNG                 | xoshiro256\*\* — deterministic seeded generation                                                     |
 
 ## Design Principles
 

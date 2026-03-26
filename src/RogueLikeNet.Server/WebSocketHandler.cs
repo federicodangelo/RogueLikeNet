@@ -9,10 +9,10 @@ namespace RogueLikeNet.Server;
 /// </summary>
 public static class WebSocketHandler
 {
-    public static async Task HandleConnection(WebSocket socket, GameLoop gameLoop)
+    public static async Task HandleConnection(WebSocket socket, GameServer gameServer)
     {
         // Create connection with send function
-        var conn = gameLoop.AddConnection(async data =>
+        var conn = gameServer.AddConnection(async data =>
         {
             if (socket.State == WebSocketState.Open)
             {
@@ -24,7 +24,7 @@ public static class WebSocketHandler
             }
         });
 
-        Console.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameLoop.ConnectionCount} online)");
+        Console.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameServer.ConnectionCount} online)");
 
         try
         {
@@ -52,7 +52,7 @@ public static class WebSocketHandler
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
                 {
                     conn.TrackReceived(ms.Length);
-                    if (!ProcessMessage(conn, ms.ToArray(), gameLoop))
+                    if (!ProcessMessage(conn, ms.ToArray(), gameServer))
                         break;
 
                 }
@@ -66,8 +66,8 @@ public static class WebSocketHandler
         }
         finally
         {
-            gameLoop.RemoveConnection(conn.ConnectionId);
-            Console.WriteLine($"[Server] Player {conn.ConnectionId} disconnected ({gameLoop.ConnectionCount} online)");
+            gameServer.RemoveConnection(conn.ConnectionId);
+            Console.WriteLine($"[Server] Player {conn.ConnectionId} disconnected ({gameServer.ConnectionCount} online)");
             if (socket.State == WebSocketState.Open)
             {
                 await socket.CloseAsync(
@@ -78,7 +78,7 @@ public static class WebSocketHandler
         }
     }
 
-    private static bool ProcessMessage(PlayerConnection conn, byte[] data, GameLoop gameLoop)
+    private static bool ProcessMessage(PlayerConnection conn, byte[] data, GameServer gameServer)
     {
         try
         {
@@ -89,7 +89,7 @@ public static class WebSocketHandler
                     if (conn.PlayerEntity == null)
                     {
                         var login = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
-                        _ = gameLoop.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
+                        _ = gameServer.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
                     }
                     else
                     {
@@ -100,12 +100,12 @@ public static class WebSocketHandler
 
                 case MessageTypes.ClientInput:
                     var input = NetSerializer.Deserialize<ClientInputMsg>(envelope.Payload);
-                    gameLoop.EnqueueInput(conn.ConnectionId, input);
+                    gameServer.EnqueueInput(conn.ConnectionId, input);
                     break;
 
                 case MessageTypes.ChatSend:
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
-                    _ = gameLoop.BroadcastChat(conn.ConnectionId, chat.Text);
+                    _ = gameServer.BroadcastChat(conn.ConnectionId, chat.Text);
                     break;
 
                 default:

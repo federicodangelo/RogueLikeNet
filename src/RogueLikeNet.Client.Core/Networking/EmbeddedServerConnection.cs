@@ -5,12 +5,12 @@ using RogueLikeNet.Server;
 namespace RogueLikeNet.Client.Core.Networking;
 
 /// <summary>
-/// In-process connection to an embedded GameLoop for standalone/offline mode.
+/// In-process connection to an embedded GameServer for standalone/offline mode.
 /// Bypasses network serialization by sending messages directly through callbacks.
 /// </summary>
 public class EmbeddedServerConnection : IGameServerConnection
 {
-    private readonly GameLoop _gameLoop;
+    private readonly GameServer _gameServer;
     private long _connectionId;
     private bool _connected;
     private long _bytesReceived;
@@ -24,15 +24,15 @@ public class EmbeddedServerConnection : IGameServerConnection
     public event Action<ChatMsg>? OnChatReceived;
     public event Action? OnDisconnected;
 
-    public EmbeddedServerConnection(GameLoop gameLoop)
+    public EmbeddedServerConnection(GameServer gameServer)
     {
-        _gameLoop = gameLoop;
+        _gameServer = gameServer;
     }
 
     public async Task ConnectAsync(string uri, CancellationToken ct = default)
     {
         // Register with the embedded game loop using a callback that deserializes and dispatches
-        var conn = _gameLoop.AddConnection(ProcessServerData);
+        var conn = _gameServer.AddConnection(ProcessServerData);
         _connectionId = conn.ConnectionId;
         _connected = true;
 
@@ -42,20 +42,20 @@ public class EmbeddedServerConnection : IGameServerConnection
     public async Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
     {
         if (!_connected) return;
-        await _gameLoop.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
+        await _gameServer.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
     }
 
     public Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default)
     {
         if (!_connected) return Task.CompletedTask;
-        _gameLoop.EnqueueInput(_connectionId, input);
+        _gameServer.EnqueueInput(_connectionId, input);
         return Task.CompletedTask;
     }
 
     public async Task SendChatAsync(string text, CancellationToken ct = default)
     {
         if (!_connected) return;
-        await _gameLoop.BroadcastChat(_connectionId, text);
+        await _gameServer.BroadcastChat(_connectionId, text);
     }
 
     private Task ProcessServerData(byte[] data)
@@ -94,7 +94,7 @@ public class EmbeddedServerConnection : IGameServerConnection
         if (_connected)
         {
             _connected = false;
-            _gameLoop.RemoveConnection(_connectionId);
+            _gameServer.RemoveConnection(_connectionId);
             OnDisconnected?.Invoke();
         }
         return ValueTask.CompletedTask;

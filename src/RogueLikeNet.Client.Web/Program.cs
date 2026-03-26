@@ -12,7 +12,7 @@ public partial class WebMain
 {
     private static RogueLikeGame? _game;
     private static IGameServerConnection? _connection;
-    private static GameLoop? _embeddedServer;
+    private static GameServer? _embeddedServer;
 
     public static async Task Main()
     {
@@ -39,7 +39,7 @@ public partial class WebMain
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
-        _embeddedServer = new GameLoop(seed);
+        _embeddedServer = new GameServer(seed);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);

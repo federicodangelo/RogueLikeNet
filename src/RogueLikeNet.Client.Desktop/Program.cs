@@ -11,7 +11,7 @@ public class Program
 {
     private static RogueLikeGame? _game;
     private static IGameServerConnection? _connection;
-    private static GameLoop? _embeddedServer;
+    private static GameServer? _embeddedServer;
     private static bool _running = true;
 
     [STAThread]
@@ -40,7 +40,7 @@ public class Program
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
-        _embeddedServer = new GameLoop(seed);
+        _embeddedServer = new GameServer(seed);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
