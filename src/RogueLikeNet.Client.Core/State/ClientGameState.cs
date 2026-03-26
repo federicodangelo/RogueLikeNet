@@ -20,11 +20,11 @@ public class ClientGameState
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
     public long PlayerEntityId { get; private set; }
-    public long WorldTick { get; set; }
+    public long WorldTick { get; private set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
-    public PlayerStateMsg? PlayerState { get; set; }
-    public FloorItemsMsg? FloorItems { get; set; }
+    public PlayerStateMsg? PlayerState { get; private set; }
+    public FloorItemsMsg? FloorItems { get; private set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
 
     public void Clear()
@@ -36,6 +36,7 @@ public class ClientGameState
         _visibleTiles.Clear();
         PlayerX = 0;
         PlayerY = 0;
+        PlayerEntityId = 0;
         WorldTick = 0;
         PlayerState = null;
         FloorItems = null;
