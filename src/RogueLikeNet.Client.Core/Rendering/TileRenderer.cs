@@ -58,12 +58,16 @@ public class TileRenderer
         "Space    Wait a turn",
         "F        Attack nearest",
         "G        Pick up item",
-        "1-4      Use item slot",
+        "1-4      Use quick slot",
         "Q        Use skill 1",
         "E        Use skill 2",
         "X        Drop item",
         "I        Inventory",
+        "Tab      Switch section",
         "Escape   Pause / Back",
+        "",
+        "INVENTORY",
+        "1-4      Assign quick slot",
     ];
 
     private static readonly char[] Cp437 = MiniBitmapFont.Cp437ToUnicode;
@@ -72,16 +76,16 @@ public class TileRenderer
 
     public void RenderGame(ISpriteRenderer r, ClientGameState state, int totalCols, int totalRows,
         float shakeX = 0, float shakeY = 0,
-        bool inventoryMode = false, int inventoryIndex = 0, int inventoryScrollOffset = 0)
+        bool inventoryMode = false, HudLayout? layout = null)
     {
         r.DrawRectScreen(0, 0, totalCols * TileWidth, totalRows * TileHeight, ColorBlack);
 
         int gameCols = totalCols - HudColumns;
         RenderGameWorld(r, state, gameCols, totalRows, shakeX, shakeY);
         if (inventoryMode)
-            RenderInventoryPanel(r, state, gameCols, totalRows, inventoryIndex, inventoryScrollOffset);
+            RenderInventoryPanel(r, state, gameCols, totalRows, layout);
         else
-            RenderHudPanel(r, state, gameCols, totalRows);
+            RenderHudPanel(r, state, gameCols, totalRows, layout);
     }
 
     private void RenderGameWorld(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows,
@@ -195,7 +199,8 @@ public class TileRenderer
         }
     }
 
-    private void RenderHudPanel(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows)
+    private void RenderHudPanel(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
+        HudLayout? layout)
     {
         float hx = hudStartCol * TileWidth;
         r.DrawRectScreen(hx, 0, HudColumns * TileWidth, totalRows * TileHeight, new Color4(15, 15, 20, 255));
@@ -208,41 +213,181 @@ public class TileRenderer
 
         int col = hudStartCol + 1;
         int innerW = HudColumns - 2;
-        int row = 1;
 
         var hud = state.PlayerState;
         if (hud == null)
         {
-            DrawString(r, col, row, "No data", ColorDim);
+            DrawString(r, col, 1, "No data", ColorDim);
             return;
         }
 
-        // HP bar
-        DrawString(r, col, row, "HP", ColorHpText);
+        if (layout == null)
+        {
+            // Fallback: render without layout
+            RenderHudFallback(r, col, innerW, totalRows, hud, state);
+            return;
+        }
+
+        layout.ComputeLayout(totalRows);
+
+        foreach (var section in layout.Sections)
+        {
+            int row = section.StartRow;
+            int maxRow = section.StartRow + section.RowCount;
+
+            switch (section.Name)
+            {
+                case "HP":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "HP", ColorHpText);
+                    row++;
+                    if (row >= maxRow) break;
+                    int barW = innerW;
+                    float hpRatio = hud.MaxHealth > 0 ? (float)hud.Health / hud.MaxHealth : 0;
+                    int filled = (int)(barW * hpRatio);
+                    for (int i = 0; i < barW; i++)
+                        DrawChar(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? ColorHpFill : ColorHpBar);
+                    row++;
+                    if (row >= maxRow) break;
+                    string hpText = $"{hud.Health}/{hud.MaxHealth}";
+                    DrawString(r, col, row, hpText, ColorHpText);
+                    break;
+
+                case "Stats":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, $"ATK: {hud.Attack}", ColorStats); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, $"DEF: {hud.Defense}", ColorStats); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, $"Lv:  {hud.Level}", ColorLevel);
+                    break;
+
+                case "Skills":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "Skills", ColorTitle); row++;
+                    if (row >= maxRow) break;
+                    DrawHudSeparator(r, col, row, innerW); row++;
+                    for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2) && row < maxRow; i++)
+                    {
+                        if (hud.SkillIds[i] == 0) continue;
+                        string key = i == 0 ? "Q" : "E";
+                        string name = i < hud.SkillNames.Length && !string.IsNullOrEmpty(hud.SkillNames[i])
+                            ? hud.SkillNames[i] : $"Skill {i + 1}";
+                        int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
+                        string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
+                        DrawString(r, col, row, text, cd > 0 ? ColorSkillCd : ColorSkillReady);
+                        row++;
+                    }
+                    break;
+
+                case "Equipment":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "Equipment", ColorTitle); row++;
+                    if (row >= maxRow) break;
+                    DrawHudSeparator(r, col, row, innerW); row++;
+                    if (row >= maxRow) break;
+                    string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
+                    string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
+                    DrawString(r, col, row, $"W: {wpn}", ColorItem); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, $"A: {arm}", ColorItem);
+                    break;
+
+                case "QuickSlots":
+                    RenderQuickSlotsSection(r, col, innerW, row, maxRow, hud, layout);
+                    break;
+
+                case "FloorItems":
+                    RenderFloorItemsSection(r, col, innerW, row, maxRow, state);
+                    break;
+
+                case "Controls":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[I] Inventory", ColorDim); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[Esc] Menu", ColorDim);
+                    break;
+            }
+        }
+    }
+
+    private void RenderQuickSlotsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        Protocol.Messages.PlayerStateMsg hud, HudLayout layout)
+    {
+        bool focused = layout.FocusedSection?.Name == "QuickSlots";
+
+        if (row >= maxRow) return;
+        DrawString(r, col, row, focused ? "\u25ba Quick Use Slots" : "Quick Use Slots", focused ? ColorSelected : ColorTitle);
         row++;
+        if (row >= maxRow) return;
+        DrawHudSeparator(r, col, row, innerW);
+        row++;
+
+        int[] qsIndices = hud.QuickSlotIndices;
+        for (int i = 0; i < 4 && row < maxRow; i++)
+        {
+            int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
+            if (invIdx >= 0 && invIdx < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[invIdx]))
+            {
+                int stack = invIdx < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[invIdx] : 1;
+                string stackStr = stack > 1 ? $"x{stack}" : "";
+                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryNames[invIdx]}{stackStr}", ColorItem);
+            }
+            else
+            {
+                DrawString(r, col, row, $"[{i + 1}] ---", ColorDim);
+            }
+            row++;
+        }
+
+        if (row < maxRow)
+            DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
+    }
+
+    private void RenderFloorItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        ClientGameState state)
+    {
+        var floorNames = state.FloorItems?.Names ?? [];
+        if (floorNames.Length == 0) return;
+
+        if (row >= maxRow) return;
+        DrawString(r, col, row, "On Ground", ColorTitle); row++;
+        if (row >= maxRow) return;
+        DrawHudSeparator(r, col, row, innerW); row++;
+        int floorToShow = Math.Min(floorNames.Length, 4);
+        for (int i = 0; i < floorToShow && row < maxRow; i++)
+        {
+            DrawString(r, col, row, $"  {floorNames[i]}", ColorFloor);
+            row++;
+        }
+        if (row < maxRow)
+            DrawString(r, col, row, "[G] Pick up", ColorDim);
+    }
+
+    /// <summary>Fallback rendering when no layout is provided (e.g., tests or minimal setup).</summary>
+    private void RenderHudFallback(ISpriteRenderer r, int col, int innerW, int totalRows,
+        Protocol.Messages.PlayerStateMsg hud, ClientGameState state)
+    {
+        int row = 1;
+
+        // HP bar
+        DrawString(r, col, row, "HP", ColorHpText); row++;
         int barW = innerW;
         float hpRatio = hud.MaxHealth > 0 ? (float)hud.Health / hud.MaxHealth : 0;
         int filled = (int)(barW * hpRatio);
         for (int i = 0; i < barW; i++)
             DrawChar(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? ColorHpFill : ColorHpBar);
         row++;
-        string hpText = $"{hud.Health}/{hud.MaxHealth}";
-        DrawString(r, col, row, hpText, ColorHpText);
+        DrawString(r, col, row, $"{hud.Health}/{hud.MaxHealth}", ColorHpText);
         row += 2;
 
-        // Stats
-        DrawString(r, col, row, $"ATK: {hud.Attack}", ColorStats);
-        row++;
-        DrawString(r, col, row, $"DEF: {hud.Defense}", ColorStats);
-        row++;
+        DrawString(r, col, row, $"ATK: {hud.Attack}", ColorStats); row++;
+        DrawString(r, col, row, $"DEF: {hud.Defense}", ColorStats); row++;
         DrawString(r, col, row, $"Lv:  {hud.Level}", ColorLevel);
         row += 2;
 
-        // Skills
-        DrawString(r, col, row, "Skills", ColorTitle);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
+        DrawString(r, col, row, "Skills", ColorTitle); row++;
+        DrawHudSeparator(r, col, row, innerW); row++;
         for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2); i++)
         {
             if (hud.SkillIds[i] == 0) continue;
@@ -256,31 +401,26 @@ public class TileRenderer
         }
         row++;
 
-        // Equipment
-        DrawString(r, col, row, "Equipment", ColorTitle);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
+        DrawString(r, col, row, "Equipment", ColorTitle); row++;
+        DrawHudSeparator(r, col, row, innerW); row++;
         string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
         string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
-        DrawString(r, col, row, $"W: {wpn}", ColorItem);
-        row++;
+        DrawString(r, col, row, $"W: {wpn}", ColorItem); row++;
         DrawString(r, col, row, $"A: {arm}", ColorItem);
         row += 2;
 
-        // Quick Use Slots
-        DrawString(r, col, row, "Quick Use Slots", ColorTitle);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
-        int itemsToShow = Math.Min(hud.InventoryNames.Length, 4);
+        // Quick Use Slots using protocol data
+        DrawString(r, col, row, "Quick Use Slots", ColorTitle); row++;
+        DrawHudSeparator(r, col, row, innerW); row++;
+        int[] qsIndices = hud.QuickSlotIndices;
         for (int i = 0; i < 4; i++)
         {
-            if (i < itemsToShow && !string.IsNullOrEmpty(hud.InventoryNames[i]))
+            int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
+            if (invIdx >= 0 && invIdx < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[invIdx]))
             {
-                int stack = i < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[i] : 1;
+                int stack = invIdx < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[invIdx] : 1;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryNames[i]}{stackStr}", ColorItem);
+                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryNames[invIdx]}{stackStr}", ColorItem);
             }
             else
                 DrawString(r, col, row, $"[{i + 1}] ---", ColorDim);
@@ -291,19 +431,15 @@ public class TileRenderer
         DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
         row += 2;
 
-        // Floor items
         var floorNames = state.FloorItems?.Names ?? [];
         if (floorNames.Length > 0)
         {
-            DrawString(r, col, row, "On Ground", ColorTitle);
-            row++;
-            DrawHudSeparator(r, col, row, innerW);
-            row++;
+            DrawString(r, col, row, "On Ground", ColorTitle); row++;
+            DrawHudSeparator(r, col, row, innerW); row++;
             int floorToShow = Math.Min(floorNames.Length, 4);
             for (int i = 0; i < floorToShow; i++)
             {
-                string name = floorNames[i];
-                DrawString(r, col, row, $"  {name}", ColorFloor);
+                DrawString(r, col, row, $"  {floorNames[i]}", ColorFloor);
                 row++;
             }
             row++;
@@ -311,14 +447,13 @@ public class TileRenderer
             row++;
         }
 
-        // Controls reminder at bottom
         int bottom = totalRows - 2;
         DrawString(r, col, bottom - 1, "[I] Inventory", ColorDim);
         DrawString(r, col, bottom, "[Esc] Menu", ColorDim);
     }
 
     private void RenderInventoryPanel(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
-        int selectedIndex, int scrollOffset = 0)
+        HudLayout? layout)
     {
         float hx = hudStartCol * TileWidth;
         r.DrawRectScreen(hx, 0, HudColumns * TileWidth, totalRows * TileHeight, new Color4(15, 15, 20, 255));
@@ -331,47 +466,107 @@ public class TileRenderer
 
         int col = hudStartCol + 1;
         int innerW = HudColumns - 2;
-        int row = 1;
-
-        DrawString(r, col, row, "INVENTORY", ColorTitle);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
 
         var hud = state.PlayerState;
         if (hud == null)
         {
-            DrawString(r, col, row, "No data", ColorDim);
+            DrawString(r, col, 1, "No data", ColorDim);
             return;
         }
 
-        // Character stats
-        string hpText = $"HP:{hud.Health}/{hud.MaxHealth}";
-        string atkText = $"ATK:{hud.Attack}";
-        string defText = $"DEF:{hud.Defense}";
-        DrawString(r, col, row, hpText, ColorHpText);
-        DrawString(r, col + hpText.Length + 1, row, atkText, ColorStats);
-        DrawString(r, col + hpText.Length + 1 + atkText.Length + 1, row, defText, ColorStats);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
+        if (layout == null)
+        {
+            RenderInventoryFallback(r, col, innerW, totalRows, hud, 0, 0);
+            return;
+        }
 
+        layout.ComputeLayout(totalRows);
+
+        foreach (var section in layout.Sections)
+        {
+            int row = section.StartRow;
+            int maxRow = section.StartRow + section.RowCount;
+            bool focused = layout.FocusedSection == section;
+
+            switch (section.Name)
+            {
+                case "InvHeader":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "INVENTORY", ColorTitle); row++;
+                    if (row >= maxRow) break;
+                    DrawHudSeparator(r, col, row, innerW); row++;
+                    if (row >= maxRow) break;
+                    string hpStr = $"HP:{hud.Health}/{hud.MaxHealth}";
+                    string atkStr = $"ATK:{hud.Attack}";
+                    string defStr = $"DEF:{hud.Defense}";
+                    DrawString(r, col, row, hpStr, ColorHpText);
+                    DrawString(r, col + hpStr.Length + 1, row, atkStr, ColorStats);
+                    DrawString(r, col + hpStr.Length + 1 + atkStr.Length + 1, row, defStr, ColorStats);
+                    row++;
+                    if (row >= maxRow) break;
+                    DrawHudSeparator(r, col, row, innerW);
+                    break;
+
+                case "InvItems":
+                    RenderInventoryItemsSection(r, col, innerW, row, maxRow, hud, section, focused);
+                    break;
+
+                case "InvEquipment":
+                    RenderInventoryEquipmentSection(r, col, innerW, row, maxRow, hud, section, focused);
+                    break;
+
+                case "InvActions":
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv); row++;
+                    row++;
+                    if (row >= maxRow) break;
+                    DrawHudSeparator(r, col, row, innerW); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[Enter] Use / Unequip", ColorDim); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[E] Equip  [X] Drop", ColorDim); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[1-4] Assign slot", ColorDim); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[Tab] Switch section", ColorDim); row++;
+                    if (row >= maxRow) break;
+                    DrawString(r, col, row, "[Esc] Close", ColorDim);
+                    break;
+            }
+        }
+    }
+
+    private void RenderInventoryItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        Protocol.Messages.PlayerStateMsg hud, HudSection section, bool focused)
+    {
         int cap = Math.Max(hud.InventoryCapacity, 4);
-        const int visibleRows = 8;
+        int visibleRows = section.RowCount;
+        int scrollOffset = section.ScrollOffset;
+        int selectedIndex = section.SelectedIndex;
+        int[] qsIndices = hud.QuickSlotIndices;
 
-        // Scrollable inventory items
-        int visibleEnd = Math.Min(scrollOffset + visibleRows, cap);
-        if (scrollOffset > 0)
+        if (scrollOffset > 0 && row < maxRow)
         {
             DrawString(r, col, row, "  \u2191 more items above", ColorDim);
-            row++;
+            row++; visibleRows--;
         }
-        for (int i = scrollOffset; i < visibleEnd && row < totalRows - 8; i++)
+
+        bool needsBottomIndicator = scrollOffset + visibleRows < cap;
+        int renderRows = needsBottomIndicator ? visibleRows - 1 : visibleRows;
+
+        int visibleEnd = Math.Min(scrollOffset + renderRows, cap);
+        for (int i = scrollOffset; i < visibleEnd && row < maxRow; i++)
         {
-            bool sel = i == selectedIndex;
-            bool isQuickSlot = i < 4;
+            bool sel = focused && i == selectedIndex;
             string prefix = sel ? "\u25ba" : " ";
-            string slotTag = isQuickSlot ? $"[{i + 1}]" : "   ";
+
+            // Determine quick-slot tag
+            string slotTag = "   ";
+            for (int q = 0; q < Math.Min(qsIndices.Length, 4); q++)
+            {
+                if (qsIndices[q] == i) { slotTag = $"[{q + 1}]"; break; }
+            }
+
             string catTag = i < hud.InventoryCategories.Length
                 ? CategoryTag(hud.InventoryCategories[i]) : "     ";
             string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
@@ -380,26 +575,30 @@ public class TileRenderer
             string stackStr = stack > 1 ? $" x{stack}" : "";
             string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
             if (text.Length > innerW) text = text[..innerW];
+            bool isQuickSlot = slotTag != "   ";
             var color = sel ? ColorInvSel : isQuickSlot ? ColorItem : ColorInv;
             DrawString(r, col, row, text, color);
             row++;
         }
-        if (visibleEnd < cap)
+
+        if (needsBottomIndicator && row < maxRow)
         {
             DrawString(r, col, row, "  \u2193 more items below", ColorDim);
-            row++;
         }
-        row++;
+    }
 
-        // Equipment slots (always visible, selectable at index cap & cap+1)
-        DrawString(r, col, row, "Equipment", ColorTitle);
-        row++;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
+    private void RenderInventoryEquipmentSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        Protocol.Messages.PlayerStateMsg hud, HudSection section, bool focused)
+    {
+        if (row >= maxRow) return;
+        DrawString(r, col, row, "Equipment", ColorTitle); row++;
+        if (row >= maxRow) return;
+        DrawHudSeparator(r, col, row, innerW); row++;
 
-        // Weapon slot (index = cap)
+        // Weapon slot (selectedIndex 0 within this section)
+        if (row < maxRow)
         {
-            bool sel = selectedIndex == cap;
+            bool sel = focused && section.SelectedIndex == 0;
             string prefix = sel ? "\u25ba" : " ";
             string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
             string text = $"{prefix}[W][Wpn]{wpn}";
@@ -407,31 +606,39 @@ public class TileRenderer
             DrawString(r, col, row, text, sel ? ColorInvSel : ColorItem);
             row++;
         }
-        // Armor slot (index = cap+1)
+        // Armor slot (selectedIndex 1 within this section)
+        if (row < maxRow)
         {
-            bool sel = selectedIndex == cap + 1;
+            bool sel = focused && section.SelectedIndex == 1;
             string prefix = sel ? "\u25ba" : " ";
             string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
             string text = $"{prefix}[A][Arm]{arm}";
             if (text.Length > innerW) text = text[..innerW];
             DrawString(r, col, row, text, sel ? ColorInvSel : ColorItem);
+        }
+    }
+
+    /// <summary>Fallback inventory rendering when no layout is provided.</summary>
+    private void RenderInventoryFallback(ISpriteRenderer r, int col, int innerW, int totalRows,
+        Protocol.Messages.PlayerStateMsg hud, int selectedIndex, int scrollOffset)
+    {
+        int row = 1;
+        DrawString(r, col, row, "INVENTORY", ColorTitle); row++;
+        DrawHudSeparator(r, col, row, innerW); row++;
+        string hpStr = $"HP:{hud.Health}/{hud.MaxHealth}";
+        DrawString(r, col, row, hpStr, ColorHpText); row++;
+        DrawHudSeparator(r, col, row, innerW); row++;
+
+        int cap = Math.Max(hud.InventoryCapacity, 4);
+        for (int i = 0; i < Math.Min(cap, 8) && row < totalRows - 8; i++)
+        {
+            bool sel = i == selectedIndex;
+            string prefix = sel ? "\u25ba" : " ";
+            string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
+                ? hud.InventoryNames[i] : "---";
+            DrawString(r, col, row, $"{prefix}   {name}", sel ? ColorInvSel : ColorInv);
             row++;
         }
-        row++;
-
-        DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
-        row += 2;
-
-        // Actions hint at bottom
-        int bottom = totalRows - 7;
-        if (bottom > row) row = bottom;
-        DrawHudSeparator(r, col, row, innerW);
-        row++;
-        DrawString(r, col, row, "[Enter] Use / Unequip", ColorDim);
-        row++;
-        DrawString(r, col, row, "[E] Equip  [X] Drop", ColorDim);
-        row++;
-        DrawString(r, col, row, "[Esc] Close", ColorDim);
     }
 
     private static string CategoryTag(int category) => category switch
@@ -449,7 +656,7 @@ public class TileRenderer
     {
         r.DrawRectScreen(0, 0, totalCols * TileWidth, totalRows * TileHeight, ColorBlack);
 
-        int boxW = 40;
+        int boxW = 50;
         int boxH = errorMessage != null ? 10 : 7;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;

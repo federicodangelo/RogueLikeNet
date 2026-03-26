@@ -23,9 +23,11 @@ public sealed class RogueLikeGame : GameBase
     private ScreenState _screenState = ScreenState.MainMenu;
     private int _menuIndex;
     private int _pauseIndex;
-    private int _inventoryIndex;
-    private int _inventoryScrollOffset;
     private string? _connectionError;
+
+    // HUD layout system
+    private readonly HudLayout _hudLayout;
+    private readonly HudLayout _inventoryLayout;
 
     // World seed — randomized each game start, editable in main menu
     private long _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
@@ -84,6 +86,33 @@ public sealed class RogueLikeGame : GameBase
     public RogueLikeGame()
     {
         _tileRenderer = new TileRenderer();
+        _hudLayout = CreateHudLayout();
+        _inventoryLayout = CreateInventoryLayout();
+    }
+
+    private static HudLayout CreateHudLayout()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "HP", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "Skills", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
+        layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
+        layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
+        layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
+        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 2 });
+        return layout;
+    }
+
+    private static HudLayout CreateInventoryLayout()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "InvHeader", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "InvItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true });
+        layout.AddSection(new HudSection { Name = "InvEquipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
+        layout.AddSection(new HudSection { Name = "InvActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 9 });
+        // Set initial focus on the items section
+        layout.SetFocus(1);
+        return layout;
     }
 
     /// <summary>
@@ -237,11 +266,12 @@ public sealed class RogueLikeGame : GameBase
                 _tileRenderer.RenderConnecting(renderer, totalCols, totalRows, _connectionError);
                 break;
             case ScreenState.Playing:
-                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY);
+                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
+                    layout: _hudLayout);
                 break;
             case ScreenState.Inventory:
                 _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
-                    inventoryMode: true, inventoryIndex: _inventoryIndex, inventoryScrollOffset: _inventoryScrollOffset);
+                    inventoryMode: true, layout: _inventoryLayout);
                 break;
             case ScreenState.Paused:
                 _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY);
@@ -412,8 +442,13 @@ public sealed class RogueLikeGame : GameBase
         if (input.IsActionPressed(InputAction.OpenInventory))
         {
             _screenState = ScreenState.Inventory;
-            _inventoryIndex = 0;
-            _inventoryScrollOffset = 0;
+            // Reset inventory layout: focus on items section, scroll to top
+            _inventoryLayout.SetFocus(1); // InvItems section
+            foreach (var s in _inventoryLayout.Sections)
+            {
+                s.SelectedIndex = 0;
+                s.ScrollOffset = 0;
+            }
             return;
         }
 
@@ -471,19 +506,17 @@ public sealed class RogueLikeGame : GameBase
         else if (input.IsActionPressed(InputAction.PickUp))
             msg = new ClientInputMsg { ActionType = ActionTypes.PickUp };
         else if (input.IsActionPressed(InputAction.UseItem1))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 0 };
+            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 0 };
         else if (input.IsActionPressed(InputAction.UseItem2))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 1 };
+            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 1 };
         else if (input.IsActionPressed(InputAction.UseItem3))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 2 };
+            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 2 };
         else if (input.IsActionPressed(InputAction.UseItem4))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseItem, ItemSlot = 3 };
+            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 3 };
         else if (input.IsActionPressed(InputAction.UseSkill1))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
         else if (input.IsActionPressed(InputAction.UseSkill2))
             msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
-        else if (input.IsActionPressed(InputAction.Drop))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Drop, ItemSlot = 0 };
         }
 
         if (msg != null && _connection != null)
@@ -530,8 +563,6 @@ public sealed class RogueLikeGame : GameBase
     {
         int cap = _gameState.PlayerState?.InventoryCapacity ?? 4;
         if (cap < 1) cap = 4;
-        int totalSlots = cap + 2; // +2 for weapon/armor equipment slots
-        const int visibleRows = 8;
 
         if (input.IsActionPressed(InputAction.MenuBack))
         {
@@ -539,48 +570,157 @@ public sealed class RogueLikeGame : GameBase
             return;
         }
 
+        if (input.IsActionPressed(InputAction.CycleSection))
+        {
+            _inventoryLayout.CycleFocus();
+            return;
+        }
+
+        var focused = _inventoryLayout.FocusedSection;
+        if (focused == null) return;
+
+        switch (focused.Name)
+        {
+            case "InvItems":
+                HandleInvItemsInput(input, focused, cap);
+                break;
+            case "InvEquipment":
+                HandleInvEquipmentInput(input, focused, cap);
+                break;
+        }
+    }
+
+    private void HandleInvItemsInput(IInputManager input, HudSection section, int cap)
+    {
         if (input.IsActionPressed(InputAction.MenuUp))
         {
-            _inventoryIndex = (_inventoryIndex + totalSlots - 1) % totalSlots;
-            UpdateInventoryScroll(cap, visibleRows);
+            if (section.SelectedIndex > 0)
+                section.ScrollUp();
+            else
+            {
+                // Cross to previous AcceptsInput section at its last item
+                var prev = _inventoryLayout.FocusPreviousInputSection();
+                if (prev != null && prev != section)
+                {
+                    int prevMax = GetInvSectionItemCount(prev, cap);
+                    prev.SelectedIndex = Math.Max(0, prevMax - 1);
+                    prev.EnsureSelectionVisible();
+                }
+                else
+                {
+                    // Single section — loop to last item
+                    section.SelectedIndex = Math.Max(0, cap - 1);
+                    section.EnsureSelectionVisible();
+                }
+            }
         }
         else if (input.IsActionPressed(InputAction.MenuDown))
         {
-            _inventoryIndex = (_inventoryIndex + 1) % totalSlots;
-            UpdateInventoryScroll(cap, visibleRows);
+            if (section.SelectedIndex < cap - 1)
+                section.ScrollDown(cap);
+            else
+            {
+                // Cross to next AcceptsInput section at its first item
+                var next = _inventoryLayout.FocusNextInputSection();
+                if (next != null && next != section)
+                {
+                    next.SelectedIndex = 0;
+                    next.ScrollOffset = 0;
+                }
+                else
+                {
+                    // Single section — loop to first item
+                    section.SelectedIndex = 0;
+                    section.ScrollOffset = 0;
+                }
+            }
         }
         else if (input.IsActionPressed(InputAction.UseItem1))
-            SendInventoryAction(ActionTypes.UseItem, 0);
+            SendInventoryAction(ActionTypes.SetQuickSlot, 0, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.UseItem2))
-            SendInventoryAction(ActionTypes.UseItem, 1);
+            SendInventoryAction(ActionTypes.SetQuickSlot, 1, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.UseItem3))
-            SendInventoryAction(ActionTypes.UseItem, 2);
+            SendInventoryAction(ActionTypes.SetQuickSlot, 2, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.UseItem4))
-            SendInventoryAction(ActionTypes.UseItem, 3);
+            SendInventoryAction(ActionTypes.SetQuickSlot, 3, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.MenuConfirm))
-        {
-            if (_inventoryIndex == cap)         SendInventoryAction(ActionTypes.Unequip, 0);
-            else if (_inventoryIndex == cap + 1) SendInventoryAction(ActionTypes.Unequip, 1);
-            else                                 SendInventoryAction(ActionTypes.UseItem, _inventoryIndex);
-        }
-        else if (input.IsActionPressed(InputAction.Equip))
-        {
-            if (_inventoryIndex >= cap) SendInventoryAction(ActionTypes.Unequip, _inventoryIndex - cap);
-            else                        SendInventoryAction(ActionTypes.Equip, _inventoryIndex);
-        }
-        else if (input.IsActionPressed(InputAction.Drop) && _inventoryIndex < cap)
-            SendInventoryAction(ActionTypes.Drop, _inventoryIndex);
+            SendInventoryAction(ActionTypes.UseItem, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.Equip) && section.SelectedIndex < cap)
+            SendInventoryAction(ActionTypes.Equip, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.Drop) && section.SelectedIndex < cap)
+            SendInventoryAction(ActionTypes.Drop, section.SelectedIndex);
     }
 
-    private void UpdateInventoryScroll(int cap, int visibleRows)
+    private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
     {
-        if (_inventoryIndex < cap)
+        const int EquipmentSlots = 2;
+        if (input.IsActionPressed(InputAction.MenuUp))
         {
-            if (_inventoryIndex < _inventoryScrollOffset)
-                _inventoryScrollOffset = _inventoryIndex;
-            else if (_inventoryIndex >= _inventoryScrollOffset + visibleRows)
-                _inventoryScrollOffset = _inventoryIndex - visibleRows + 1;
+            if (section.SelectedIndex > 0)
+                section.SelectedIndex--;
+            else
+            {
+                // Cross to previous AcceptsInput section at its last item
+                var prev = _inventoryLayout.FocusPreviousInputSection();
+                if (prev != null && prev != section)
+                {
+                    int prevMax = GetInvSectionItemCount(prev, cap);
+                    prev.SelectedIndex = Math.Max(0, prevMax - 1);
+                    prev.EnsureSelectionVisible();
+                }
+                else
+                {
+                    // Single section — loop to last equipment slot
+                    section.SelectedIndex = EquipmentSlots - 1;
+                }
+            }
         }
+        else if (input.IsActionPressed(InputAction.MenuDown))
+        {
+            if (section.SelectedIndex < EquipmentSlots - 1)
+                section.SelectedIndex++;
+            else
+            {
+                // Cross to next AcceptsInput section at its first item
+                var next = _inventoryLayout.FocusNextInputSection();
+                if (next != null && next != section)
+                {
+                    next.SelectedIndex = 0;
+                    next.ScrollOffset = 0;
+                }
+                else
+                {
+                    // Single section — loop to first slot
+                    section.SelectedIndex = 0;
+                }
+            }
+        }
+        else if (input.IsActionPressed(InputAction.MenuConfirm) || input.IsActionPressed(InputAction.Equip))
+        {
+            // Unequip: 0 = weapon, 1 = armor
+            SendInventoryAction(ActionTypes.Unequip, section.SelectedIndex);
+        }
+    }
+
+    /// <summary>Returns the total number of selectable items in an inventory section.</summary>
+    private static int GetInvSectionItemCount(HudSection section, int cap) => section.Name switch
+    {
+        "InvItems" => cap,
+        "InvEquipment" => 2,
+        _ => 0
+    };
+
+    private void SendInventoryAction(int actionType, int slot, int targetSlot = 0)
+    {
+        if (_connection == null) return;
+        var msg = new ClientInputMsg
+        {
+            ActionType = actionType,
+            ItemSlot = slot,
+            TargetSlot = targetSlot,
+            Tick = _gameState.WorldTick
+        };
+        _ = _connection.SendInputAsync(msg);
     }
 
     private void HandleChatInput(IInputManager input)
@@ -617,18 +757,6 @@ public sealed class RogueLikeGame : GameBase
             if (_chatInputText.Length > 100)
                 _chatInputText = _chatInputText[..100];
         }
-    }
-
-    private void SendInventoryAction(int actionType, int slot)
-    {
-        if (_connection == null) return;
-        var msg = new ClientInputMsg
-        {
-            ActionType = actionType,
-            ItemSlot = slot,
-            Tick = _gameState.WorldTick
-        };
-        _ = _connection.SendInputAsync(msg);
     }
 
     private void HandleHelpInput(IInputManager input, ScreenState returnTo)

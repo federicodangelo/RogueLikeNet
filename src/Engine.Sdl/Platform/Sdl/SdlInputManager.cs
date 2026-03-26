@@ -82,6 +82,7 @@ public class SdlInputManager : BaseInputManager
         [InputAction.Equip] = [InputBinding.Key(SDL.Scancode.E)],
         [InputAction.UnequipSlot1] = [InputBinding.Key(SDL.Scancode.U)],
         [InputAction.UnequipSlot2] = [InputBinding.Key(SDL.Scancode.R)],
+        [InputAction.CycleSection] = [InputBinding.Key(SDL.Scancode.Tab)],
     };
 
     private bool _quitRequested;

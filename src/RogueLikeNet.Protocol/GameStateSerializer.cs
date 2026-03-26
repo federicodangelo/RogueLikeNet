@@ -276,6 +276,7 @@ public static class GameStateSerializer
             InventoryCategories = hudData.InventoryCategories,
             EquippedWeaponName = hudData.EquippedWeaponName,
             EquippedArmorName = hudData.EquippedArmorName,
+            QuickSlotIndices = hudData.QuickSlotIndices,
         };
     }
 

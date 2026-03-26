@@ -16,6 +16,8 @@ public class InventorySystem
         ProcessPickups(world);
         ProcessDrops(world);
         ProcessUseItem(world);
+        ProcessUseQuickSlot(world);
+        ProcessSetQuickSlot(world);
         ProcessSwapItems(world);
         ProcessUnequip(world);
         ProcessEquip(world);
@@ -76,14 +78,18 @@ public class InventorySystem
                 // Remaining stack goes into new slot
                 if (itemData.StackCount > 0 && !inv.IsFull)
                 {
+                    int newIndex = inv.Items.Count;
                     inv.Items.Add(itemData);
+                    AutoAssignQuickSlot(world, player, newIndex);
                     world.Destroy(item);
                 }
             }
             else
             {
                 if (inv.IsFull) continue;
+                int newIndex = inv.Items.Count;
                 inv.Items.Add(itemData);
+                AutoAssignQuickSlot(world, player, newIndex);
                 world.Destroy(item);
             }
         }
@@ -111,6 +117,13 @@ public class InventorySystem
 
             var itemData = inv.Items[slot];
             inv.Items.RemoveAt(slot);
+
+            // Adjust quick-slot references after removal
+            if (world.Has<QuickSlots>(player))
+            {
+                ref var qs = ref world.Get<QuickSlots>(player);
+                qs.OnItemRemoved(slot);
+            }
 
             // Find a position without an existing ground item (spiral outward)
             var (dropX, dropY) = FindDropPosition(world, pos.X, pos.Y);
@@ -181,6 +194,11 @@ public class InventorySystem
                 case ItemDefinitions.CategoryPotion:
                     ApplyPotion(world, player, itemData);
                     inv.Items.RemoveAt(slot);
+                    if (world.Has<QuickSlots>(player))
+                    {
+                        ref var qs = ref world.Get<QuickSlots>(player);
+                        qs.OnItemRemoved(slot);
+                    }
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
@@ -215,6 +233,13 @@ public class InventorySystem
         var newWeapon = inv.Items![slot];
         inv.Items.RemoveAt(slot);
 
+        // Adjust quick-slot references after removal
+        if (world.Has<QuickSlots>(player))
+        {
+            ref var qs = ref world.Get<QuickSlots>(player);
+            qs.OnItemRemoved(slot);
+        }
+
         // Unequip current weapon if any
         if (equip.HasWeapon)
         {
@@ -237,6 +262,13 @@ public class InventorySystem
 
         var newArmor = inv.Items![slot];
         inv.Items.RemoveAt(slot);
+
+        // Adjust quick-slot references after removal
+        if (world.Has<QuickSlots>(player))
+        {
+            ref var qs = ref world.Get<QuickSlots>(player);
+            qs.OnItemRemoved(slot);
+        }
 
         // Unequip current armor if any
         if (equip.HasArmor)
@@ -273,6 +305,17 @@ public class InventorySystem
             if (slotA == slotB) continue;
 
             (inv.Items[slotA], inv.Items[slotB]) = (inv.Items[slotB], inv.Items[slotA]);
+
+            // Update quick-slot references to track the swapped positions
+            if (world.Has<QuickSlots>(player))
+            {
+                ref var qs = ref world.Get<QuickSlots>(player);
+                for (int i = 0; i < QuickSlots.SlotCount; i++)
+                {
+                    if (qs[i] == slotA) qs[i] = slotB;
+                    else if (qs[i] == slotB) qs[i] = slotA;
+                }
+            }
         }
     }
 
@@ -344,5 +387,109 @@ public class InventorySystem
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Handles SetQuickSlot action: toggle-assign an inventory item to a quick slot.
+    /// ItemSlot = quick slot number (0-3), TargetSlot = inventory index to assign.
+    /// If the quick slot already holds that inventory index, clear it (toggle off).
+    /// </summary>
+    private void ProcessSetQuickSlot(Arch.Core.World world)
+    {
+        var actions = new List<(Entity Player, int QuickSlotNum, int InvIndex)>();
+
+        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, QuickSlots>();
+        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        {
+            if (input.ActionType != ActionTypes.SetQuickSlot) return;
+            actions.Add((player, input.ItemSlot, input.TargetSlot));
+            input.ActionType = ActionTypes.None;
+        });
+
+        foreach (var (player, qsNum, invIndex) in actions)
+        {
+            if (!world.IsAlive(player)) continue;
+            if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
+
+            ref var qs = ref world.Get<QuickSlots>(player);
+            ref var inv = ref world.Get<Inventory>(player);
+
+            // Toggle: if this quick slot already points to this item, clear it
+            if (qs[qsNum] == invIndex)
+            {
+                qs[qsNum] = -1;
+            }
+            else
+            {
+                // Validate the inventory index
+                if (inv.Items == null || invIndex < 0 || invIndex >= inv.Items.Count) continue;
+
+                // Clear any other quick slot that had this inventory index
+                qs.ClearIndex(invIndex);
+                qs[qsNum] = invIndex;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles UseQuickSlot action: resolves quick slot to inventory index, then uses the item.
+    /// ItemSlot = quick slot number (0-3).
+    /// </summary>
+    private void ProcessUseQuickSlot(Arch.Core.World world)
+    {
+        var uses = new List<(Entity Player, int QuickSlotNum)>();
+
+        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, QuickSlots, Health, CombatStats>();
+        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        {
+            if (input.ActionType != ActionTypes.UseQuickSlot) return;
+            uses.Add((player, input.ItemSlot));
+            input.ActionType = ActionTypes.None;
+        });
+
+        foreach (var (player, qsNum) in uses)
+        {
+            if (!world.IsAlive(player)) continue;
+            if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
+
+            ref var qs = ref world.Get<QuickSlots>(player);
+            int invIndex = qs[qsNum];
+            if (invIndex < 0) continue;
+
+            ref var inv = ref world.Get<Inventory>(player);
+            if (inv.Items == null || invIndex >= inv.Items.Count) continue;
+
+            var itemData = inv.Items[invIndex];
+            var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
+
+            switch (template.Category)
+            {
+                case ItemDefinitions.CategoryPotion:
+                    ApplyPotion(world, player, itemData);
+                    inv.Items.RemoveAt(invIndex);
+                    qs.OnItemRemoved(invIndex);
+                    break;
+
+                case ItemDefinitions.CategoryWeapon:
+                    EquipWeapon(world, player, invIndex);
+                    break;
+
+                case ItemDefinitions.CategoryArmor:
+                    EquipArmor(world, player, invIndex);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Auto-assigns a newly added inventory item to the first empty quick slot.
+    /// </summary>
+    private static void AutoAssignQuickSlot(Arch.Core.World world, Entity player, int newIndex)
+    {
+        if (!world.Has<QuickSlots>(player)) return;
+        ref var qs = ref world.Get<QuickSlots>(player);
+        int emptySlot = qs.FirstEmptySlot();
+        if (emptySlot >= 0)
+            qs[emptySlot] = newIndex;
     }
 }

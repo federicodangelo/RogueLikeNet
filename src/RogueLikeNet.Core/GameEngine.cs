@@ -119,6 +119,7 @@ public class GameEngine : IDisposable
             skills,
             new Inventory(20),
             new Equipment(),
+            new QuickSlots(),
             new MoveDelay(Math.Max(0, 10 - (5 + bonusSpeed))),
             new AttackDelay(Math.Max(0, 10 - (5 + bonusSpeed)))
         );
@@ -407,6 +408,12 @@ public class GameEngine : IDisposable
                 state.EquippedArmorName = ItemDefinitions.Get(equip.Armor!.Value.ItemTypeId).Name ?? "";
         }
 
+        if (_ecsWorld.Has<QuickSlots>(playerEntity))
+        {
+            ref var qs = ref _ecsWorld.Get<QuickSlots>(playerEntity);
+            state.QuickSlotIndices = [qs.Slot0, qs.Slot1, qs.Slot2, qs.Slot3];
+        }
+
         if (_ecsWorld.Has<SkillSlots>(playerEntity))
         {
             ref var skills = ref _ecsWorld.Get<SkillSlots>(playerEntity);
@@ -468,4 +475,5 @@ public class PlayerStateData
     public int[] InventoryCategories = [];
     public string EquippedWeaponName = "";
     public string EquippedArmorName = "";
+    public int[] QuickSlotIndices = [];
 }

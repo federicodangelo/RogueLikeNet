@@ -41,6 +41,7 @@ public enum InputAction
     Equip,
     UnequipSlot1,
     UnequipSlot2,
+    CycleSection,
 }
 
 public enum InputActionAxis

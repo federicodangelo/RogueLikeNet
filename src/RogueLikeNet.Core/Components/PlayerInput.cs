@@ -22,4 +22,6 @@ public static class ActionTypes
     public const int SwapItems = 8;
     public const int Unequip = 9;
     public const int Equip = 10;
+    public const int SetQuickSlot = 11;
+    public const int UseQuickSlot = 12;
 }
