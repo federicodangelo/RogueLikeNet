@@ -103,8 +103,8 @@ public class GameEngineTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.True(hud!.InventoryCount > 0);
-        Assert.NotEmpty(hud.InventoryNames);
-        Assert.Equal("Short Sword", hud.InventoryNames[0]);
+        Assert.NotEmpty(hud.InventoryItems);
+        Assert.Equal("Short Sword", hud.InventoryItems[0].Name);
     }
 
     [Fact]
@@ -134,10 +134,9 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal(4, hud!.SkillIds.Length);
-        Assert.Equal(4, hud.SkillCooldowns.Length);
-        Assert.Equal(SkillDefinitions.PowerStrike, hud.SkillIds[0]);
-        Assert.Equal(SkillDefinitions.ShieldBash, hud.SkillIds[1]);
+        Assert.Equal(4, hud!.Skills.Length);
+        Assert.Equal(SkillDefinitions.PowerStrike, hud.Skills[0].Id);
+        Assert.Equal(SkillDefinitions.ShieldBash, hud.Skills[1].Id);
     }
 
     [Fact]
@@ -255,10 +254,10 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal(4, hud!.SkillNames.Length);
+        Assert.Equal(4, hud!.Skills.Length);
         // Mage skills: Fireball, Heal, and two more
-        Assert.Equal(SkillDefinitions.GetName(hud.SkillIds[0]), hud.SkillNames[0]);
-        Assert.Equal(SkillDefinitions.GetName(hud.SkillIds[1]), hud.SkillNames[1]);
+        Assert.Equal(SkillDefinitions.GetName(hud.Skills[0].Id), hud.Skills[0].Name);
+        Assert.Equal(SkillDefinitions.GetName(hud.Skills[1].Id), hud.Skills[1].Name);
     }
 
     [Fact]
@@ -313,9 +312,8 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Single(hud!.InventoryStackCounts);
-        Assert.Equal(1, hud.InventoryStackCounts[0]); // Sword is not stackable
-        Assert.Single(hud.InventoryRarities);
-        Assert.Equal(1, hud.InventoryRarities[0]); // Rarity 1 (Uncommon)
+        Assert.Single(hud!.InventoryItems);
+        Assert.Equal(1, hud.InventoryItems[0].StackCount); // Sword is not stackable
+        Assert.Equal(1, hud.InventoryItems[0].Rarity); // Rarity 1 (Uncommon)
     }
 }

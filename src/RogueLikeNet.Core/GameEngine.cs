@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
@@ -412,25 +413,22 @@ public class GameEngine : IDisposable
             state.InventoryCount = inv.Items?.Count ?? 0;
             state.InventoryCapacity = inv.Capacity;
 
-            // Build inventory item names, stack counts, rarities, categories
+            // Build inventory items
             if (inv.Items != null)
             {
-                var names = new List<string>();
-                var stacks = new List<int>();
-                var rarities = new List<int>();
-                var categories = new List<int>();
+                var items = new List<InventoryItemData>();
                 foreach (var item in inv.Items)
                 {
                     var def = ItemDefinitions.Get(item.ItemTypeId);
-                    names.Add(def.Name ?? "Unknown");
-                    stacks.Add(item.StackCount);
-                    rarities.Add(item.Rarity);
-                    categories.Add(def.Category);
+                    items.Add(new InventoryItemData
+                    {
+                        Name = def.Name ?? "Unknown",
+                        StackCount = item.StackCount,
+                        Rarity = item.Rarity,
+                        Category = def.Category,
+                    });
                 }
-                state.InventoryNames = names.ToArray();
-                state.InventoryStackCounts = stacks.ToArray();
-                state.InventoryRarities = rarities.ToArray();
-                state.InventoryCategories = categories.ToArray();
+                state.InventoryItems = items.ToArray();
             }
         }
 
@@ -452,39 +450,15 @@ public class GameEngine : IDisposable
         if (_ecsWorld.Has<SkillSlots>(playerEntity))
         {
             ref var skills = ref _ecsWorld.Get<SkillSlots>(playerEntity);
-            state.SkillIds = [skills.Skill0, skills.Skill1, skills.Skill2, skills.Skill3];
-            state.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
-            state.SkillNames = [
-                SkillDefinitions.GetName(skills.Skill0),
-                SkillDefinitions.GetName(skills.Skill1),
-                SkillDefinitions.GetName(skills.Skill2),
-                SkillDefinitions.GetName(skills.Skill3),
+            state.Skills = [
+                new SkillSlotData { Id = skills.Skill0, Cooldown = skills.Cooldown0, Name = SkillDefinitions.GetName(skills.Skill0) },
+                new SkillSlotData { Id = skills.Skill1, Cooldown = skills.Cooldown1, Name = SkillDefinitions.GetName(skills.Skill1) },
+                new SkillSlotData { Id = skills.Skill2, Cooldown = skills.Cooldown2, Name = SkillDefinitions.GetName(skills.Skill2) },
+                new SkillSlotData { Id = skills.Skill3, Cooldown = skills.Cooldown3, Name = SkillDefinitions.GetName(skills.Skill3) },
             ];
         }
 
         // Floor items at player position — now derived client-side from entity data
         return state;
     }
-}
-
-public class PlayerStateData
-{
-    public int Health;
-    public int MaxHealth;
-    public int Attack;
-    public int Defense;
-    public int Level;
-    public int Experience;
-    public int InventoryCount;
-    public int InventoryCapacity;
-    public int[] SkillIds = [];
-    public int[] SkillCooldowns = [];
-    public string[] SkillNames = [];
-    public string[] InventoryNames = [];
-    public int[] InventoryStackCounts = [];
-    public int[] InventoryRarities = [];
-    public int[] InventoryCategories = [];
-    public string EquippedWeaponName = "";
-    public string EquippedArmorName = "";
-    public int[] QuickSlotIndices = [];
 }

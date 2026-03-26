@@ -22,7 +22,7 @@ public class PlayerStateDataTests
         Assert.Equal(hud.Health, hud.MaxHealth);
         Assert.True(hud.Attack > 0);
         Assert.True(hud.Defense > 0);
-        Assert.Equal(4, hud.SkillIds.Length);
+        Assert.Equal(4, hud.Skills.Length);
     }
 
     [Fact]
@@ -35,9 +35,9 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal(4, hud!.SkillNames.Length);
-        Assert.Equal("Power Strike", hud.SkillNames[0]);
-        Assert.Equal("Shield Bash", hud.SkillNames[1]);
+        Assert.Equal(4, hud!.Skills.Length);
+        Assert.Equal("Power Strike", hud.Skills[0].Name);
+        Assert.Equal("Shield Bash", hud.Skills[1].Name);
     }
 
     [Fact]
@@ -107,8 +107,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Single(hud!.InventoryStackCounts);
-        Assert.True(hud.InventoryStackCounts[0] >= 1);
+        Assert.Single(hud!.InventoryItems);
+        Assert.True(hud.InventoryItems[0].StackCount >= 1);
     }
 
     [Fact]
@@ -128,8 +128,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Single(hud!.InventoryRarities);
-        Assert.Equal(2, hud.InventoryRarities[0]);
+        Assert.Single(hud!.InventoryItems);
+        Assert.Equal(2, hud.InventoryItems[0].Rarity);
     }
 
     [Fact]

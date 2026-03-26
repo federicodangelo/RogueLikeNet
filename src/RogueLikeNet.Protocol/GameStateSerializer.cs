@@ -180,28 +180,23 @@ public static class GameStateSerializer
 
     public static PlayerStateMsg? BuildPlayerState(GameEngine engine, Entity playerEntity)
     {
-        var hudData = engine.GetPlayerStateData(playerEntity);
-        if (hudData == null) return null;
+        var stateData = engine.GetPlayerStateData(playerEntity);
+        if (stateData == null) return null;
         return new PlayerStateMsg
         {
-            Health = hudData.Health,
-            MaxHealth = hudData.MaxHealth,
-            Attack = hudData.Attack,
-            Defense = hudData.Defense,
-            Level = hudData.Level,
-            Experience = hudData.Experience,
-            InventoryCount = hudData.InventoryCount,
-            InventoryCapacity = hudData.InventoryCapacity,
-            SkillIds = hudData.SkillIds,
-            SkillCooldowns = hudData.SkillCooldowns,
-            SkillNames = hudData.SkillNames,
-            InventoryNames = hudData.InventoryNames,
-            InventoryStackCounts = hudData.InventoryStackCounts,
-            InventoryRarities = hudData.InventoryRarities,
-            InventoryCategories = hudData.InventoryCategories,
-            EquippedWeaponName = hudData.EquippedWeaponName,
-            EquippedArmorName = hudData.EquippedArmorName,
-            QuickSlotIndices = hudData.QuickSlotIndices,
+            Health = stateData.Health,
+            MaxHealth = stateData.MaxHealth,
+            Attack = stateData.Attack,
+            Defense = stateData.Defense,
+            Level = stateData.Level,
+            Experience = stateData.Experience,
+            InventoryCount = stateData.InventoryCount,
+            InventoryCapacity = stateData.InventoryCapacity,
+            Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),
+            InventoryItems = stateData.InventoryItems.Select(i => new InventoryItemMsg { Name = i.Name, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category }).ToArray(),
+            EquippedWeaponName = stateData.EquippedWeaponName,
+            EquippedArmorName = stateData.EquippedArmorName,
+            QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = playerEntity.Id,
         };
     }

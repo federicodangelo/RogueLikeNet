@@ -258,13 +258,13 @@ public class TileRenderer
                     DrawString(r, col, row, "Skills", ColorTitle); row++;
                     if (row >= maxRow) break;
                     DrawHudSeparator(r, col, row, innerW); row++;
-                    for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2) && row < maxRow; i++)
+                    for (int i = 0; i < Math.Min(hud.Skills.Length, 2) && row < maxRow; i++)
                     {
-                        if (hud.SkillIds[i] == 0) continue;
+                        if (hud.Skills[i].Id == 0) continue;
                         string key = i == 0 ? "Q" : "E";
-                        string name = i < hud.SkillNames.Length && !string.IsNullOrEmpty(hud.SkillNames[i])
-                            ? hud.SkillNames[i] : $"Skill {i + 1}";
-                        int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
+                        string name = !string.IsNullOrEmpty(hud.Skills[i].Name)
+                            ? hud.Skills[i].Name : $"Skill {i + 1}";
+                        int cd = hud.Skills[i].Cooldown;
                         string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
                         DrawString(r, col, row, text, cd > 0 ? ColorSkillCd : ColorSkillReady);
                         row++;
@@ -318,11 +318,11 @@ public class TileRenderer
         for (int i = 0; i < 4 && row < maxRow; i++)
         {
             int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
-            if (invIdx >= 0 && invIdx < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[invIdx]))
+            if (invIdx >= 0 && invIdx < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[invIdx].Name))
             {
-                int stack = invIdx < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[invIdx] : 1;
+                int stack = hud.InventoryItems[invIdx].StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryNames[invIdx]}{stackStr}", ColorItem);
+                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryItems[invIdx].Name}{stackStr}", ColorItem);
             }
             else
             {
@@ -379,13 +379,13 @@ public class TileRenderer
 
         DrawString(r, col, row, "Skills", ColorTitle); row++;
         DrawHudSeparator(r, col, row, innerW); row++;
-        for (int i = 0; i < Math.Min(hud.SkillIds.Length, 2); i++)
+        for (int i = 0; i < Math.Min(hud.Skills.Length, 2); i++)
         {
-            if (hud.SkillIds[i] == 0) continue;
+            if (hud.Skills[i].Id == 0) continue;
             string key = i == 0 ? "Q" : "E";
-            string name = i < hud.SkillNames.Length && !string.IsNullOrEmpty(hud.SkillNames[i])
-                ? hud.SkillNames[i] : $"Skill {i + 1}";
-            int cd = i < hud.SkillCooldowns.Length ? hud.SkillCooldowns[i] : 0;
+            string name = !string.IsNullOrEmpty(hud.Skills[i].Name)
+                ? hud.Skills[i].Name : $"Skill {i + 1}";
+            int cd = hud.Skills[i].Cooldown;
             string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
             DrawString(r, col, row, text, cd > 0 ? ColorSkillCd : ColorSkillReady);
             row++;
@@ -407,11 +407,11 @@ public class TileRenderer
         for (int i = 0; i < 4; i++)
         {
             int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
-            if (invIdx >= 0 && invIdx < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[invIdx]))
+            if (invIdx >= 0 && invIdx < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[invIdx].Name))
             {
-                int stack = invIdx < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[invIdx] : 1;
+                int stack = hud.InventoryItems[invIdx].StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryNames[invIdx]}{stackStr}", ColorItem);
+                DrawString(r, col, row, $"[{i + 1}]{hud.InventoryItems[invIdx].Name}{stackStr}", ColorItem);
             }
             else
                 DrawString(r, col, row, $"[{i + 1}] ---", ColorDim);
@@ -558,11 +558,11 @@ public class TileRenderer
                 if (qsIndices[q] == i) { slotTag = $"[{q + 1}]"; break; }
             }
 
-            string catTag = i < hud.InventoryCategories.Length
-                ? CategoryTag(hud.InventoryCategories[i]) : "     ";
-            string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
-                ? hud.InventoryNames[i] : "---";
-            int stack = i < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[i] : 1;
+            string catTag = i < hud.InventoryItems.Length
+                ? CategoryTag(hud.InventoryItems[i].Category) : "     ";
+            string name = i < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[i].Name)
+                ? hud.InventoryItems[i].Name : "---";
+            int stack = i < hud.InventoryItems.Length ? hud.InventoryItems[i].StackCount : 1;
             string stackStr = stack > 1 ? $" x{stack}" : "";
             string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
             if (text.Length > innerW) text = text[..innerW];
@@ -625,8 +625,8 @@ public class TileRenderer
         {
             bool sel = i == selectedIndex;
             string prefix = sel ? "\u25ba" : " ";
-            string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
-                ? hud.InventoryNames[i] : "---";
+            string name = i < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[i].Name)
+                ? hud.InventoryItems[i].Name : "---";
             DrawString(r, col, row, $"{prefix}   {name}", sel ? ColorInvSel : ColorInv);
             row++;
         }
