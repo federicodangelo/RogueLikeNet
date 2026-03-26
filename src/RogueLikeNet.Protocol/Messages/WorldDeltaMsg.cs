@@ -12,7 +12,7 @@ public class WorldDeltaMsg
     [Key(4)] public CombatEventMsg[] CombatEvents { get; set; } = [];
     [Key(5)] public ChunkDataMsg[] Chunks { get; set; } = [];
     [Key(6)] public PlayerStateMsg? PlayerState { get; set; }
-    [Key(7)] public FloorItemsMsg? FloorItems { get; set; }
+    // Key(7) reserved (was FloorItems, now derived from EntityUpdates)
 }
 
 [MessagePackObject]
@@ -39,6 +39,7 @@ public class EntityUpdateMsg
     [Key(6)] public int MaxHealth { get; set; }
     [Key(7)] public bool Removed { get; set; }
     [Key(8)] public int LightRadius { get; set; }
+    [Key(9)] public string? ItemName { get; set; }
 }
 
 [MessagePackObject]
@@ -66,7 +67,7 @@ public class PlayerStateMsg
     [Key(8)] public int[] SkillIds { get; set; } = [];
     [Key(9)] public int[] SkillCooldowns { get; set; } = [];
     [Key(10)] public string[] InventoryNames { get; set; } = [];
-    // Key(11) reserved (was FloorItemNames, moved to FloorItemsMsg)
+    // Key(11) reserved (was FloorItemNames, now derived from entity data)
     [Key(12)] public string[] SkillNames { get; set; } = [];
     [Key(13)] public string EquippedWeaponName { get; set; } = "";
     [Key(14)] public string EquippedArmorName { get; set; } = "";
@@ -77,8 +78,4 @@ public class PlayerStateMsg
     [Key(19)] public long PlayerEntityId { get; set; }
 }
 
-[MessagePackObject]
-public class FloorItemsMsg
-{
-    [Key(0)] public string[] Names { get; set; } = [];
-}
+

@@ -102,7 +102,7 @@ public class GameEngine : IDisposable
     /// Spawns a player entity at the given world position.
     /// Class choice affects starting stats.
     /// </summary>
-    public Entity SpawnPlayer(long connectionId, int x, int y, int classId = ClassDefinitions.Warrior)
+    public Entity SpawnPlayer(long connectionId, int x, int y, int classId)
     {
         var stats = ClassDefinitions.GetStartingStats(classId);
         var skills = ClassDefinitions.GetStartingSkills(classId);
@@ -111,13 +111,13 @@ public class GameEngine : IDisposable
             new Position(x, y),
             new Health(100 + stats.Health),
             new CombatStats(10 + stats.Attack, 5 + stats.Defense, 10 + stats.Speed),
-            new FOVData(20),
+            new FOVData(ClassDefinitions.FOVRadius),
             new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             new PlayerTag { ConnectionId = connectionId },
             new PlayerInput(),
             new ClassData { ClassId = classId, Level = 1 },
             skills,
-            new Inventory(20),
+            new Inventory(ClassDefinitions.InventorySlots),
             new Equipment(),
             new QuickSlots(),
             new MoveDelay(Math.Max(0, 10 - (6 + stats.Speed))),
@@ -223,9 +223,44 @@ public class GameEngine : IDisposable
             {
                 int difficulty = typeId; // rough mapping: harder monster = higher difficulty
                 var (template, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                SpawnItemOnGround(template, rarity, x, y);
+                var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y);
+                SpawnItemOnGround(template, rarity, dropX, dropY);
             }
         }
+    }
+
+    /// <summary>
+    /// Finds an unoccupied position to drop an item, spiraling outward from origin.
+    /// Avoids overlapping with other ground items.
+    /// </summary>
+    public static (int X, int Y) FindDropPosition(Arch.Core.World world, int originX, int originY)
+    {
+        // Collect positions of all ground items
+        var occupied = new HashSet<long>();
+        var groundQuery = new QueryDescription().WithAll<Position, GroundItemTag>();
+        world.Query(in groundQuery, (ref Position gPos) =>
+        {
+            occupied.Add(FOVData.PackCoord(gPos.X, gPos.Y));
+        });
+
+        // Try origin first, then spiral outward up to radius 5
+        if (!occupied.Contains(FOVData.PackCoord(originX, originY)))
+            return (originX, originY);
+
+        for (int r = 1; r <= 5; r++)
+        {
+            for (int dx = -r; dx <= r; dx++)
+                for (int dy = -r; dy <= r; dy++)
+                {
+                    if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
+                    int x = originX + dx;
+                    int y = originY + dy;
+                    if (!occupied.Contains(FOVData.PackCoord(x, y)))
+                        return (x, y);
+                }
+        }
+
+        return (originX, originY); // fallback
     }
 
     /// <summary>
@@ -427,32 +462,8 @@ public class GameEngine : IDisposable
             ];
         }
 
-        // Floor items at player position — now returned separately via GetFloorItemsData
+        // Floor items at player position — now derived client-side from entity data
         return state;
-    }
-
-    /// <summary>
-    /// Returns names of items on the ground at the player's current position.
-    /// Sent as a separate message since it changes with position, not stats.
-    /// </summary>
-    public string[] GetFloorItemsData(Entity playerEntity)
-    {
-        if (!_ecsWorld.IsAlive(playerEntity)) return [];
-        if (!_ecsWorld.Has<Position>(playerEntity)) return [];
-
-        ref var playerPos = ref _ecsWorld.Get<Position>(playerEntity);
-        int px = playerPos.X, py = playerPos.Y;
-        var floorNames = new List<string>();
-        var floorQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
-        _ecsWorld.Query(in floorQuery, (ref Position iPos, ref ItemData itemData) =>
-        {
-            if (iPos.X == px && iPos.Y == py)
-            {
-                var def = ItemDefinitions.Get(itemData.ItemTypeId);
-                floorNames.Add(def.Name ?? "Unknown");
-            }
-        });
-        return floorNames.ToArray();
     }
 }
 

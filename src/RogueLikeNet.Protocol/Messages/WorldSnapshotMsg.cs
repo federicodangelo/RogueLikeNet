@@ -12,7 +12,7 @@ public class WorldSnapshotMsg
     [Key(4)] public int PlayerX { get; set; }
     [Key(5)] public int PlayerY { get; set; }
     [Key(6)] public PlayerStateMsg? PlayerState { get; set; }
-    [Key(7)] public FloorItemsMsg? FloorItems { get; set; }
+    // Key(7) reserved (was FloorItems, now derived from Entities)
 }
 
 [MessagePackObject]
@@ -38,4 +38,5 @@ public class EntityMsg
     [Key(5)] public int Health { get; set; }
     [Key(6)] public int MaxHealth { get; set; }
     [Key(7)] public int LightRadius { get; set; }
+    [Key(8)] public string? ItemName { get; set; }
 }

@@ -7,6 +7,9 @@ namespace RogueLikeNet.Core.Definitions;
 /// </summary>
 public static class ClassDefinitions
 {
+    public const int InventorySlots = 20;
+    public const int FOVRadius = 20;
+
     public const int Warrior = 0;
     public const int Rogue = 1;
     public const int Mage = 2;

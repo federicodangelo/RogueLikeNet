@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Algorithms;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 
@@ -10,7 +11,6 @@ namespace RogueLikeNet.Client.Core.State;
 /// </summary>
 public class ClientGameState
 {
-    private const int FovRadius = 20;
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
@@ -24,7 +24,6 @@ public class ClientGameState
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
     public PlayerStateMsg? PlayerState { get; private set; }
-    public FloorItemsMsg? FloorItems { get; private set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
 
     public void Clear()
@@ -39,7 +38,6 @@ public class ClientGameState
         PlayerEntityId = 0;
         WorldTick = 0;
         PlayerState = null;
-        FloorItems = null;
     }
 
     public void ApplySnapshot(WorldSnapshotMsg snapshot)
@@ -66,11 +64,11 @@ public class ClientGameState
                 Health = entityMsg.Health,
                 MaxHealth = entityMsg.MaxHealth,
                 LightRadius = entityMsg.LightRadius,
+                ItemName = entityMsg.ItemName,
             };
         }
 
         PlayerState = snapshot.PlayerState;
-        FloorItems = snapshot.FloorItems;
         ComputeVisibility();
         ComputeLighting();
     }
@@ -126,13 +124,11 @@ public class ClientGameState
             entity.Health = entityUpdate.Health;
             entity.MaxHealth = entityUpdate.MaxHealth;
             entity.LightRadius = entityUpdate.LightRadius;
+            entity.ItemName = entityUpdate.ItemName;
         }
 
         if (delta.PlayerState != null)
             PlayerState = delta.PlayerState;
-
-        if (delta.FloorItems != null)
-            FloorItems = delta.FloorItems;
 
         // Queue combat events for particle system
         if (delta.CombatEvents.Length > 0)
@@ -155,6 +151,21 @@ public class ClientGameState
     public void DrainCombatEvents()
     {
         _pendingCombatEvents.Clear();
+    }
+
+    /// <summary>
+    /// Returns item names on the ground at the player's current position,
+    /// derived from entity data.
+    /// </summary>
+    public string[] GetFloorItemNames()
+    {
+        var names = new List<string>();
+        foreach (var entity in _entities.Values)
+        {
+            if (entity.ItemName != null && entity.X == PlayerX && entity.Y == PlayerY)
+                names.Add(entity.ItemName);
+        }
+        return names.ToArray();
     }
 
     private void ApplyChunkData(ChunkDataMsg msg)
@@ -196,7 +207,7 @@ public class ClientGameState
     private void ComputeVisibility()
     {
         _visibleTiles.Clear();
-        ShadowCastFov.Compute(PlayerX, PlayerY, FovRadius,
+        ShadowCastFov.Compute(PlayerX, PlayerY, ClassDefinitions.FOVRadius,
             isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
             markVisible: (x, y) =>
             {
@@ -209,8 +220,8 @@ public class ClientGameState
     private void ComputeLighting()
     {
         // Reset light only for chunks within FOV range of the player
-        var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - FovRadius, PlayerY - FovRadius);
-        var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + FovRadius, PlayerY + FovRadius);
+        var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius);
+        var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius);
         foreach (var chunk in _chunks.Values)
             if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx &&
                 chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
@@ -219,7 +230,7 @@ public class ClientGameState
                         chunk.Tiles[x, y].LightLevel = 0;
 
         // Player emits light at FOV radius
-        FloodLight(PlayerX, PlayerY, FovRadius);
+        FloodLight(PlayerX, PlayerY, ClassDefinitions.FOVRadius);
 
         // Light source entities
         foreach (var entity in _entities.Values)
@@ -263,4 +274,5 @@ public class ClientEntity
     public int Health { get; set; }
     public int MaxHealth { get; set; }
     public int LightRadius { get; set; }
+    public string? ItemName { get; set; }
 }

@@ -88,7 +88,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Spawn item at player's position
         var template = ItemDefinitions.All[0]; // Short Sword
@@ -109,7 +109,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up two items
         engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, sx, sy);
@@ -132,7 +132,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Fill all 4 quick slots
         for (int i = 0; i < 4; i++)
@@ -162,7 +162,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up an item
         engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, sx, sy);
@@ -192,7 +192,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up an item (auto-assigned to slot 0)
         engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, sx, sy);
@@ -219,7 +219,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up 3 items (auto-assigned to slots 0, 1, 2)
         for (int i = 0; i < 3; i++)
@@ -247,7 +247,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Damage player
         ref var health = ref engine.EcsWorld.Get<Health>(player);
@@ -275,7 +275,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         ref var inp = ref engine.EcsWorld.Get<PlayerInput>(player);
         inp.ActionType = ActionTypes.UseQuickSlot;
@@ -288,7 +288,7 @@ public class QuickSlotsTests
     {
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         // Pick up 2 items (auto-assigned)
         engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, sx, sy);

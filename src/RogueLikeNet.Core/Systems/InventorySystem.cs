@@ -126,7 +126,7 @@ public class InventorySystem
             }
 
             // Find a position without an existing ground item (spiral outward)
-            var (dropX, dropY) = FindDropPosition(world, pos.X, pos.Y);
+            var (dropX, dropY) = GameEngine.FindDropPosition(world, pos.X, pos.Y);
 
             // Create a new entity on the ground
             var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
@@ -136,36 +136,6 @@ public class InventorySystem
                 itemData,
                 new GroundItemTag());
         }
-    }
-
-    private static (int X, int Y) FindDropPosition(Arch.Core.World world, int originX, int originY)
-    {
-        // Collect positions of all ground items
-        var occupied = new HashSet<long>();
-        var groundQuery = new QueryDescription().WithAll<Position, GroundItemTag>();
-        world.Query(in groundQuery, (ref Position gPos) =>
-        {
-            occupied.Add(FOVData.PackCoord(gPos.X, gPos.Y));
-        });
-
-        // Try origin first, then spiral outward up to radius 5
-        if (!occupied.Contains(FOVData.PackCoord(originX, originY)))
-            return (originX, originY);
-
-        for (int r = 1; r <= 5; r++)
-        {
-            for (int dx = -r; dx <= r; dx++)
-                for (int dy = -r; dy <= r; dy++)
-                {
-                    if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
-                    int x = originX + dx;
-                    int y = originY + dy;
-                    if (!occupied.Contains(FOVData.PackCoord(x, y)))
-                        return (x, y);
-                }
-        }
-
-        return (originX, originY); // fallback
     }
 
     private void ProcessUseItem(Arch.Core.World world)

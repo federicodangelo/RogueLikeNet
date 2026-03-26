@@ -338,7 +338,7 @@ public class TileRenderer
     private void RenderFloorItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         ClientGameState state)
     {
-        var floorNames = state.FloorItems?.Names ?? [];
+        var floorNames = state.GetFloorItemNames();
         if (floorNames.Length == 0) return;
 
         if (row >= maxRow) return;
@@ -422,7 +422,7 @@ public class TileRenderer
         DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
         row += 2;
 
-        var floorNames = state.FloorItems?.Names ?? [];
+        var floorNames = state.GetFloorItemNames();
         if (floorNames.Length > 0)
         {
             DrawString(r, col, row, "On Ground", ColorTitle); row++;

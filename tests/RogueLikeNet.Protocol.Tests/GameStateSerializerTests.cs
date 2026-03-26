@@ -1,5 +1,6 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -10,9 +11,9 @@ public class GameStateSerializerTests
     [Fact]
     public void EntitySnapshot_EqualityWorks()
     {
-        var a = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0);
-        var b = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0);
-        var c = new EntitySnapshot(1, 3, 64, 0xFFFFFF, 10, 10, 0);
+        var a = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0, null);
+        var b = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0, null);
+        var c = new EntitySnapshot(1, 3, 64, 0xFFFFFF, 10, 10, 0, null);
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, c);
@@ -162,7 +163,7 @@ public class GameStateSerializerTests
         var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator());
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         engine.Tick();
 
         ref var pos = ref engine.EcsWorld.Get<Position>(player);

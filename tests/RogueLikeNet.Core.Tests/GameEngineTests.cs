@@ -16,7 +16,7 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
-        var entity = engine.SpawnPlayer(1, 10, 10);
+        var entity = engine.SpawnPlayer(1, 10, 10, ClassDefinitions.Warrior);
         Assert.True(engine.EcsWorld.IsAlive(entity));
         ref var pos = ref engine.EcsWorld.Get<Position>(entity);
         Assert.Equal(10, pos.X);
@@ -49,7 +49,7 @@ public class GameEngineTests
         engine.EnsureChunkLoaded(0, 0);
 
         var (sx, sy) = engine.FindSpawnPosition();
-        engine.SpawnPlayer(1, sx, sy);
+        engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         engine.Tick();
 
         var chunk = engine.WorldMap.TryGetChunk(0, 0)!;
@@ -223,7 +223,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerStateData_FloorItems_ReturnsNames()
+    public void SpawnItemOnGround_CreatesGroundItemEntity()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -234,11 +234,15 @@ public class GameEngineTests
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
-        var hud = engine.GetPlayerStateData(player);
-        Assert.NotNull(hud);
-        var floorItems = engine.GetFloorItemsData(player);
-        Assert.NotEmpty(floorItems);
-        Assert.Equal("Short Sword", floorItems[0]);
+        // Verify entity exists with GroundItemTag and ItemData at the expected position
+        int count = 0;
+        var query = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+        engine.EcsWorld.Query(in query, (ref Position pos, ref ItemData data) =>
+        {
+            if (pos.X == sx && pos.Y == sy && data.ItemTypeId == ItemDefinitions.ShortSword)
+                count++;
+        });
+        Assert.Equal(1, count);
     }
 
     [Fact]

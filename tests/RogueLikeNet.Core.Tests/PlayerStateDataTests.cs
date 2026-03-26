@@ -26,51 +26,6 @@ public class PlayerStateDataTests
     }
 
     [Fact]
-    public void GetPlayerStateData_FloorItemNames_Empty_WhenNoItems()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-
-        var floorItems = engine.GetFloorItemsData(player);
-        Assert.Empty(floorItems);
-    }
-
-    [Fact]
-    public void GetPlayerStateData_FloorItemNames_ReturnsItemsAtPlayerPosition()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-
-        // Place a Health Potion at player's position
-        var template = ItemDefinitions.All[8]; // Health Potion
-        engine.SpawnItemOnGround(template, 0, sx, sy);
-
-        var floorItems = engine.GetFloorItemsData(player);
-        Assert.Single(floorItems);
-        Assert.Equal("Health Potion", floorItems[0]);
-    }
-
-    [Fact]
-    public void GetPlayerStateData_FloorItemNames_IgnoresItemsElsewhere()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-
-        // Place an item far from player
-        var template = ItemDefinitions.All[0]; // Short Sword
-        engine.SpawnItemOnGround(template, 0, sx + 5, sy + 5);
-
-        var floorItems = engine.GetFloorItemsData(player);
-        Assert.Empty(floorItems);
-    }
-
-    [Fact]
     public void GetPlayerStateData_SkillNames_Populated()
     {
         using var engine = new GameEngine(42, _gen);

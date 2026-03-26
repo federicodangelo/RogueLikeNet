@@ -1,6 +1,7 @@
 using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -10,7 +11,7 @@ namespace RogueLikeNet.Protocol;
 /// <summary>
 /// Compact snapshot of entity state for delta comparison.
 /// </summary>
-public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius);
+public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius, string? ItemName);
 
 /// <summary>
 /// Shared helpers for building snapshot/delta/HUD messages from game state.
@@ -116,6 +117,11 @@ public static class GameStateSerializer
             }
             if (world.Has<LightSource>(e))
                 msg.LightRadius = world.Get<LightSource>(e).Radius;
+            if (world.Has<GroundItemTag>(e) && world.Has<ItemData>(e))
+            {
+                var def = ItemDefinitions.Get(world.Get<ItemData>(e).ItemTypeId);
+                msg.ItemName = def.Name ?? "Unknown";
+            }
             entities.Add(msg);
         });
         return entities.ToArray();
@@ -150,8 +156,14 @@ public static class GameStateSerializer
                 maxHp = health.Max;
             }
             int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
+            string? itemName = null;
+            if (world.Has<GroundItemTag>(e) && world.Has<ItemData>(e))
+            {
+                var def = ItemDefinitions.Get(world.Get<ItemData>(e).ItemTypeId);
+                itemName = def.Name ?? "Unknown";
+            }
 
-            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius);
+            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius, itemName);
 
             // Only send if changed or new
             if (!previousState.TryGetValue(id, out var prev) || prev != snap)
@@ -166,6 +178,7 @@ public static class GameStateSerializer
                     Health = hp,
                     MaxHealth = maxHp,
                     LightRadius = lightRadius,
+                    ItemName = itemName,
                 });
             }
 
@@ -224,11 +237,5 @@ public static class GameStateSerializer
             QuickSlotIndices = hudData.QuickSlotIndices,
             PlayerEntityId = playerEntity.Id,
         };
-    }
-
-    public static FloorItemsMsg? BuildFloorItems(GameEngine engine, Entity playerEntity)
-    {
-        var names = engine.GetFloorItemsData(playerEntity);
-        return new FloorItemsMsg { Names = names };
     }
 }

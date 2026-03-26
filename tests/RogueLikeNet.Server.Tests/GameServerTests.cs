@@ -578,7 +578,7 @@ public class GameServerTests
     }
 
     [Fact]
-    public async Task Delta_IncludesFloorItems()
+    public async Task Delta_IncludesFloorItemsViaEntityUpdates()
     {
         var messages = new List<byte[]>();
         using var loop = new GameServer(42, _gen);
@@ -599,23 +599,26 @@ public class GameServerTests
         await Task.Delay(200);
         loop.Dispose();
 
-        // Find a delta with floor item data
-        bool hasFloorItems = false;
+        // Find a delta with an entity update carrying the item name
+        bool hasItemEntity = false;
         foreach (var msg in messages)
         {
             var env = NetSerializer.UnwrapMessage(msg);
             if (env.MessageType == MessageTypes.WorldDelta)
             {
                 var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
-                if (delta.FloorItems?.Names.Length > 0)
+                foreach (var eu in delta.EntityUpdates)
                 {
-                    hasFloorItems = true;
-                    Assert.Contains(template.Name, delta.FloorItems.Names);
-                    break;
+                    if (eu.ItemName == template.Name)
+                    {
+                        hasItemEntity = true;
+                        break;
+                    }
                 }
+                if (hasItemEntity) break;
             }
         }
-        Assert.True(hasFloorItems, "Delta should contain floor items in FloorItems message");
+        Assert.True(hasItemEntity, "Delta should contain an entity update with ItemName for the floor item");
     }
 
     [Fact]

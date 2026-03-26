@@ -201,7 +201,6 @@ public class GameServer : IDisposable
             Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y),
             Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov),
             PlayerState = GameStateSerializer.BuildPlayerState(_engine, entity),
-            FloorItems = GameStateSerializer.BuildFloorItems(_engine, entity)
         };
 
         // Seed chunk tracking from snapshot so first delta only sends new chunks
@@ -223,7 +222,7 @@ public class GameServer : IDisposable
         // Seed delta tracking from snapshot so first delta is already compressed
         conn.LastSentEntities.Clear();
         foreach (var e in snapshot.Entities)
-            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth, e.LightRadius);
+            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth, e.LightRadius, e.ItemName);
 
         return snapshot;
     }
@@ -261,7 +260,6 @@ public class GameServer : IDisposable
             EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
             PlayerState = deltaState,
-            FloorItems = GameStateSerializer.BuildFloorItems(_engine, playerEntity),
         };
         return delta;
     }

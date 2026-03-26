@@ -35,7 +35,7 @@ public class LootAndDeathTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy);
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
         ref var health = ref engine.EcsWorld.Get<Health>(player);
         health.Current = 0;
