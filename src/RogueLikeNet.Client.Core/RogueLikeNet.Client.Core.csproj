@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Engine\Engine.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Core\RogueLikeNet.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Protocol\RogueLikeNet.Protocol.csproj" />
+    <ProjectReference Include="..\RogueLikeNet.Server.Core\RogueLikeNet.Server.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -54,7 +54,7 @@ public static class NetSerializer
     private static byte[] Compress(byte[] data)
     {
         using var output = new MemoryStream();
-        using (var deflate = new BrotliStream(output, CompressionLevel.Fastest, leaveOpen: true))
+        using (var deflate = new DeflateStream(output, CompressionLevel.Fastest, leaveOpen: true))
             deflate.Write(data, 0, data.Length);
         return output.ToArray();
     }
@@ -62,7 +62,7 @@ public static class NetSerializer
     private static byte[] Decompress(byte[] data)
     {
         using var input = new MemoryStream(data);
-        using var deflate = new BrotliStream(input, CompressionMode.Decompress);
+        using var deflate = new DeflateStream(input, CompressionMode.Decompress);
         using var output = new MemoryStream();
         deflate.CopyTo(output);
         return output.ToArray();

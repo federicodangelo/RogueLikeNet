@@ -4,6 +4,7 @@ using Engine.Platform.Web;
 using RogueLikeNet.Client.Core;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Protocol.Messages;
+using RogueLikeNet.Server;
 
 namespace RogueLikeNet.Client.Web;
 
@@ -11,6 +12,7 @@ public partial class WebMain
 {
     private static RogueLikeGame? _game;
     private static IGameServerConnection? _connection;
+    private static GameLoop? _embeddedServer;
 
     public static async Task Main()
     {
@@ -37,9 +39,13 @@ public partial class WebMain
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
-        _connection = new LocalGameConnection(seed);
+        _embeddedServer = new GameLoop(seed);
+        _embeddedServer.Start();
+
+        var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
+        _connection = embeddedConnection;
         _game!.SetConnection(_connection);
-        await _connection.ConnectAsync("local://");
+        await _connection.ConnectAsync("embedded://localhost");
         await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
         _game.TransitionToPlaying();
     }
@@ -71,6 +77,8 @@ public partial class WebMain
 
         _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
         _connection = null;
+        _embeddedServer?.Dispose();
+        _embeddedServer = null;
     }
 
     private sealed class NullMusicProvider : IMusicProvider
