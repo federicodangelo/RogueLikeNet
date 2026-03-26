@@ -16,6 +16,21 @@ public struct TexturedQuad
     public float DstX0, DstY0, DstX1, DstY1;
 }
 
+/// <summary>
+/// A textured quad with an individual RGBA tint color,
+/// used by <see cref="RenderCommandType.DrawColoredQuadBatchScreen"/> for
+/// per-glyph coloring in batched glyph grid rendering.
+/// </summary>
+public struct ColoredTexturedQuad
+{
+    /// <summary>Source coordinates in the source texture (absolute UV, not width/height).</summary>
+    public float U0, V0, U1, V1;
+    /// <summary>Destination screen coordinates in pixels (absolute, not width/height).</summary>
+    public float DstX0, DstY0, DstX1, DstY1;
+    /// <summary>Per-quad tint color.</summary>
+    public byte R, G, B, A;
+}
+
 
 /// <summary>
 /// Identifies each drawing or lifecycle command stored in a <see cref="RenderCommandBuffer"/>.
@@ -70,13 +85,29 @@ public enum RenderCommandType : int
     /// </summary>
     DrawTexturedQuadBatchScreen = 40,
 
+    // ── Colored textured quad batch ─────────────────────────────────
+    /// <summary>
+    /// long (nint texture); int atlasW, atlasH; int quadCount;
+    /// quadCount × (float u0,v0,u1,v1, dstX0,dstY0,dstX1,dstY1; byte r,g,b,a).
+    /// Like <see cref="DrawTexturedQuadBatchScreen"/> but with per-quad tint colors.
+    /// </summary>
+    DrawColoredQuadBatchScreen = 41,
+
     // ── Tile map ──────────────────────────────────────────────────────
     /// <summary>
     /// float screenX, screenY (center of first tile); float scaledTileSize;
     /// int tilesW, tilesH; int colorCount; Color4[colorCount] (A=0 means empty/skip).
-    /// Colors are stored in row-major order: index = tileX * tilesH + tileY.
+    /// Colors are stored in column-major order: index = tileX * tilesH + tileY.
     /// </summary>
     DrawTileMapScreen = 50,
+
+    /// <summary>
+    /// Like <see cref="DrawTileMapScreen"/> but with separate tile width and height.
+    /// float screenX, screenY, tileW, tileH;
+    /// int tilesW, tilesH; int colorCount; Color4[colorCount] (A=0 means empty/skip).
+    /// Colors are stored in column-major order: index = tileX * tilesH + tileY.
+    /// </summary>
+    DrawRectTileMapScreen = 52,
 }
 
 
@@ -322,6 +353,50 @@ public sealed class RenderCommandBuffer : IDisposable
         }
     }
 
+    // ── Colored textured quad batches ────────────────────────────────
+
+    // cmd(4) + texture(8) + atlasW(4) + atlasH(4) + count(4) + count×(8 floats×4 + 4 bytes = 36) = 24 + count*36
+    public void WriteDrawColoredQuadBatchScreen(nint texture, int atlasWidth, int atlasHeight, ColoredTexturedQuad[] quads, int count)
+    {
+        EnsureAvailable(24 + count * 36);
+        Cmd(RenderCommandType.DrawColoredQuadBatchScreen);
+        _writer.Write((long)texture);
+        _writer.Write(atlasWidth);
+        _writer.Write(atlasHeight);
+        _writer.Write(count);
+        for (int i = 0; i < count; i++)
+        {
+            ref var q = ref quads[i];
+            _writer.Write(q.U0); _writer.Write(q.V0); _writer.Write(q.U1); _writer.Write(q.V1);
+            _writer.Write(q.DstX0); _writer.Write(q.DstY0); _writer.Write(q.DstX1); _writer.Write(q.DstY1);
+            _writer.Write(q.R); _writer.Write(q.G); _writer.Write(q.B); _writer.Write(q.A);
+        }
+    }
+
+    /// <summary>
+    /// Reads a <see cref="RenderCommandType.DrawColoredQuadBatchScreen"/> command.
+    /// <paramref name="quadBuf"/> is grown as needed and reused to avoid allocations.
+    /// </summary>
+    public static void ReadDrawColoredQuadBatchScreen(
+        BinaryReader r,
+        out nint texture, out int atlasWidth, out int atlasHeight, out int count,
+        ref ColoredTexturedQuad[]? quadBuf)
+    {
+        texture = (nint)r.ReadInt64();
+        atlasWidth = r.ReadInt32();
+        atlasHeight = r.ReadInt32();
+        count = r.ReadInt32();
+        if (quadBuf == null || quadBuf.Length < count)
+            quadBuf = new ColoredTexturedQuad[count];
+        for (int i = 0; i < count; i++)
+        {
+            ref var q = ref quadBuf[i];
+            q.U0 = r.ReadSingle(); q.V0 = r.ReadSingle(); q.U1 = r.ReadSingle(); q.V1 = r.ReadSingle();
+            q.DstX0 = r.ReadSingle(); q.DstY0 = r.ReadSingle(); q.DstX1 = r.ReadSingle(); q.DstY1 = r.ReadSingle();
+            q.R = r.ReadByte(); q.G = r.ReadByte(); q.B = r.ReadByte(); q.A = r.ReadByte();
+        }
+    }
+
     /// <summary>
     /// Reads a <see cref="RenderCommandType.DrawTileMapScreen"/> command.
     /// <paramref name="colorBuf"/> is grown as needed and reused to avoid allocations.
@@ -356,6 +431,44 @@ public sealed class RenderCommandBuffer : IDisposable
         _writer.Write(colorCount);
         for (int i = 0; i < colorCount; i++)
             Write(colors[i]);
+    }
+
+    // ── Rectangular tile map (separate tileW / tileH) ────────────
+
+    // cmd(4) + screenX,screenY,tileW,tileH(16) + tilesW,tilesH(8) + colorCount(4) + colorCount×4 = 32 + colorCount×4
+    public void WriteDrawRectTileMapScreen(float screenX, float screenY,
+        float tileW, float tileH, int tilesW, int tilesH,
+        Color4[] colors, int colorCount)
+    {
+        EnsureAvailable(32 + colorCount * 4);
+        Cmd(RenderCommandType.DrawRectTileMapScreen);
+        _writer.Write(screenX); _writer.Write(screenY);
+        _writer.Write(tileW); _writer.Write(tileH);
+        _writer.Write(tilesW); _writer.Write(tilesH);
+        _writer.Write(colorCount);
+        for (int i = 0; i < colorCount; i++)
+            Write(colors[i]);
+    }
+
+    /// <summary>
+    /// Reads a <see cref="RenderCommandType.DrawRectTileMapScreen"/> command.
+    /// <paramref name="colorBuf"/> is grown as needed and reused to avoid allocations.
+    /// </summary>
+    public static void ReadDrawRectTileMapScreen(
+        BinaryReader r,
+        out float screenX, out float screenY,
+        out float tileW, out float tileH,
+        out int tilesW, out int tilesH, out int colorCount,
+        ref Color4[]? colorBuf)
+    {
+        screenX = r.ReadSingle(); screenY = r.ReadSingle();
+        tileW = r.ReadSingle(); tileH = r.ReadSingle();
+        tilesW = r.ReadInt32(); tilesH = r.ReadInt32();
+        colorCount = r.ReadInt32();
+        if (colorBuf == null || colorBuf.Length < colorCount)
+            colorBuf = new Color4[colorCount];
+        for (int i = 0; i < colorCount; i++)
+            colorBuf[i] = ReadColor4(r);
     }
 
     // ── IDisposable ───────────────────────────────────────────────────

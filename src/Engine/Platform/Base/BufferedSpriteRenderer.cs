@@ -205,4 +205,60 @@ public abstract class BufferedSpriteRenderer : BaseSpriteRenderer
             }
         }
     }
+
+    // ── Glyph grid ────────────────────────────────────────────────────
+
+    // Reused across frames to collect glyph quads.
+    private ColoredTexturedQuad[] _glyphQuadBuf = [];
+
+    public override void DrawGlyphGridScreen(float x, float y, int cols, int rows,
+        float tileW, float tileH, float fontScale,
+        Func<int, int, GlyphTile> getTile)
+    {
+        if (cols <= 0 || rows <= 0) return;
+
+        ref var atlas = ref _fontRenderer.GetAtlasEntry(fontScale);
+        var glyphUV = atlas.GlyphUV;
+
+        int cellCount = cols * rows;
+        int glyphW = (int)MathF.Round(MiniBitmapFont.GlyphWidth * fontScale);
+        int glyphH = (int)MathF.Round(MiniBitmapFont.GlyphHeight * fontScale);
+
+        // Background tile map: column-major Color4 array (same layout as DrawTileMapScreen).
+        if (_tileColorBuf.Length < cellCount)
+            _tileColorBuf = new Color4[cellCount];
+        if (_glyphQuadBuf.Length < cellCount)
+            _glyphQuadBuf = new ColoredTexturedQuad[cellCount];
+
+        int glyphCount = 0;
+
+        for (int col = 0; col < cols; col++)
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                var tile = getTile(col, row);
+                _tileColorBuf[col * rows + row] = tile.BgColor;
+
+                if (tile.Glyph <= ' ' || tile.FgColor.A == 0) continue;
+                if (!glyphUV.TryGetValue(tile.Glyph, out var uv)) continue;
+
+                float left = x + col * tileW;
+                float top = y + row * tileH;
+
+                ref var q = ref _glyphQuadBuf[glyphCount++];
+                q.U0 = uv.U0; q.V0 = uv.V0; q.U1 = uv.U1; q.V1 = uv.V1;
+                q.DstX0 = left; q.DstY0 = top;
+                q.DstX1 = left + glyphW; q.DstY1 = top + glyphH;
+                q.R = tile.FgColor.R; q.G = tile.FgColor.G;
+                q.B = tile.FgColor.B; q.A = tile.FgColor.A;
+            }
+        }
+
+        // Emit one tile-map command for all backgrounds.
+        Buffer.WriteDrawRectTileMapScreen(x, y, tileW, tileH, cols, rows, _tileColorBuf, cellCount);
+
+        // Emit one colored-quad-batch command for all glyphs.
+        if (glyphCount > 0)
+            Buffer.WriteDrawColoredQuadBatchScreen(atlas.Texture, atlas.AtlasWidth, atlas.AtlasHeight, _glyphQuadBuf, glyphCount);
+    }
 }

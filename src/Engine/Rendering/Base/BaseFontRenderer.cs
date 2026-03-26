@@ -17,7 +17,7 @@ public abstract class BaseFontRenderer : IFontRenderer
     protected const float AtlasScaleMax = 2.0f;
     protected const float AtlasScaleStep = 0.1f;
 
-    protected struct FontAtlasEntry
+    public struct FontAtlasEntry
     {
         public float Scale;
         public nint Texture;
@@ -125,6 +125,9 @@ public abstract class BaseFontRenderer : IFontRenderer
             };
         }
     }
+
+    /// <summary>Returns the atlas entry closest to the given scale, for external batched rendering.</summary>
+    public ref FontAtlasEntry GetAtlasEntry(float scale) => ref PickAtlas(scale);
 
     /// <summary>Picks the atlas whose pre-rendered scale is closest to the requested scale.</summary>
     protected ref FontAtlasEntry PickAtlas(float scale)

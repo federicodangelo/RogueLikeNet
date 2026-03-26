@@ -96,49 +96,40 @@ public class TileRenderer
         int halfW = gameCols / 2;
         int halfH = totalRows / 2;
 
-        // Pass 1: tile backgrounds and foreground glyphs
-        for (int sx = 0; sx < gameCols; sx++)
-            for (int sy = 0; sy < totalRows; sy++)
+        // Pass 1: tile backgrounds and foreground glyphs (batched)
+        r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, TileWidth, TileHeight, FontScale,
+            (col, row) =>
             {
-                int worldX = cameraCenterX - halfW + sx;
-                int worldY = cameraCenterY - halfH + sy;
+                int worldX = cameraCenterX - halfW + col;
+                int worldY = cameraCenterY - halfH + row;
                 var tile = state.GetTile(worldX, worldY);
-
-                float px = sx * TileWidth + shakeX;
-                float py = sy * TileHeight + shakeY;
 
                 bool visible = state.IsVisible(worldX, worldY);
                 bool explored = state.IsExplored(worldX, worldY);
 
                 if (visible)
                 {
-                    // Currently in FOV — render with actual light level
                     var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
-                    r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
-
                     if (tile.GlyphId > 0 && tile.LightLevel > 0)
                     {
                         var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
                         char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
-                        r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
+                        return new GlyphTile(ch, fgColor, bgColor);
                     }
+                    return new GlyphTile('\0', default, bgColor);
                 }
                 else if (explored && tile.GlyphId > 0)
                 {
-                    // Explored but not in FOV — dim fog of war
                     var bgColor = FogColor(tile.BgColor);
-                    r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
-
                     var fgColor = FogColor(tile.FgColor);
                     char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
-                    r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
+                    return new GlyphTile(ch, fgColor, bgColor);
                 }
                 else
                 {
-                    // Unknown — black
-                    r.DrawRectScreen(px, py, TileWidth, TileHeight, ColorBlack);
+                    return new GlyphTile('\0', default, ColorBlack);
                 }
-            }
+            });
 
         // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
         for (int sx = 0; sx < gameCols; sx++)

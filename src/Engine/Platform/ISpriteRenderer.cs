@@ -74,4 +74,15 @@ public interface ISpriteRenderer : IDisposable
     void RenderTiles(Camera camera, int mapWidth, int mapHeight, float tileSize,
         Func<int, int, Color3?> getColor,
         Action<int, int, Vector2, int>? renderDetail = null);
+
+    // ── Glyph grid ───────────────────────────────────────────────────
+    /// <summary>
+    /// Renders a rectangular grid of character tiles in batched draw calls.
+    /// Each cell is described by the <paramref name="getTile"/> callback returning
+    /// a <see cref="GlyphTile"/> with glyph, foreground and background colors.
+    /// Backgrounds are drawn as a single batch, then all glyphs as another batch.
+    /// </summary>
+    void DrawGlyphGridScreen(float x, float y, int cols, int rows,
+        float tileW, float tileH, float fontScale,
+        Func<int, int, GlyphTile> getTile);
 }

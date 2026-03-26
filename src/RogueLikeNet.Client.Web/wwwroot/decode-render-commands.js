@@ -26,6 +26,11 @@
 //   quad(u0, v0, u1, v1, dx0, dy0, dx1, dy1)
 //   endQuadBatch()
 //
+//   beginColoredQuadBatch(texId, atlasW, atlasH, count) → bool
+//     Return true to receive coloredQuad() calls, false to skip.
+//   coloredQuad(u0, v0, u1, v1, dx0, dy0, dx1, dy1, r, g, b, a)
+//   endColoredQuadBatch()
+//
 //   beginTileMap(screenX, screenY, scaledTileSize, tilesW, tilesH, colorCount)
 //   tileColor(index, r, g, b, a)
 //   endTileMap()
@@ -36,7 +41,7 @@
 //   20=FillRect  21=DrawCircle  22=FillCircle  23=FillCircleGradient
 //   24=SolidRing  25=DrawLine  26=Triangle  27=FilledTriangle
 //   30=Texture  31=TextureRect  32=TextureSrcDst  33=TextureColor
-//   40=QuadBatch  50=TileMap
+//   40=QuadBatch  41=ColoredQuadBatch  50=TileMap
 //
 // Binary layout: little-endian IEEE-754 floats, Int32/Int64.
 // Textures are Int64 handles; only the low 32 bits (nint on WASM32) are used.
@@ -177,6 +182,22 @@ export function decodeRenderCommands(buffer, length, handler) {
                 break;
             }
 
+            case 41: { // ColoredQuadBatch (per-quad tint colors)
+                const texId = rtex();
+                const atlasW = ri32(), atlasH = ri32();
+                const count = ri32();
+                if (handler.beginColoredQuadBatch(texId, atlasW, atlasH, count)) {
+                    for (let i = 0; i < count; i++) {
+                        handler.coloredQuad(rf32(), rf32(), rf32(), rf32(), rf32(), rf32(), rf32(), rf32(),
+                            ru8(), ru8(), ru8(), ru8());
+                    }
+                    handler.endColoredQuadBatch();
+                } else {
+                    pos += count * 36; // 8 floats × 4 + 4 bytes — skip
+                }
+                break;
+            }
+
             case 50: { // TileMap  (colors column-major: index = tileX * tilesH + tileY)
                 const screenX = rf32(), screenY = rf32(), scaledTileSize = rf32();
                 const tilesW = ri32(), tilesH = ri32();
@@ -186,6 +207,19 @@ export function decodeRenderCommands(buffer, length, handler) {
                     handler.tileColor(i, ru8(), ru8(), ru8(), ru8());
                 }
                 handler.endTileMap();
+                break;
+            }
+
+            case 52: { // RectTileMap  (separate tileW/tileH, colors column-major)
+                const screenX = rf32(), screenY = rf32();
+                const tileW = rf32(), tileH = rf32();
+                const tilesW = ri32(), tilesH = ri32();
+                const colorCount = ri32();
+                handler.beginRectTileMap(screenX, screenY, tileW, tileH, tilesW, tilesH, colorCount);
+                for (let i = 0; i < colorCount; i++) {
+                    handler.rectTileColor(i, ru8(), ru8(), ru8(), ru8());
+                }
+                handler.endRectTileMap();
                 break;
             }
         }

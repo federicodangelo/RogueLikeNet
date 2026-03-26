@@ -273,7 +273,7 @@ export function createWebGLRenderer(canvas) {
     // Quad-batch float color components
     let _qRF = 0, _qGF = 0, _qBF = 0, _qAF = 0;
     // Tile-map position / scale
-    let _tmScreenX = 0, _tmScreenY = 0, _tmScale = 0, _tmTilesH = 0;
+    let _tmScreenX = 0, _tmScreenY = 0, _tmScale = 0, _tmScaleH = 0, _tmTilesH = 0;
 
     // ── Render-command handler ────────────────────────────────────
     const handler = {
@@ -493,6 +493,25 @@ export function createWebGLRenderer(canvas) {
         },
         endQuadBatch() { },
 
+        // ── ColoredQuadBatch ──────────────────────────────────────
+        beginColoredQuadBatch(texId, _atlasW, _atlasH, _count) {
+            if (texId === 0 || !textures.has(texId)) return false;
+            setTexture(texId);
+            return true;
+        },
+        coloredQuad(u0, v0, u1, v1, dx0, dy0, dx1, dy1, r, g, b, a) {
+            ensureCapacity(4, 2);
+            const base = vertCount;
+            const rf = r / 255, gf = g / 255, bf = b / 255, af = a / 255;
+            pushVert(dx0, dy0, u0, v0, rf, gf, bf, af);
+            pushVert(dx1, dy0, u1, v0, rf, gf, bf, af);
+            pushVert(dx1, dy1, u1, v1, rf, gf, bf, af);
+            pushVert(dx0, dy1, u0, v1, rf, gf, bf, af);
+            pushTri(base, base + 1, base + 2);
+            pushTri(base, base + 2, base + 3);
+        },
+        endColoredQuadBatch() { },
+
         // ── TileMap ───────────────────────────────────────────────
         // Colors stored column-major: index = tileX * tilesH + tileY
         beginTileMap(screenX, screenY, scaledTileSize, _tilesW, tilesH, _colorCount) {
@@ -521,6 +540,35 @@ export function createWebGLRenderer(canvas) {
             pushTri(base, base + 2, base + 3);
         },
         endTileMap() { },
+
+        // ── RectTileMap (separate tileW / tileH) ──────────────────
+        beginRectTileMap(screenX, screenY, tileW, tileH, _tilesW, tilesH, _colorCount) {
+            setTexture(0);
+            _tmScreenX = screenX;
+            _tmScreenY = screenY;
+            _tmScale = tileW;
+            _tmScaleH = tileH;
+            _tmTilesH = tilesH;
+        },
+        rectTileColor(i, r, g, b, a) {
+            if (a === 0) return;
+            const tx = (i / _tmTilesH) | 0;
+            const ty = i % _tmTilesH;
+            const left = _tmScreenX + tx * _tmScale;
+            const top = _tmScreenY + ty * _tmScaleH;
+            const right = left + _tmScale;
+            const bottom = top + _tmScaleH;
+            ensureCapacity(4, 2);
+            const base = vertCount;
+            const rf = r / 255, gf = g / 255, bf = b / 255, af = a / 255;
+            pushVert(left, top, 0, 0, rf, gf, bf, af);
+            pushVert(right, top, 1, 0, rf, gf, bf, af);
+            pushVert(right, bottom, 1, 1, rf, gf, bf, af);
+            pushVert(left, bottom, 0, 1, rf, gf, bf, af);
+            pushTri(base, base + 1, base + 2);
+            pushTri(base, base + 2, base + 3);
+        },
+        endRectTileMap() { },
     };
 
     function flushCommandBuffer(buffer, length, _cachedCircleTexId) {

@@ -74,4 +74,9 @@ public sealed class NullSpriteRenderer : ISpriteRenderer
         Func<int, int, Color3?> getColor,
         Action<int, int, Vector2, int>? renderDetail = null)
     { }
+
+    public void DrawGlyphGridScreen(float x, float y, int cols, int rows,
+        float tileW, float tileH, float fontScale,
+        Func<int, int, GlyphTile> getTile)
+    { }
 }

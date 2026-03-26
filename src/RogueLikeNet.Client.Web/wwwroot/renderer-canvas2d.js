@@ -39,8 +39,9 @@ export function createCanvas2DRenderer(canvas) {
     const CACHED_CIRCLE_SIZE = 64;
     // Quad-batch state
     let _qTinted = null, _qAtlasW = 0, _qAtlasH = 0;
+    let _qTexId = 0, _qSmooth = false;
     // Tile-map state
-    let _tmScreenX = 0, _tmScreenY = 0, _tmScale = 0, _tmTilesH = 0, _tmLastColor = -1;
+    let _tmScreenX = 0, _tmScreenY = 0, _tmScale = 0, _tmScaleH = 0, _tmTilesH = 0, _tmLastColor = -1;
 
     // ── Render-command handler ────────────────────────────────────
     const handler = {
@@ -244,6 +245,30 @@ export function createCanvas2DRenderer(canvas) {
         },
         endQuadBatch() { ctx.restore(); },
 
+        // ── ColoredQuadBatch ──────────────────────────────────────
+        beginColoredQuadBatch(texId, atlasW, atlasH, _count) {
+            if (texId === 0) return false;
+            const tex = textures.get(texId);
+            if (!tex) return false;
+            _qAtlasW = atlasW;
+            _qAtlasH = atlasH;
+            _qTexId = texId;
+            _qSmooth = tex.smooth;
+            return true;
+        },
+        coloredQuad(u0, v0, u1, v1, dx0, dy0, dx1, dy1, r, g, b, a) {
+            const tinted = getTintedTexture(_qTexId, r, g, b);
+            if (!tinted) return;
+            ctx.save();
+            ctx.globalAlpha = a / 255;
+            ctx.imageSmoothingEnabled = _qSmooth;
+            ctx.drawImage(tinted,
+                u0 * _qAtlasW, v0 * _qAtlasH, (u1 - u0) * _qAtlasW, (v1 - v0) * _qAtlasH,
+                dx0, dy0, dx1 - dx0, dy1 - dy0);
+            ctx.restore();
+        },
+        endColoredQuadBatch() { },
+
         // ── TileMap ───────────────────────────────────────────────
         // Colors stored column-major: index = tileX * tilesH + tileY
         beginTileMap(screenX, screenY, scaledTileSize, _tilesW, tilesH, _colorCount) {
@@ -271,6 +296,32 @@ export function createCanvas2DRenderer(canvas) {
             ctx.fillRect(left, top, right - left, bot - top);
         },
         endTileMap() { },
+
+        // ── RectTileMap (separate tileW / tileH) ──────────────────
+        beginRectTileMap(screenX, screenY, tileW, tileH, _tilesW, tilesH, _colorCount) {
+            _tmScreenX = screenX;
+            _tmScreenY = screenY;
+            _tmScale = tileW;
+            _tmScaleH = tileH;
+            _tmTilesH = tilesH;
+            _tmLastColor = -1;
+        },
+        rectTileColor(i, r, g, b, a) {
+            if (a === 0) return;
+            const tx = (i / _tmTilesH) | 0;
+            const ty = i % _tmTilesH;
+            const left = Math.floor(_tmScreenX + tx * _tmScale);
+            const top = Math.floor(_tmScreenY + ty * _tmScaleH);
+            const right = Math.floor(_tmScreenX + (tx + 1) * _tmScale);
+            const bot = Math.floor(_tmScreenY + (ty + 1) * _tmScaleH);
+            const color = (r << 16) | (g << 8) | b;
+            if (color !== _tmLastColor) {
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                _tmLastColor = color;
+            }
+            ctx.fillRect(left, top, right - left, bot - top);
+        },
+        endRectTileMap() { },
     };
 
     function flushCommandBuffer(buffer, length, cachedCircleTexId) {

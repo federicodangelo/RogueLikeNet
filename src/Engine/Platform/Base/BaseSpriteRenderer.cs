@@ -183,6 +183,33 @@ public abstract class BaseSpriteRenderer : ISpriteRenderer
         Func<int, int, Color3?> getColor,
         Action<int, int, Vector2, int>? renderDetail = null);
 
+    // ── Glyph grid ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Default implementation: falls back to individual DrawRectScreen + DrawTextScreen calls.
+    /// Subclasses should override with batched rendering for better performance.
+    /// </summary>
+    public virtual void DrawGlyphGridScreen(float x, float y, int cols, int rows,
+        float tileW, float tileH, float fontScale,
+        Func<int, int, GlyphTile> getTile)
+    {
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < cols; col++)
+            {
+                var tile = getTile(col, row);
+                float px = x + col * tileW;
+                float py = y + row * tileH;
+
+                if (tile.BgColor.A > 0)
+                    DrawRectScreen(px, py, tileW, tileH, tile.BgColor);
+
+                if (tile.Glyph > ' ' && tile.FgColor.A > 0)
+                    DrawTextScreen(px, py, tile.Glyph.ToString(), tile.FgColor, fontScale);
+            }
+        }
+    }
+
     // ── Dispose ──────────────────────────────────────────────────────
     public virtual void Dispose()
     {

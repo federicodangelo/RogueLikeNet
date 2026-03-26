@@ -26,5 +26,12 @@ public readonly record struct Color4(byte R, byte G, byte B, byte A)
 /// <summary>A float axis-aligned rectangle (position + size).</summary>
 public readonly record struct Rect(float X, float Y, float W, float H);
 
+/// <summary>
+/// Describes a single cell in a glyph grid: character, foreground and background colors.
+/// <see cref="Glyph"/> of '\0' or ' ' means no glyph (background only).
+/// <see cref="BgColor"/> with A=0 means fully transparent (skip cell entirely).
+/// </summary>
+public readonly record struct GlyphTile(char Glyph, Color4 FgColor, Color4 BgColor);
+
 /// <summary>Visible world-space bounds (top-left and bottom-right corners).</summary>
 public readonly record struct VisibleBounds(Vector2 TopLeft, Vector2 BottomRight);
