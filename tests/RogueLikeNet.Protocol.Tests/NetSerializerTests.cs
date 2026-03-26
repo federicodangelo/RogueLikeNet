@@ -45,12 +45,11 @@ public class NetSerializerTests
     [Fact]
     public void WorldSnapshot_RoundTrip()
     {
-        var snapshot = new WorldSnapshotMsg
+        var snapshot = new WorldDeltaMsg
         {
-            WorldTick = 100,
-            PlayerX = 32,
-            PlayerY = 16,
-            PlayerEntityId = 5,
+            FromTick = 0,
+            ToTick = 100,
+            IsSnapshot = true,
             Chunks = [new ChunkDataMsg
             {
                 ChunkX = 0, ChunkY = 0,
@@ -59,18 +58,20 @@ public class NetSerializerTests
                 TileFgColors = [0xFFFFFF, 0x808080, 0],
                 TileBgColors = [0, 0, 0],
             }],
-            Entities = [new EntityMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 5 },
         };
 
         var data = NetSerializer.Serialize(snapshot);
-        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(data);
+        var result = NetSerializer.Deserialize<WorldDeltaMsg>(data);
 
-        Assert.Equal(100, result.WorldTick);
-        Assert.Equal(32, result.PlayerX);
+        Assert.True(result.IsSnapshot);
+        Assert.Equal(0, result.FromTick);
+        Assert.Equal(100, result.ToTick);
         Assert.Single(result.Chunks);
         Assert.Equal(3, result.Chunks[0].TileTypes.Length);
-        Assert.Single(result.Entities);
-        Assert.Equal(64, result.Entities[0].GlyphId);
+        Assert.Single(result.EntityUpdates);
+        Assert.Equal(64, result.EntityUpdates[0].GlyphId);
     }
 
     [Fact]
@@ -102,15 +103,15 @@ public class NetSerializerTests
         var inputPayload = NetSerializer.Serialize(input);
         var inputWrapped = NetSerializer.WrapMessage(MessageTypes.ClientInput, inputPayload);
 
-        var snapshot = new WorldSnapshotMsg { WorldTick = 99 };
-        var snapshotPayload = NetSerializer.Serialize(snapshot);
-        var snapshotWrapped = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, snapshotPayload);
+        var delta = new WorldDeltaMsg { FromTick = 0, ToTick = 99, IsSnapshot = true };
+        var deltaPayload = NetSerializer.Serialize(delta);
+        var deltaWrapped = NetSerializer.WrapMessage(MessageTypes.WorldDelta, deltaPayload);
 
         var env1 = NetSerializer.UnwrapMessage(inputWrapped);
-        var env2 = NetSerializer.UnwrapMessage(snapshotWrapped);
+        var env2 = NetSerializer.UnwrapMessage(deltaWrapped);
 
         Assert.Equal(MessageTypes.ClientInput, env1.MessageType);
-        Assert.Equal(MessageTypes.WorldSnapshot, env2.MessageType);
+        Assert.Equal(MessageTypes.WorldDelta, env2.MessageType);
     }
 
     [Fact]
@@ -133,7 +134,7 @@ public class NetSerializerTests
     [Fact]
     public void LargePayload_CompressedAndDecompressedTransparently()
     {
-        // Build a payload larger than 4096 bytes by creating a snapshot with many chunks
+        // Build a payload larger than 4096 bytes by creating a delta with many chunks
         var chunks = new ChunkDataMsg[50];
         for (int i = 0; i < chunks.Length; i++)
         {
@@ -147,19 +148,19 @@ public class NetSerializerTests
                 TileBgColors = new int[256],
             };
         }
-        var snapshot = new WorldSnapshotMsg { WorldTick = 42, PlayerX = 10, PlayerY = 10, Chunks = chunks, Entities = [] };
-        var payload = NetSerializer.Serialize(snapshot);
+        var delta = new WorldDeltaMsg { FromTick = 0, ToTick = 42, IsSnapshot = true, Chunks = chunks };
+        var payload = NetSerializer.Serialize(delta);
         Assert.True(payload.Length > 4096, "Test payload must exceed compression threshold");
 
-        var wrapped = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+        var wrapped = NetSerializer.WrapMessage(MessageTypes.WorldDelta, payload);
 
         // Unwrap is transparent — caller receives decompressed payload
         var envelope = NetSerializer.UnwrapMessage(wrapped);
-        Assert.Equal(MessageTypes.WorldSnapshot, envelope.MessageType);
+        Assert.Equal(MessageTypes.WorldDelta, envelope.MessageType);
         Assert.Equal(0, envelope.IsCompressed); // already decompressed by UnwrapMessage
 
-        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
-        Assert.Equal(42, result.WorldTick);
+        var result = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
+        Assert.Equal(42, result.ToTick);
         Assert.Equal(50, result.Chunks.Length);
     }
 
@@ -180,10 +181,10 @@ public class NetSerializerTests
                 TileBgColors = new int[256],
             };
         }
-        var snapshot = new WorldSnapshotMsg { WorldTick = 1, Chunks = chunks, Entities = [] };
-        var payload = NetSerializer.Serialize(snapshot);
+        var delta = new WorldDeltaMsg { FromTick = 0, ToTick = 1, IsSnapshot = true, Chunks = chunks };
+        var payload = NetSerializer.Serialize(delta);
 
-        var compressedWire = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+        var compressedWire = NetSerializer.WrapMessage(MessageTypes.WorldDelta, payload);
         Assert.True(compressedWire.Length < payload.Length, "Compressed wire frame should be smaller than raw payload");
     }
 }

@@ -24,7 +24,6 @@ public class NetworkEnvelopeTests
     [Fact]
     public void MessageTypes_ServerToClient_Constants()
     {
-        Assert.Equal(100, MessageTypes.WorldSnapshot);
         Assert.Equal(101, MessageTypes.WorldDelta);
         Assert.Equal(103, MessageTypes.ChatReceive);
         Assert.Equal(104, MessageTypes.PlayerSpawned);

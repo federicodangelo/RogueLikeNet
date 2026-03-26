@@ -84,9 +84,10 @@ public class GameServerTests
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
-        Assert.Equal(MessageTypes.WorldSnapshot, envelope.MessageType);
+        Assert.Equal(MessageTypes.WorldDelta, envelope.MessageType);
 
-        var snapshot = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
+        var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
+        Assert.True(snapshot.IsSnapshot);
         Assert.True(snapshot.Chunks.Length > 0);
     }
 
@@ -218,7 +219,7 @@ public class GameServerTests
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
-        var snapshot = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
+        var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
 
         // Should have 3x3 = 9 chunks around spawn
         Assert.Equal(9, snapshot.Chunks.Length);
@@ -232,7 +233,7 @@ public class GameServerTests
         }
 
         // Should have entities (at least the player)
-        Assert.True(snapshot.Entities.Length > 0);
+        Assert.True(snapshot.EntityUpdates.Length > 0);
 
         // Should have PlayerState
         Assert.NotNull(snapshot.PlayerState);
@@ -488,10 +489,10 @@ public class GameServerTests
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
-        var snapshot = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
+        var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
 
         // Should have the healthless entity with Health = 0 / MaxHealth = 0
-        var healthless = snapshot.Entities.FirstOrDefault(e => e.GlyphId == 42);
+        var healthless = snapshot.EntityUpdates.FirstOrDefault(e => e.GlyphId == 42);
         Assert.NotNull(healthless);
         Assert.Equal(0, healthless.Health);
         Assert.Equal(0, healthless.MaxHealth);

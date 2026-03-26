@@ -34,16 +34,16 @@ public class ClientGameStateTests
         };
     }
 
-    private static WorldSnapshotMsg MakeSnapshot(int playerX = 32, int playerY = 32)
+    private static WorldDeltaMsg MakeSnapshot(int playerX = 32, int playerY = 32)
     {
-        return new WorldSnapshotMsg
+        return new WorldDeltaMsg
         {
-            WorldTick = 1,
-            PlayerEntityId = 1,
-            PlayerX = playerX,
-            PlayerY = playerY,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks = [MakeFloorChunk(0, 0)],
-            Entities = [new EntityMsg { Id = 1, X = playerX, Y = playerY, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = playerX, Y = playerY, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         };
     }
     [Fact]
@@ -52,11 +52,14 @@ public class ClientGameStateTests
         var state = new ClientGameState();
 
         // Apply a snapshot first to initialize
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 1,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks = [],
-            Entities = [new EntityMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         });
 
         var delta = new WorldDeltaMsg
@@ -84,11 +87,14 @@ public class ClientGameStateTests
     public void DrainCombatEvents_ClearsPending()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 1,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks = [],
-            Entities = [new EntityMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         });
 
         state.ApplyDelta(new WorldDeltaMsg
@@ -110,11 +116,14 @@ public class ClientGameStateTests
     public void Clear_ResetsCombatEvents()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 1,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks = [],
-            Entities = [new EntityMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 5, Y = 5, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         });
 
         state.ApplyDelta(new WorldDeltaMsg
@@ -135,9 +144,11 @@ public class ClientGameStateTests
     public void Chunks_ExposedViaReadOnlyDictionary()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 1,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks =
             [
                 new ChunkDataMsg
@@ -150,7 +161,7 @@ public class ClientGameStateTests
                     TileBgColors = new int[64 * 64],
                 }
             ],
-            Entities = [],
+            EntityUpdates = [],
         });
 
         Assert.Single(state.Chunks);
@@ -162,7 +173,7 @@ public class ClientGameStateTests
     public void ApplySnapshot_ComputesVisibility()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         // Player's own tile should be visible
         Assert.True(state.IsVisible(32, 32));
@@ -175,19 +186,20 @@ public class ClientGameStateTests
     public void IsExplored_PersistsAfterClear_OfVisibleTiles()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         Assert.True(state.IsExplored(32, 32));
         Assert.True(state.IsVisible(32, 32));
 
         // After a new snapshot at a far location, old tiles become explored but not visible
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 2,
-            PlayerX = 10,
-            PlayerY = 10,
+            FromTick = 0,
+            ToTick = 2,
+            IsSnapshot = true,
             Chunks = [MakeFloorChunk(0, 0)],
-            Entities = [new EntityMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
         });
 
         // Old position is explored but not visible
@@ -202,7 +214,7 @@ public class ClientGameStateTests
     public void Clear_ResetsVisibilityAndExplored()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         Assert.True(state.IsVisible(32, 32));
         Assert.True(state.IsExplored(32, 32));
@@ -221,7 +233,7 @@ public class ClientGameStateTests
     public void ApplyDelta_AddEntity()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         state.ApplyDelta(new WorldDeltaMsg
         {
@@ -241,7 +253,7 @@ public class ClientGameStateTests
     public void ApplyDelta_UpdateEntity()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         // Add entity
         state.ApplyDelta(new WorldDeltaMsg
@@ -273,18 +285,9 @@ public class ClientGameStateTests
     public void ApplyDelta_RemoveEntity()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         // Add and then remove
-        state.ApplyDelta(new WorldDeltaMsg
-        {
-            FromTick = 1,
-            ToTick = 2,
-            Chunks = [],
-            TileUpdates = [],
-            CombatEvents = [],
-            EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 35, Y = 35, GlyphId = 103 }],
-        });
         state.ApplyDelta(new WorldDeltaMsg
         {
             FromTick = 2,
@@ -302,7 +305,7 @@ public class ClientGameStateTests
     public void ApplyDelta_TileUpdates()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         state.ApplyDelta(new WorldDeltaMsg
         {
@@ -325,7 +328,7 @@ public class ClientGameStateTests
     public void ApplyDelta_PlayerPositionTrackedFromEntity()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         Assert.Equal(32, state.PlayerX);
         Assert.Equal(32, state.PlayerY);
@@ -349,7 +352,7 @@ public class ClientGameStateTests
     public void ApplyDelta_UpdatesChunks()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         // Send a delta with updated chunk data
         state.ApplyDelta(new WorldDeltaMsg
@@ -369,7 +372,7 @@ public class ClientGameStateTests
     public void ApplyDelta_PlayerState_Updated()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         state.ApplyDelta(new WorldDeltaMsg
         {
@@ -390,12 +393,14 @@ public class ClientGameStateTests
     public void ApplyDelta_NullPlayerState_KeepsExisting()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(new WorldSnapshotMsg
+        state.ApplyDelta(new WorldDeltaMsg
         {
-            WorldTick = 1,
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
             Chunks = [MakeFloorChunk(0, 0)],
-            Entities = [new EntityMsg { Id = 1, X = 32, Y = 32, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
-            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100 },
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 32, Y = 32, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100, PlayerEntityId = 1 },
         });
 
         state.ApplyDelta(new WorldDeltaMsg
@@ -417,7 +422,7 @@ public class ClientGameStateTests
     public void ApplyDelta_RecomputesVisibility()
     {
         var state = new ClientGameState();
-        state.ApplySnapshot(MakeSnapshot(32, 32));
+        state.ApplyDelta(MakeSnapshot(32, 32));
 
         Assert.True(state.IsVisible(32, 32));
 

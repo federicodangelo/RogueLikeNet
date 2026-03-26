@@ -6,8 +6,6 @@ using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
-using Chunk = RogueLikeNet.Core.World.Chunk;
-
 namespace RogueLikeNet.Server;
 
 /// <summary>
@@ -99,10 +97,15 @@ public class GameServer : IDisposable
         // Run a tick so lighting is computed before the initial snapshot
         _engine.Tick();
 
-        // Send initial world snapshot
-        var snapshot = BuildSnapshot(conn);
+        // Reset per-connection tracking so BuildDelta treats this as a full snapshot
+        conn.LastSentEntities.Clear();
+        conn.SentChunkKeys.Clear();
+        conn.LastSentHudBytes = null;
+        conn.LastAckedTick = 0;
+
+        var snapshot = BuildDelta(conn, isSnapshot: true);
         var payload = NetSerializer.Serialize(snapshot);
-        var data = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+        var data = NetSerializer.WrapMessage(MessageTypes.WorldDelta, payload);
         await conn.SendAsync(data);
     }
 
@@ -186,50 +189,8 @@ public class GameServer : IDisposable
         }
     }
 
-    private WorldSnapshotMsg BuildSnapshot(PlayerConnection conn)
+    private WorldDeltaMsg BuildDelta(PlayerConnection conn, bool isSnapshot = false)
     {
-        // Caller (SpawnPlayerForConnection) guarantees conn.PlayerEntity is set and alive
-        var entity = conn.PlayerEntity!.Value;
-        ref var pos = ref _engine.EcsWorld.Get<Position>(entity);
-        ref var fov = ref _engine.EcsWorld.Get<FOVData>(entity);
-
-        var snapshot = new WorldSnapshotMsg
-        {
-            WorldTick = _engine.CurrentTick,
-            PlayerX = pos.X,
-            PlayerY = pos.Y,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y),
-            Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov),
-            PlayerState = GameStateSerializer.BuildPlayerState(_engine, entity),
-        };
-
-        // Seed chunk tracking from snapshot so first delta only sends new chunks
-        conn.SentChunkKeys.Clear();
-        var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                int ccx = cx + dx, ccy = cy + dy;
-                long key = Chunk.PackChunkKey(ccx, ccy);
-                conn.SentChunkKeys.Add(key);
-            }
-
-        // Seed HUD tracking
-        conn.LastSentHudBytes = snapshot.PlayerState != null
-            ? NetSerializer.Serialize(snapshot.PlayerState)
-            : null;
-
-        // Seed delta tracking from snapshot so first delta is already compressed
-        conn.LastSentEntities.Clear();
-        foreach (var e in snapshot.Entities)
-            conn.LastSentEntities[e.Id] = new EntitySnapshot(e.X, e.Y, e.GlyphId, e.FgColor, e.Health, e.MaxHealth, e.LightRadius, e.ItemName);
-
-        return snapshot;
-    }
-
-    private WorldDeltaMsg BuildDelta(PlayerConnection conn)
-    {
-        // Caller (BroadcastDeltas) guarantees conn.PlayerEntity is set and alive
         var playerEntity = conn.PlayerEntity!.Value;
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
@@ -237,7 +198,7 @@ public class GameServer : IDisposable
         var newChunks = GameStateSerializer.SerializeChunksDelta(
             _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys);
 
-        // State delta compression: only send when changed
+        // State delta compression: always send on snapshot, otherwise only when changed
         var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);
         byte[]? stateBytes = state != null ? NetSerializer.Serialize(state) : null;
         PlayerStateMsg? deltaState;
@@ -252,16 +213,16 @@ public class GameServer : IDisposable
             conn.LastSentHudBytes = stateBytes;
         }
 
-        var delta = new WorldDeltaMsg
+        return new WorldDeltaMsg
         {
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
+            IsSnapshot = isSnapshot,
             Chunks = newChunks,
             EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
             PlayerState = deltaState,
         };
-        return delta;
     }
 
     public void Dispose()

@@ -23,7 +23,7 @@ public static class MessageTypes
     public const byte ChatSend = 3;
 
     // Server → Client
-    public const byte WorldSnapshot = 100;
+    // 100 reserved (was WorldSnapshot, now unified into WorldDelta)
     public const byte WorldDelta = 101;
     public const byte ChatReceive = 103;
     public const byte PlayerSpawned = 104;

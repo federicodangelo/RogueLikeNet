@@ -40,41 +40,17 @@ public class ClientGameState
         PlayerState = null;
     }
 
-    public void ApplySnapshot(WorldSnapshotMsg snapshot)
-    {
-        WorldTick = snapshot.WorldTick;
-        PlayerX = snapshot.PlayerX;
-        PlayerY = snapshot.PlayerY;
-        PlayerEntityId = snapshot.PlayerEntityId;
-
-        _chunks.Clear();
-        foreach (var chunkMsg in snapshot.Chunks)
-            ApplyChunkData(chunkMsg);
-
-        _entities.Clear();
-        foreach (var entityMsg in snapshot.Entities)
-        {
-            _entities[entityMsg.Id] = new ClientEntity
-            {
-                Id = entityMsg.Id,
-                X = entityMsg.X,
-                Y = entityMsg.Y,
-                GlyphId = entityMsg.GlyphId,
-                FgColor = entityMsg.FgColor,
-                Health = entityMsg.Health,
-                MaxHealth = entityMsg.MaxHealth,
-                LightRadius = entityMsg.LightRadius,
-                ItemName = entityMsg.ItemName,
-            };
-        }
-
-        PlayerState = snapshot.PlayerState;
-        ComputeVisibility();
-        ComputeLighting();
-    }
-
     public void ApplyDelta(WorldDeltaMsg delta)
     {
+        // Snapshot delta: clear transient state before applying (explored tiles persist for fog of war)
+        if (delta.IsSnapshot)
+        {
+            _chunks.Clear();
+            _entities.Clear();
+            _pendingCombatEvents.Clear();
+            _visibleTiles.Clear();
+        }
+
         WorldTick = delta.ToTick;
 
         // Update chunks (full data for newly discovered chunks)

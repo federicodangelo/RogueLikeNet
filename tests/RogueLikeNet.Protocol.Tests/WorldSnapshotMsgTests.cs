@@ -6,39 +6,6 @@ namespace RogueLikeNet.Protocol.Tests;
 public class WorldSnapshotMsgTests
 {
     [Fact]
-    public void WorldSnapshotMsg_DefaultValues()
-    {
-        var msg = new WorldSnapshotMsg();
-        Assert.Equal(0, msg.WorldTick);
-        Assert.Empty(msg.Chunks);
-        Assert.Empty(msg.Entities);
-        Assert.Equal(0, msg.PlayerEntityId);
-        Assert.Equal(0, msg.PlayerX);
-        Assert.Equal(0, msg.PlayerY);
-        Assert.Null(msg.PlayerState);
-    }
-
-    [Fact]
-    public void WorldSnapshotMsg_WithPlayerState_RoundTrip()
-    {
-        var snapshot = new WorldSnapshotMsg
-        {
-            WorldTick = 50,
-            PlayerX = 10,
-            PlayerY = 20,
-            PlayerEntityId = 3,
-            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100, Level = 2 },
-            Chunks = [],
-            Entities = [],
-        };
-        var data = NetSerializer.Serialize(snapshot);
-        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(data);
-        Assert.NotNull(result.PlayerState);
-        Assert.Equal(90, result.PlayerState.Health);
-        Assert.Equal(2, result.PlayerState.Level);
-    }
-
-    [Fact]
     public void ChunkDataMsg_DefaultValues()
     {
         var msg = new ChunkDataMsg();
@@ -51,39 +18,26 @@ public class WorldSnapshotMsgTests
     }
 
     [Fact]
-    public void EntityMsg_DefaultValues()
+    public void WorldDeltaMsg_IsSnapshot_RoundTrip()
     {
-        var msg = new EntityMsg();
-        Assert.Equal(0, msg.Id);
-        Assert.Equal(0, msg.X);
-        Assert.Equal(0, msg.Y);
-        Assert.Equal(0, msg.GlyphId);
-        Assert.Equal(0, msg.FgColor);
-        Assert.Equal(0, msg.Health);
-        Assert.Equal(0, msg.MaxHealth);
-    }
-
-    [Fact]
-    public void EntityMsg_RoundTrip()
-    {
-        var msg = new EntityMsg
+        var msg = new WorldDeltaMsg
         {
-            Id = 99,
-            X = 15,
-            Y = 25,
-            GlyphId = 77,
-            FgColor = 0x00FF00,
-            Health = 50,
-            MaxHealth = 75
+            FromTick = 0,
+            ToTick = 50,
+            IsSnapshot = true,
+            Chunks = [],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 20, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100, Level = 2, PlayerEntityId = 3 },
         };
         var data = NetSerializer.Serialize(msg);
-        var result = NetSerializer.Deserialize<EntityMsg>(data);
-        Assert.Equal(99, result.Id);
-        Assert.Equal(15, result.X);
-        Assert.Equal(25, result.Y);
-        Assert.Equal(77, result.GlyphId);
-        Assert.Equal(0x00FF00, result.FgColor);
-        Assert.Equal(50, result.Health);
-        Assert.Equal(75, result.MaxHealth);
+        var result = NetSerializer.Deserialize<WorldDeltaMsg>(data);
+        Assert.True(result.IsSnapshot);
+        Assert.Equal(0, result.FromTick);
+        Assert.Equal(50, result.ToTick);
+        Assert.NotNull(result.PlayerState);
+        Assert.Equal(90, result.PlayerState.Health);
+        Assert.Equal(2, result.PlayerState.Level);
+        Assert.Single(result.EntityUpdates);
+        Assert.Equal(64, result.EntityUpdates[0].GlyphId);
     }
 }

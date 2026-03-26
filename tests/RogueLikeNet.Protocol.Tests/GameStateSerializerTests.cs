@@ -20,47 +20,6 @@ public class GameStateSerializerTests
     }
 
     [Fact]
-    public void SerializeEntities_WithFOV_OnlyReturnsVisibleEntities()
-    {
-        var world = World.Create();
-
-        // Entity at (5,5) — will be visible
-        world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
-        // Entity at (50,50) — will NOT be visible
-        world.Create(new Position(50, 50), new TileAppearance(65, 0xFFFFFF));
-
-        var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
-
-        var result = GameStateSerializer.SerializeEntities(world, fov);
-
-        Assert.Single(result);
-        Assert.Equal(5, result[0].X);
-        Assert.Equal(5, result[0].Y);
-        Assert.Equal(64, result[0].GlyphId);
-
-        World.Destroy(world);
-    }
-
-    [Fact]
-    public void SerializeEntities_WithFOV_IncludesHealthData()
-    {
-        var world = World.Create();
-        world.Create(new Position(3, 4), new TileAppearance(64, 0xFF0000), new Health(20));
-
-        var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(FOVData.PackCoord(3, 4));
-
-        var result = GameStateSerializer.SerializeEntities(world, fov);
-
-        Assert.Single(result);
-        Assert.Equal(20, result[0].Health);
-        Assert.Equal(20, result[0].MaxHealth);
-
-        World.Destroy(world);
-    }
-
-    [Fact]
     public void SerializeEntityUpdatesDelta_OnlyReturnsChangedEntities()
     {
         var world = World.Create();
@@ -159,7 +118,7 @@ public class GameStateSerializerTests
     [Fact]
     public void FullSnapshot_SerializeDeserialize_RoundTrip()
     {
-        // Replicate the exact server→client flow: build a real snapshot, serialize, wrap, unwrap, deserialize
+        // Replicate the exact server→client flow: build a snapshot delta, serialize, wrap, unwrap, deserialize
         var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator());
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
@@ -169,29 +128,30 @@ public class GameStateSerializerTests
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
         ref var fov = ref engine.EcsWorld.Get<FOVData>(player);
 
-        var snapshot = new WorldSnapshotMsg
+        var previousState = new Dictionary<long, EntitySnapshot>();
+        var snapshot = new WorldDeltaMsg
         {
-            WorldTick = engine.CurrentTick,
-            PlayerX = pos.X,
-            PlayerY = pos.Y,
+            FromTick = 0,
+            ToTick = engine.CurrentTick,
+            IsSnapshot = true,
             Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y),
-            Entities = GameStateSerializer.SerializeEntities(engine.EcsWorld, fov),
+            EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(engine.EcsWorld, fov, previousState),
             PlayerState = GameStateSerializer.BuildPlayerState(engine, player),
         };
 
         // Serialize + wrap (server side)
         var payload = NetSerializer.Serialize(snapshot);
-        var data = NetSerializer.WrapMessage(MessageTypes.WorldSnapshot, payload);
+        var data = NetSerializer.WrapMessage(MessageTypes.WorldDelta, payload);
 
         // Unwrap + deserialize (client side)
         var envelope = NetSerializer.UnwrapMessage(data);
-        Assert.Equal(MessageTypes.WorldSnapshot, envelope.MessageType);
+        Assert.Equal(MessageTypes.WorldDelta, envelope.MessageType);
 
-        var result = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
-        Assert.Equal(snapshot.WorldTick, result.WorldTick);
-        Assert.Equal(snapshot.PlayerX, result.PlayerX);
+        var result = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
+        Assert.True(result.IsSnapshot);
+        Assert.Equal(snapshot.ToTick, result.ToTick);
         Assert.Equal(9, result.Chunks.Length); // 3x3 around player
-        Assert.True(result.Entities.Length > 0);
+        Assert.True(result.EntityUpdates.Length > 0);
         Assert.NotNull(result.PlayerState);
 
         engine.Dispose();

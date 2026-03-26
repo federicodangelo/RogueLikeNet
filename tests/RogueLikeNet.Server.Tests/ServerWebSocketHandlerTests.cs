@@ -30,7 +30,7 @@ public class ServerWebSocketHandlerTests
         Assert.True(socket.SentMessages.Count > 0);
         var first = socket.SentMessages[0];
         var env = NetSerializer.UnwrapMessage(first);
-        Assert.Equal(MessageTypes.WorldSnapshot, env.MessageType);
+        Assert.Equal(MessageTypes.WorldDelta, env.MessageType);
     }
 
     [Fact]

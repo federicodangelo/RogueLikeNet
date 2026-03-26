@@ -44,7 +44,6 @@ public sealed class RogueLikeGame : GameBase
 
     // Network message buffers — written from network thread, drained each frame
     private readonly ConcurrentQueue<WorldDeltaMsg> _pendingDeltas = new();
-    private volatile WorldSnapshotMsg? _pendingSnapshot;
 
     // Performance metrics
     private readonly Stopwatch _fpsStopwatch = Stopwatch.StartNew();
@@ -136,7 +135,6 @@ public sealed class RogueLikeGame : GameBase
     public void SetConnection(IGameServerConnection connection)
     {
         _connection = connection;
-        _connection.OnWorldSnapshot += OnWorldSnapshot;
         _connection.OnWorldDelta += OnWorldDelta;
         _connection.OnChatReceived += OnChatReceived;
     }
@@ -145,7 +143,6 @@ public sealed class RogueLikeGame : GameBase
     {
         if (_connection != null)
         {
-            _connection.OnWorldSnapshot -= OnWorldSnapshot;
             _connection.OnWorldDelta -= OnWorldDelta;
             _connection.OnChatReceived -= OnChatReceived;
             _connection = null;
@@ -319,13 +316,6 @@ public sealed class RogueLikeGame : GameBase
 
     private void DrainNetworkMessages()
     {
-        var snapshot = _pendingSnapshot;
-        if (snapshot != null)
-        {
-            _pendingSnapshot = null;
-            _gameState.ApplySnapshot(snapshot);
-            while (_pendingDeltas.TryDequeue(out _)) { }
-        }
         while (_pendingDeltas.TryDequeue(out var delta))
             _gameState.ApplyDelta(delta);
 
@@ -854,7 +844,6 @@ public sealed class RogueLikeGame : GameBase
 
     // ── Server Messages ────────────────────────────────────────
 
-    private void OnWorldSnapshot(WorldSnapshotMsg snapshot) => _pendingSnapshot = snapshot;
     private void OnWorldDelta(WorldDeltaMsg delta)
     {
         long now = Stopwatch.GetTimestamp();

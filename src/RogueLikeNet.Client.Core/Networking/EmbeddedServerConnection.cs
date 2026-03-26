@@ -19,7 +19,6 @@ public class EmbeddedServerConnection : IGameServerConnection
     public long BytesSent => 0;
     public long BytesReceived => Interlocked.Read(ref _bytesReceived);
 
-    public event Action<WorldSnapshotMsg>? OnWorldSnapshot;
     public event Action<WorldDeltaMsg>? OnWorldDelta;
     public event Action<ChatMsg>? OnChatReceived;
     public event Action? OnDisconnected;
@@ -66,11 +65,6 @@ public class EmbeddedServerConnection : IGameServerConnection
             var envelope = NetSerializer.UnwrapMessage(data);
             switch (envelope.MessageType)
             {
-                case MessageTypes.WorldSnapshot:
-                    var snapshot = NetSerializer.Deserialize<WorldSnapshotMsg>(envelope.Payload);
-                    OnWorldSnapshot?.Invoke(snapshot);
-                    break;
-
                 case MessageTypes.WorldDelta:
                     var delta = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
                     OnWorldDelta?.Invoke(delta);
