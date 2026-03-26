@@ -174,7 +174,7 @@ public abstract class BaseFontRenderer : IFontRenderer
         int gw = MiniBitmapFont.GlyphWidth;
         int gh = MiniBitmapFont.GlyphHeight;
 
-        int snappedAdvance = (int)MathF.Round((gw + 1) * scale);
+        int snappedAdvance = (int)MathF.Round(gw * scale);
         int snappedDrawW = (int)MathF.Round(gw * scale);
         int snappedDrawH = (int)MathF.Round(gh * scale);
         float snappedY = MathF.Round(y);
@@ -245,7 +245,7 @@ public abstract class BaseFontRenderer : IFontRenderer
     }
 
     /// <summary>Measure the width of text in screen pixels.</summary>
-    public float MeasureText(string text, float scale = 1f) => text.Length * (MiniBitmapFont.GlyphWidth + 1f) * scale;
+    public float MeasureText(string text, float scale = 1f) => text.Length * MiniBitmapFont.GlyphWidth * scale;
 
     public virtual void Dispose()
     {

@@ -13,8 +13,8 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public class TileRenderer
 {
-    public const int TileWidth = (int)(9 * FontScale);  // (8px glyph + 1px advance) * 2
-    public const int TileHeight = (int)(16 * FontScale);
+    public const int TileWidth = (int)(MiniBitmapFont.GlyphWidth * FontScale);
+    public const int TileHeight = (int)(MiniBitmapFont.GlyphHeight * FontScale);
     public const int HudColumns = 30;
     private const float FontScale = 1.5f;
 
@@ -764,7 +764,7 @@ public class TileRenderer
     {
         FillOverlay(r, totalCols, totalRows);
 
-        int boxW = 30;
+        int boxW = 38;
         int boxH = PauseMenuItems.Length + 8;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
@@ -868,17 +868,12 @@ public class TileRenderer
     {
         if (fillColor.HasValue)
         {
-            float fx = (x + 1) * TileWidth;
-            float fy = (y + 1) * TileHeight;
-            float fw = (w - 2) * TileWidth;
-            float fh = (h - 2) * TileHeight;
+            float fx = (x) * TileWidth;
+            float fy = (y) * TileHeight;
+            float fw = (w) * TileWidth;
+            float fh = (h) * TileHeight;
             r.DrawRectScreen(fx, fy, fw, fh, fillColor.Value);
         }
-
-        DrawChar(r, x, y, '\u250C', borderColor);
-        DrawChar(r, x + w - 1, y, '\u2510', borderColor);
-        DrawChar(r, x, y + h - 1, '\u2514', borderColor);
-        DrawChar(r, x + w - 1, y + h - 1, '\u2518', borderColor);
 
         for (int i = 1; i < w - 1; i++)
         {
@@ -890,6 +885,11 @@ public class TileRenderer
             DrawChar(r, x, y + i, '\u2502', borderColor);
             DrawChar(r, x + w - 1, y + i, '\u2502', borderColor);
         }
+
+        DrawChar(r, x, y, '\u250C', borderColor);
+        DrawChar(r, x + w - 1, y, '\u2510', borderColor);
+        DrawChar(r, x, y + h - 1, '\u2514', borderColor);
+        DrawChar(r, x + w - 1, y + h - 1, '\u2518', borderColor);
     }
 
     private static void FillOverlay(ISpriteRenderer r, int totalCols, int totalRows)
