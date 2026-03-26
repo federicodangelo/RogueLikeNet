@@ -139,7 +139,8 @@ public class NetSerializerTests
         {
             chunks[i] = new ChunkDataMsg
             {
-                ChunkX = i, ChunkY = i,
+                ChunkX = i,
+                ChunkY = i,
                 TileTypes = new byte[256],
                 TileGlyphs = new int[256],
                 TileFgColors = new int[256],
@@ -171,7 +172,8 @@ public class NetSerializerTests
         {
             chunks[i] = new ChunkDataMsg
             {
-                ChunkX = i, ChunkY = i,
+                ChunkX = i,
+                ChunkY = i,
                 TileTypes = new byte[256],
                 TileGlyphs = new int[256],
                 TileFgColors = new int[256],

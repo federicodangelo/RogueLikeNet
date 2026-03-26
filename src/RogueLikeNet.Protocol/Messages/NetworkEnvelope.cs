@@ -12,8 +12,8 @@ public class NetworkEnvelope
     /// <summary>1 if Payload is deflate-compressed, 0 otherwise.</summary>
     [Key(1)] public byte IsCompressed { get; set; } = 0;
     [Key(2)] public byte[] Payload { get; set; } = [];
-}   
- 
+}
+
 
 public static class MessageTypes
 {

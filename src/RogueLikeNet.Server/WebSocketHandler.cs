@@ -55,7 +55,7 @@ public static class WebSocketHandler
                     conn.TrackReceived(ms.Length);
                     if (ProcessMessage(conn, ms.ToArray(), gameLoop))
                         break;
-                    
+
                 }
 
                 ms.SetLength(0); // Clear for next message
