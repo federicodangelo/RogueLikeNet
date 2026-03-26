@@ -32,10 +32,10 @@ public static class WebSocketHandler
             await gameLoop.SpawnPlayerForConnection(conn.ConnectionId);
 
             // Read loop
-            var buffer = new byte[4096];
+            var buffer = new byte[65536];
+            using var ms = new MemoryStream();
             while (socket.State == WebSocketState.Open)
             {
-                using var ms = new MemoryStream();
                 WebSocketReceiveResult result;
                 do
                 {
@@ -53,8 +53,12 @@ public static class WebSocketHandler
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
                 {
                     conn.TrackReceived(ms.Length);
-                    ProcessMessage(conn, ms.ToArray(), gameLoop);
+                    if (ProcessMessage(conn, ms.ToArray(), gameLoop))
+                        break;
+                    
                 }
+
+                ms.SetLength(0); // Clear for next message
             }
         }
         catch (WebSocketException)
@@ -75,7 +79,7 @@ public static class WebSocketHandler
         }
     }
 
-    private static void ProcessMessage(PlayerConnection conn, byte[] data, GameLoop gameLoop)
+    private static bool ProcessMessage(PlayerConnection conn, byte[] data, GameLoop gameLoop)
     {
         try
         {
@@ -91,11 +95,17 @@ public static class WebSocketHandler
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
                     _ = gameLoop.BroadcastChat(conn.ConnectionId, chat.Text);
                     break;
+
+                default:
+                    Console.Error.WriteLine($"Unknown message type from {conn.ConnectionId}: {envelope.MessageType}");
+                    return false;
             }
+            return true;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error processing message from {conn.ConnectionId}: {ex.Message}");
+            return false;
         }
     }
 }

@@ -65,11 +65,11 @@ public class WebSocketServerConnection : IGameServerConnection
     private async Task ReadLoop(CancellationToken ct)
     {
         var buffer = new byte[65536];
+        using var ms = new MemoryStream();
         try
         {
             while (!ct.IsCancellationRequested && _socket?.State == WebSocketState.Open)
             {
-                using var ms = new MemoryStream();
                 WebSocketReceiveResult result;
                 do
                 {
@@ -87,6 +87,7 @@ public class WebSocketServerConnection : IGameServerConnection
                     Interlocked.Add(ref _bytesReceived, ms.Length);
                     ProcessMessage(ms.ToArray());
                 }
+                ms.SetLength(0); // Clear for next message
             }
         }
         catch (OperationCanceledException) { }
@@ -97,7 +98,7 @@ public class WebSocketServerConnection : IGameServerConnection
         }
     }
 
-    private void ProcessMessage(byte[] data)
+    private bool ProcessMessage(byte[] data)
     {
         try
         {
@@ -118,11 +119,17 @@ public class WebSocketServerConnection : IGameServerConnection
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
                     OnChatReceived?.Invoke(chat);
                     break;
+
+                default:
+                    Console.Error.WriteLine($"Unknown message type received: {envelope.MessageType}");
+                    return false;
             }
+            return true;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error processing server message: {ex.Message}");
+            return false;
         }
     }
 
