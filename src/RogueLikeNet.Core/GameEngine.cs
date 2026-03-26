@@ -104,13 +104,13 @@ public class GameEngine : IDisposable
     /// </summary>
     public Entity SpawnPlayer(long connectionId, int x, int y, int classId = ClassDefinitions.Warrior)
     {
-        var (bonusAtk, bonusDef, bonusHp, bonusSpeed) = ClassDefinitions.GetStartingBonus(classId);
+        var stats = ClassDefinitions.GetStartingStats(classId);
         var skills = ClassDefinitions.GetStartingSkills(classId);
 
         return _ecsWorld.Create(
             new Position(x, y),
-            new Health(100 + bonusHp),
-            new CombatStats(10 + bonusAtk, 5 + bonusDef, 10 + bonusSpeed),
+            new Health(100 + stats.Health),
+            new CombatStats(10 + stats.Attack, 5 + stats.Defense, 10 + stats.Speed),
             new FOVData(20),
             new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             new PlayerTag { ConnectionId = connectionId },
@@ -120,8 +120,8 @@ public class GameEngine : IDisposable
             new Inventory(20),
             new Equipment(),
             new QuickSlots(),
-            new MoveDelay(Math.Max(0, 10 - (6 + bonusSpeed))),
-            new AttackDelay(Math.Max(0, 10 - (6 + bonusSpeed)))
+            new MoveDelay(Math.Max(0, 10 - (6 + stats.Speed))),
+            new AttackDelay(Math.Max(0, 10 - (6 + stats.Speed)))
         );
     }
 

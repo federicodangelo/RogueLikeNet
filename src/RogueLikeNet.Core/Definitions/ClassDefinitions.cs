@@ -14,20 +14,20 @@ public static class ClassDefinitions
 
     public static readonly ClassDefinition[] All =
     [
-        new(Warrior, "Warrior", 3, 3, 20, 0, SkillDefinitions.PowerStrike, SkillDefinitions.ShieldBash),
-        new(Rogue,   "Rogue",   1, 0, 0, 4, SkillDefinitions.Backstab, SkillDefinitions.Dodge),
-        new(Mage,    "Mage",    0, 0, -10, 2, SkillDefinitions.Fireball, SkillDefinitions.Heal),
-        new(Ranger,  "Ranger",  2, 1, 0, 2, SkillDefinitions.PowerShot, SkillDefinitions.Trap),
+        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0), SkillDefinitions.PowerStrike, SkillDefinitions.ShieldBash),
+        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4), SkillDefinitions.Backstab, SkillDefinitions.Dodge),
+        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2), SkillDefinitions.Fireball, SkillDefinitions.Heal),
+        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2), SkillDefinitions.PowerShot, SkillDefinitions.Trap),
     ];
 
     public static ClassDefinition Get(int classId) =>
         Array.Find(All, d => d.ClassId == classId);
 
     /// <summary>Returns (bonusAttack, bonusDefense, bonusHealth, bonusSpeed).</summary>
-    public static (int Atk, int Def, int Hp, int Spd) GetStartingBonus(int classId)
+    public static ClassStats GetStartingStats(int classId)
     {
         var def = Get(classId);
-        return (def.BonusAttack, def.BonusDefense, def.BonusHealth, def.BonusSpeed);
+        return def.StartingStats;
     }
 
     public static SkillSlots GetStartingSkills(int classId)
@@ -41,6 +41,8 @@ public static class ClassDefinitions
     }
 }
 
+public readonly record struct ClassStats(int Attack, int Defense, int Health, int Speed);
+
 public readonly record struct ClassDefinition(
-    int ClassId, string Name, int BonusAttack, int BonusDefense, int BonusHealth, int BonusSpeed, int StartingSkill0, int StartingSkill1
+    int ClassId, string Name, ClassStats StartingStats, int StartingSkill0, int StartingSkill1
 );

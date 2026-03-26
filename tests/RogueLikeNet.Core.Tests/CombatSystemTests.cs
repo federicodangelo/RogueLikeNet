@@ -239,15 +239,17 @@ public class CombatSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 15, 0, 8);
 
-        // Set monster to Attack state
         ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Attack;
+        ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
 
+        var healthBefore = pHealth.Current;
+
+        // Set monster to Attack state
+        ai.StateId = AIStates.Attack;
         engine.Tick();
 
-        ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
-        Assert.True(pHealth.Current < 100 + ClassDefinitions.GetStartingBonus(ClassDefinitions.Warrior).Hp,
-            "Player should take damage from monster attack");
+        var healthAfter = pHealth.Current;
+        Assert.True(healthAfter < healthBefore, "Player should take damage from monster attack");
     }
 
     [Fact]
