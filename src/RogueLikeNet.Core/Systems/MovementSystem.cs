@@ -22,10 +22,13 @@ public class MovementSystem
                 actorPositions.Add(FOVData.PackCoord(aPos.X, aPos.Y));
         });
 
-        var query = new QueryDescription().WithAll<Position, PlayerInput>();
-        world.Query(in query, (ref Position pos, ref PlayerInput input) =>
+        var query = new QueryDescription().WithAll<Position, PlayerInput, MoveDelay>();
+        world.Query(in query, (ref Position pos, ref PlayerInput input, ref MoveDelay delay) =>
         {
             if (input.ActionType != ActionTypes.Move) return;
+
+            // Respect player action cooldown — preserve action to execute next tick
+            if (delay.Current > 0) return;
 
             int newX = pos.X + input.TargetX;
             int newY = pos.Y + input.TargetY;
@@ -47,6 +50,8 @@ public class MovementSystem
             pos.X = newX;
             pos.Y = newY;
             input.ActionType = ActionTypes.None;
+            // Reset player action cooldown after moving
+            delay.Current = delay.Interval;
         });
 
         // Process GridVelocity-based movement (for entities with velocity)

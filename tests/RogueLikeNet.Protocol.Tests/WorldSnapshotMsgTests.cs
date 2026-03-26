@@ -15,11 +15,11 @@ public class WorldSnapshotMsgTests
         Assert.Equal(0, msg.PlayerEntityId);
         Assert.Equal(0, msg.PlayerX);
         Assert.Equal(0, msg.PlayerY);
-        Assert.Null(msg.PlayerHud);
+        Assert.Null(msg.PlayerState);
     }
 
     [Fact]
-    public void WorldSnapshotMsg_WithPlayerHud_RoundTrip()
+    public void WorldSnapshotMsg_WithPlayerState_RoundTrip()
     {
         var snapshot = new WorldSnapshotMsg
         {
@@ -27,15 +27,15 @@ public class WorldSnapshotMsgTests
             PlayerX = 10,
             PlayerY = 20,
             PlayerEntityId = 3,
-            PlayerHud = new PlayerHudMsg { Health = 90, MaxHealth = 100, Level = 2 },
+            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100, Level = 2 },
             Chunks = [],
             Entities = [],
         };
         var data = NetSerializer.Serialize(snapshot);
         var result = NetSerializer.Deserialize<WorldSnapshotMsg>(data);
-        Assert.NotNull(result.PlayerHud);
-        Assert.Equal(90, result.PlayerHud.Health);
-        Assert.Equal(2, result.PlayerHud.Level);
+        Assert.NotNull(result.PlayerState);
+        Assert.Equal(90, result.PlayerState.Health);
+        Assert.Equal(2, result.PlayerState.Level);
     }
 
     [Fact]

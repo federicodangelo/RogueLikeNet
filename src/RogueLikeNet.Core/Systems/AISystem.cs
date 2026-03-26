@@ -44,6 +44,14 @@ public class AISystem
                 delay.Current--;
         });
 
+        // Tick down attack delays
+        var attackDelayQuery = new QueryDescription().WithAll<AttackDelay>();
+        world.Query(in attackDelayQuery, (ref AttackDelay attackDelay) =>
+        {
+            if (attackDelay.Current > 0)
+                attackDelay.Current--;
+        });
+
         // Process AI entities
         var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
         world.Query(in aiQuery, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>

@@ -43,9 +43,9 @@ public class WorldDeltaMsgTests
     }
 
     [Fact]
-    public void PlayerHudMsg_RoundTrip()
+    public void PlayerStateMsg_RoundTrip()
     {
-        var msg = new PlayerHudMsg
+        var msg = new PlayerStateMsg
         {
             Health = 80,
             MaxHealth = 100,
@@ -58,10 +58,10 @@ public class WorldDeltaMsgTests
             SkillIds = [1, 2, 3],
             SkillCooldowns = [0, 5, 10],
             InventoryNames = ["Sword", "Shield", "Potion"],
-            FloorItemNames = ["Health Potion", "Gold"]
+            InventoryCategories = [0, 1, 2]
         };
         var data = NetSerializer.Serialize(msg);
-        var result = NetSerializer.Deserialize<PlayerHudMsg>(data);
+        var result = NetSerializer.Deserialize<PlayerStateMsg>(data);
         Assert.Equal(80, result.Health);
         Assert.Equal(100, result.MaxHealth);
         Assert.Equal(15, result.Attack);
@@ -73,13 +73,13 @@ public class WorldDeltaMsgTests
         Assert.Equal([1, 2, 3], result.SkillIds);
         Assert.Equal([0, 5, 10], result.SkillCooldowns);
         Assert.Equal(["Sword", "Shield", "Potion"], result.InventoryNames);
-        Assert.Equal(["Health Potion", "Gold"], result.FloorItemNames);
+        Assert.Equal([0, 1, 2], result.InventoryCategories);
     }
 
     [Fact]
-    public void PlayerHudMsg_DefaultValues()
+    public void PlayerStateMsg_DefaultValues()
     {
-        var msg = new PlayerHudMsg();
+        var msg = new PlayerStateMsg();
         Assert.Equal(0, msg.Health);
         Assert.Equal(0, msg.MaxHealth);
         Assert.Equal(0, msg.Attack);
@@ -91,7 +91,7 @@ public class WorldDeltaMsgTests
         Assert.Empty(msg.SkillIds);
         Assert.Empty(msg.SkillCooldowns);
         Assert.Empty(msg.InventoryNames);
-        Assert.Empty(msg.FloorItemNames);
+        Assert.Empty(msg.InventoryCategories);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class WorldDeltaMsgTests
             FromTick = 5,
             ToTick = 6,
             TileUpdates = [new TileUpdateMsg { X = 1, Y = 2, TileType = 1, GlyphId = 100, FgColor = 0xFF, BgColor = 0, LightLevel = 50 }],
-            PlayerHud = new PlayerHudMsg { Health = 50, MaxHealth = 100, Attack = 10, Defense = 5 }
+            PlayerState = new PlayerStateMsg { Health = 50, MaxHealth = 100, Attack = 10, Defense = 5 }
         };
         var data = NetSerializer.Serialize(delta);
         var result = NetSerializer.Deserialize<WorldDeltaMsg>(data);
@@ -110,8 +110,8 @@ public class WorldDeltaMsgTests
         Assert.Equal(1, result.TileUpdates[0].X);
         Assert.Equal(2, result.TileUpdates[0].Y);
         Assert.Equal(1, result.TileUpdates[0].TileType);
-        Assert.NotNull(result.PlayerHud);
-        Assert.Equal(50, result.PlayerHud.Health);
+        Assert.NotNull(result.PlayerState);
+        Assert.Equal(50, result.PlayerState.Health);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class WorldDeltaMsgTests
         Assert.Empty(msg.EntityUpdates);
         Assert.Empty(msg.CombatEvents);
         Assert.Empty(msg.Chunks);
-        Assert.Null(msg.PlayerHud);
+        Assert.Null(msg.PlayerState);
     }
 
     [Fact]
@@ -176,9 +176,9 @@ public class WorldDeltaMsgTests
     }
 
     [Fact]
-    public void PlayerHudMsg_NewFields_RoundTrip()
+    public void PlayerStateMsg_NewFields_RoundTrip()
     {
-        var msg = new PlayerHudMsg
+        var msg = new PlayerStateMsg
         {
             Health = 80,
             MaxHealth = 100,
@@ -192,14 +192,13 @@ public class WorldDeltaMsgTests
             SkillCooldowns = [0, 5, 10, 0],
             SkillNames = ["Power Strike", "Shield Bash", "Backstab", "Dodge"],
             InventoryNames = ["Sword", "Potion"],
-            FloorItemNames = ["Gold"],
             EquippedWeaponName = "Long Sword",
             EquippedArmorName = "Chain Mail",
             InventoryStackCounts = [1, 5],
             InventoryRarities = [2, 0],
         };
         var data = NetSerializer.Serialize(msg);
-        var result = NetSerializer.Deserialize<PlayerHudMsg>(data);
+        var result = NetSerializer.Deserialize<PlayerStateMsg>(data);
         Assert.Equal(["Power Strike", "Shield Bash", "Backstab", "Dodge"], result.SkillNames);
         Assert.Equal("Long Sword", result.EquippedWeaponName);
         Assert.Equal("Chain Mail", result.EquippedArmorName);
@@ -208,9 +207,9 @@ public class WorldDeltaMsgTests
     }
 
     [Fact]
-    public void PlayerHudMsg_NewFields_DefaultValues()
+    public void PlayerStateMsg_NewFields_DefaultValues()
     {
-        var msg = new PlayerHudMsg();
+        var msg = new PlayerStateMsg();
         Assert.Empty(msg.SkillNames);
         Assert.Equal("", msg.EquippedWeaponName);
         Assert.Equal("", msg.EquippedArmorName);

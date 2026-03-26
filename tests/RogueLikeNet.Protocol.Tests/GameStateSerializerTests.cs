@@ -188,7 +188,7 @@ public class GameStateSerializerTests
             PlayerY = pos.Y,
             Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y),
             Entities = GameStateSerializer.SerializeEntities(engine.EcsWorld, fov),
-            PlayerHud = GameStateSerializer.BuildPlayerHud(engine, player),
+            PlayerState = GameStateSerializer.BuildPlayerState(engine, player),
         };
 
         // Serialize + wrap (server side)
@@ -204,7 +204,7 @@ public class GameStateSerializerTests
         Assert.Equal(snapshot.PlayerX, result.PlayerX);
         Assert.Equal(9, result.Chunks.Length); // 3x3 around player
         Assert.True(result.Entities.Length > 0);
-        Assert.NotNull(result.PlayerHud);
+        Assert.NotNull(result.PlayerState);
 
         engine.Dispose();
     }

@@ -11,7 +11,8 @@ public class WorldSnapshotMsg
     [Key(3)] public long PlayerEntityId { get; set; }
     [Key(4)] public int PlayerX { get; set; }
     [Key(5)] public int PlayerY { get; set; }
-    [Key(6)] public PlayerHudMsg? PlayerHud { get; set; }
+    [Key(6)] public PlayerStateMsg? PlayerState { get; set; }
+    [Key(7)] public FloorItemsMsg? FloorItems { get; set; }
 }
 
 [MessagePackObject]

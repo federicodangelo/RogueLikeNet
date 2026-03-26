@@ -85,7 +85,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_WithInventoryItems_ReturnsNames()
+    public void GetPlayerStateData_WithInventoryItems_ReturnsNames()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -100,7 +100,7 @@ public class GameEngineTests
         input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.True(hud!.InventoryCount > 0);
         Assert.NotEmpty(hud.InventoryNames);
@@ -108,7 +108,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_DeadEntity_ReturnsNull()
+    public void GetPlayerStateData_DeadEntity_ReturnsNull()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -120,19 +120,19 @@ public class GameEngineTests
         health.Current = 0;
         engine.Tick(); // This marks dead and destroys monster
 
-        var hud = engine.GetPlayerHudData(monster);
+        var hud = engine.GetPlayerStateData(monster);
         Assert.Null(hud);
     }
 
     [Fact]
-    public void GetPlayerHudData_ReturnsSkillData()
+    public void GetPlayerStateData_ReturnsSkillData()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Equal(4, hud!.SkillIds.Length);
         Assert.Equal(4, hud.SkillCooldowns.Length);
@@ -141,14 +141,14 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_ReturnsClassInfo()
+    public void GetPlayerStateData_ReturnsClassInfo()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Equal(1, hud!.Level);
         Assert.Equal(0, hud.Experience);
@@ -223,7 +223,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_FloorItems_ReturnsNames()
+    public void GetPlayerStateData_FloorItems_ReturnsNames()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -234,21 +234,22 @@ public class GameEngineTests
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.NotEmpty(hud!.FloorItemNames);
-        Assert.Equal("Short Sword", hud.FloorItemNames[0]);
+        var floorItems = engine.GetFloorItemsData(player);
+        Assert.NotEmpty(floorItems);
+        Assert.Equal("Short Sword", floorItems[0]);
     }
 
     [Fact]
-    public void GetPlayerHudData_SkillNames_MatchSkillDefinitions()
+    public void GetPlayerStateData_SkillNames_MatchSkillDefinitions()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Equal(4, hud!.SkillNames.Length);
         // Mage skills: Fireball, Heal, and two more
@@ -257,7 +258,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerHudData_EquippedNames_AfterEquip()
+    public void GetPlayerStateData_EquippedNames_AfterEquip()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -286,14 +287,14 @@ public class GameEngineTests
         input4.ItemSlot = 0;
         engine.Tick();
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Equal("Short Sword", hud!.EquippedWeaponName);
         Assert.Equal("Leather Armor", hud.EquippedArmorName);
     }
 
     [Fact]
-    public void GetPlayerHudData_InventoryStackCountsAndRarities()
+    public void GetPlayerStateData_InventoryStackCountsAndRarities()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
@@ -306,7 +307,7 @@ public class GameEngineTests
         input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        var hud = engine.GetPlayerHudData(player);
+        var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Single(hud!.InventoryStackCounts);
         Assert.Equal(1, hud.InventoryStackCounts[0]); // Sword is not stackable

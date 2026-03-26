@@ -122,7 +122,8 @@ public class LocalGameConnection : IGameServerConnection
             }
         }
 
-        snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
+        snapshot.PlayerState = GameStateSerializer.BuildPlayerState(_engine, _playerEntity);
+        snapshot.FloorItems = GameStateSerializer.BuildFloorItems(_engine, _playerEntity);
         return snapshot;
     }
 
@@ -141,7 +142,8 @@ public class LocalGameConnection : IGameServerConnection
         }
 
         delta.CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine);
-        delta.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, _playerEntity);
+        delta.PlayerState = GameStateSerializer.BuildPlayerState(_engine, _playerEntity);
+        delta.FloorItems = GameStateSerializer.BuildFloorItems(_engine, _playerEntity);
         return delta;
     }
 

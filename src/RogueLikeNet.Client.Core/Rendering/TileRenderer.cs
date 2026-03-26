@@ -15,7 +15,7 @@ public class TileRenderer
 {
     public const int TileWidth = (int) (9 * FontScale);  // (8px glyph + 1px advance) * 2
     public const int TileHeight = (int) (16 * FontScale);
-    public const int HudColumns = 20;
+    public const int HudColumns = 30;
     private const float FontScale = 1.5f;
 
     // Colors used across menus and HUD
@@ -72,14 +72,14 @@ public class TileRenderer
 
     public void RenderGame(ISpriteRenderer r, ClientGameState state, int totalCols, int totalRows,
         float shakeX = 0, float shakeY = 0,
-        bool inventoryMode = false, int inventoryIndex = 0)
+        bool inventoryMode = false, int inventoryIndex = 0, int inventoryScrollOffset = 0)
     {
         r.DrawRectScreen(0, 0, totalCols * TileWidth, totalRows * TileHeight, ColorBlack);
 
         int gameCols = totalCols - HudColumns;
         RenderGameWorld(r, state, gameCols, totalRows, shakeX, shakeY);
         if (inventoryMode)
-            RenderInventoryPanel(r, state, gameCols, totalRows, inventoryIndex);
+            RenderInventoryPanel(r, state, gameCols, totalRows, inventoryIndex, inventoryScrollOffset);
         else
             RenderHudPanel(r, state, gameCols, totalRows);
     }
@@ -210,7 +210,7 @@ public class TileRenderer
         int innerW = HudColumns - 2;
         int row = 1;
 
-        var hud = state.PlayerHud;
+        var hud = state.PlayerState;
         if (hud == null)
         {
             DrawString(r, col, row, "No data", ColorDim);
@@ -292,16 +292,17 @@ public class TileRenderer
         row += 2;
 
         // Floor items
-        if (hud.FloorItemNames.Length > 0)
+        var floorNames = state.FloorItems?.Names ?? [];
+        if (floorNames.Length > 0)
         {
             DrawString(r, col, row, "On Ground", ColorTitle);
             row++;
             DrawHudSeparator(r, col, row, innerW);
             row++;
-            int floorToShow = Math.Min(hud.FloorItemNames.Length, 4);
+            int floorToShow = Math.Min(floorNames.Length, 4);
             for (int i = 0; i < floorToShow; i++)
             {
-                string name = hud.FloorItemNames[i];
+                string name = floorNames[i];
                 DrawString(r, col, row, $"  {name}", ColorFloor);
                 row++;
             }
@@ -316,7 +317,8 @@ public class TileRenderer
         DrawString(r, col, bottom, "[Esc] Menu", ColorDim);
     }
 
-    private void RenderInventoryPanel(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows, int selectedIndex)
+    private void RenderInventoryPanel(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
+        int selectedIndex, int scrollOffset = 0)
     {
         float hx = hudStartCol * TileWidth;
         r.DrawRectScreen(hx, 0, HudColumns * TileWidth, totalRows * TileHeight, new Color4(15, 15, 20, 255));
@@ -336,64 +338,110 @@ public class TileRenderer
         DrawHudSeparator(r, col, row, innerW);
         row++;
 
-        var hud = state.PlayerHud;
+        var hud = state.PlayerState;
         if (hud == null)
         {
             DrawString(r, col, row, "No data", ColorDim);
             return;
         }
 
+        // Character stats
+        string hpText = $"HP:{hud.Health}/{hud.MaxHealth}";
+        string atkText = $"ATK:{hud.Attack}";
+        string defText = $"DEF:{hud.Defense}";
+        DrawString(r, col, row, hpText, ColorHpText);
+        DrawString(r, col + hpText.Length + 1, row, atkText, ColorStats);
+        DrawString(r, col + hpText.Length + 1 + atkText.Length + 1, row, defText, ColorStats);
+        row++;
+        DrawHudSeparator(r, col, row, innerW);
+        row++;
+
         int cap = Math.Max(hud.InventoryCapacity, 4);
-        for (int i = 0; i < cap; i++)
+        const int visibleRows = 8;
+
+        // Scrollable inventory items
+        int visibleEnd = Math.Min(scrollOffset + visibleRows, cap);
+        if (scrollOffset > 0)
+        {
+            DrawString(r, col, row, "  \u2191 more items above", ColorDim);
+            row++;
+        }
+        for (int i = scrollOffset; i < visibleEnd && row < totalRows - 8; i++)
         {
             bool sel = i == selectedIndex;
             bool isQuickSlot = i < 4;
             string prefix = sel ? "\u25ba" : " ";
             string slotTag = isQuickSlot ? $"[{i + 1}]" : "   ";
+            string catTag = i < hud.InventoryCategories.Length
+                ? CategoryTag(hud.InventoryCategories[i]) : "     ";
             string name = i < hud.InventoryNames.Length && !string.IsNullOrEmpty(hud.InventoryNames[i])
-                ? hud.InventoryNames[i]
-                : "---";
+                ? hud.InventoryNames[i] : "---";
             int stack = i < hud.InventoryStackCounts.Length ? hud.InventoryStackCounts[i] : 1;
             string stackStr = stack > 1 ? $" x{stack}" : "";
-            string text = $"{prefix}{slotTag}{name}{stackStr}";
+            string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
+            if (text.Length > innerW) text = text[..innerW];
             var color = sel ? ColorInvSel : isQuickSlot ? ColorItem : ColorInv;
             DrawString(r, col, row, text, color);
             row++;
         }
+        if (visibleEnd < cap)
+        {
+            DrawString(r, col, row, "  \u2193 more items below", ColorDim);
+            row++;
+        }
         row++;
 
-        // Equipped items section
-        DrawString(r, col, row, "Equipped", ColorTitle);
+        // Equipment slots (always visible, selectable at index cap & cap+1)
+        DrawString(r, col, row, "Equipment", ColorTitle);
         row++;
         DrawHudSeparator(r, col, row, innerW);
         row++;
-        string eq_wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
-        string eq_arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
-        DrawString(r, col, row, $"W: {eq_wpn}", ColorItem);
+
+        // Weapon slot (index = cap)
+        {
+            bool sel = selectedIndex == cap;
+            string prefix = sel ? "\u25ba" : " ";
+            string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
+            string text = $"{prefix}[W][Wpn]{wpn}";
+            if (text.Length > innerW) text = text[..innerW];
+            DrawString(r, col, row, text, sel ? ColorInvSel : ColorItem);
+            row++;
+        }
+        // Armor slot (index = cap+1)
+        {
+            bool sel = selectedIndex == cap + 1;
+            string prefix = sel ? "\u25ba" : " ";
+            string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
+            string text = $"{prefix}[A][Arm]{arm}";
+            if (text.Length > innerW) text = text[..innerW];
+            DrawString(r, col, row, text, sel ? ColorInvSel : ColorItem);
+            row++;
+        }
         row++;
-        DrawString(r, col, row, $"A: {eq_arm}", ColorItem);
-        row += 2;
 
         DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", ColorInv);
         row += 2;
 
-        // Contextual actions
-        DrawString(r, col, row, "Actions", ColorTitle);
-        row++;
+        // Actions hint at bottom
+        int bottom = totalRows - 7;
+        if (bottom > row) row = bottom;
         DrawHudSeparator(r, col, row, innerW);
         row++;
-        DrawString(r, col, row, "[Enter] Use item", ColorDim);
+        DrawString(r, col, row, "[Enter] Use / Unequip", ColorDim);
         row++;
-        DrawString(r, col, row, "[E]     Equip", ColorDim);
+        DrawString(r, col, row, "[E] Equip  [X] Drop", ColorDim);
         row++;
-        DrawString(r, col, row, "[U]     Unequip wpn", ColorDim);
-        row++;
-        DrawString(r, col, row, "[R]     Unequip arm", ColorDim);
-        row++;
-        DrawString(r, col, row, "[X]     Drop item", ColorDim);
-        row++;
-        DrawString(r, col, row, "[Esc]   Close", ColorDim);
+        DrawString(r, col, row, "[Esc] Close", ColorDim);
     }
+
+    private static string CategoryTag(int category) => category switch
+    {
+        ItemDefinitions.CategoryWeapon => "[Wpn]",
+        ItemDefinitions.CategoryArmor  => "[Arm]",
+        ItemDefinitions.CategoryPotion => "[Pot]",
+        ItemDefinitions.CategoryGold   => "[Gld]",
+        _                              => "     ",
+    };
 
     // ── Connecting Screen ──────────────────────────────────────
 

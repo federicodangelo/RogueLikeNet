@@ -234,8 +234,8 @@ public class GameLoopTests
         // Should have entities (at least the player)
         Assert.True(snapshot.Entities.Length > 0);
 
-        // Should have PlayerHud
-        Assert.NotNull(snapshot.PlayerHud);
+        // Should have PlayerState
+        Assert.NotNull(snapshot.PlayerState);
     }
 
     [Fact]
@@ -411,7 +411,7 @@ public class GameLoopTests
     }
 
     [Fact]
-    public async Task BuildPlayerHud_ReturnsNullForNoEntity()
+    public async Task BuildPlayerState_ReturnsNullForNoEntity()
     {
         var messages = new List<byte[]>();
         using var loop = new GameLoop(42, _gen);
@@ -427,7 +427,7 @@ public class GameLoopTests
         loop.Dispose();
 
         // No deltas are sent when there's no entity (checked by BroadcastDeltas/ProcessInputs skip),
-        // so this implicitly covers BuildPlayerHud returning null for no entity
+        // so this implicitly covers BuildPlayerState returning null for no entity
         Assert.Empty(messages);
     }
 
@@ -535,7 +535,7 @@ public class GameLoopTests
     }
 
     [Fact]
-    public async Task ProcessInputs_OnlyOneInputPerTick()
+    public async Task ProcessInputs_DrainsAllKeepsLatest()
     {
         var messages = new List<byte[]>();
         using var loop = new GameLoop(42, _gen);
@@ -561,24 +561,24 @@ public class GameLoopTests
         });
         foreach (var e in toDestroy) loop.Engine.EcsWorld.Destroy(e);
 
-        // Queue 3 right-moves before start
+        // Queue 3 right-moves before start — all drained in tick 1, only the last is applied
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
 
         messages.Clear();
         loop.Start();
-        await Task.Delay(400); // Enough time for all 3 moves to process one per tick
+        await Task.Delay(400); // Enough time for all ticks to run
         loop.Dispose();
 
-        // Player should have moved exactly 3 tiles right (one per tick, not all at once)
+        // Player should have moved exactly 1 tile right (all 3 queued drained in tick 1, latest applied)
         ref var endPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
-        Assert.Equal(startX + 3, endPos.X);
+        Assert.Equal(startX + 1, endPos.X);
         Assert.Equal(startY, endPos.Y);
     }
 
     [Fact]
-    public async Task Delta_IncludesFloorItemNames()
+    public async Task Delta_IncludesFloorItems()
     {
         var messages = new List<byte[]>();
         using var loop = new GameLoop(42, _gen);
@@ -607,15 +607,15 @@ public class GameLoopTests
             if (env.MessageType == MessageTypes.WorldDelta)
             {
                 var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
-                if (delta.PlayerHud?.FloorItemNames.Length > 0)
+                if (delta.FloorItems?.Names.Length > 0)
                 {
                     hasFloorItems = true;
-                    Assert.Contains(template.Name, delta.PlayerHud.FloorItemNames);
+                    Assert.Contains(template.Name, delta.FloorItems.Names);
                     break;
                 }
             }
         }
-        Assert.True(hasFloorItems, "Delta should contain floor item names in PlayerHud");
+        Assert.True(hasFloorItems, "Delta should contain floor items in FloorItems message");
     }
 
     [Fact]
@@ -651,13 +651,13 @@ public class GameLoopTests
     }
 
     [Fact]
-    public async Task GameStateSerializer_BuildPlayerHud_PopulatesAllFields()
+    public async Task GameStateSerializer_BuildPlayerState_PopulatesAllFields()
     {
         using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         await loop.SpawnPlayerForConnection(conn.ConnectionId);
 
-        var hudMsg = GameStateSerializer.BuildPlayerHud(loop.Engine, conn.PlayerEntity!.Value);
+        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, conn.PlayerEntity!.Value);
         Assert.NotNull(hudMsg);
         Assert.True(hudMsg!.MaxHealth > 0);
         Assert.True(hudMsg.Attack > 0);
@@ -671,7 +671,7 @@ public class GameLoopTests
     }
 
     [Fact]
-    public async Task GameStateSerializer_BuildPlayerHud_NullForDeadEntity()
+    public async Task GameStateSerializer_BuildPlayerState_NullForDeadEntity()
     {
         using var loop = new GameLoop(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
@@ -680,7 +680,7 @@ public class GameLoopTests
         var entity = conn.PlayerEntity!.Value;
         loop.Engine.EcsWorld.Destroy(entity);
 
-        var hudMsg = GameStateSerializer.BuildPlayerHud(loop.Engine, entity);
+        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, entity);
         Assert.Null(hudMsg);
     }
 }

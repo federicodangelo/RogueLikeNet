@@ -253,11 +253,11 @@ public static class GameStateSerializer
         }).ToArray();
     }
 
-    public static PlayerHudMsg? BuildPlayerHud(GameEngine engine, Entity playerEntity)
+    public static PlayerStateMsg? BuildPlayerState(GameEngine engine, Entity playerEntity)
     {
-        var hudData = engine.GetPlayerHudData(playerEntity);
+        var hudData = engine.GetPlayerStateData(playerEntity);
         if (hudData == null) return null;
-        return new PlayerHudMsg
+        return new PlayerStateMsg
         {
             Health = hudData.Health,
             MaxHealth = hudData.MaxHealth,
@@ -273,9 +273,15 @@ public static class GameStateSerializer
             InventoryNames = hudData.InventoryNames,
             InventoryStackCounts = hudData.InventoryStackCounts,
             InventoryRarities = hudData.InventoryRarities,
-            FloorItemNames = hudData.FloorItemNames,
+            InventoryCategories = hudData.InventoryCategories,
             EquippedWeaponName = hudData.EquippedWeaponName,
             EquippedArmorName = hudData.EquippedArmorName,
         };
+    }
+
+    public static FloorItemsMsg? BuildFloorItems(GameEngine engine, Entity playerEntity)
+    {
+        var names = engine.GetFloorItemsData(playerEntity);
+        return new FloorItemsMsg { Names = names };
     }
 }

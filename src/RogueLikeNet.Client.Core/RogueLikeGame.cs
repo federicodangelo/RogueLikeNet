@@ -24,6 +24,7 @@ public sealed class RogueLikeGame : GameBase
     private int _menuIndex;
     private int _pauseIndex;
     private int _inventoryIndex;
+    private int _inventoryScrollOffset;
     private string? _connectionError;
 
     // World seed — randomized each game start, editable in main menu
@@ -59,6 +60,11 @@ public sealed class RogueLikeGame : GameBase
 
     // Frame timing for particle update
     private long _lastFrameTicks;
+
+    // Movement hold-to-repeat: fire immediately on press, repeat only after 250ms initial delay
+    private static readonly long MoveRepeatDelayTicks = Stopwatch.Frequency / 4; // 250 ms
+    private InputAction? _heldMoveAction;
+    private long _moveHeldSinceTicks;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenState;
@@ -158,7 +164,7 @@ public sealed class RogueLikeGame : GameBase
         DrainNetworkMessages();
 
         // Detect player damage → trigger screen shake
-        int currentHealth = _gameState.PlayerHud?.Health ?? 0;
+        int currentHealth = _gameState.PlayerState?.Health ?? 0;
         if (_lastKnownHealth > 0 && currentHealth < _lastKnownHealth)
             _shakeUntilTicks = Stopwatch.GetTimestamp() + Stopwatch.Frequency / 4; // 250ms
         _lastKnownHealth = currentHealth;
@@ -235,7 +241,7 @@ public sealed class RogueLikeGame : GameBase
                 break;
             case ScreenState.Inventory:
                 _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
-                    inventoryMode: true, inventoryIndex: _inventoryIndex);
+                    inventoryMode: true, inventoryIndex: _inventoryIndex, inventoryScrollOffset: _inventoryScrollOffset);
                 break;
             case ScreenState.Paused:
                 _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY);
@@ -407,6 +413,7 @@ public sealed class RogueLikeGame : GameBase
         {
             _screenState = ScreenState.Inventory;
             _inventoryIndex = 0;
+            _inventoryScrollOffset = 0;
             return;
         }
 
@@ -419,15 +426,45 @@ public sealed class RogueLikeGame : GameBase
 
         ClientInputMsg? msg = null;
 
-        if (input.IsActionPressed(InputAction.MoveUp))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = -1 };
-        else if (input.IsActionPressed(InputAction.MoveDown))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = 1 };
-        else if (input.IsActionPressed(InputAction.MoveLeft))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 };
-        else if (input.IsActionPressed(InputAction.MoveRight))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 };
-        else if (input.IsActionPressed(InputAction.Wait))
+        // Determine held movement direction, applying a 250ms initial-repeat delay
+        InputAction? activeMoveAction = null;
+        if (input.IsActionDown(InputAction.MoveUp))         activeMoveAction = InputAction.MoveUp;
+        else if (input.IsActionDown(InputAction.MoveDown))  activeMoveAction = InputAction.MoveDown;
+        else if (input.IsActionDown(InputAction.MoveLeft))  activeMoveAction = InputAction.MoveLeft;
+        else if (input.IsActionDown(InputAction.MoveRight)) activeMoveAction = InputAction.MoveRight;
+
+        if (activeMoveAction != null)
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (_heldMoveAction != activeMoveAction)
+            {
+                // New direction — treat as a fresh press and restart the hold timer
+                _heldMoveAction = activeMoveAction;
+                _moveHeldSinceTicks = now;
+            }
+
+            bool fireMove = input.IsActionPressed(activeMoveAction.Value)
+                            || now - _moveHeldSinceTicks >= MoveRepeatDelayTicks;
+            if (fireMove)
+            {
+                msg = activeMoveAction.Value switch
+                {
+                    InputAction.MoveUp    => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  0, TargetY = -1 },
+                    InputAction.MoveDown  => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  0, TargetY =  1 },
+                    InputAction.MoveLeft  => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY =  0 },
+                    InputAction.MoveRight => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  1, TargetY =  0 },
+                    _ => null
+                };
+            }
+        }
+        else
+        {
+            _heldMoveAction = null;
+        }
+
+        if (msg == null)
+        {
+        if (input.IsActionPressed(InputAction.Wait))
             msg = new ClientInputMsg { ActionType = ActionTypes.Wait };
         else if (input.IsActionPressed(InputAction.Attack))
             msg = new ClientInputMsg { ActionType = ActionTypes.Attack, TargetX = 0, TargetY = 0 };
@@ -447,6 +484,7 @@ public sealed class RogueLikeGame : GameBase
             msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
         else if (input.IsActionPressed(InputAction.Drop))
             msg = new ClientInputMsg { ActionType = ActionTypes.Drop, ItemSlot = 0 };
+        }
 
         if (msg != null && _connection != null)
         {
@@ -490,8 +528,10 @@ public sealed class RogueLikeGame : GameBase
 
     private void HandleInventoryInput(IInputManager input)
     {
-        int cap = _gameState.PlayerHud?.InventoryCapacity ?? 4;
+        int cap = _gameState.PlayerState?.InventoryCapacity ?? 4;
         if (cap < 1) cap = 4;
+        int totalSlots = cap + 2; // +2 for weapon/armor equipment slots
+        const int visibleRows = 8;
 
         if (input.IsActionPressed(InputAction.MenuBack))
         {
@@ -500,9 +540,15 @@ public sealed class RogueLikeGame : GameBase
         }
 
         if (input.IsActionPressed(InputAction.MenuUp))
-            _inventoryIndex = (_inventoryIndex + cap - 1) % cap;
+        {
+            _inventoryIndex = (_inventoryIndex + totalSlots - 1) % totalSlots;
+            UpdateInventoryScroll(cap, visibleRows);
+        }
         else if (input.IsActionPressed(InputAction.MenuDown))
-            _inventoryIndex = (_inventoryIndex + 1) % cap;
+        {
+            _inventoryIndex = (_inventoryIndex + 1) % totalSlots;
+            UpdateInventoryScroll(cap, visibleRows);
+        }
         else if (input.IsActionPressed(InputAction.UseItem1))
             SendInventoryAction(ActionTypes.UseItem, 0);
         else if (input.IsActionPressed(InputAction.UseItem2))
@@ -512,15 +558,29 @@ public sealed class RogueLikeGame : GameBase
         else if (input.IsActionPressed(InputAction.UseItem4))
             SendInventoryAction(ActionTypes.UseItem, 3);
         else if (input.IsActionPressed(InputAction.MenuConfirm))
-            SendInventoryAction(ActionTypes.UseItem, _inventoryIndex);
+        {
+            if (_inventoryIndex == cap)         SendInventoryAction(ActionTypes.Unequip, 0);
+            else if (_inventoryIndex == cap + 1) SendInventoryAction(ActionTypes.Unequip, 1);
+            else                                 SendInventoryAction(ActionTypes.UseItem, _inventoryIndex);
+        }
         else if (input.IsActionPressed(InputAction.Equip))
-            SendInventoryAction(ActionTypes.Equip, _inventoryIndex);
-        else if (input.IsActionPressed(InputAction.UnequipSlot1))
-            SendInventoryAction(ActionTypes.Unequip, 0);
-        else if (input.IsActionPressed(InputAction.UnequipSlot2))
-            SendInventoryAction(ActionTypes.Unequip, 1);
-        else if (input.IsActionPressed(InputAction.Drop))
+        {
+            if (_inventoryIndex >= cap) SendInventoryAction(ActionTypes.Unequip, _inventoryIndex - cap);
+            else                        SendInventoryAction(ActionTypes.Equip, _inventoryIndex);
+        }
+        else if (input.IsActionPressed(InputAction.Drop) && _inventoryIndex < cap)
             SendInventoryAction(ActionTypes.Drop, _inventoryIndex);
+    }
+
+    private void UpdateInventoryScroll(int cap, int visibleRows)
+    {
+        if (_inventoryIndex < cap)
+        {
+            if (_inventoryIndex < _inventoryScrollOffset)
+                _inventoryScrollOffset = _inventoryIndex;
+            else if (_inventoryIndex >= _inventoryScrollOffset + visibleRows)
+                _inventoryScrollOffset = _inventoryIndex - visibleRows + 1;
+        }
     }
 
     private void HandleChatInput(IInputManager input)

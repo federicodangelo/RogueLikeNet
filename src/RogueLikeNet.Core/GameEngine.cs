@@ -118,7 +118,9 @@ public class GameEngine : IDisposable
             new ClassData { ClassId = classId, Level = 1 },
             skills,
             new Inventory(20),
-            new Equipment()
+            new Equipment(),
+            new MoveDelay(Math.Max(0, 10 - (5 + bonusSpeed))),
+            new AttackDelay(Math.Max(0, 10 - (5 + bonusSpeed)))
         );
     }
 
@@ -139,7 +141,8 @@ public class GameEngine : IDisposable
             new TileAppearance(glyphId, color),
             new MonsterTag { MonsterTypeId = monsterTypeId },
             new AIState { StateId = AIStates.Idle },
-            new MoveDelay(moveInterval)
+            new MoveDelay(moveInterval),
+            new AttackDelay(moveInterval)
         );
     }
 
@@ -280,6 +283,14 @@ public class GameEngine : IDisposable
     {
         var chunk = EnsureChunkLoaded(0, 0);
 
+        // Collect enemy positions to enforce safety radius
+        var enemyPositions = new List<(int X, int Y)>();
+        var enemyQuery = new QueryDescription().WithAll<Position, MonsterTag>();
+        _ecsWorld.Query(in enemyQuery, (ref Position p) =>
+        {
+            enemyPositions.Add((p.X, p.Y));
+        });
+
         // Collect occupied positions to avoid spawning on entities
         var occupied = new HashSet<long>();
         var posQuery = new QueryDescription().WithAll<Position>();
@@ -288,6 +299,38 @@ public class GameEngine : IDisposable
             occupied.Add(FOVData.PackCoord(p.X, p.Y));
         });
 
+        for (int x = 0; x < Chunk.Size; x++)
+        for (int y = 0; y < Chunk.Size; y++)
+        {
+            if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
+            if (occupied.Contains(FOVData.PackCoord(x, y))) continue;
+
+            // Require 2-tile clear floor radius (all tiles within Chebyshev 2 must be floor)
+            bool clearArea = true;
+            for (int dx = -2; dx <= 2 && clearArea; dx++)
+            for (int dy = -2; dy <= 2 && clearArea; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                int nx = x + dx, ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= Chunk.Size || ny >= Chunk.Size)
+                { clearArea = false; continue; }
+                if (chunk.Tiles[nx, ny].Type != TileType.Floor)
+                    clearArea = false;
+            }
+            if (!clearArea) continue;
+
+            // Require no enemies within 5-tile Chebyshev radius
+            bool enemyNearby = false;
+            foreach (var (ex, ey) in enemyPositions)
+            {
+                if (Math.Max(Math.Abs(ex - x), Math.Abs(ey - y)) <= 5)
+                { enemyNearby = true; break; }
+            }
+            if (enemyNearby) continue;
+
+            return (x, y);
+        }
+        // Fallback: just find any free floor tile
         for (int x = 0; x < Chunk.Size; x++)
         for (int y = 0; y < Chunk.Size; y++)
         {
@@ -303,16 +346,16 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
-    /// Returns HUD data for a player entity (health, stats, inventory, skills).
+    /// Returns data for a player entity (health, stats, inventory, skills).
     /// </summary>
-    public PlayerHudData? GetPlayerHudData(Entity playerEntity)
+    public PlayerStateData? GetPlayerStateData(Entity playerEntity)
     {
         if (!_ecsWorld.IsAlive(playerEntity)) return null;
 
         ref var health = ref _ecsWorld.Get<Health>(playerEntity);
         ref var stats = ref _ecsWorld.Get<CombatStats>(playerEntity);
 
-        var hud = new PlayerHudData
+        var state = new PlayerStateData
         {
             Health = health.Current,
             MaxHealth = health.Max,
@@ -323,32 +366,35 @@ public class GameEngine : IDisposable
         if (_ecsWorld.Has<ClassData>(playerEntity))
         {
             ref var classData = ref _ecsWorld.Get<ClassData>(playerEntity);
-            hud.Level = classData.Level;
-            hud.Experience = classData.Experience;
+            state.Level = classData.Level;
+            state.Experience = classData.Experience;
         }
 
         if (_ecsWorld.Has<Inventory>(playerEntity))
         {
             ref var inv = ref _ecsWorld.Get<Inventory>(playerEntity);
-            hud.InventoryCount = inv.Items?.Count ?? 0;
-            hud.InventoryCapacity = inv.Capacity;
+            state.InventoryCount = inv.Items?.Count ?? 0;
+            state.InventoryCapacity = inv.Capacity;
 
-            // Build inventory item names, stack counts, rarities
+            // Build inventory item names, stack counts, rarities, categories
             if (inv.Items != null)
             {
                 var names = new List<string>();
                 var stacks = new List<int>();
                 var rarities = new List<int>();
+                var categories = new List<int>();
                 foreach (var item in inv.Items)
                 {
                     var def = ItemDefinitions.Get(item.ItemTypeId);
                     names.Add(def.Name ?? "Unknown");
                     stacks.Add(item.StackCount);
                     rarities.Add(item.Rarity);
+                    categories.Add(def.Category);
                 }
-                hud.InventoryNames = names.ToArray();
-                hud.InventoryStackCounts = stacks.ToArray();
-                hud.InventoryRarities = rarities.ToArray();
+                state.InventoryNames = names.ToArray();
+                state.InventoryStackCounts = stacks.ToArray();
+                state.InventoryRarities = rarities.ToArray();
+                state.InventoryCategories = categories.ToArray();
             }
         }
 
@@ -356,17 +402,17 @@ public class GameEngine : IDisposable
         {
             ref var equip = ref _ecsWorld.Get<Equipment>(playerEntity);
             if (equip.HasWeapon)
-                hud.EquippedWeaponName = ItemDefinitions.Get(equip.Weapon!.Value.ItemTypeId).Name ?? "";
+                state.EquippedWeaponName = ItemDefinitions.Get(equip.Weapon!.Value.ItemTypeId).Name ?? "";
             if (equip.HasArmor)
-                hud.EquippedArmorName = ItemDefinitions.Get(equip.Armor!.Value.ItemTypeId).Name ?? "";
+                state.EquippedArmorName = ItemDefinitions.Get(equip.Armor!.Value.ItemTypeId).Name ?? "";
         }
 
         if (_ecsWorld.Has<SkillSlots>(playerEntity))
         {
             ref var skills = ref _ecsWorld.Get<SkillSlots>(playerEntity);
-            hud.SkillIds = [skills.Skill0, skills.Skill1, skills.Skill2, skills.Skill3];
-            hud.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
-            hud.SkillNames = [
+            state.SkillIds = [skills.Skill0, skills.Skill1, skills.Skill2, skills.Skill3];
+            state.SkillCooldowns = [skills.Cooldown0, skills.Cooldown1, skills.Cooldown2, skills.Cooldown3];
+            state.SkillNames = [
                 SkillDefinitions.GetName(skills.Skill0),
                 SkillDefinitions.GetName(skills.Skill1),
                 SkillDefinitions.GetName(skills.Skill2),
@@ -374,29 +420,36 @@ public class GameEngine : IDisposable
             ];
         }
 
-        // Floor items at player position
-        if (_ecsWorld.Has<Position>(playerEntity))
-        {
-            ref var playerPos = ref _ecsWorld.Get<Position>(playerEntity);
-            int px = playerPos.X, py = playerPos.Y;
-            var floorNames = new List<string>();
-            var floorQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
-            _ecsWorld.Query(in floorQuery, (ref Position iPos, ref ItemData itemData) =>
-            {
-                if (iPos.X == px && iPos.Y == py)
-                {
-                    var def = ItemDefinitions.Get(itemData.ItemTypeId);
-                    floorNames.Add(def.Name ?? "Unknown");
-                }
-            });
-            hud.FloorItemNames = floorNames.ToArray();
-        }
+        // Floor items at player position — now returned separately via GetFloorItemsData
+        return state;
+    }
 
-        return hud;
+    /// <summary>
+    /// Returns names of items on the ground at the player's current position.
+    /// Sent as a separate message since it changes with position, not stats.
+    /// </summary>
+    public string[] GetFloorItemsData(Entity playerEntity)
+    {
+        if (!_ecsWorld.IsAlive(playerEntity)) return [];
+        if (!_ecsWorld.Has<Position>(playerEntity)) return [];
+
+        ref var playerPos = ref _ecsWorld.Get<Position>(playerEntity);
+        int px = playerPos.X, py = playerPos.Y;
+        var floorNames = new List<string>();
+        var floorQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+        _ecsWorld.Query(in floorQuery, (ref Position iPos, ref ItemData itemData) =>
+        {
+            if (iPos.X == px && iPos.Y == py)
+            {
+                var def = ItemDefinitions.Get(itemData.ItemTypeId);
+                floorNames.Add(def.Name ?? "Unknown");
+            }
+        });
+        return floorNames.ToArray();
     }
 }
 
-public class PlayerHudData
+public class PlayerStateData
 {
     public int Health;
     public int MaxHealth;
@@ -412,7 +465,7 @@ public class PlayerHudData
     public string[] InventoryNames = [];
     public int[] InventoryStackCounts = [];
     public int[] InventoryRarities = [];
-    public string[] FloorItemNames = [];
+    public int[] InventoryCategories = [];
     public string EquippedWeaponName = "";
     public string EquippedArmorName = "";
 }

@@ -338,7 +338,7 @@ public class ClientGameStateTests
     }
 
     [Fact]
-    public void ApplyDelta_PlayerHud_Updated()
+    public void ApplyDelta_PlayerState_Updated()
     {
         var state = new ClientGameState();
         state.ApplySnapshot(MakeSnapshot(32, 32));
@@ -347,15 +347,15 @@ public class ClientGameStateTests
         {
             FromTick = 1, ToTick = 2,
             Chunks = [], TileUpdates = [], CombatEvents = [], EntityUpdates = [],
-            PlayerHud = new PlayerHudMsg { Health = 80, MaxHealth = 100, Attack = 12, Defense = 6, Level = 2 },
+            PlayerState = new PlayerStateMsg { Health = 80, MaxHealth = 100, Attack = 12, Defense = 6, Level = 2 },
         });
 
-        Assert.NotNull(state.PlayerHud);
-        Assert.Equal(80, state.PlayerHud.Health);
+        Assert.NotNull(state.PlayerState);
+        Assert.Equal(80, state.PlayerState.Health);
     }
 
     [Fact]
-    public void ApplyDelta_NullPlayerHud_KeepsExisting()
+    public void ApplyDelta_NullPlayerState_KeepsExisting()
     {
         var state = new ClientGameState();
         state.ApplySnapshot(new WorldSnapshotMsg
@@ -363,18 +363,18 @@ public class ClientGameStateTests
             WorldTick = 1,
             Chunks = [MakeFloorChunk(0, 0)],
             Entities = [new EntityMsg { Id = 1, X = 32, Y = 32, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
-            PlayerHud = new PlayerHudMsg { Health = 90, MaxHealth = 100 },
+            PlayerState = new PlayerStateMsg { Health = 90, MaxHealth = 100 },
         });
 
         state.ApplyDelta(new WorldDeltaMsg
         {
             FromTick = 1, ToTick = 2,
             Chunks = [], TileUpdates = [], CombatEvents = [], EntityUpdates = [],
-            PlayerHud = null,
+            PlayerState = null,
         });
 
-        Assert.NotNull(state.PlayerHud);
-        Assert.Equal(90, state.PlayerHud.Health);
+        Assert.NotNull(state.PlayerState);
+        Assert.Equal(90, state.PlayerState.Health);
     }
 
     [Fact]

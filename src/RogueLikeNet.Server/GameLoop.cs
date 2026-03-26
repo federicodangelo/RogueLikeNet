@@ -144,9 +144,14 @@ public class GameLoop : IDisposable
             if (!conn.PlayerEntity.HasValue) continue;
             if (!_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value)) continue;
 
-            // Process only ONE input per tick to prevent action skipping
-            if (conn.InputQueue.TryDequeue(out var input))
+            // Drain all queued inputs; keep only the latest one
+            ClientInputMsg? latestInput = null;
+            while (conn.InputQueue.TryDequeue(out var queued))
+                latestInput = queued;
+
+            if (latestInput != null)
             {
+                var input = latestInput;
                 ref var playerInput = ref _engine.EcsWorld.Get<PlayerInput>(conn.PlayerEntity.Value);
                 playerInput.ActionType = input.ActionType;
                 playerInput.TargetX = input.TargetX;
@@ -195,7 +200,8 @@ public class GameLoop : IDisposable
 
         snapshot.Chunks = GameStateSerializer.SerializeChunksAroundPosition(_engine, pos.X, pos.Y);
         snapshot.Entities = GameStateSerializer.SerializeEntities(_engine.EcsWorld, fov);
-        snapshot.PlayerHud = GameStateSerializer.BuildPlayerHud(_engine, entity);
+        snapshot.PlayerState = GameStateSerializer.BuildPlayerState(_engine, entity);
+        snapshot.FloorItems = GameStateSerializer.BuildFloorItems(_engine, entity);
 
         // Seed chunk tracking from snapshot so first delta only sends new chunks
         conn.SentChunkKeys.Clear();
@@ -209,8 +215,8 @@ public class GameLoop : IDisposable
         }
 
         // Seed HUD tracking
-        conn.LastSentHudBytes = snapshot.PlayerHud != null
-            ? NetSerializer.Serialize(snapshot.PlayerHud)
+        conn.LastSentHudBytes = snapshot.PlayerState != null
+            ? NetSerializer.Serialize(snapshot.PlayerState)
             : null;
 
         // Seed delta tracking from snapshot so first delta is already compressed
@@ -231,19 +237,19 @@ public class GameLoop : IDisposable
         var newChunks = GameStateSerializer.SerializeChunksDelta(
             _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys);
 
-        // HUD delta compression: only send when changed
-        var hud = GameStateSerializer.BuildPlayerHud(_engine, playerEntity);
-        byte[]? hudBytes = hud != null ? NetSerializer.Serialize(hud) : null;
-        PlayerHudMsg? deltaHud;
-        if (hudBytes != null && conn.LastSentHudBytes != null
-            && hudBytes.AsSpan().SequenceEqual(conn.LastSentHudBytes))
+        // State delta compression: only send when changed
+        var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);
+        byte[]? stateBytes = state != null ? NetSerializer.Serialize(state) : null;
+        PlayerStateMsg? deltaState;
+        if (stateBytes != null && conn.LastSentHudBytes != null
+            && stateBytes.AsSpan().SequenceEqual(conn.LastSentHudBytes))
         {
-            deltaHud = null;
+            deltaState = null;
         }
         else
         {
-            deltaHud = hud;
-            conn.LastSentHudBytes = hudBytes;
+            deltaState = state;
+            conn.LastSentHudBytes = stateBytes;
         }
 
         var delta = new WorldDeltaMsg
@@ -253,7 +259,8 @@ public class GameLoop : IDisposable
             Chunks = newChunks,
             EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
-            PlayerHud = deltaHud,
+            PlayerState = deltaState,
+            FloorItems = GameStateSerializer.BuildFloorItems(_engine, playerEntity),
         };
         return delta;
     }

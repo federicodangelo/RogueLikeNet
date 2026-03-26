@@ -22,7 +22,8 @@ public class ClientGameState
     public long WorldTick { get; set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
-    public PlayerHudMsg? PlayerHud { get; set; }
+    public PlayerStateMsg? PlayerState { get; set; }
+    public FloorItemsMsg? FloorItems { get; set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
 
     public void Clear()
@@ -35,7 +36,8 @@ public class ClientGameState
         PlayerX = 0;
         PlayerY = 0;
         WorldTick = 0;
-        PlayerHud = null;
+        PlayerState = null;
+        FloorItems = null;
     }
 
     public void ApplySnapshot(WorldSnapshotMsg snapshot)
@@ -64,7 +66,8 @@ public class ClientGameState
             };
         }
 
-        PlayerHud = snapshot.PlayerHud;
+        PlayerState = snapshot.PlayerState;
+        FloorItems = snapshot.FloorItems;
         ComputeVisibility();
         ComputeLighting();
     }
@@ -134,8 +137,11 @@ public class ClientGameState
             }
         }
 
-        if (delta.PlayerHud != null)
-            PlayerHud = delta.PlayerHud;
+        if (delta.PlayerState != null)
+            PlayerState = delta.PlayerState;
+
+        if (delta.FloorItems != null)
+            FloorItems = delta.FloorItems;
 
         // Queue combat events for particle system
         if (delta.CombatEvents.Length > 0)

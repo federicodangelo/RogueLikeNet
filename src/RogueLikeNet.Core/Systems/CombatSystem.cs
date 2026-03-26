@@ -21,10 +21,13 @@ public class CombatSystem
     {
         _events.Clear();
 
-        var attackQuery = new QueryDescription().WithAll<Position, PlayerInput, CombatStats>();
-        world.Query(in attackQuery, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats) =>
+        var attackQuery = new QueryDescription().WithAll<Position, PlayerInput, CombatStats, AttackDelay>();
+        world.Query(in attackQuery, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats, ref AttackDelay delay) =>
         {
             if (input.ActionType != ActionTypes.Attack) return;
+
+            // Respect player attack cooldown — preserve action to execute next tick
+            if (delay.Current > 0) return;
 
             int attackerAttack = stats.Attack;
             int attackerX = pos.X;
@@ -60,12 +63,14 @@ public class CombatSystem
                     int damage = Math.Max(1, attackerAttack - tStats.Defense);
                     tHealth.Current = Math.Max(0, tHealth.Current - damage);
 
+                    // Record position before potential death
+                    int tx2 = tPos.X, ty2 = tPos.Y;
                     _events.Add(new CombatEvent
                     {
                         AttackerX = attackerX,
                         AttackerY = attackerY,
-                        TargetX = tPos.X,
-                        TargetY = tPos.Y,
+                        TargetX = tx2,
+                        TargetY = ty2,
                         Damage = damage,
                         TargetDied = !tHealth.IsAlive
                     });
@@ -73,6 +78,8 @@ public class CombatSystem
             });
 
             input.ActionType = ActionTypes.None;
+            // Reset player attack cooldown after attacking
+            delay.Current = delay.Interval;
         });
 
         // Monster attacks: AI entities in Attack state hit adjacent players
@@ -106,10 +113,13 @@ public class CombatSystem
         if (players.Count == 0) return;
 
         // Process monster attacks
-        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
-        world.Query(in monsterQuery, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth) =>
+        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health, AttackDelay>().WithNone<DeadTag>();
+        world.Query(in monsterQuery, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth, ref AttackDelay attackDelay) =>
         {
             if (!mHealth.IsAlive || ai.StateId != AIStates.Attack) return;
+
+            // Respect attack delay
+            if (attackDelay.Current > 0) return;
 
             // Find adjacent player
             foreach (var (playerEntity, px, py) in players)
@@ -135,6 +145,8 @@ public class CombatSystem
                     Damage = damage,
                     TargetDied = !pHealth.IsAlive
                 });
+                // Reset attack delay after attacking
+                attackDelay.Current = attackDelay.Interval;
                 break; // One attack per monster per tick
             }
         });
