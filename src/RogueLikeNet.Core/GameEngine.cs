@@ -120,8 +120,8 @@ public class GameEngine : IDisposable
             new Inventory(20),
             new Equipment(),
             new QuickSlots(),
-            new MoveDelay(Math.Max(0, 10 - (5 + bonusSpeed))),
-            new AttackDelay(Math.Max(0, 10 - (5 + bonusSpeed)))
+            new MoveDelay(Math.Max(0, 10 - (6 + bonusSpeed))),
+            new AttackDelay(Math.Max(0, 10 - (6 + bonusSpeed)))
         );
     }
 
