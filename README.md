@@ -1,6 +1,19 @@
 # RogueLikeNet
 
+[![Build](https://github.com/federicodangelo/RogueLikeNet/actions/workflows/build.yml/badge.svg)](https://github.com/federicodangelo/RogueLikeNet/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/federicodangelo/RogueLikeNet)](https://github.com/federicodangelo/RogueLikeNet/releases/latest)
+
+<p align="center">
+  <a href="https://federicodangelo.github.io/RogueLikeNet/">
+    <img src="https://img.shields.io/badge/%E2%96%B6%20PLAY%20IN%20BROWSER-federicodangelo.github.io%2FRogueLikeNet-brightgreen?style=for-the-badge" alt="Play in Browser" />
+  </a>
+</p>
+
 A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons, real-time combat, ECS architecture, item stacking and equipment, and both desktop and web browser clients.
+
+## About This Project
+
+This project was created as an experiment to push the boundaries of what's possible when using **AI coding agents** for game development. The entire codebase — rendering, procedural generation, ECS architecture, UI, and gameplay — was written by [Claude](https://www.anthropic.com/claude) (Opus 4.6 and Sonnet 4.6) through iterative prompting.
 
 ## Architecture
 

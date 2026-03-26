@@ -1,0 +1,127 @@
+name: Build Native Executables
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PROJECT_PATH: src/RogueLikeNet.Client.Desktop/RogueLikeNet.Client.Desktop.csproj
+  SOLUTION_PATH: RogueLikeNet.slnx
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    name: Code Format
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: preview
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Verify formatting
+        run: >
+          dotnet format ${{ env.SOLUTION_PATH }} whitespace
+          --verify-no-changes
+
+  build:
+    needs: format
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact: RogueLikeNet-windows-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: RogueLikeNet-linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: RogueLikeNet-macos-arm64
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.rid }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: preview
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }}
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          -c Release
+          -r ${{ matrix.rid }}
+          -o publish
+
+      - name: Remove debug symbols
+        run: Remove-Item -Path publish/*.pdb -Force -ErrorAction SilentlyContinue
+        if: runner.os == 'Windows'
+
+      - name: Remove debug symbols
+        run: rm -f publish/*.pdb publish/*.dbg publish/*.dsym
+        if: runner.os == 'Linux'
+
+      - name: Remove debug symbols
+        run: rm -rf publish/*.pdb publish/*.dbg publish/*.dSYM
+        if: runner.os == 'macOS'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: publish/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Zip artifacts
+        run: |
+          cd artifacts
+          for dir in */; do
+            name="${dir%/}"
+            zip -r "../${name}.zip" "$dir"
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: '*.zip'
