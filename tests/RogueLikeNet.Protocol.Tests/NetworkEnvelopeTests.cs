@@ -17,7 +17,7 @@ public class NetworkEnvelopeTests
     public void MessageTypes_ClientToServer_Constants()
     {
         Assert.Equal(1, MessageTypes.ClientInput);
-        Assert.Equal(2, MessageTypes.AuthRequest);
+        Assert.Equal(2, MessageTypes.LoginSend);
         Assert.Equal(3, MessageTypes.ChatSend);
     }
 
@@ -26,7 +26,6 @@ public class NetworkEnvelopeTests
     {
         Assert.Equal(100, MessageTypes.WorldSnapshot);
         Assert.Equal(101, MessageTypes.WorldDelta);
-        Assert.Equal(102, MessageTypes.AuthResponse);
         Assert.Equal(103, MessageTypes.ChatReceive);
         Assert.Equal(104, MessageTypes.PlayerSpawned);
         Assert.Equal(105, MessageTypes.EntityDied);

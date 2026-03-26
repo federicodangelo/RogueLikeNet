@@ -3,6 +3,7 @@ using Engine.Platform;
 using Engine.Platform.Web;
 using RogueLikeNet.Client.Core;
 using RogueLikeNet.Client.Core.Networking;
+using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Web;
 
@@ -20,8 +21,8 @@ public partial class WebMain
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += seed => OnStartOffline(seed);
-        _game.StartOnlineRequested += seed => OnStartOnline(seed);
+        _game.StartOfflineRequested += (seed, classId, playerName) => OnStartOffline(seed, classId, playerName);
+        _game.StartOnlineRequested += (seed, classId, playerName) => OnStartOnline(seed, classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         // Web platform cannot quit — QuitRequested is ignored
 
@@ -34,15 +35,16 @@ public partial class WebMain
         _game?.RunFrame();
     }
 
-    private static async void OnStartOffline(long seed)
+    private static async void OnStartOffline(long seed, int classId, string playerName)
     {
         _connection = new LocalGameConnection(seed);
         _game!.SetConnection(_connection);
         await _connection.ConnectAsync("local://");
+        await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline(long seed)
+    private static async void OnStartOnline(long seed, int classId, string playerName)
     {
         _game!.TransitionToConnecting();
 
@@ -52,6 +54,7 @@ public partial class WebMain
             _connection = wsConnection;
             _game.SetConnection(_connection);
             await _connection.ConnectAsync("ws://localhost:5090/ws");
+            await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
             _game.TransitionToPlaying();
         }
         catch (Exception ex)

@@ -12,12 +12,46 @@ public static class ClassDefinitions
     public const int Mage = 2;
     public const int Ranger = 3;
 
+    public const int NumClasses = 4;
+
     public static readonly ClassDefinition[] All =
     [
-        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0), SkillDefinitions.PowerStrike, SkillDefinitions.ShieldBash),
-        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4), SkillDefinitions.Backstab, SkillDefinitions.Dodge),
-        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2), SkillDefinitions.Fireball, SkillDefinitions.Heal),
-        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2), SkillDefinitions.PowerShot, SkillDefinitions.Trap),
+        // Warrior - sword and shield
+        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0), SkillDefinitions.PowerStrike, SkillDefinitions.ShieldBash,
+        [
+            @"    O/  ",
+            @"   /[+] ",
+            @"    /|  ",
+            @"   / |  ",
+            @"  _/ \_ ",
+        ]),
+        // Rogue - dual daggers
+        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4), SkillDefinitions.Backstab, SkillDefinitions.Dodge,
+        [
+            @"   _O_  ",
+            @"  /- -\ ",
+            @"   \|/  ",
+            @"   /|\  ",
+            @"  _/ \_ ",
+        ]),
+        // Mage - staff and spell
+        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2), SkillDefinitions.Fireball, SkillDefinitions.Heal,
+        [
+            @"   \O/  ",
+            @"  .*|*. ",
+            @"    |   ",
+            @"   /|\  ",
+            @"  _/ \_ ",
+        ]),
+        // Ranger - bow
+        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2), SkillDefinitions.PowerShot, SkillDefinitions.Trap,
+        [
+            @"    O}  ",
+            @"   )|}  ",
+            @"    |}  ",
+            @"   /|   ",
+            @"  _/ \_ ",
+        ]),
     ];
 
     public static ClassDefinition Get(int classId) =>
@@ -39,10 +73,16 @@ public static class ClassDefinitions
             Skill1 = def.StartingSkill1,
         };
     }
+
+    public static string[] GetAsciiArt(int classId)
+    {
+        var def = Get(classId);
+        return def.AsciiArt;
+    }
 }
 
 public readonly record struct ClassStats(int Attack, int Defense, int Health, int Speed);
 
 public readonly record struct ClassDefinition(
-    int ClassId, string Name, ClassStats StartingStats, int StartingSkill0, int StartingSkill1
+    int ClassId, string Name, ClassStats StartingStats, int StartingSkill0, int StartingSkill1, string[] AsciiArt
 );

@@ -726,6 +726,107 @@ public class TileRenderer
         DrawCentered(r, totalCols, by + boxH - 2, footer, ColorDim);
     }
 
+    // ── Class Selection Screen ────────────────────────────────
+
+    private static readonly Color4 ColorClassHighlight = new(100, 200, 255, 255);
+    private static readonly Color4 ColorClassBorder = new(80, 80, 120, 255);
+    private static readonly Color4 ColorStatLabel = new(160, 160, 160, 255);
+    private static readonly Color4 ColorStatPositive = new(100, 255, 100, 255);
+    private static readonly Color4 ColorStatNegative = new(255, 100, 100, 255);
+    private static readonly Color4 ColorStatZero = new(120, 120, 120, 255);
+    private static readonly Color4 ColorSkillName = new(200, 180, 100, 255);
+    private static readonly Color4 ColorNameField = new(255, 220, 100, 255);
+
+
+    public void RenderClassSelect(ISpriteRenderer r, int totalCols, int totalRows,
+        int selectedClassIndex, string playerName, bool nameEditing, string nameEditText)
+    {
+        r.DrawRectScreen(0, 0, totalCols * TileWidth, totalRows * TileHeight, ColorBlack);
+
+        int classCount = ClassDefinitions.NumClasses;
+        int cardW = 18;
+        int cardH = 18;
+        int gap = 2;
+        int totalW = classCount * cardW + (classCount - 1) * gap;
+        int startX = (totalCols - totalW) / 2;
+
+        // Title
+        DrawCentered(r, totalCols, 1, "SELECT YOUR CLASS", ColorTitle);
+
+        // Player name
+        int nameY = 3;
+        string nameDisplay = nameEditing ? nameEditText + "_" : playerName;
+        string nameLabel = $"Name: {nameDisplay}";
+        DrawCentered(r, totalCols, nameY, nameLabel, nameEditing ? ColorSelected : ColorNameField);
+        if (!nameEditing)
+            DrawCentered(r, totalCols, nameY + 1, "(T to edit name)", ColorDim);
+
+        int cardStartY = nameY + 3;
+
+        // Draw each class card
+        for (int i = 0; i < classCount; i++)
+        {
+            int cx = startX + i * (cardW + gap);
+            bool selected = i == selectedClassIndex;
+            var borderColor = selected ? ColorClassHighlight : ColorClassBorder;
+
+            DrawBox(r, cx, cardStartY, cardW, cardH, borderColor);
+
+            var classDef = ClassDefinitions.All[i];
+            var stats = classDef.StartingStats;
+
+            // Class name
+            int nameX = cx + (cardW - classDef.Name.Length) / 2;
+            DrawString(r, nameX, cardStartY + 1, classDef.Name, selected ? ColorClassHighlight : ColorTitle);
+
+            // ASCII art
+            var art = ClassDefinitions.GetAsciiArt(i);
+            for (int line = 0; line < art.Length; line++)
+            {
+                int artX = cx + (cardW - art[line].Length) / 2;
+                DrawString(r, artX, cardStartY + 3 + line, art[line], selected ? ColorSelected : ColorNormal);
+            }
+
+            // Stats
+            int statsY = cardStartY + 3 + art.Length + 1;
+            DrawStatLine(r, cx + 2, statsY, "ATK", stats.Attack, cardW - 4);
+            DrawStatLine(r, cx + 2, statsY + 1, "DEF", stats.Defense, cardW - 4);
+            DrawStatLine(r, cx + 2, statsY + 2, "HP", stats.Health, cardW - 4);
+            DrawStatLine(r, cx + 2, statsY + 3, "SPD", stats.Speed, cardW - 4);
+
+            // Skills
+            int skillY = statsY + 5;
+            var skill0 = SkillDefinitions.Get(classDef.StartingSkill0);
+            var skill1 = SkillDefinitions.Get(classDef.StartingSkill1);
+            DrawString(r, cx + 2, skillY, skill0.Name, ColorSkillName);
+            DrawString(r, cx + 2, skillY + 1, skill1.Name, ColorSkillName);
+
+            // Selection arrow
+            if (selected)
+            {
+                int arrowY = cardStartY + cardH / 2;
+                if (cx > 1)
+                    DrawChar(r, cx - 1, arrowY, '\u25ba', ColorClassHighlight);
+            }
+        }
+
+        // Footer
+        int footerY = cardStartY + cardH + 1;
+        string footer = nameEditing
+            ? "Type name   Enter Confirm   Esc Cancel"
+            : "\u2190\u2192 Select Class   T Edit Name   Enter Confirm   Esc Back";
+        DrawCentered(r, totalCols, footerY, footer, ColorDim);
+    }
+
+    private static void DrawStatLine(ISpriteRenderer r, int x, int y, string label, int value, int width)
+    {
+        DrawString(r, x, y, $"{label}:", ColorStatLabel);
+        string valStr = value > 0 ? $"+{value}" : value.ToString();
+        var valColor = value > 0 ? ColorStatPositive : value < 0 ? ColorStatNegative : ColorStatZero;
+        int valX = x + width - valStr.Length;
+        DrawString(r, valX, y, valStr, valColor);
+    }
+
     // ── Help Screen ────────────────────────────────────────────
 
     public void RenderHelp(ISpriteRenderer r, int totalCols, int totalRows, bool isOverlay = false)

@@ -4,6 +4,7 @@ public enum ScreenState
 {
     MainMenu,
     MainMenuHelp,
+    ClassSelect,
     Connecting,
     Playing,
     Inventory,

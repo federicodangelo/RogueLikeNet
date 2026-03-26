@@ -19,13 +19,12 @@ public static class MessageTypes
 {
     // Client → Server
     public const byte ClientInput = 1;
-    public const byte AuthRequest = 2;
+    public const byte LoginSend = 2;
     public const byte ChatSend = 3;
 
     // Server → Client
     public const byte WorldSnapshot = 100;
     public const byte WorldDelta = 101;
-    public const byte AuthResponse = 102;
     public const byte ChatReceive = 103;
     public const byte PlayerSpawned = 104;
     public const byte EntityDied = 105;

@@ -2,6 +2,7 @@ using Engine.Platform;
 using Engine.Platform.Sdl;
 using RogueLikeNet.Client.Core;
 using RogueLikeNet.Client.Core.Networking;
+using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
 
 namespace RogueLikeNet.Client.Desktop;
@@ -23,8 +24,8 @@ public class Program
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += seed => OnStartOffline(seed);
-        _game.StartOnlineRequested += seed => OnStartOnline(seed);
+        _game.StartOfflineRequested += (seed, classId, playerName) => OnStartOffline(seed, classId, playerName);
+        _game.StartOnlineRequested += (seed, classId, playerName) => OnStartOnline(seed, classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         _game.QuitRequested += () => _running = false;
 
@@ -37,7 +38,7 @@ public class Program
         _game.Dispose();
     }
 
-    private static async void OnStartOffline(long seed)
+    private static async void OnStartOffline(long seed, int classId, string playerName)
     {
         _embeddedServer = new GameLoop(seed);
         _embeddedServer.Start();
@@ -46,10 +47,11 @@ public class Program
         _connection = embeddedConnection;
         _game!.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
+        await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline(long seed)
+    private static async void OnStartOnline(long seed, int classId, string playerName)
     {
         _game!.TransitionToConnecting();
 
@@ -59,6 +61,7 @@ public class Program
             _connection = wsConnection;
             _game.SetConnection(_connection);
             await _connection.ConnectAsync("ws://localhost:5090/ws");
+            await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
             _game.TransitionToPlaying();
         }
         catch (Exception ex)

@@ -14,6 +14,7 @@ public interface IGameServerConnection : IAsyncDisposable
     long BytesReceived { get; }
 
     Task ConnectAsync(string uri, CancellationToken ct = default);
+    Task SendLoginAsync(LoginMsg login, CancellationToken ct = default);
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);
     Task SendChatAsync(string text, CancellationToken ct = default);
 

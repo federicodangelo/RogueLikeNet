@@ -3,19 +3,10 @@ using MessagePack;
 namespace RogueLikeNet.Protocol.Messages;
 
 [MessagePackObject]
-public class AuthRequestMsg
+public class LoginMsg
 {
-    [Key(0)] public string Username { get; set; } = "";
-    [Key(1)] public string PasswordHash { get; set; } = "";
-}
-
-[MessagePackObject]
-public class AuthResponseMsg
-{
-    [Key(0)] public bool Success { get; set; }
-    [Key(1)] public string Message { get; set; } = "";
-    [Key(2)] public long PlayerId { get; set; }
-    [Key(3)] public string Token { get; set; } = "";
+    [Key(0)] public string PlayerName { get; set; } = "";
+    [Key(1)] public int ClassId { get; set; }
 }
 
 [MessagePackObject]

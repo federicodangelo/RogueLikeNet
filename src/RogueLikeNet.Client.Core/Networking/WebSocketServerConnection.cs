@@ -47,6 +47,20 @@ public class WebSocketServerConnection : IGameServerConnection
             ct);
     }
 
+    public async Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
+    {
+        if (_socket?.State != WebSocketState.Open) return;
+
+        var payload = NetSerializer.Serialize(login);
+        var data = NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
+        await _socket.SendAsync(
+            new ArraySegment<byte>(data),
+            WebSocketMessageType.Binary,
+            endOfMessage: true,
+            ct);
+    }
+
     public async Task SendChatAsync(string text, CancellationToken ct = default)
     {
         if (_socket?.State != WebSocketState.Open) return;

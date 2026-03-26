@@ -3,38 +3,41 @@ using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Protocol.Tests;
 
-public class AuthMsgTests
+public class MessageTests
 {
     [Fact]
-    public void AuthRequestMsg_RoundTrip()
+    public void LoginMsg_RoundTrip()
     {
-        var msg = new AuthRequestMsg
+        var msg = new LoginMsg
         {
-            Username = "testuser",
-            PasswordHash = "hash123"
+            PlayerName = "TestHero",
+            ClassId = 2
         };
         var data = NetSerializer.Serialize(msg);
-        var result = NetSerializer.Deserialize<AuthRequestMsg>(data);
-        Assert.Equal("testuser", result.Username);
-        Assert.Equal("hash123", result.PasswordHash);
+        var result = NetSerializer.Deserialize<LoginMsg>(data);
+        Assert.Equal("TestHero", result.PlayerName);
+        Assert.Equal(2, result.ClassId);
     }
 
     [Fact]
-    public void AuthResponseMsg_RoundTrip()
+    public void LoginMsg_DefaultValues()
     {
-        var msg = new AuthResponseMsg
-        {
-            Success = true,
-            Message = "OK",
-            PlayerId = 42,
-            Token = "abc"
-        };
-        var data = NetSerializer.Serialize(msg);
-        var result = NetSerializer.Deserialize<AuthResponseMsg>(data);
-        Assert.True(result.Success);
-        Assert.Equal("OK", result.Message);
-        Assert.Equal(42, result.PlayerId);
-        Assert.Equal("abc", result.Token);
+        var msg = new LoginMsg();
+        Assert.Equal("", msg.PlayerName);
+        Assert.Equal(0, msg.ClassId);
+    }
+
+    [Fact]
+    public void LoginMsg_WrapUnwrap()
+    {
+        var msg = new LoginMsg { PlayerName = "Hero", ClassId = 1 };
+        var payload = NetSerializer.Serialize(msg);
+        var wrapped = NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
+        var envelope = NetSerializer.UnwrapMessage(wrapped);
+        Assert.Equal(MessageTypes.LoginSend, envelope.MessageType);
+        var result = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
+        Assert.Equal("Hero", result.PlayerName);
+        Assert.Equal(1, result.ClassId);
     }
 
     [Fact]
@@ -56,24 +59,6 @@ public class AuthMsgTests
     }
 
     [Fact]
-    public void AuthRequestMsg_DefaultValues()
-    {
-        var msg = new AuthRequestMsg();
-        Assert.Equal("", msg.Username);
-        Assert.Equal("", msg.PasswordHash);
-    }
-
-    [Fact]
-    public void AuthResponseMsg_DefaultValues()
-    {
-        var msg = new AuthResponseMsg();
-        Assert.False(msg.Success);
-        Assert.Equal("", msg.Message);
-        Assert.Equal(0, msg.PlayerId);
-        Assert.Equal("", msg.Token);
-    }
-
-    [Fact]
     public void ChatMsg_DefaultValues()
     {
         var msg = new ChatMsg();
@@ -81,31 +66,6 @@ public class AuthMsgTests
         Assert.Equal("", msg.SenderName);
         Assert.Equal("", msg.Text);
         Assert.Equal(0, msg.Timestamp);
-    }
-
-    [Fact]
-    public void AuthRequestMsg_WrapUnwrap()
-    {
-        var msg = new AuthRequestMsg { Username = "player1", PasswordHash = "secret" };
-        var payload = NetSerializer.Serialize(msg);
-        var wrapped = NetSerializer.WrapMessage(MessageTypes.AuthRequest, payload);
-        var envelope = NetSerializer.UnwrapMessage(wrapped);
-        Assert.Equal(MessageTypes.AuthRequest, envelope.MessageType);
-        var result = NetSerializer.Deserialize<AuthRequestMsg>(envelope.Payload);
-        Assert.Equal("player1", result.Username);
-    }
-
-    [Fact]
-    public void AuthResponseMsg_WrapUnwrap()
-    {
-        var msg = new AuthResponseMsg { Success = true, PlayerId = 10, Token = "tok" };
-        var payload = NetSerializer.Serialize(msg);
-        var wrapped = NetSerializer.WrapMessage(MessageTypes.AuthResponse, payload);
-        var envelope = NetSerializer.UnwrapMessage(wrapped);
-        Assert.Equal(MessageTypes.AuthResponse, envelope.MessageType);
-        var result = NetSerializer.Deserialize<AuthResponseMsg>(envelope.Payload);
-        Assert.True(result.Success);
-        Assert.Equal(10, result.PlayerId);
     }
 
     [Fact]

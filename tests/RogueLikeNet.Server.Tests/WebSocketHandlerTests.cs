@@ -10,11 +10,19 @@ public class WebSocketHandlerTests
 {
     private static readonly BspDungeonGenerator _gen = new();
 
+    private static byte[] MakeLoginMessage()
+    {
+        var login = new LoginMsg { PlayerName = "TestHero", ClassId = 0 };
+        var payload = NetSerializer.Serialize(login);
+        return NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
+    }
+
     [Fact]
     public async Task HandleConnection_SpawnsPlayerAndSendsSnapshot()
     {
         using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
+        socket.EnqueueReceive(MakeLoginMessage());
         socket.EnqueueClose();
 
         await WebSocketHandler.HandleConnection(socket, loop);
@@ -30,6 +38,9 @@ public class WebSocketHandlerTests
     {
         using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
+
+        // Send login first to spawn player
+        socket.EnqueueReceive(MakeLoginMessage());
 
         // Create a valid ClientInput message
         var input = new ClientInputMsg { ActionType = 1, TargetX = 5, TargetY = 3 };
@@ -49,6 +60,9 @@ public class WebSocketHandlerTests
     {
         using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
+
+        // Send login first
+        socket.EnqueueReceive(MakeLoginMessage());
 
         var chat = new ChatMsg { Text = "Hello" };
         var chatPayload = NetSerializer.Serialize(chat);
@@ -92,14 +106,15 @@ public class WebSocketHandlerTests
         using var loop = new GameLoop(42, _gen);
         var socket = new FakeWebSocket();
 
-        // Send invalid/corrupt binary data
+        // Send invalid/corrupt binary data (before login)
         socket.EnqueueReceive([0xFF, 0xFE, 0x01]);
         socket.EnqueueClose();
 
         await WebSocketHandler.HandleConnection(socket, loop);
 
-        // Should handle the error in ProcessMessage and continue
-        Assert.True(socket.SentMessages.Count > 0);
+        // Should handle the error in ProcessMessage and continue without crashing
+        // No snapshot expected since login was never sent
+        Assert.Equal(WebSocketState.Closed, socket.State);
     }
 
     [Fact]

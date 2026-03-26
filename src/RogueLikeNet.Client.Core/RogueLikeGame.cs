@@ -5,6 +5,7 @@ using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core;
@@ -24,6 +25,13 @@ public sealed class RogueLikeGame : GameBase
     private int _menuIndex;
     private int _pauseIndex;
     private string? _connectionError;
+
+    // Class selection state
+    private int _selectedClassIndex;
+    private string _playerName = "Hero";
+    private bool _nameEditing;
+    private string _nameEditText = "";
+    private bool _classSelectIsOnline; // remembers which mode was chosen
 
     // HUD layout system
     private readonly HudLayout _hudLayout;
@@ -72,10 +80,10 @@ public sealed class RogueLikeGame : GameBase
     public ScreenState CurrentScreen => _screenState;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu.</summary>
-    public event Action<long>? StartOfflineRequested;
+    public event Action<long, int, string>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
-    public event Action<long>? StartOnlineRequested;
+    public event Action<long, int, string>? StartOnlineRequested;
 
     /// <summary>Fired when the player selects "Return to Main Menu" from the pause menu.</summary>
     public event Action? ReturnToMenuRequested;
@@ -262,6 +270,9 @@ public sealed class RogueLikeGame : GameBase
             case ScreenState.MainMenuHelp:
                 _tileRenderer.RenderHelp(renderer, totalCols, totalRows);
                 break;
+            case ScreenState.ClassSelect:
+                _tileRenderer.RenderClassSelect(renderer, totalCols, totalRows, _selectedClassIndex, _playerName, _nameEditing, _nameEditText);
+                break;
             case ScreenState.Connecting:
                 _tileRenderer.RenderConnecting(renderer, totalCols, totalRows, _connectionError);
                 break;
@@ -345,6 +356,9 @@ public sealed class RogueLikeGame : GameBase
             case ScreenState.MainMenuHelp:
                 HandleHelpInput(input, ScreenState.MainMenu);
                 break;
+            case ScreenState.ClassSelect:
+                HandleClassSelectInput(input);
+                break;
             case ScreenState.Connecting:
                 HandleConnectingInput(input);
                 break;
@@ -381,8 +395,16 @@ public sealed class RogueLikeGame : GameBase
         {
             switch (_menuIndex)
             {
-                case 0: StartOfflineRequested?.Invoke(_worldSeed); break;
-                case 1: StartOnlineRequested?.Invoke(_worldSeed); break;
+                case 0:
+                    _classSelectIsOnline = false;
+                    _screenState = ScreenState.ClassSelect;
+                    _selectedClassIndex = 0;
+                    break;
+                case 1:
+                    _classSelectIsOnline = true;
+                    _screenState = ScreenState.ClassSelect;
+                    _selectedClassIndex = 0;
+                    break;
                 case 2:
                     _seedEditing = true;
                     _seedEditText = _worldSeed.ToString();
@@ -421,6 +443,71 @@ public sealed class RogueLikeGame : GameBase
         {
             if (char.IsAsciiDigit(c) && _seedEditText.Length < 18)
                 _seedEditText += c;
+        }
+    }
+
+    private void HandleClassSelectInput(IInputManager input)
+    {
+        if (_nameEditing)
+        {
+            HandleNameEditing(input);
+            return;
+        }
+
+        int classCount = ClassDefinitions.All.Length;
+
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _screenState = ScreenState.MainMenu;
+            return;
+        }
+
+        if (input.IsActionPressed(InputAction.MoveLeft) || input.IsActionPressed(InputAction.MenuUp))
+            _selectedClassIndex = (_selectedClassIndex + classCount - 1) % classCount;
+        else if (input.IsActionPressed(InputAction.MoveRight) || input.IsActionPressed(InputAction.MenuDown))
+            _selectedClassIndex = (_selectedClassIndex + 1) % classCount;
+        else if (input.IsActionPressed(InputAction.OpenChat)) // 'T' to edit name
+        {
+            _nameEditing = true;
+            _nameEditText = _playerName;
+        }
+        else if (input.IsActionPressed(InputAction.MenuConfirm))
+        {
+            int classId = ClassDefinitions.All[_selectedClassIndex].ClassId;
+            if (_classSelectIsOnline)
+                StartOnlineRequested?.Invoke(_worldSeed, classId, _playerName);
+            else
+                StartOfflineRequested?.Invoke(_worldSeed, classId, _playerName);
+        }
+    }
+
+    private void HandleNameEditing(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _nameEditing = false;
+            return;
+        }
+
+        for (int i = 0; i < input.TextInputBackspacesCount; i++)
+        {
+            if (_nameEditText.Length > 0)
+                _nameEditText = _nameEditText[..^1];
+        }
+
+        if (input.TextInputReturnsCount > 0)
+        {
+            if (_nameEditText.Length > 0)
+                _playerName = _nameEditText;
+            _nameEditing = false;
+            return;
+        }
+
+        string typed = input.TextInput;
+        foreach (char c in typed)
+        {
+            if ((char.IsLetterOrDigit(c) || c == ' ' || c == '_' || c == '-') && _nameEditText.Length < 16)
+                _nameEditText += c;
         }
     }
 

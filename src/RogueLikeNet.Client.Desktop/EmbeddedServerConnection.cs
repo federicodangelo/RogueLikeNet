@@ -37,8 +37,13 @@ public class EmbeddedServerConnection : IGameServerConnection
         _connectionId = conn.ConnectionId;
         _connected = true;
 
-        // Spawn the player
-        await _gameLoop.SpawnPlayerForConnection(_connectionId);
+        await Task.CompletedTask;
+    }
+
+    public async Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
+    {
+        if (!_connected) return;
+        await _gameLoop.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
     }
 
     public Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default)

@@ -68,7 +68,9 @@ public class GameLoop : IDisposable
 
     public async Task BroadcastChat(long senderConnectionId, string text)
     {
-        string senderName = $"Player {senderConnectionId}";
+        string senderName = "Player";
+        if (_connections.TryGetValue(senderConnectionId, out var sender))
+            senderName = sender.PlayerName.Length > 0 ? sender.PlayerName : $"Player {senderConnectionId}";
         var chat = new ChatMsg
         {
             SenderId = senderConnectionId,
@@ -86,12 +88,14 @@ public class GameLoop : IDisposable
         }
     }
 
-    public async Task SpawnPlayerForConnection(long connectionId)
+    public async Task SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
     {
         if (!_connections.TryGetValue(connectionId, out var conn)) return;
 
+        conn.PlayerName = playerName;
+
         var (spawnX, spawnY) = _engine.FindSpawnPosition();
-        var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY);
+        var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, classId);
         conn.PlayerEntity = entity;
 
         // Run a tick so lighting is computed before the initial snapshot

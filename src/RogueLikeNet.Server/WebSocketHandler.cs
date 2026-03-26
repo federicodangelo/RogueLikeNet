@@ -28,8 +28,7 @@ public static class WebSocketHandler
 
         try
         {
-            // Spawn player
-            await gameLoop.SpawnPlayerForConnection(conn.ConnectionId);
+            // Player will be spawned when LoginMsg is received
 
             // Read loop
             var buffer = new byte[65536];
@@ -53,7 +52,7 @@ public static class WebSocketHandler
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
                 {
                     conn.TrackReceived(ms.Length);
-                    if (ProcessMessage(conn, ms.ToArray(), gameLoop))
+                    if (!ProcessMessage(conn, ms.ToArray(), gameLoop))
                         break;
 
                 }
@@ -86,6 +85,19 @@ public static class WebSocketHandler
             var envelope = NetSerializer.UnwrapMessage(data);
             switch (envelope.MessageType)
             {
+                case MessageTypes.LoginSend:
+                    if (conn.PlayerEntity == null)
+                    {
+                        var login = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
+                        _ = gameLoop.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine($"Player {conn.ConnectionId} attempted to login but is already logged in");
+                        return false;
+                    }
+                    break;
+
                 case MessageTypes.ClientInput:
                     var input = NetSerializer.Deserialize<ClientInputMsg>(envelope.Payload);
                     gameLoop.EnqueueInput(conn.ConnectionId, input);

@@ -38,9 +38,15 @@ public class LocalGameConnection : IGameServerConnection
     public Task ConnectAsync(string uri, CancellationToken ct = default)
     {
         _connected = true;
+        return Task.CompletedTask;
+    }
+
+    public Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
+    {
+        if (!_connected) return Task.CompletedTask;
 
         var (sx, sy) = _engine.FindSpawnPosition();
-        _playerEntity = _engine.SpawnPlayer(1, sx, sy);
+        _playerEntity = _engine.SpawnPlayer(1, sx, sy, login.ClassId);
 
         // Run a tick so lighting is computed before the initial snapshot
         _engine.Tick();
