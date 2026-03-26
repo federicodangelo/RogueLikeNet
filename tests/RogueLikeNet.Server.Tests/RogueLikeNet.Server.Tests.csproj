@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RogueLikeNet.Server\RogueLikeNet.Server.csproj" />
+    <ProjectReference Include="..\..\src\RogueLikeNet.Server.Core\RogueLikeNet.Server.Core.csproj" />
   </ItemGroup>
 
 </Project>
