@@ -25,9 +25,12 @@ public class ClientGameStateTests
         }
         return new ChunkDataMsg
         {
-            ChunkX = cx, ChunkY = cy,
-            TileTypes = types, TileGlyphs = glyphs,
-            TileFgColors = fg, TileBgColors = bg,
+            ChunkX = cx,
+            ChunkY = cy,
+            TileTypes = types,
+            TileGlyphs = glyphs,
+            TileFgColors = fg,
+            TileBgColors = bg,
         };
     }
 
@@ -221,8 +224,11 @@ public class ClientGameStateTests
 
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 35, Y = 35, GlyphId = 103, FgColor = 0xFF0000, Health = 20, MaxHealth = 20 }],
         });
 
@@ -239,16 +245,22 @@ public class ClientGameStateTests
         // Add entity
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 35, Y = 35, GlyphId = 103, FgColor = 0xFF0000, Health = 20, MaxHealth = 20 }],
         });
 
         // Update entity position
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 2, ToTick = 3,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 2,
+            ToTick = 3,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 36, Y = 36, GlyphId = 103, FgColor = 0xFF0000, Health = 15, MaxHealth = 20 }],
         });
 
@@ -265,14 +277,20 @@ public class ClientGameStateTests
         // Add and then remove
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 35, Y = 35, GlyphId = 103 }],
         });
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 2, ToTick = 3,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 2,
+            ToTick = 3,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 99, Removed = true }],
         });
 
@@ -287,8 +305,11 @@ public class ClientGameStateTests
 
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], CombatEvents = [], EntityUpdates = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            CombatEvents = [],
+            EntityUpdates = [],
             TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileType = (byte)TileType.Wall, GlyphId = '#', FgColor = 0xAAAAAA, BgColor = 0x111111, LightLevel = 3 }],
         });
 
@@ -311,8 +332,11 @@ public class ClientGameStateTests
         // Move the player entity (glyph 64 = '@')
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 40, Y = 40, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
         });
 
@@ -329,9 +353,12 @@ public class ClientGameStateTests
         // Send a delta with updated chunk data
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
+            FromTick = 1,
+            ToTick = 2,
             Chunks = [MakeFloorChunk(0, 0)],
-            TileUpdates = [], CombatEvents = [], EntityUpdates = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
         });
 
         Assert.Equal(2, state.WorldTick);
@@ -345,8 +372,12 @@ public class ClientGameStateTests
 
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [], EntityUpdates = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
             PlayerState = new PlayerStateMsg { Health = 80, MaxHealth = 100, Attack = 12, Defense = 6, Level = 2 },
         });
 
@@ -368,8 +399,12 @@ public class ClientGameStateTests
 
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [], EntityUpdates = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
             PlayerState = null,
         });
 
@@ -388,8 +423,11 @@ public class ClientGameStateTests
         // Move player far away via delta
         state.ApplyDelta(new WorldDeltaMsg
         {
-            FromTick = 1, ToTick = 2,
-            Chunks = [], TileUpdates = [], CombatEvents = [],
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
             EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
         });
 

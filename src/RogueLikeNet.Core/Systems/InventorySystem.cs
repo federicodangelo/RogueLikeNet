@@ -155,14 +155,14 @@ public class InventorySystem
         for (int r = 1; r <= 5; r++)
         {
             for (int dx = -r; dx <= r; dx++)
-            for (int dy = -r; dy <= r; dy++)
-            {
-                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
-                int x = originX + dx;
-                int y = originY + dy;
-                if (!occupied.Contains(FOVData.PackCoord(x, y)))
-                    return (x, y);
-            }
+                for (int dy = -r; dy <= r; dy++)
+                {
+                    if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
+                    int x = originX + dx;
+                    int y = originY + dy;
+                    if (!occupied.Contains(FOVData.PackCoord(x, y)))
+                        return (x, y);
+                }
         }
 
         return (originX, originY); // fallback

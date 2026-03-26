@@ -98,10 +98,10 @@ public class ShadowCastFovDiagnosticTests
 
         // All 8 neighbors should be visible
         for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-        {
-            Assert.Contains((10 + dx, 10 + dy), visible);
-        }
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                Assert.Contains((10 + dx, 10 + dy), visible);
+            }
     }
 
     [Fact]

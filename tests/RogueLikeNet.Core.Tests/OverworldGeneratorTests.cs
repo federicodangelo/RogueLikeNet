@@ -15,8 +15,8 @@ public class OverworldGeneratorTests
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 100, $"Expected many floor tiles, got {floorCount}");
     }
@@ -30,8 +30,8 @@ public class OverworldGeneratorTests
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
 
         Assert.True(wallCount > 0, "Overworld should have walls");
     }
@@ -46,11 +46,11 @@ public class OverworldGeneratorTests
         gen.Generate(chunk2, 42);
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
-            Assert.Equal(chunk1.Tiles[x, y].GlyphId, chunk2.Tiles[x, y].GlyphId);
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
+                Assert.Equal(chunk1.Tiles[x, y].GlyphId, chunk2.Tiles[x, y].GlyphId);
+            }
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public class OverworldGeneratorTests
         gen.Generate(chunk, 42);
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            Assert.NotEqual(TileType.Void, chunk.Tiles[x, y].Type);
+            for (int y = 0; y < Chunk.Size; y++)
+                Assert.NotEqual(TileType.Void, chunk.Tiles[x, y].Type);
     }
 
     [Fact]
@@ -141,9 +141,9 @@ public class OverworldGeneratorTests
             var chunk = new Chunk(cx, 0);
             gen.Generate(chunk, 42);
             for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Decoration)
-                    totalDecorations++;
+                for (int y = 0; y < Chunk.Size; y++)
+                    if (chunk.Tiles[x, y].Type == TileType.Decoration)
+                        totalDecorations++;
         }
 
         Assert.True(totalDecorations > 0, "Overworld should place decorations");
@@ -160,9 +160,9 @@ public class OverworldGeneratorTests
 
         int differences = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (chunk1.Tiles[x, y].Type != chunk2.Tiles[x, y].Type)
-                differences++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (chunk1.Tiles[x, y].Type != chunk2.Tiles[x, y].Type)
+                    differences++;
 
         Assert.True(differences > 0, "Different seeds should produce different terrain");
     }

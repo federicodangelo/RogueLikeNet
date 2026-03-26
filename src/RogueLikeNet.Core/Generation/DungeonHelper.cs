@@ -12,14 +12,14 @@ internal static class DungeonHelper
     public static void FillWalls(Chunk chunk)
     {
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            ref var tile = ref chunk.Tiles[x, y];
-            tile.Type = TileType.Wall;
-            tile.GlyphId = TileDefinitions.GlyphWall;
-            tile.FgColor = TileDefinitions.ColorWallFg;
-            tile.BgColor = TileDefinitions.ColorBlack;
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                ref var tile = ref chunk.Tiles[x, y];
+                tile.Type = TileType.Wall;
+                tile.GlyphId = TileDefinitions.GlyphWall;
+                tile.FgColor = TileDefinitions.ColorWallFg;
+                tile.BgColor = TileDefinitions.ColorBlack;
+            }
     }
 
     public static void CarveTile(Chunk chunk, int x, int y)
@@ -48,8 +48,8 @@ internal static class DungeonHelper
     public static void CarveRoom(Chunk chunk, Room room)
     {
         for (int x = room.X; x < room.X + room.Width; x++)
-        for (int y = room.Y; y < room.Y + room.Height; y++)
-            CarveFloor(chunk, x, y);
+            for (int y = room.Y; y < room.Y + room.Height; y++)
+                CarveFloor(chunk, x, y);
     }
 
     public static void PlaceFeature(Chunk chunk, int x, int y, TileType type, int glyph, int fgColor)
@@ -90,17 +90,17 @@ internal static class DungeonHelper
             int poolH = room.Height - 4;
 
             for (int x = poolX; x < poolX + poolW; x++)
-            for (int y = poolY; y < poolY + poolH; y++)
-            {
-                if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
+                for (int y = poolY; y < poolY + poolH; y++)
                 {
-                    ref var tile = ref chunk.Tiles[x, y];
-                    tile.Type = liq.Type;
-                    tile.GlyphId = liq.GlyphId;
-                    tile.FgColor = liq.FgColor;
-                    tile.BgColor = liq.BgColor;
+                    if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
+                    {
+                        ref var tile = ref chunk.Tiles[x, y];
+                        tile.Type = liq.Type;
+                        tile.GlyphId = liq.GlyphId;
+                        tile.FgColor = liq.FgColor;
+                        tile.BgColor = liq.BgColor;
+                    }
                 }
-            }
         }
     }
 
@@ -110,22 +110,22 @@ internal static class DungeonHelper
         if (decorations.Length == 0) return;
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            ref var tile = ref chunk.Tiles[x, y];
-            if (tile.Type != TileType.Floor) continue;
-
-            foreach (var deco in decorations)
+            for (int y = 0; y < Chunk.Size; y++)
             {
-                if (rng.Next(100) < deco.Chance)
+                ref var tile = ref chunk.Tiles[x, y];
+                if (tile.Type != TileType.Floor) continue;
+
+                foreach (var deco in decorations)
                 {
-                    tile.Type = TileType.Decoration;
-                    tile.GlyphId = deco.GlyphId;
-                    tile.FgColor = deco.FgColor;
-                    break;
+                    if (rng.Next(100) < deco.Chance)
+                    {
+                        tile.Type = TileType.Decoration;
+                        tile.GlyphId = deco.GlyphId;
+                        tile.FgColor = deco.FgColor;
+                        break;
+                    }
                 }
             }
-        }
     }
 
     public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result)
@@ -158,12 +158,12 @@ internal static class DungeonHelper
     public static void ApplyBiomeTint(Chunk chunk, BiomeType biome)
     {
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            ref var tile = ref chunk.Tiles[x, y];
-            tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-            tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                ref var tile = ref chunk.Tiles[x, y];
+                tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
+                tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+            }
     }
 
     public static void CarveHLine(Chunk chunk, int x1, int x2, int y)

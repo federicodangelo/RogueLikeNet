@@ -26,8 +26,8 @@ public class BiomeClimateTests
         var found = new HashSet<BiomeType>();
         // Sweep the full range
         for (double t = -1.0; t <= 1.0; t += 0.1)
-        for (double m = -1.0; m <= 1.0; m += 0.1)
-            found.Add(BiomeDefinitions.GetBiomeFromClimate(t, m));
+            for (double m = -1.0; m <= 1.0; m += 0.1)
+                found.Add(BiomeDefinitions.GetBiomeFromClimate(t, m));
 
         Assert.Equal(BiomeDefinitions.BiomeCount, found.Count);
     }

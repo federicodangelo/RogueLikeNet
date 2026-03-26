@@ -301,43 +301,43 @@ public class GameEngine : IDisposable
         });
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
-            if (occupied.Contains(FOVData.PackCoord(x, y))) continue;
-
-            // Require 2-tile clear floor radius (all tiles within Chebyshev 2 must be floor)
-            bool clearArea = true;
-            for (int dx = -2; dx <= 2 && clearArea; dx++)
-            for (int dy = -2; dy <= 2 && clearArea; dy++)
+            for (int y = 0; y < Chunk.Size; y++)
             {
-                if (dx == 0 && dy == 0) continue;
-                int nx = x + dx, ny = y + dy;
-                if (nx < 0 || ny < 0 || nx >= Chunk.Size || ny >= Chunk.Size)
-                { clearArea = false; continue; }
-                if (chunk.Tiles[nx, ny].Type != TileType.Floor)
-                    clearArea = false;
-            }
-            if (!clearArea) continue;
+                if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
+                if (occupied.Contains(FOVData.PackCoord(x, y))) continue;
 
-            // Require no enemies within 5-tile Chebyshev radius
-            bool enemyNearby = false;
-            foreach (var (ex, ey) in enemyPositions)
-            {
-                if (Math.Max(Math.Abs(ex - x), Math.Abs(ey - y)) <= 5)
-                { enemyNearby = true; break; }
-            }
-            if (enemyNearby) continue;
+                // Require 2-tile clear floor radius (all tiles within Chebyshev 2 must be floor)
+                bool clearArea = true;
+                for (int dx = -2; dx <= 2 && clearArea; dx++)
+                    for (int dy = -2; dy <= 2 && clearArea; dy++)
+                    {
+                        if (dx == 0 && dy == 0) continue;
+                        int nx = x + dx, ny = y + dy;
+                        if (nx < 0 || ny < 0 || nx >= Chunk.Size || ny >= Chunk.Size)
+                        { clearArea = false; continue; }
+                        if (chunk.Tiles[nx, ny].Type != TileType.Floor)
+                            clearArea = false;
+                    }
+                if (!clearArea) continue;
 
-            return (x, y);
-        }
+                // Require no enemies within 5-tile Chebyshev radius
+                bool enemyNearby = false;
+                foreach (var (ex, ey) in enemyPositions)
+                {
+                    if (Math.Max(Math.Abs(ex - x), Math.Abs(ey - y)) <= 5)
+                    { enemyNearby = true; break; }
+                }
+                if (enemyNearby) continue;
+
+                return (x, y);
+            }
         // Fallback: just find any free floor tile
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(FOVData.PackCoord(x, y)))
-                return (x, y);
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(FOVData.PackCoord(x, y)))
+                    return (x, y);
+            }
         return (Chunk.Size / 2, Chunk.Size / 2);
     }
 

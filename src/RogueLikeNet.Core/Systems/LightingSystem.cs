@@ -18,8 +18,8 @@ public class LightingSystem
         foreach (var chunk in map.LoadedChunks)
         {
             for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                chunk.Tiles[x, y].LightLevel = 0;
+                for (int y = 0; y < Chunk.Size; y++)
+                    chunk.Tiles[x, y].LightLevel = 0;
         }
 
         // Gather all light sources

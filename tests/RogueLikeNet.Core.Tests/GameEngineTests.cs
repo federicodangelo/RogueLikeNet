@@ -58,15 +58,15 @@ public class GameEngineTests
 
         int litCount = 0;
         for (int dx = -3; dx <= 3; dx++)
-        for (int dy = -3; dy <= 3; dy++)
-        {
-            int nx = sx + dx, ny = sy + dy;
-            if (nx >= 0 && nx < Chunk.Size && ny >= 0 && ny < Chunk.Size)
+            for (int dy = -3; dy <= 3; dy++)
             {
-                if (chunk.Tiles[nx, ny].LightLevel > 0)
-                    litCount++;
+                int nx = sx + dx, ny = sy + dy;
+                if (nx >= 0 && nx < Chunk.Size && ny >= 0 && ny < Chunk.Size)
+                {
+                    if (chunk.Tiles[nx, ny].LightLevel > 0)
+                        litCount++;
+                }
             }
-        }
         Assert.True(litCount > 5, $"Only {litCount} tiles lit in 7x7 area around player, expected > 5");
     }
 
@@ -214,8 +214,8 @@ public class GameEngineTests
         var chunk = engine.EnsureChunkLoaded(0, 0);
         // Set all tiles to Wall to trigger fallback
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            chunk.Tiles[x, y].Type = TileType.Wall;
+            for (int y = 0; y < Chunk.Size; y++)
+                chunk.Tiles[x, y].Type = TileType.Wall;
 
         var (rx, ry) = engine.FindSpawnPosition();
         Assert.Equal(Chunk.Size / 2, rx);

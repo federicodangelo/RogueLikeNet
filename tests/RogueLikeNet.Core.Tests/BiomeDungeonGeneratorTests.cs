@@ -20,8 +20,8 @@ public class BiomeDungeonGeneratorTests
 
             int floorCount = 0;
             for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+                for (int y = 0; y < Chunk.Size; y++)
+                    if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
             Assert.True(floorCount > 0, $"Chunk at ({cx},0) should have floor tiles");
         }
@@ -48,11 +48,11 @@ public class BiomeDungeonGeneratorTests
         // BSP rooms have stairs
         bool hasStairsUp = false, hasStairsDown = false;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            if (stoneChunk.Tiles[x, y].Type == TileType.StairsUp) hasStairsUp = true;
-            if (stoneChunk.Tiles[x, y].Type == TileType.StairsDown) hasStairsDown = true;
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                if (stoneChunk.Tiles[x, y].Type == TileType.StairsUp) hasStairsUp = true;
+                if (stoneChunk.Tiles[x, y].Type == TileType.StairsDown) hasStairsDown = true;
+            }
         Assert.True(hasStairsUp, "Stone biome should have stairs up");
         Assert.True(hasStairsDown, "Stone biome should have stairs down");
     }
@@ -78,8 +78,8 @@ public class BiomeDungeonGeneratorTests
         // Cave generator should produce many floor tiles
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (caveChunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (caveChunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 100, "Cave biome should have many floor tiles");
     }
@@ -104,8 +104,8 @@ public class BiomeDungeonGeneratorTests
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (tunnelChunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (tunnelChunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 100, "Tunnel biome should have many floor tiles");
     }
@@ -123,8 +123,8 @@ public class BiomeDungeonGeneratorTests
             gen.Generate(c2, 42);
 
             for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                Assert.Equal(c1.Tiles[x, y].Type, c2.Tiles[x, y].Type);
+                for (int y = 0; y < Chunk.Size; y++)
+                    Assert.Equal(c1.Tiles[x, y].Type, c2.Tiles[x, y].Type);
         }
     }
 }

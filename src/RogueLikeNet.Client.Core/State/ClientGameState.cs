@@ -160,15 +160,15 @@ public class ClientGameState
     {
         var chunk = new Chunk(msg.ChunkX, msg.ChunkY);
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            int idx = y * Chunk.Size + x;
-            ref var tile = ref chunk.Tiles[x, y];
-            tile.Type = (TileType)msg.TileTypes[idx];
-            tile.GlyphId = msg.TileGlyphs[idx];
-            tile.FgColor = msg.TileFgColors[idx];
-            tile.BgColor = msg.TileBgColors[idx];
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                int idx = y * Chunk.Size + x;
+                ref var tile = ref chunk.Tiles[x, y];
+                tile.Type = (TileType)msg.TileTypes[idx];
+                tile.GlyphId = msg.TileGlyphs[idx];
+                tile.FgColor = msg.TileFgColors[idx];
+                tile.BgColor = msg.TileBgColors[idx];
+            }
         long key = Chunk.PackChunkKey(msg.ChunkX, msg.ChunkY);
         _chunks[key] = chunk;
     }
@@ -210,8 +210,8 @@ public class ClientGameState
         // Reset all loaded chunk light to 0
         foreach (var chunk in _chunks.Values)
             for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                chunk.Tiles[x, y].LightLevel = 0;
+                for (int y = 0; y < Chunk.Size; y++)
+                    chunk.Tiles[x, y].LightLevel = 0;
 
         // Player emits light at FOV radius
         FloodLight(PlayerX, PlayerY, FovRadius);

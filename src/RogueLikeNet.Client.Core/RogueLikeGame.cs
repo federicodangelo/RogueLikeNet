@@ -463,9 +463,9 @@ public sealed class RogueLikeGame : GameBase
 
         // Determine held movement direction, applying a 250ms initial-repeat delay
         InputAction? activeMoveAction = null;
-        if (input.IsActionDown(InputAction.MoveUp))         activeMoveAction = InputAction.MoveUp;
-        else if (input.IsActionDown(InputAction.MoveDown))  activeMoveAction = InputAction.MoveDown;
-        else if (input.IsActionDown(InputAction.MoveLeft))  activeMoveAction = InputAction.MoveLeft;
+        if (input.IsActionDown(InputAction.MoveUp)) activeMoveAction = InputAction.MoveUp;
+        else if (input.IsActionDown(InputAction.MoveDown)) activeMoveAction = InputAction.MoveDown;
+        else if (input.IsActionDown(InputAction.MoveLeft)) activeMoveAction = InputAction.MoveLeft;
         else if (input.IsActionDown(InputAction.MoveRight)) activeMoveAction = InputAction.MoveRight;
 
         if (activeMoveAction != null)
@@ -484,10 +484,10 @@ public sealed class RogueLikeGame : GameBase
             {
                 msg = activeMoveAction.Value switch
                 {
-                    InputAction.MoveUp    => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  0, TargetY = -1 },
-                    InputAction.MoveDown  => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  0, TargetY =  1 },
-                    InputAction.MoveLeft  => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY =  0 },
-                    InputAction.MoveRight => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX =  1, TargetY =  0 },
+                    InputAction.MoveUp => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = -1 },
+                    InputAction.MoveDown => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = 1 },
+                    InputAction.MoveLeft => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 },
+                    InputAction.MoveRight => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 },
                     _ => null
                 };
             }
@@ -499,24 +499,24 @@ public sealed class RogueLikeGame : GameBase
 
         if (msg == null)
         {
-        if (input.IsActionPressed(InputAction.Wait))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Wait };
-        else if (input.IsActionPressed(InputAction.Attack))
-            msg = new ClientInputMsg { ActionType = ActionTypes.Attack, TargetX = 0, TargetY = 0 };
-        else if (input.IsActionPressed(InputAction.PickUp))
-            msg = new ClientInputMsg { ActionType = ActionTypes.PickUp };
-        else if (input.IsActionPressed(InputAction.UseItem1))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 0 };
-        else if (input.IsActionPressed(InputAction.UseItem2))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 1 };
-        else if (input.IsActionPressed(InputAction.UseItem3))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 2 };
-        else if (input.IsActionPressed(InputAction.UseItem4))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 3 };
-        else if (input.IsActionPressed(InputAction.UseSkill1))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
-        else if (input.IsActionPressed(InputAction.UseSkill2))
-            msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
+            if (input.IsActionPressed(InputAction.Wait))
+                msg = new ClientInputMsg { ActionType = ActionTypes.Wait };
+            else if (input.IsActionPressed(InputAction.Attack))
+                msg = new ClientInputMsg { ActionType = ActionTypes.Attack, TargetX = 0, TargetY = 0 };
+            else if (input.IsActionPressed(InputAction.PickUp))
+                msg = new ClientInputMsg { ActionType = ActionTypes.PickUp };
+            else if (input.IsActionPressed(InputAction.UseItem1))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 0 };
+            else if (input.IsActionPressed(InputAction.UseItem2))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 1 };
+            else if (input.IsActionPressed(InputAction.UseItem3))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 2 };
+            else if (input.IsActionPressed(InputAction.UseItem4))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 3 };
+            else if (input.IsActionPressed(InputAction.UseSkill1))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
+            else if (input.IsActionPressed(InputAction.UseSkill2))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
         }
 
         if (msg != null && _connection != null)

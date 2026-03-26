@@ -15,8 +15,8 @@ public class DirectionalTunnelGeneratorTests
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 0, "Tunnel should have floor tiles");
     }
@@ -30,8 +30,8 @@ public class DirectionalTunnelGeneratorTests
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+            for (int y = 0; y < Chunk.Size; y++)
+                if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
 
         Assert.True(wallCount > 0, "Tunnel should have walls");
     }
@@ -46,8 +46,8 @@ public class DirectionalTunnelGeneratorTests
         gen.Generate(chunk2, 42);
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-            Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
+            for (int y = 0; y < Chunk.Size; y++)
+                Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
     }
 
     [Fact]

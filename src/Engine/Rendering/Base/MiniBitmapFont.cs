@@ -461,10 +461,10 @@ public static class MiniBitmapFont
         int offset = 0;
 
         void G(
-            string r0,  string r1,  string r2,  string r3,
-            string r4,  string r5,  string r6,  string r7,
-            string r8,  string r9,  string rA,  string rB,
-            string rC,  string rD,  string rE,  string rF)
+            string r0, string r1, string r2, string r3,
+            string r4, string r5, string r6, string r7,
+            string r8, string r9, string rA, string rB,
+            string rC, string rD, string rE, string rF)
         {
             ReadOnlySpan<string> rows = [r0, r1, r2, r3, r4, r5, r6, r7,
                                          r8, r9, rA, rB, rC, rD, rE, rF];

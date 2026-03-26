@@ -32,15 +32,15 @@ public static class GameStateSerializer
         };
 
         for (int x = 0; x < Chunk.Size; x++)
-        for (int y = 0; y < Chunk.Size; y++)
-        {
-            int idx = y * Chunk.Size + x;
-            ref var tile = ref chunk.Tiles[x, y];
-            msg.TileTypes[idx] = (byte)tile.Type;
-            msg.TileGlyphs[idx] = tile.GlyphId;
-            msg.TileFgColors[idx] = tile.FgColor;
-            msg.TileBgColors[idx] = tile.BgColor;
-        }
+            for (int y = 0; y < Chunk.Size; y++)
+            {
+                int idx = y * Chunk.Size + x;
+                ref var tile = ref chunk.Tiles[x, y];
+                msg.TileTypes[idx] = (byte)tile.Type;
+                msg.TileGlyphs[idx] = tile.GlyphId;
+                msg.TileFgColors[idx] = tile.FgColor;
+                msg.TileBgColors[idx] = tile.BgColor;
+            }
 
         return msg;
     }
@@ -50,11 +50,11 @@ public static class GameStateSerializer
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         var chunks = new List<ChunkDataMsg>();
         for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-        {
-            var chunk = engine.EnsureChunkLoaded(cx + dx, cy + dy);
-            chunks.Add(SerializeChunk(chunk));
-        }
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                var chunk = engine.EnsureChunkLoaded(cx + dx, cy + dy);
+                chunks.Add(SerializeChunk(chunk));
+            }
         return chunks.ToArray();
     }
 
@@ -70,18 +70,18 @@ public static class GameStateSerializer
         var newChunks = new List<ChunkDataMsg>();
 
         for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-        {
-            int ccx = cx + dx, ccy = cy + dy;
-            long key = Chunk.PackChunkKey(ccx, ccy);
-
-            if (!sentChunkKeys.Contains(key))
+            for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = engine.EnsureChunkLoaded(ccx, ccy);
-                newChunks.Add(SerializeChunk(chunk));
-                sentChunkKeys.Add(key);
+                int ccx = cx + dx, ccy = cy + dy;
+                long key = Chunk.PackChunkKey(ccx, ccy);
+
+                if (!sentChunkKeys.Contains(key))
+                {
+                    var chunk = engine.EnsureChunkLoaded(ccx, ccy);
+                    newChunks.Add(SerializeChunk(chunk));
+                    sentChunkKeys.Add(key);
+                }
             }
-        }
 
         // Prune chunk keys far from current position (5×5 around player chunk)
         sentChunkKeys.RemoveWhere(key =>

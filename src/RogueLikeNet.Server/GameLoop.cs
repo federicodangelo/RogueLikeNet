@@ -207,12 +207,12 @@ public class GameLoop : IDisposable
         conn.SentChunkKeys.Clear();
         var (cx, cy) = Chunk.WorldToChunkCoord(pos.X, pos.Y);
         for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-        {
-            int ccx = cx + dx, ccy = cy + dy;
-            long key = Chunk.PackChunkKey(ccx, ccy);
-            conn.SentChunkKeys.Add(key);
-        }
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int ccx = cx + dx, ccy = cy + dy;
+                long key = Chunk.PackChunkKey(ccx, ccy);
+                conn.SentChunkKeys.Add(key);
+            }
 
         // Seed HUD tracking
         conn.LastSentHudBytes = snapshot.PlayerState != null

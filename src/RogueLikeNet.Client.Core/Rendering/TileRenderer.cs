@@ -13,8 +13,8 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public class TileRenderer
 {
-    public const int TileWidth = (int) (9 * FontScale);  // (8px glyph + 1px advance) * 2
-    public const int TileHeight = (int) (16 * FontScale);
+    public const int TileWidth = (int)(9 * FontScale);  // (8px glyph + 1px advance) * 2
+    public const int TileHeight = (int)(16 * FontScale);
     public const int HudColumns = 30;
     private const float FontScale = 1.5f;
 
@@ -98,82 +98,82 @@ public class TileRenderer
 
         // Pass 1: tile backgrounds and foreground glyphs
         for (int sx = 0; sx < gameCols; sx++)
-        for (int sy = 0; sy < totalRows; sy++)
-        {
-            int worldX = cameraCenterX - halfW + sx;
-            int worldY = cameraCenterY - halfH + sy;
-            var tile = state.GetTile(worldX, worldY);
-
-            float px = sx * TileWidth + shakeX;
-            float py = sy * TileHeight + shakeY;
-
-            bool visible = state.IsVisible(worldX, worldY);
-            bool explored = state.IsExplored(worldX, worldY);
-
-            if (visible)
+            for (int sy = 0; sy < totalRows; sy++)
             {
-                // Currently in FOV — render with actual light level
-                var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
-                r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+                int worldX = cameraCenterX - halfW + sx;
+                int worldY = cameraCenterY - halfH + sy;
+                var tile = state.GetTile(worldX, worldY);
 
-                if (tile.GlyphId > 0 && tile.LightLevel > 0)
+                float px = sx * TileWidth + shakeX;
+                float py = sy * TileHeight + shakeY;
+
+                bool visible = state.IsVisible(worldX, worldY);
+                bool explored = state.IsExplored(worldX, worldY);
+
+                if (visible)
                 {
-                    var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
+                    // Currently in FOV — render with actual light level
+                    var bgColor = IntToColor4(tile.BgColor, tile.LightLevel);
+                    r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+
+                    if (tile.GlyphId > 0 && tile.LightLevel > 0)
+                    {
+                        var fgColor = IntToColor4(tile.FgColor, tile.LightLevel);
+                        char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
+                        r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
+                    }
+                }
+                else if (explored && tile.GlyphId > 0)
+                {
+                    // Explored but not in FOV — dim fog of war
+                    var bgColor = FogColor(tile.BgColor);
+                    r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
+
+                    var fgColor = FogColor(tile.FgColor);
                     char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
                     r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
                 }
+                else
+                {
+                    // Unknown — black
+                    r.DrawRectScreen(px, py, TileWidth, TileHeight, ColorBlack);
+                }
             }
-            else if (explored && tile.GlyphId > 0)
-            {
-                // Explored but not in FOV — dim fog of war
-                var bgColor = FogColor(tile.BgColor);
-                r.DrawRectScreen(px, py, TileWidth, TileHeight, bgColor);
-
-                var fgColor = FogColor(tile.FgColor);
-                char ch = tile.GlyphId < 256 ? Cp437[tile.GlyphId] : '?';
-                r.DrawTextScreen(px, py, ch.ToString(), fgColor, FontScale);
-            }
-            else
-            {
-                // Unknown — black
-                r.DrawRectScreen(px, py, TileWidth, TileHeight, ColorBlack);
-            }
-        }
 
         // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
         for (int sx = 0; sx < gameCols; sx++)
-        for (int sy = 0; sy < totalRows; sy++)
-        {
-            int worldX = cameraCenterX - halfW + sx;
-            int worldY = cameraCenterY - halfH + sy;
-
-            if (!state.IsVisible(worldX, worldY)) continue;
-
-            var tile = state.GetTile(worldX, worldY);
-
-            if (tile.LightLevel < 5) continue;
-
-            // Glow behind torches
-            if (tile.GlyphId == TileDefinitions.GlyphTorch)
+            for (int sy = 0; sy < totalRows; sy++)
             {
-                float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
-                float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
-                float radius = TileWidth * 2.5f;
-                var inner = new Color4(255, 200, 100, 40);
-                var outer = new Color4(255, 150, 50, 0);
-                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+                int worldX = cameraCenterX - halfW + sx;
+                int worldY = cameraCenterY - halfH + sy;
+
+                if (!state.IsVisible(worldX, worldY)) continue;
+
+                var tile = state.GetTile(worldX, worldY);
+
+                if (tile.LightLevel < 5) continue;
+
+                // Glow behind torches
+                if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                {
+                    float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
+                    float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
+                    float radius = TileWidth * 2.5f;
+                    var inner = new Color4(255, 200, 100, 40);
+                    var outer = new Color4(255, 150, 50, 0);
+                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+                }
+                // Subtle glow behind lava tiles
+                else if (tile.Type == TileType.Lava)
+                {
+                    float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
+                    float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
+                    float radius = TileWidth * 1.5f;
+                    var inner = new Color4(255, 80, 20, 25);
+                    var outer = new Color4(255, 40, 0, 0);
+                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
+                }
             }
-            // Subtle glow behind lava tiles
-            else if (tile.Type == TileType.Lava)
-            {
-                float cx = sx * TileWidth + TileWidth * 0.5f + shakeX;
-                float cy = sy * TileHeight + TileHeight * 0.5f + shakeY;
-                float radius = TileWidth * 1.5f;
-                var inner = new Color4(255, 80, 20, 25);
-                var outer = new Color4(255, 40, 0, 0);
-                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
-            }
-        }
 
         // Pass 3: entities
         foreach (var entity in state.Entities.Values)
@@ -644,10 +644,10 @@ public class TileRenderer
     private static string CategoryTag(int category) => category switch
     {
         ItemDefinitions.CategoryWeapon => "[Wpn]",
-        ItemDefinitions.CategoryArmor  => "[Arm]",
+        ItemDefinitions.CategoryArmor => "[Arm]",
         ItemDefinitions.CategoryPotion => "[Pot]",
-        ItemDefinitions.CategoryGold   => "[Gld]",
-        _                              => "     ",
+        ItemDefinitions.CategoryGold => "[Gld]",
+        _ => "     ",
     };
 
     // ── Connecting Screen ──────────────────────────────────────
@@ -951,43 +951,43 @@ public class TileRenderer
         int half = mapSize / 2;
 
         for (int dx = 0; dx < mapSize; dx++)
-        for (int dy = 0; dy < mapSize; dy++)
-        {
-            int wx = cx - half + dx;
-            int wy = cy - half + dy;
+            for (int dy = 0; dy < mapSize; dy++)
+            {
+                int wx = cx - half + dx;
+                int wy = cy - half + dy;
 
-            if (!state.IsExplored(wx, wy))
-                continue;
+                if (!state.IsExplored(wx, wy))
+                    continue;
 
-            var tile = state.GetTile(wx, wy);
-            if (tile.GlyphId == 0)
-                continue;
+                var tile = state.GetTile(wx, wy);
+                if (tile.GlyphId == 0)
+                    continue;
 
-            // Bright for tiles currently visible, dim for explored fog of war
-            bool visible = state.IsVisible(wx, wy);
+                // Bright for tiles currently visible, dim for explored fog of war
+                bool visible = state.IsVisible(wx, wy);
 
-            Color4 dotColor;
-            if (tile.Type == TileType.Wall)
-                dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
-            else if (tile.Type == TileType.Lava)
-                dotColor = visible ? new Color4(255, 80, 20, 255) : new Color4(80, 30, 10, 255);
-            else if (tile.Type == TileType.Water)
-                dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphTorch)
-                dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphDoor)
-                dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
-            else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
-                dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
-            else if (tile.Type == TileType.Decoration)
-                dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);
-            else if (tile.Type == TileType.Floor)
-                dotColor = visible ? new Color4(60, 60, 70, 255) : new Color4(25, 25, 30, 255);
-            else
-                dotColor = visible ? new Color4(50, 50, 60, 255) : new Color4(20, 20, 25, 255);
+                Color4 dotColor;
+                if (tile.Type == TileType.Wall)
+                    dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
+                else if (tile.Type == TileType.Lava)
+                    dotColor = visible ? new Color4(255, 80, 20, 255) : new Color4(80, 30, 10, 255);
+                else if (tile.Type == TileType.Water)
+                    dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
+                else if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                    dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
+                else if (tile.GlyphId == TileDefinitions.GlyphDoor)
+                    dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
+                else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
+                    dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
+                else if (tile.Type == TileType.Decoration)
+                    dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);
+                else if (tile.Type == TileType.Floor)
+                    dotColor = visible ? new Color4(60, 60, 70, 255) : new Color4(25, 25, 30, 255);
+                else
+                    dotColor = visible ? new Color4(50, 50, 60, 255) : new Color4(20, 20, 25, 255);
 
-            r.DrawRectScreen(baseX + dx * pixelSize, baseY + dy * pixelSize, pixelSize, pixelSize, dotColor);
-        }
+                r.DrawRectScreen(baseX + dx * pixelSize, baseY + dy * pixelSize, pixelSize, pixelSize, dotColor);
+            }
 
         // Entities on minimap
         foreach (var entity in state.Entities.Values)

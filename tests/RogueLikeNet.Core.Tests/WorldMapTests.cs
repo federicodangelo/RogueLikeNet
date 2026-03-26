@@ -60,11 +60,11 @@ public class WorldMapTests
         // After generation, at least some tiles should be non-void
         bool hasNonVoid = false;
         for (int x = 0; x < Chunk.Size && !hasNonVoid; x++)
-        for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
-        {
-            var tile = map.GetTile(x, y);
-            if (tile.Type != TileType.Void) hasNonVoid = true;
-        }
+            for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
+            {
+                var tile = map.GetTile(x, y);
+                if (tile.Type != TileType.Void) hasNonVoid = true;
+            }
         Assert.True(hasNonVoid);
     }
 

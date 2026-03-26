@@ -29,11 +29,11 @@ public class BiomePaletteTests
     {
         var biomes = new HashSet<BiomeType>();
         for (int x = 0; x < 500; x += 64)
-        for (int y = 0; y < 500; y += 64)
-        {
-            var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
-            biomes.Add(BiomeDefinitions.GetBiomeForChunk(cx, cy, 42));
-        }
+            for (int y = 0; y < 500; y += 64)
+            {
+                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
+                biomes.Add(BiomeDefinitions.GetBiomeForChunk(cx, cy, 42));
+            }
 
         Assert.True(biomes.Count >= 2, $"Expected multiple biomes, got: {string.Join(", ", biomes)}");
     }

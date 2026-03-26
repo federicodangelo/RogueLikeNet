@@ -100,17 +100,17 @@ public class BspDungeonGenerator : IDungeonGenerator
     private static void CarveRoom(Chunk chunk, Room room)
     {
         for (int x = room.X; x < room.X + room.Width; x++)
-        for (int y = room.Y; y < room.Y + room.Height; y++)
-        {
-            if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
+            for (int y = room.Y; y < room.Y + room.Height; y++)
             {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
+                {
+                    ref var tile = ref chunk.Tiles[x, y];
+                    tile.Type = TileType.Floor;
+                    tile.GlyphId = TileDefinitions.GlyphFloor;
+                    tile.FgColor = TileDefinitions.ColorFloorFg;
+                    tile.BgColor = TileDefinitions.ColorBlack;
+                }
             }
-        }
     }
 
     private static void ConnectRooms(BspNode node, Chunk chunk, SeededRandom rng)
