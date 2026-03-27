@@ -158,8 +158,8 @@ public class WorldDeltaMsgTests
         Assert.Equal(80, result.Health);
         Assert.Equal(100, result.MaxHealth);
         Assert.NotNull(result.Item);
-        Assert.Equal(5, result.Item!.Value.ItemTypeId);
-        Assert.Equal(2, result.Item!.Value.Rarity);
+        Assert.Equal(5, result.Item.ItemTypeId);
+        Assert.Equal(2, result.Item.Rarity);
     }
 
     [Fact]
@@ -237,9 +237,9 @@ public class WorldDeltaMsgTests
         Assert.Equal("Power Strike", result.Skills[0].Name);
         Assert.Equal("Dodge", result.Skills[3].Name);
         Assert.NotNull(result.EquippedWeapon);
-        Assert.Equal(ItemDefinitions.LongSword, result.EquippedWeapon!.Value.ItemTypeId);
+        Assert.Equal(ItemDefinitions.LongSword, result.EquippedWeapon.ItemTypeId);
         Assert.NotNull(result.EquippedArmor);
-        Assert.Equal(ItemDefinitions.ChainMail, result.EquippedArmor!.Value.ItemTypeId);
+        Assert.Equal(ItemDefinitions.ChainMail, result.EquippedArmor.ItemTypeId);
         Assert.Equal(2, result.InventoryItems.Length);
         Assert.Equal(1, result.InventoryItems[0].StackCount);
         Assert.Equal(2, result.InventoryItems[0].Rarity);
