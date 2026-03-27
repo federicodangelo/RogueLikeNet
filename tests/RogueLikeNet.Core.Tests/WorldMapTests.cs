@@ -10,7 +10,7 @@ public class WorldMapTests
     public void GetOrCreateChunk_GeneratesOnDemand()
     {
         var map = new WorldMap(42);
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         var (chunk, genResult) = map.GetOrCreateChunk(0, 0, gen);
         Assert.NotNull(chunk);
         Assert.Equal(0, chunk.ChunkX);
@@ -22,7 +22,7 @@ public class WorldMapTests
     public void GetOrCreateChunk_ReturnsSameChunk()
     {
         var map = new WorldMap(42);
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         var (c1, _) = map.GetOrCreateChunk(0, 0, gen);
         var (c2, genResult2) = map.GetOrCreateChunk(0, 0, gen);
         Assert.Same(c1, c2);
@@ -55,7 +55,7 @@ public class WorldMapTests
     public void GetTile_ReturnsCorrectTileForLoadedChunk()
     {
         var map = new WorldMap(42);
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         map.GetOrCreateChunk(0, 0, gen);
         // After generation, at least some tiles should be non-void
         bool hasNonVoid = false;

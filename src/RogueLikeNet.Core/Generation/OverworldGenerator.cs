@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -31,20 +32,30 @@ public class OverworldGenerator : IDungeonGenerator
     private const int ItemChance = 1;
     private const int TorchChance = 0; // Disabled for now, it doesn't make sense for overworld
 
-    public GenerationResult Generate(Chunk chunk, long seed)
+    private readonly long _seed;
+
+    public OverworldGenerator(long seed)
     {
-        var result = new GenerationResult();
-        var rng = new SeededRandom(seed);
+        _seed = seed;
+    }
+
+    public GenerationResult Generate(int chunkX, int chunkY)
+    {
+        var chunk = new Chunk(chunkX, chunkY);
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var result = new GenerationResult(chunk);
+        var rng = new SeededRandom(chunkSeed);
 
         // Three independent noise layers with different seeds
-        var terrainNoise = new PerlinNoise(seed);
-        var detailNoise = new PerlinNoise(seed ^ 0x5DEECE66DL);
-        var tempNoise = new PerlinNoise(seed ^ 0x27BB2EE687B0B0FDL);
-        var moistNoise = new PerlinNoise(seed ^ 0x12345678ABCDEF0L);
-        var liquidNoise = new PerlinNoise(seed ^ 0x3141592653589793L);
+        var terrainNoise = new PerlinNoise(_seed);
+        var detailNoise = new PerlinNoise(_seed ^ 0x5DEECE66DL);
+        var tempNoise = new PerlinNoise(_seed ^ 0x27BB2EE687B0B0FDL);
+        var moistNoise = new PerlinNoise(_seed ^ 0x12345678ABCDEF0L);
+        var liquidNoise = new PerlinNoise(_seed ^ 0x3141592653589793L);
 
-        int worldOffsetX = chunk.ChunkX * Chunk.Size;
-        int worldOffsetY = chunk.ChunkY * Chunk.Size;
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
 
         // Pass 1: Carve terrain (floor vs wall) using continuous noise
         for (int lx = 0; lx < Chunk.Size; lx++)
@@ -132,11 +143,33 @@ public class OverworldGenerator : IDungeonGenerator
                 if (tile.Type == TileType.Floor)
                 {
                     if (rng.Next(1000) < MonsterChance)
-                        result.SpawnPoints.Add(new SpawnPoint(lx, ly, SpawnType.Monster));
+                    {
+                        var template = NpcDefinitions.Pick(rng, difficulty);
+                        result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData { MonsterTypeId = template.TypeId }));
+                    }
                     else if (rng.Next(1000) < ItemChance)
-                        result.SpawnPoints.Add(new SpawnPoint(lx, ly, SpawnType.Item));
+                    {
+                        var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
+                        int rarityMult = 100 + loot.Rarity * 50;
+                        result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new ItemData
+                        {
+                            ItemTypeId = loot.Definition.TypeId,
+                            Rarity = loot.Rarity,
+                            BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
+                            BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
+                            BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
+                            StackCount = loot.Definition.Stackable
+                                ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
+                                : 1,
+                        }));
+                    }
                     else if (rng.Next(1000) < TorchChance)
-                        result.SpawnPoints.Add(new SpawnPoint(lx, ly, SpawnType.Torch));
+                    {
+                        result.Elements.Add(new DungeonElement(
+                            new Position(worldOffsetX + lx, worldOffsetY + ly),
+                            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+                            new LightSource(6, TileDefinitions.ColorTorchFg)));
+                    }
                 }
             }
 

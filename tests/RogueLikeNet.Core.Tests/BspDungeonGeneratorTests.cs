@@ -10,14 +10,13 @@ public class BspDungeonGeneratorTests
     [Fact]
     public void Generate_ProducesFloorTiles()
     {
-        var gen = new BspDungeonGenerator();
-        var chunk = new Chunk(0, 0);
-        gen.Generate(chunk, 42);
+        var gen = new BspDungeonGenerator(42);
+        var result = gen.Generate(0, 0);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 0, "Dungeon should have at least some floor tiles");
     }
@@ -25,28 +24,25 @@ public class BspDungeonGeneratorTests
     [Fact]
     public void Generate_IsDeterministic()
     {
-        var gen = new BspDungeonGenerator();
-        var chunk1 = new Chunk(0, 0);
-        var chunk2 = new Chunk(0, 0);
-        gen.Generate(chunk1, 42);
-        gen.Generate(chunk2, 42);
+        var gen = new BspDungeonGenerator(42);
+        var result1 = gen.Generate(0, 0);
+        var result2 = gen.Generate(0, 0);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
+                Assert.Equal(result1.Chunk.Tiles[x, y].Type, result2.Chunk.Tiles[x, y].Type);
     }
 
     [Fact]
     public void Generate_HasWalls()
     {
-        var gen = new BspDungeonGenerator();
-        var chunk = new Chunk(0, 0);
-        gen.Generate(chunk, 42);
+        var gen = new BspDungeonGenerator(42);
+        var result = gen.Generate(0, 0);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
 
         Assert.True(wallCount > 0, "Dungeon should have walls");
     }
@@ -55,15 +51,15 @@ public class BspDungeonGeneratorTests
     public void Generate_AppliesBiomeTints()
     {
         // Find a chunk whose biome is NOT Stone (Stone = neutral, no tint)
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         Chunk? tintedChunk = null;
         for (int cx = 0; cx < 20; cx++)
         {
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome != BiomeType.Stone)
             {
-                tintedChunk = new Chunk(cx, 0);
-                gen.Generate(tintedChunk, 42);
+                var result = gen.Generate(cx, 0);
+                tintedChunk = result.Chunk;
                 break;
             }
         }
@@ -87,15 +83,14 @@ public class BspDungeonGeneratorTests
     public void Generate_PlacesDecorations()
     {
         // Generate many chunks — at least some should have decorations
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
-            var chunk = new Chunk(cx, 0);
-            gen.Generate(chunk, 42);
+            var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (chunk.Tiles[x, y].Type == TileType.Decoration)
+                    if (result.Chunk.Tiles[x, y].Type == TileType.Decoration)
                         totalDecorations++;
         }
 
@@ -106,18 +101,17 @@ public class BspDungeonGeneratorTests
     public void Generate_PlacesLiquidPools()
     {
         // Generate chunks until we hit a biome with liquid (Lava, Sewer, Infernal, etc.)
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         bool foundLiquid = false;
         for (int cx = 0; cx < 50 && !foundLiquid; cx++)
         {
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (BiomeDefinitions.GetLiquid(biome) == null) continue;
 
-            var chunk = new Chunk(cx, 0);
-            gen.Generate(chunk, 42);
+            var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size && !foundLiquid; x++)
                 for (int y = 0; y < Chunk.Size && !foundLiquid; y++)
-                    if (chunk.Tiles[x, y].Type is TileType.Water or TileType.Lava)
+                    if (result.Chunk.Tiles[x, y].Type is TileType.Water or TileType.Lava)
                         foundLiquid = true;
         }
 
@@ -127,15 +121,14 @@ public class BspDungeonGeneratorTests
     [Fact]
     public void Generate_DecorationsAreWalkable()
     {
-        var gen = new BspDungeonGenerator();
+        var gen = new BspDungeonGenerator(42);
         for (int cx = 0; cx < 5; cx++)
         {
-            var chunk = new Chunk(cx, 0);
-            gen.Generate(chunk, 42);
+            var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
-                    ref var tile = ref chunk.Tiles[x, y];
+                    ref var tile = ref result.Chunk.Tiles[x, y];
                     if (tile.Type == TileType.Decoration)
                         Assert.True(tile.IsWalkable, $"Decoration at ({x},{y}) should be walkable");
                 }

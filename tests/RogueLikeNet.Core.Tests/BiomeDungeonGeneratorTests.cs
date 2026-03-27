@@ -10,18 +10,17 @@ public class BiomeDungeonGeneratorTests
     [Fact]
     public void Generate_AllBiomes_ProduceFloorTiles()
     {
-        var gen = new BiomeDungeonGenerator();
+        var gen = new BiomeDungeonGenerator(42);
 
         // Generate chunks for all 10 biome types
         for (int cx = 0; cx < 50; cx++)
         {
-            var chunk = new Chunk(cx, 0);
-            gen.Generate(chunk, 42);
+            var result = gen.Generate(cx, 0);
 
             int floorCount = 0;
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+                    if (result.Chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
             Assert.True(floorCount > 0, $"Chunk at ({cx},0) should have floor tiles");
         }
@@ -31,14 +30,13 @@ public class BiomeDungeonGeneratorTests
     public void Generate_UsesMatchingGenerator_ForStructuredBiomes()
     {
         // Stone biome should produce BSP-style rooms (rectangular open areas)
-        var gen = new BiomeDungeonGenerator();
+        var gen = new BiomeDungeonGenerator(42);
         Chunk? stoneChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
             if (BiomeDefinitions.GetBiomeForChunk(cx, 0, 42) == BiomeType.Stone)
             {
-                stoneChunk = new Chunk(cx, 0);
-                gen.Generate(stoneChunk, 42);
+                stoneChunk = gen.Generate(cx, 0).Chunk;
                 break;
             }
         }
@@ -60,15 +58,14 @@ public class BiomeDungeonGeneratorTests
     [Fact]
     public void Generate_UsesMatchingGenerator_ForCaveBiomes()
     {
-        var gen = new BiomeDungeonGenerator();
+        var gen = new BiomeDungeonGenerator(42);
         Chunk? caveChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome is BiomeType.Lava or BiomeType.Forest or BiomeType.Fungal or BiomeType.Infernal)
             {
-                caveChunk = new Chunk(cx, 0);
-                gen.Generate(caveChunk, 42);
+                caveChunk = gen.Generate(cx, 0).Chunk;
                 break;
             }
         }
@@ -87,15 +84,14 @@ public class BiomeDungeonGeneratorTests
     [Fact]
     public void Generate_UsesMatchingGenerator_ForTunnelBiomes()
     {
-        var gen = new BiomeDungeonGenerator();
+        var gen = new BiomeDungeonGenerator(42);
         Chunk? tunnelChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome is BiomeType.Ice or BiomeType.Sewer)
             {
-                tunnelChunk = new Chunk(cx, 0);
-                gen.Generate(tunnelChunk, 42);
+                tunnelChunk = gen.Generate(cx, 0).Chunk;
                 break;
             }
         }
@@ -113,18 +109,16 @@ public class BiomeDungeonGeneratorTests
     [Fact]
     public void Generate_IsDeterministic_AcrossBiomes()
     {
-        var gen = new BiomeDungeonGenerator();
+        var gen = new BiomeDungeonGenerator(42);
 
         for (int cx = 0; cx < 20; cx++)
         {
-            var c1 = new Chunk(cx, 0);
-            var c2 = new Chunk(cx, 0);
-            gen.Generate(c1, 42);
-            gen.Generate(c2, 42);
+            var r1 = gen.Generate(cx, 0);
+            var r2 = gen.Generate(cx, 0);
 
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    Assert.Equal(c1.Tiles[x, y].Type, c2.Tiles[x, y].Type);
+                    Assert.Equal(r1.Chunk.Tiles[x, y].Type, r2.Chunk.Tiles[x, y].Type);
         }
     }
 }

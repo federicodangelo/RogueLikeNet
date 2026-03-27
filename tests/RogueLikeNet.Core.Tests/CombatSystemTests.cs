@@ -7,7 +7,7 @@ namespace RogueLikeNet.Core.Tests;
 
 public class CombatSystemTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     private GameEngine CreateEngine()
     {

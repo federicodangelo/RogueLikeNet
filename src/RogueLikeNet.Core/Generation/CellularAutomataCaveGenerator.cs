@@ -15,12 +15,21 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
     private const int WallFillPercent = 45;
     private const int MinRoomArea = 25;
 
-    public GenerationResult Generate(Chunk chunk, long seed)
+    private readonly long _seed;
+
+    public CellularAutomataCaveGenerator(long seed)
     {
-        var rng = new SeededRandom(seed);
-        var result = new GenerationResult();
+        _seed = seed;
+    }
+
+    public GenerationResult Generate(int chunkX, int chunkY)
+    {
+        var chunk = new Chunk(chunkX, chunkY);
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var rng = new SeededRandom(chunkSeed);
+        var result = new GenerationResult(chunk);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
 
         // Step 1: Fill with walls
         DungeonHelper.FillWalls(chunk);
@@ -103,7 +112,10 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         DungeonHelper.PlaceDecorations(chunk, biome, rng);
 
         // Step 10: Populate rooms
-        DungeonHelper.PopulateRooms(rooms, rng, result);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
 
         // Step 11: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);

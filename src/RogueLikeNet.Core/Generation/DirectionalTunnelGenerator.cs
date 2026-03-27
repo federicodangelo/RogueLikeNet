@@ -17,12 +17,21 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
     private const int MinChamberSize = 4;
     private const int MaxChamberSize = 8;
 
-    public GenerationResult Generate(Chunk chunk, long seed)
+    private readonly long _seed;
+
+    public DirectionalTunnelGenerator(long seed)
     {
-        var rng = new SeededRandom(seed);
-        var result = new GenerationResult();
+        _seed = seed;
+    }
+
+    public GenerationResult Generate(int chunkX, int chunkY)
+    {
+        var chunk = new Chunk(chunkX, chunkY);
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var rng = new SeededRandom(chunkSeed);
+        var result = new GenerationResult(chunk);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
 
         // Step 1: Fill with walls
         DungeonHelper.FillWalls(chunk);
@@ -47,7 +56,10 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
         DungeonHelper.PlaceDecorations(chunk, biome, rng);
 
         // Step 6: Populate rooms
-        DungeonHelper.PopulateRooms(rooms, rng, result);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
 
         // Step 7: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);

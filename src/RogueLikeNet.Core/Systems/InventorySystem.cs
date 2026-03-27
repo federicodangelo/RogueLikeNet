@@ -37,7 +37,7 @@ public class InventorySystem
 
             int px = pPos.X, py = pPos.Y;
 
-            var itemQuery = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+            var itemQuery = new QueryDescription().WithAll<Position, ItemData>();
             world.Query(in itemQuery, (Entity item, ref Position iPos) =>
             {
                 if (iPos.X == px && iPos.Y == py)
@@ -129,12 +129,11 @@ public class InventorySystem
             var (dropX, dropY) = GameEngine.FindDropPosition(world, pos.X, pos.Y);
 
             // Create a new entity on the ground
-            var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
+            var def = ItemDefinitions.Get(itemData.ItemTypeId);
             world.Create(
                 new Position(dropX, dropY),
-                new TileAppearance(template.GlyphId, template.Color),
-                itemData,
-                new GroundItemTag());
+                new TileAppearance(def.GlyphId, def.Color),
+                itemData);
         }
     }
 

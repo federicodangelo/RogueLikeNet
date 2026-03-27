@@ -7,7 +7,7 @@ namespace RogueLikeNet.Core.Tests;
 
 public class LootAndDeathTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     [Fact]
     public void MonsterDeath_DropsLoot()
@@ -21,7 +21,7 @@ public class LootAndDeathTests
         mHealth.Current = 0;
 
         int itemsBefore = 0;
-        var itemQuery = new QueryDescription().WithAll<GroundItemTag>();
+        var itemQuery = new QueryDescription().WithAll<ItemData>();
         engine.EcsWorld.Query(in itemQuery, (Entity _) => itemsBefore++);
 
         engine.Tick();
@@ -88,7 +88,7 @@ public class LootAndDeathTests
 
         // With 10 monsters at 60% drop rate, some should drop loot
         int itemCount = 0;
-        var itemQuery = new QueryDescription().WithAll<GroundItemTag>();
+        var itemQuery = new QueryDescription().WithAll<ItemData>();
         engine.EcsWorld.Query(in itemQuery, (Entity _) => itemCount++);
 
         Assert.True(itemCount > 0, "At least some of 10 dead monsters should drop loot");

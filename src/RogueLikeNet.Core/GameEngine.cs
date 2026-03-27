@@ -38,7 +38,7 @@ public class GameEngine : IDisposable
     {
         _ecsWorld = Arch.Core.World.Create();
         _worldMap = new WorldMap(worldSeed);
-        _generator = generator ?? new OverworldGenerator();
+        _generator = generator ?? new OverworldGenerator(worldSeed);
         _movementSystem = new MovementSystem();
         _fovSystem = new FOVSystem();
         _lightingSystem = new LightingSystem();
@@ -58,44 +58,31 @@ public class GameEngine : IDisposable
         var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkX, chunkY, _generator);
 
         if (genResult != null)
-            ProcessSpawnPoints(chunk, genResult, chunkX, chunkY);
+            ProcessGenerationResult(genResult);
 
         return chunk;
     }
 
-    private void ProcessSpawnPoints(Chunk chunk, GenerationResult result, int chunkX, int chunkY)
+    private void ProcessGenerationResult(GenerationResult result)
     {
-        int worldOffsetX = chunkX * Chunk.Size;
-        int worldOffsetY = chunkY * Chunk.Size;
-
-        // Determine difficulty from distance to origin
-        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
-
-        foreach (var sp in result.SpawnPoints)
+        foreach (var (pos, monster) in result.Monsters)
         {
-            int wx = worldOffsetX + sp.LocalX;
-            int wy = worldOffsetY + sp.LocalY;
+            var template = NpcDefinitions.Get(monster.MonsterTypeId);
+            int difficulty = Math.Max(Math.Abs(pos.X / Chunk.Size), Math.Abs(pos.Y / Chunk.Size));
+            int hpScale = 1 + difficulty / 2;
+            SpawnMonster(template.TypeId, pos.X, pos.Y, template.GlyphId, template.Color,
+                template.Health * hpScale, template.Attack + difficulty,
+                template.Defense + difficulty / 2, template.Speed);
+        }
 
-            switch (sp.Type)
-            {
-                case SpawnType.Monster:
-                    var template = NpcDefinitions.Pick(_worldRng, difficulty);
-                    // Scale stats with difficulty
-                    int hpScale = 1 + difficulty / 2;
-                    SpawnMonster(template.TypeId, wx, wy, template.GlyphId, template.Color,
-                        template.Health * hpScale, template.Attack + difficulty,
-                        template.Defense + difficulty / 2, template.Speed);
-                    break;
+        foreach (var (pos, item) in result.Items)
+        {
+            SpawnItemOnGround(item, pos.X, pos.Y);
+        }
 
-                case SpawnType.Item:
-                    var loot = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                    SpawnItemOnGround(loot.Definition, loot.Rarity, wx, wy);
-                    break;
-
-                case SpawnType.Torch:
-                    SpawnTorch(wx, wy);
-                    break;
-            }
+        foreach (var element in result.Elements)
+        {
+            SpawnElement(element);
         }
     }
 
@@ -141,7 +128,7 @@ public class GameEngine : IDisposable
             new Health(health),
             new CombatStats(attack, defense, speed),
             new TileAppearance(glyphId, color),
-            new MonsterTag { MonsterTypeId = monsterTypeId },
+            new MonsterData { MonsterTypeId = monsterTypeId },
             new AIState { StateId = AIStates.Idle },
             new MoveDelay(moveInterval),
             new AttackDelay(moveInterval)
@@ -153,35 +140,39 @@ public class GameEngine : IDisposable
     /// </summary>
     public Entity SpawnItemOnGround(ItemDefinition def, int rarity, int x, int y)
     {
-        // Rarity multiplier: each tier adds 50% to base stats
-        int rarityMult = 100 + rarity * 50;
+        var itemData = ItemDefinitions.GenerateItemData(def, rarity, _worldRng);
+        return SpawnItemOnGround(itemData, x, y);
+    }
+
+    /// <summary>
+    /// Creates an item entity on the ground from pre-built ItemData.
+    /// </summary>
+    public Entity SpawnItemOnGround(ItemData itemData, int x, int y)
+    {
+        var def = ItemDefinitions.Get(itemData.ItemTypeId);
         return _ecsWorld.Create(
             new Position(x, y),
             new TileAppearance(def.GlyphId, def.Color),
-            new ItemData
-            {
-                ItemTypeId = def.TypeId,
-                Rarity = rarity,
-                BonusAttack = def.BaseAttack * rarityMult / 100,
-                BonusDefense = def.BaseDefense * rarityMult / 100,
-                BonusHealth = def.BaseHealth * rarityMult / 100,
-                StackCount = def.Stackable
-                    ? (def.Category == ItemDefinitions.CategoryGold ? 10 + _worldRng.Next(50) : 1)
-                    : 1,
-            },
-            new GroundItemTag()
+            itemData
         );
     }
 
     /// <summary>
-    /// Spawns a torch (light source) at the given position.
+    /// Spawns a dungeon element (decoration with optional light).
     /// </summary>
-    public Entity SpawnTorch(int x, int y)
+    public Entity SpawnElement(DungeonElement element)
     {
+        if (element.Light is { } light)
+        {
+            return _ecsWorld.Create(
+                element.Position,
+                element.Appearance,
+                light
+            );
+        }
         return _ecsWorld.Create(
-            new Position(x, y),
-            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-            new LightSource(6, TileDefinitions.ColorTorchFg)
+            element.Position,
+            element.Appearance
         );
     }
 
@@ -211,8 +202,8 @@ public class GameEngine : IDisposable
     private void ProcessLootDrops()
     {
         var deadMonsters = new List<(int X, int Y, int MonsterTypeId)>();
-        var deathQuery = new QueryDescription().WithAll<DeadTag, MonsterTag, Position>();
-        _ecsWorld.Query(in deathQuery, (ref Position pos, ref MonsterTag tag) =>
+        var deathQuery = new QueryDescription().WithAll<DeadTag, MonsterData, Position>();
+        _ecsWorld.Query(in deathQuery, (ref Position pos, ref MonsterData tag) =>
         {
             deadMonsters.Add((pos.X, pos.Y, tag.MonsterTypeId));
         });
@@ -238,7 +229,7 @@ public class GameEngine : IDisposable
     {
         // Collect positions of all ground items
         var occupied = new HashSet<long>();
-        var groundQuery = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var groundQuery = new QueryDescription().WithAll<Position, ItemData>();
         world.Query(in groundQuery, (ref Position gPos) =>
         {
             occupied.Add(Position.PackCoord(gPos.X, gPos.Y));
@@ -302,7 +293,7 @@ public class GameEngine : IDisposable
     private void CleanupDead()
     {
         var toDestroy = new List<Entity>();
-        var deadQuery = new QueryDescription().WithAll<DeadTag, MonsterTag>();
+        var deadQuery = new QueryDescription().WithAll<DeadTag, MonsterData>();
         _ecsWorld.Query(in deadQuery, (Entity entity) =>
         {
             toDestroy.Add(entity);
@@ -322,7 +313,7 @@ public class GameEngine : IDisposable
 
         // Collect enemy positions to enforce safety radius
         var enemyPositions = new List<(int X, int Y)>();
-        var enemyQuery = new QueryDescription().WithAll<Position, MonsterTag>();
+        var enemyQuery = new QueryDescription().WithAll<Position, MonsterData>();
         _ecsWorld.Query(in enemyQuery, (ref Position p) =>
         {
             enemyPositions.Add((p.X, p.Y));

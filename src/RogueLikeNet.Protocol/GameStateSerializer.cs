@@ -119,7 +119,7 @@ public static class GameStateSerializer
             }
             int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
             ItemDataMsg? item = null;
-            if (world.Has<GroundItemTag>(e) && world.Has<ItemData>(e))
+            if (world.Has<ItemData>(e))
             {
                 var itemData = world.Get<ItemData>(e);
                 item = new ItemDataMsg

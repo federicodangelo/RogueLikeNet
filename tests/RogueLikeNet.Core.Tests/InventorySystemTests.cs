@@ -7,7 +7,7 @@ namespace RogueLikeNet.Core.Tests;
 
 public class InventorySystemTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     private GameEngine CreateEngine()
     {
@@ -67,7 +67,7 @@ public class InventorySystemTests
 
         // Original entity was destroyed on pickup; drop creates a new ground entity
         int groundCount = 0;
-        var gq = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+        var gq = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gq, (ref Position gPos) =>
         {
             if (gPos.X == sx && gPos.Y == sy) groundCount++;
@@ -181,7 +181,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Item should still be on the ground
-        Assert.True(engine.EcsWorld.Has<GroundItemTag>(extraItem));
+        Assert.True(engine.EcsWorld.Has<ItemData>(extraItem));
     }
 
     [Fact]
@@ -717,7 +717,7 @@ public class InventorySystemTests
 
         // Item should land at player position since nothing is there
         var positions = new List<(int X, int Y)>();
-        var gq = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var gq = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gq, (ref Position gPos) =>
         {
             positions.Add((gPos.X, gPos.Y));
@@ -738,7 +738,7 @@ public class InventorySystemTests
 
         // Count ground items before drop
         int countBefore = 0;
-        var gqBefore = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var gqBefore = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gqBefore, (ref Position gPos) => { countBefore++; });
 
         // Give player an item to drop
@@ -753,7 +753,7 @@ public class InventorySystemTests
         // Count ground items after drop — should be one more
         int countAfter = 0;
         int atOrigin = 0;
-        var gqAfter = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var gqAfter = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gqAfter, (ref Position gPos) =>
         {
             countAfter++;
@@ -773,7 +773,7 @@ public class InventorySystemTests
 
         // Count items before dropping
         int countBefore = 0;
-        var gqBefore = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var gqBefore = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gqBefore, (ref Position gPos) => { countBefore++; });
 
         // Drop 3 items — each should land at a different position
@@ -790,7 +790,7 @@ public class InventorySystemTests
 
         // Count total items after
         int countAfter = 0;
-        var gqAfter = new QueryDescription().WithAll<Position, GroundItemTag>();
+        var gqAfter = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in gqAfter, (ref Position gPos) => { countAfter++; });
         Assert.Equal(countBefore + 3, countAfter);
 

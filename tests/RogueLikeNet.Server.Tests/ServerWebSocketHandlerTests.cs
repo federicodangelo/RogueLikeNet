@@ -8,7 +8,7 @@ namespace RogueLikeNet.Server.Tests;
 
 public class ServerWebSocketHandlerTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     private static byte[] MakeLoginMessage()
     {

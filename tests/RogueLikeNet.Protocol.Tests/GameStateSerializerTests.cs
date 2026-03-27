@@ -136,7 +136,7 @@ public class GameStateSerializerTests
     public void FullSnapshot_SerializeDeserialize_RoundTrip()
     {
         // Replicate the exact server→client flow: build a snapshot delta, serialize, wrap, unwrap, deserialize
-        var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator());
+        var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator(42));
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);

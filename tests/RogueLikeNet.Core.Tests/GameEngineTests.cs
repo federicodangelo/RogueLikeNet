@@ -9,7 +9,7 @@ namespace RogueLikeNet.Core.Tests;
 
 public class GameEngineTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     [Fact]
     public void SpawnPlayer_CreatesEntity()
@@ -168,18 +168,6 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void SpawnTorch_CreatesLightSource()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var torch = engine.SpawnTorch(10, 10);
-
-        Assert.True(engine.EcsWorld.IsAlive(torch));
-        Assert.True(engine.EcsWorld.Has<LightSource>(torch));
-        Assert.True(engine.EcsWorld.Has<Position>(torch));
-    }
-
-    [Fact]
     public void SpawnItemOnGround_CreatesItemWithRarity()
     {
         using var engine = new GameEngine(42, _gen);
@@ -235,7 +223,7 @@ public class GameEngineTests
 
         // Verify entity exists with GroundItemTag and ItemData at the expected position
         int count = 0;
-        var query = new QueryDescription().WithAll<Position, ItemData, GroundItemTag>();
+        var query = new QueryDescription().WithAll<Position, ItemData>();
         engine.EcsWorld.Query(in query, (ref Position pos, ref ItemData data) =>
         {
             if (pos.X == sx && pos.Y == sy && data.ItemTypeId == ItemDefinitions.ShortSword)

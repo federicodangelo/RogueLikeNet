@@ -23,11 +23,9 @@ public class WorldMap
         if (_chunks.TryGetValue(key, out var chunk))
             return (chunk, null);
 
-        chunk = new Chunk(chunkX, chunkY);
-        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
-        var result = generator.Generate(chunk, chunkSeed);
-        _chunks[key] = chunk;
-        return (chunk, result);
+        var result = generator.Generate(chunkX, chunkY);
+        _chunks[key] = result.Chunk;
+        return (result.Chunk, result);
     }
 
     public Chunk? TryGetChunk(int chunkX, int chunkY)

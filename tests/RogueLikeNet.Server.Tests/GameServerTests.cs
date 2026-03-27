@@ -27,7 +27,7 @@ public class TestGameServer : GameServer
 
 public class GameServerTests
 {
-    private static readonly BspDungeonGenerator _gen = new();
+    private static readonly BspDungeonGenerator _gen = new(42);
 
     [Fact]
     public void GameServer_StartsAndStops()

@@ -15,12 +15,21 @@ public class BspDungeonGenerator : IDungeonGenerator
     private const int MinLeafSize = 8;
     private const int Padding = 1;
 
-    public GenerationResult Generate(Chunk chunk, long seed)
+    private readonly long _seed;
+
+    public BspDungeonGenerator(long seed)
     {
-        var rng = new SeededRandom(seed);
-        var result = new GenerationResult();
+        _seed = seed;
+    }
+
+    public GenerationResult Generate(int chunkX, int chunkY)
+    {
+        var chunk = new Chunk(chunkX, chunkY);
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var rng = new SeededRandom(chunkSeed);
+        var result = new GenerationResult(chunk);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
 
         DungeonHelper.FillWalls(chunk);
 
@@ -42,7 +51,10 @@ public class BspDungeonGenerator : IDungeonGenerator
         DungeonHelper.PlaceStairs(chunk, rooms);
         DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
         DungeonHelper.PlaceDecorations(chunk, biome, rng);
-        DungeonHelper.PopulateRooms(rooms, rng, result);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
         DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         return result;

@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -128,31 +129,49 @@ internal static class DungeonHelper
             }
     }
 
-    public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result)
+    public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY)
     {
         int monsterCount = 1 + rng.Next(3);
         for (int m = 0; m < monsterCount; m++)
         {
             int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
             int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
-            result.SpawnPoints.Add(new SpawnPoint(x, y, SpawnType.Monster));
+            var template = NpcDefinitions.Pick(rng, difficulty);
+            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData { MonsterTypeId = template.TypeId }));
         }
 
         if (rng.Next(100) < 30)
         {
             int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
             int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
-            result.SpawnPoints.Add(new SpawnPoint(x, y, SpawnType.Item));
+            var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
+            int rarityMult = 100 + loot.Rarity * 50;
+            result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y), new ItemData
+            {
+                ItemTypeId = loot.Definition.TypeId,
+                Rarity = loot.Rarity,
+                BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
+                BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
+                BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
+                StackCount = loot.Definition.Stackable
+                    ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
+                    : 1,
+            }));
         }
 
         if (rng.Next(100) < 40)
-            result.SpawnPoints.Add(new SpawnPoint(room.CenterX, room.CenterY, SpawnType.Torch));
+        {
+            result.Elements.Add(new DungeonElement(
+                new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY),
+                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+                new LightSource(6, TileDefinitions.ColorTorchFg)));
+        }
     }
 
-    public static void PopulateRooms(List<Room> rooms, SeededRandom rng, GenerationResult result)
+    public static void PopulateRooms(List<Room> rooms, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY)
     {
         for (int i = 1; i < rooms.Count; i++)
-            PopulateRoom(rooms[i], rng, result);
+            PopulateRoom(rooms[i], rng, result, difficulty, worldOffsetX, worldOffsetY);
     }
 
     public static void ApplyBiomeTint(Chunk chunk, BiomeType biome)

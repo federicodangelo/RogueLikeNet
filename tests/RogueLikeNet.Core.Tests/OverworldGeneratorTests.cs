@@ -9,14 +9,13 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_ProducesFloorTiles()
     {
-        var gen = new OverworldGenerator();
-        var chunk = new Chunk(0, 0);
-        gen.Generate(chunk, 42);
+        var gen = new OverworldGenerator(42);
+        var result = gen.Generate(0, 0);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Floor) floorCount++;
 
         Assert.True(floorCount > 100, $"Expected many floor tiles, got {floorCount}");
     }
@@ -24,14 +23,13 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_HasWalls()
     {
-        var gen = new OverworldGenerator();
-        var chunk = new Chunk(0, 0);
-        gen.Generate(chunk, 42);
+        var gen = new OverworldGenerator(42);
+        var result = gen.Generate(0, 0);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
 
         Assert.True(wallCount > 0, "Overworld should have walls");
     }
@@ -39,47 +37,41 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_IsDeterministic()
     {
-        var gen = new OverworldGenerator();
-        var chunk1 = new Chunk(3, -2);
-        var chunk2 = new Chunk(3, -2);
-        gen.Generate(chunk1, 42);
-        gen.Generate(chunk2, 42);
+        var gen = new OverworldGenerator(42);
+        var result1 = gen.Generate(3, -2);
+        var result2 = gen.Generate(3, -2);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
-                Assert.Equal(chunk1.Tiles[x, y].Type, chunk2.Tiles[x, y].Type);
-                Assert.Equal(chunk1.Tiles[x, y].GlyphId, chunk2.Tiles[x, y].GlyphId);
+                Assert.Equal(result1.Chunk.Tiles[x, y].Type, result2.Chunk.Tiles[x, y].Type);
+                Assert.Equal(result1.Chunk.Tiles[x, y].GlyphId, result2.Chunk.Tiles[x, y].GlyphId);
             }
     }
 
     [Fact]
-    public void Generate_ProducesSpawnPoints()
+    public void Generate_ProducesMonsters()
     {
-        var gen = new OverworldGenerator();
-        // Generate a few chunks to ensure we get spawns
-        int totalSpawns = 0;
+        var gen = new OverworldGenerator(42);
+        // Generate a few chunks to ensure we get monsters
+        int totalMonsters = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var chunk = new Chunk(cx, 0);
-            var result = gen.Generate(chunk, 42);
-            totalSpawns += result.SpawnPoints.Count;
+            var result = gen.Generate(cx, 0);
+            totalMonsters += result.Monsters.Count;
         }
 
-        Assert.True(totalSpawns > 0, "Overworld should produce spawn points");
+        Assert.True(totalMonsters > 0, "Overworld should produce monsters");
     }
 
     [Fact]
     public void Generate_AdjacentChunks_HaveContinuousTerrain()
     {
-        var gen = new OverworldGenerator();
-        long seed = 42;
+        var gen = new OverworldGenerator(42);
 
         // Generate two horizontally adjacent chunks
-        var left = new Chunk(0, 0);
-        var right = new Chunk(1, 0);
-        gen.Generate(left, seed);
-        gen.Generate(right, seed);
+        var left = gen.Generate(0, 0).Chunk;
+        var right = gen.Generate(1, 0).Chunk;
 
         // Check border tiles: the rightmost column of 'left' vs leftmost column of 'right'
         // should not be a solid wall barrier. Count matching floor/wall patterns.
@@ -99,13 +91,10 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_VerticallyAdjacentChunks_HaveContinuousTerrain()
     {
-        var gen = new OverworldGenerator();
-        long seed = 42;
+        var gen = new OverworldGenerator(42);
 
-        var top = new Chunk(0, 0);
-        var bottom = new Chunk(0, 1);
-        gen.Generate(top, seed);
-        gen.Generate(bottom, seed);
+        var top = gen.Generate(0, 0).Chunk;
+        var bottom = gen.Generate(0, 1).Chunk;
 
         int topEdgeFloors = 0;
         int bottomEdgeFloors = 0;
@@ -122,27 +111,25 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_NoVoidTiles()
     {
-        var gen = new OverworldGenerator();
-        var chunk = new Chunk(0, 0);
-        gen.Generate(chunk, 42);
+        var gen = new OverworldGenerator(42);
+        var result = gen.Generate(0, 0);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                Assert.NotEqual(TileType.Void, chunk.Tiles[x, y].Type);
+                Assert.NotEqual(TileType.Void, result.Chunk.Tiles[x, y].Type);
     }
 
     [Fact]
     public void Generate_PlacesDecorations()
     {
-        var gen = new OverworldGenerator();
+        var gen = new OverworldGenerator(42);
         int totalDecorations = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var chunk = new Chunk(cx, 0);
-            gen.Generate(chunk, 42);
+            var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (chunk.Tiles[x, y].Type == TileType.Decoration)
+                    if (result.Chunk.Tiles[x, y].Type == TileType.Decoration)
                         totalDecorations++;
         }
 
@@ -152,16 +139,15 @@ public class OverworldGeneratorTests
     [Fact]
     public void Generate_DifferentSeedsProduceDifferentTerrain()
     {
-        var gen = new OverworldGenerator();
-        var chunk1 = new Chunk(0, 0);
-        var chunk2 = new Chunk(0, 0);
-        gen.Generate(chunk1, 42);
-        gen.Generate(chunk2, 99999);
+        var gen1 = new OverworldGenerator(42);
+        var gen2 = new OverworldGenerator(99999);
+        var result1 = gen1.Generate(0, 0);
+        var result2 = gen2.Generate(0, 0);
 
         int differences = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk1.Tiles[x, y].Type != chunk2.Tiles[x, y].Type)
+                if (result1.Chunk.Tiles[x, y].Type != result2.Chunk.Tiles[x, y].Type)
                     differences++;
 
         Assert.True(differences > 0, "Different seeds should produce different terrain");

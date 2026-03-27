@@ -1,26 +1,27 @@
+using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
+
 namespace RogueLikeNet.Core.Generation;
 
 public interface IDungeonGenerator
 {
-    /// <summary>
-    /// Generates terrain for a chunk and returns spawn points for entities.
-    /// </summary>
-    GenerationResult Generate(World.Chunk chunk, long seed);
+    GenerationResult Generate(int chunkX, int chunkY);
 }
 
 /// <summary>
-/// Describes a position where an entity should be spawned after generation.
+/// An element placed in the dungeon with a visual appearance and optional light source.
 /// </summary>
-public readonly record struct SpawnPoint(int LocalX, int LocalY, SpawnType Type);
-
-public enum SpawnType
-{
-    Monster,
-    Item,
-    Torch,
-}
+public readonly record struct DungeonElement(Position Position, TileAppearance Appearance, LightSource? Light);
 
 public class GenerationResult
 {
-    public List<SpawnPoint> SpawnPoints { get; } = new();
+    public Chunk Chunk { get; }
+    public List<(Position Position, MonsterData Monster)> Monsters { get; } = new();
+    public List<(Position Position, ItemData Item)> Items { get; } = new();
+    public List<DungeonElement> Elements { get; } = new();
+
+    public GenerationResult(Chunk chunk)
+    {
+        Chunk = chunk;
+    }
 }

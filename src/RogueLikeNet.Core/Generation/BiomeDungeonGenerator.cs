@@ -13,15 +13,24 @@ namespace RogueLikeNet.Core.Generation;
 /// </summary>
 public class BiomeDungeonGenerator : IDungeonGenerator
 {
-    private readonly BspDungeonGenerator _bsp = new();
-    private readonly CellularAutomataCaveGenerator _cave = new();
-    private readonly DirectionalTunnelGenerator _tunnel = new();
+    private readonly BspDungeonGenerator _bsp;
+    private readonly CellularAutomataCaveGenerator _cave;
+    private readonly DirectionalTunnelGenerator _tunnel;
+    private readonly long _seed;
 
-    public GenerationResult Generate(Chunk chunk, long seed)
+    public BiomeDungeonGenerator(long seed)
     {
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunk.ChunkX, chunk.ChunkY, seed);
+        _seed = seed;
+        _bsp = new BspDungeonGenerator(seed);
+        _cave = new CellularAutomataCaveGenerator(seed);
+        _tunnel = new DirectionalTunnelGenerator(seed);
+    }
+
+    public GenerationResult Generate(int chunkX, int chunkY)
+    {
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
         var generator = PickGenerator(biome);
-        return generator.Generate(chunk, seed);
+        return generator.Generate(chunkX, chunkY);
     }
 
     private IDungeonGenerator PickGenerator(BiomeType biome) => biome switch

@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
@@ -86,6 +87,22 @@ public static class ItemDefinitions
         rarity = Math.Min(4, rarity + difficulty / 3);
 
         return new Loot(def, rarity);
+    }
+
+    public static ItemData GenerateItemData(ItemDefinition def, int rarity, SeededRandom rnd)
+    {
+        int rarityMult = 100 + rarity * 50;
+        return new ItemData
+        {
+            ItemTypeId = def.TypeId,
+            Rarity = rarity,
+            BonusAttack = def.BaseAttack * rarityMult / 100,
+            BonusDefense = def.BaseDefense * rarityMult / 100,
+            BonusHealth = def.BaseHealth * rarityMult / 100,
+            StackCount = def.Stackable
+                    ? (def.Category == ItemDefinitions.CategoryGold ? 10 + rnd.Next(50) : 1)
+                    : 1,
+        };
     }
 }
 
