@@ -52,7 +52,7 @@ public static class ItemDefinitions
     /// <summary>
     /// Generates a random item with optional rarity bonus.
     /// </summary>
-    public static (ItemDefinition Definition, int Rarity) GenerateLoot(SeededRandom rng, int difficulty)
+    public static Loot GenerateLoot(SeededRandom rng, int difficulty)
     {
         // Pick category weighted: 30% weapon, 25% armor, 25% potion, 20% gold
         int roll = rng.Next(100);
@@ -78,7 +78,7 @@ public static class ItemDefinitions
         // Higher difficulty slightly boosts rarity
         rarity = Math.Min(4, rarity + difficulty / 3);
 
-        return (def, rarity);
+        return new Loot(def, rarity);
     }
 }
 
@@ -91,3 +91,5 @@ public readonly record struct ItemDefinition(
     int BaseAttack, int BaseDefense, int BaseHealth,
     bool Stackable, int MaxStackSize
 );
+
+public readonly record struct Loot(ItemDefinition Definition, int Rarity);

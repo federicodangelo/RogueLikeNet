@@ -88,8 +88,8 @@ public class GameEngine : IDisposable
                     break;
 
                 case SpawnType.Item:
-                    var (itemDef, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                    SpawnItemOnGround(itemDef, rarity, wx, wy);
+                    var loot = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                    SpawnItemOnGround(loot.Definition, loot.Rarity, wx, wy);
                     break;
 
                 case SpawnType.Torch:
