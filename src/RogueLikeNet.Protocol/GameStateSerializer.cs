@@ -9,11 +9,6 @@ using Chunk = RogueLikeNet.Core.World.Chunk;
 namespace RogueLikeNet.Protocol;
 
 /// <summary>
-/// Compact snapshot of entity state for delta comparison.
-/// </summary>
-public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius, int ItemTypeId, int ItemRarity);
-
-/// <summary>
 /// Shared helpers for building snapshot/delta/HUD messages from game state.
 /// </summary>
 public static class GameStateSerializer
@@ -97,14 +92,15 @@ public static class GameStateSerializer
     /// <summary>
     /// Builds a delta-compressed entity update for a specific player.
     /// Only includes entities visible to the player's FOV, and marks
-    /// previously-visible entities that left FOV as Removed.
+    /// previously-visible entities that left FOV as removed.
     /// Returns updated previousState for the next tick.
     /// </summary>
-    public static EntityUpdateMsg[] SerializeEntityUpdatesDelta(
-        World world, FOVData fov,
-        Dictionary<long, EntitySnapshot> previousState)
+    public static SerializedEntityData SerializeEntityDelta(World world, FOVData fov,
+            Dictionary<long, EntityUpdateMsg> previousState)
     {
-        var updates = new List<EntityUpdateMsg>();
+        var fullUpdates = new List<EntityUpdateMsg>();
+        var positionHealthUpdates = new List<EntityPositionHealthMsg>();
+        var removals = new List<EntityRemovedMsg>();
         var currentIds = new HashSet<long>();
         var query = new QueryDescription().WithAll<Position, TileAppearance>();
 
@@ -123,47 +119,63 @@ public static class GameStateSerializer
                 maxHp = health.Max;
             }
             int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
-            int itemTypeId = -1;
-            int itemRarity = 0;
+            ItemDataMsg? item = null;
             if (world.Has<GroundItemTag>(e) && world.Has<ItemData>(e))
             {
                 var itemData = world.Get<ItemData>(e);
-                itemTypeId = itemData.ItemTypeId;
-                itemRarity = itemData.Rarity;
-            }
-
-            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius, itemTypeId, itemRarity);
-
-            // Only send if changed or new
-            if (!previousState.TryGetValue(id, out var prev) || prev != snap)
-            {
-                updates.Add(new EntityUpdateMsg
+                item = new ItemDataMsg
                 {
-                    Id = id,
-                    X = ePos.X,
-                    Y = ePos.Y,
-                    GlyphId = appearance.GlyphId,
-                    FgColor = appearance.FgColor,
-                    Health = hp,
-                    MaxHealth = maxHp,
-                    LightRadius = lightRadius,
-                    ItemTypeId = itemTypeId,
-                    ItemRarity = itemRarity,
-                });
+                    ItemTypeId = itemData.ItemTypeId,
+                    Rarity = itemData.Rarity,
+                    Category = ItemDefinitions.Get(itemData.ItemTypeId).Category,
+                    StackCount = itemData.StackCount,
+                    BonusAttack = itemData.BonusAttack,
+                    BonusDefense = itemData.BonusDefense,
+                    BonusHealth = itemData.BonusHealth,
+                };
             }
 
-            previousState[id] = snap;
+            var current = new EntityUpdateMsg
+            {
+                Id = id,
+                X = ePos.X,
+                Y = ePos.Y,
+                GlyphId = appearance.GlyphId,
+                FgColor = appearance.FgColor,
+                Health = hp,
+                MaxHealth = maxHp,
+                LightRadius = lightRadius,
+                Item = item,
+            };
+
+            if (previousState.TryGetValue(id, out var prev))
+            {
+                if (!current.SameValues(prev))
+                {
+                    if (current.HasOnlyPositionHealthChanges(prev))
+                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ePos.X, Y = ePos.Y, Health = hp });
+                    else
+                        fullUpdates.Add(current);
+                }
+            }
+            else
+            {
+                // New entity
+                fullUpdates.Add(current);
+            }
+
+            previousState[id] = current;
         });
 
-        // Entities that were visible last tick but are no longer → mark Removed
+        // Entities that were visible last tick but are no longer → removed
         var staleIds = previousState.Keys.Where(id => !currentIds.Contains(id)).ToList();
         foreach (var id in staleIds)
         {
-            updates.Add(new EntityUpdateMsg { Id = id, Removed = true });
+            removals.Add(new EntityRemovedMsg { Id = id });
             previousState.Remove(id);
         }
 
-        return updates.ToArray();
+        return new SerializedEntityData(fullUpdates.ToArray(), positionHealthUpdates.ToArray(), removals.ToArray());
     }
 
     public static CombatEventMsg[] SerializeCombatEvents(GameEngine engine)
@@ -196,11 +208,13 @@ public static class GameStateSerializer
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
             Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),
-            InventoryItems = stateData.InventoryItems.Select(i => new InventoryItemMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category, BonusAttack = i.BonusAttack, BonusDefense = i.BonusDefense, BonusHealth = i.BonusHealth }).ToArray(),
-            EquippedWeapon = stateData.EquippedWeapon.HasValue ? new InventoryItemMsg { ItemTypeId = stateData.EquippedWeapon.Value.ItemTypeId, StackCount = stateData.EquippedWeapon.Value.StackCount, Rarity = stateData.EquippedWeapon.Value.Rarity, Category = stateData.EquippedWeapon.Value.Category, BonusAttack = stateData.EquippedWeapon.Value.BonusAttack, BonusDefense = stateData.EquippedWeapon.Value.BonusDefense, BonusHealth = stateData.EquippedWeapon.Value.BonusHealth } : null,
-            EquippedArmor = stateData.EquippedArmor.HasValue ? new InventoryItemMsg { ItemTypeId = stateData.EquippedArmor.Value.ItemTypeId, StackCount = stateData.EquippedArmor.Value.StackCount, Rarity = stateData.EquippedArmor.Value.Rarity, Category = stateData.EquippedArmor.Value.Category, BonusAttack = stateData.EquippedArmor.Value.BonusAttack, BonusDefense = stateData.EquippedArmor.Value.BonusDefense, BonusHealth = stateData.EquippedArmor.Value.BonusHealth } : null,
+            InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category, BonusAttack = i.BonusAttack, BonusDefense = i.BonusDefense, BonusHealth = i.BonusHealth }).ToArray(),
+            EquippedWeapon = stateData.EquippedWeapon.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedWeapon.Value.ItemTypeId, StackCount = stateData.EquippedWeapon.Value.StackCount, Rarity = stateData.EquippedWeapon.Value.Rarity, Category = stateData.EquippedWeapon.Value.Category, BonusAttack = stateData.EquippedWeapon.Value.BonusAttack, BonusDefense = stateData.EquippedWeapon.Value.BonusDefense, BonusHealth = stateData.EquippedWeapon.Value.BonusHealth } : null,
+            EquippedArmor = stateData.EquippedArmor.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedArmor.Value.ItemTypeId, StackCount = stateData.EquippedArmor.Value.StackCount, Rarity = stateData.EquippedArmor.Value.Rarity, Category = stateData.EquippedArmor.Value.Category, BonusAttack = stateData.EquippedArmor.Value.BonusAttack, BonusDefense = stateData.EquippedArmor.Value.BonusDefense, BonusHealth = stateData.EquippedArmor.Value.BonusHealth } : null,
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = playerEntity.Id,
         };
     }
 }
+
+public readonly record struct SerializedEntityData(EntityUpdateMsg[] FullUpdates, EntityPositionHealthMsg[] PositionHealthUpdates, EntityRemovedMsg[] Removals);

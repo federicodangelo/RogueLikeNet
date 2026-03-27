@@ -62,9 +62,9 @@ public class WorldDeltaMsgTests
                 new SkillSlotMsg { Id = 3, Cooldown = 10, Name = "" },
             ],
             InventoryItems = [
-                new InventoryItemMsg { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryWeapon },
-                new InventoryItemMsg { ItemTypeId = ItemDefinitions.Shield, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryArmor },
-                new InventoryItemMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
+                new ItemDataMsg { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryWeapon },
+                new ItemDataMsg { ItemTypeId = ItemDefinitions.Shield, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryArmor },
+                new ItemDataMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
             ],
         };
         var data = NetSerializer.Serialize(msg);
@@ -146,7 +146,7 @@ public class WorldDeltaMsgTests
             FgColor = 0xFF0000,
             Health = 80,
             MaxHealth = 100,
-            Removed = true
+            Item = new ItemDataMsg { ItemTypeId = 5, Rarity = 2, Category = 1, StackCount = 1, BonusAttack = 3 },
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<EntityUpdateMsg>(data);
@@ -157,7 +157,30 @@ public class WorldDeltaMsgTests
         Assert.Equal(0xFF0000, result.FgColor);
         Assert.Equal(80, result.Health);
         Assert.Equal(100, result.MaxHealth);
-        Assert.True(result.Removed);
+        Assert.NotNull(result.Item);
+        Assert.Equal(5, result.Item!.Value.ItemTypeId);
+        Assert.Equal(2, result.Item!.Value.Rarity);
+    }
+
+    [Fact]
+    public void EntityPositionMsg_RoundTrip()
+    {
+        var msg = new EntityPositionHealthMsg { Id = 7, X = 3, Y = 4, Health = 50 };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<EntityPositionHealthMsg>(data);
+        Assert.Equal(7, result.Id);
+        Assert.Equal(3, result.X);
+        Assert.Equal(4, result.Y);
+        Assert.Equal(50, result.Health);
+    }
+
+    [Fact]
+    public void EntityRemovedMsg_RoundTrip()
+    {
+        var msg = new EntityRemovedMsg { Id = 99 };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<EntityRemovedMsg>(data);
+        Assert.Equal(99, result.Id);
     }
 
     [Fact]
@@ -202,11 +225,11 @@ public class WorldDeltaMsgTests
                 new SkillSlotMsg { Id = 4, Cooldown = 0, Name = "Dodge" },
             ],
             InventoryItems = [
-                new InventoryItemMsg { ItemTypeId = ItemDefinitions.LongSword, StackCount = 1, Rarity = 2, Category = ItemDefinitions.CategoryWeapon },
-                new InventoryItemMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
+                new ItemDataMsg { ItemTypeId = ItemDefinitions.LongSword, StackCount = 1, Rarity = 2, Category = ItemDefinitions.CategoryWeapon },
+                new ItemDataMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
             ],
-            EquippedWeapon = new InventoryItemMsg { ItemTypeId = ItemDefinitions.LongSword, Rarity = 0, Category = ItemDefinitions.CategoryWeapon, BonusAttack = 5 },
-            EquippedArmor = new InventoryItemMsg { ItemTypeId = ItemDefinitions.ChainMail, Rarity = 0, Category = ItemDefinitions.CategoryArmor, BonusDefense = 4 },
+            EquippedWeapon = new ItemDataMsg { ItemTypeId = ItemDefinitions.LongSword, Rarity = 0, Category = ItemDefinitions.CategoryWeapon, BonusAttack = 5 },
+            EquippedArmor = new ItemDataMsg { ItemTypeId = ItemDefinitions.ChainMail, Rarity = 0, Category = ItemDefinitions.CategoryArmor, BonusDefense = 4 },
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<PlayerStateMsg>(data);

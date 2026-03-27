@@ -12,8 +12,26 @@ public class EntityUpdateMsg
     [Key(4)] public int FgColor { get; set; }
     [Key(5)] public int Health { get; set; }
     [Key(6)] public int MaxHealth { get; set; }
-    [Key(7)] public bool Removed { get; set; }
-    [Key(8)] public int LightRadius { get; set; }
-    [Key(9)] public int ItemTypeId { get; set; } = -1;
-    [Key(10)] public int ItemRarity { get; set; }
+    [Key(7)] public int LightRadius { get; set; }
+    [Key(8)] public ItemDataMsg? Item { get; set; }
+
+    /// <summary>
+    /// Returns true when only X, Y, or Health differ from <paramref name="other"/>.
+    /// </summary>
+    public bool HasOnlyPositionHealthChanges(EntityUpdateMsg other) =>
+        Id == other.Id &&
+        GlyphId == other.GlyphId &&
+        FgColor == other.FgColor &&
+        MaxHealth == other.MaxHealth &&
+        LightRadius == other.LightRadius &&
+        ItemDataMsg.Equals(Item, other.Item);
+
+    /// <summary>
+    /// Value equality
+    /// </summary>
+    public bool SameValues(EntityUpdateMsg other) =>
+        HasOnlyPositionHealthChanges(other) &&
+        X == other.X &&
+        Y == other.Y &&
+        Health == other.Health;
 }

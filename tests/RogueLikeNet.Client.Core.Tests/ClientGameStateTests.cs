@@ -295,7 +295,8 @@ public class ClientGameStateTests
             Chunks = [],
             TileUpdates = [],
             CombatEvents = [],
-            EntityUpdates = [new EntityUpdateMsg { Id = 99, Removed = true }],
+            EntityUpdates = [],
+            EntityRemovals = [new EntityRemovedMsg { Id = 99 }],
         });
 
         Assert.False(state.Entities.ContainsKey(99));

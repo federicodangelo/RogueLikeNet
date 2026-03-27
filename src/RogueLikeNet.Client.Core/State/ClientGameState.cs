@@ -78,15 +78,9 @@ public class ClientGameState
             }
         }
 
-        // Update entities (delta-compressed: only changed/new/removed entities are included)
+        // Update entities — full updates (new or changed)
         foreach (var entityUpdate in delta.EntityUpdates)
         {
-            if (entityUpdate.Removed)
-            {
-                _entities.Remove(entityUpdate.Id);
-                continue;
-            }
-
             if (!_entities.TryGetValue(entityUpdate.Id, out var entity))
             {
                 entity = new ClientEntity { Id = entityUpdate.Id };
@@ -100,9 +94,23 @@ public class ClientGameState
             entity.Health = entityUpdate.Health;
             entity.MaxHealth = entityUpdate.MaxHealth;
             entity.LightRadius = entityUpdate.LightRadius;
-            entity.ItemTypeId = entityUpdate.ItemTypeId;
-            entity.ItemRarity = entityUpdate.ItemRarity;
+            entity.Item = entityUpdate.Item;
         }
+
+        // Position-health-only updates (X, Y, Health changed)
+        foreach (var posHealthUpdate in delta.EntityPositionHealthUpdates)
+        {
+            if (_entities.TryGetValue(posHealthUpdate.Id, out var entity))
+            {
+                entity.X = posHealthUpdate.X;
+                entity.Y = posHealthUpdate.Y;
+                entity.Health = posHealthUpdate.Health;
+            }
+        }
+
+        // Entity removals
+        foreach (var removal in delta.EntityRemovals)
+            _entities.Remove(removal.Id);
 
         if (delta.PlayerState != null)
             PlayerState = delta.PlayerState;
@@ -138,8 +146,8 @@ public class ClientGameState
         var items = new List<(int, int)>();
         foreach (var entity in _entities.Values)
         {
-            if (entity.ItemTypeId >= 0 && entity.X == PlayerX && entity.Y == PlayerY)
-                items.Add((entity.ItemTypeId, entity.ItemRarity));
+            if (entity.Item.HasValue && entity.X == PlayerX && entity.Y == PlayerY)
+                items.Add((entity.Item.Value.ItemTypeId, entity.Item.Value.Rarity));
         }
         return items.ToArray();
     }
@@ -250,6 +258,5 @@ public class ClientEntity
     public int Health { get; set; }
     public int MaxHealth { get; set; }
     public int LightRadius { get; set; }
-    public int ItemTypeId { get; set; } = -1;
-    public int ItemRarity { get; set; }
+    public ItemDataMsg? Item { get; set; }
 }

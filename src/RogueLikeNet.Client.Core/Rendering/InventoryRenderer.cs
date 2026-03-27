@@ -190,7 +190,7 @@ public sealed class InventoryRenderer
             return;
 
         // Find the currently equipped item in the same slot
-        InventoryItemMsg? equipped = def.Category == ItemDefinitions.CategoryWeapon
+        ItemDataMsg? equipped = def.Category == ItemDefinitions.CategoryWeapon
             ? hud.EquippedWeapon : hud.EquippedArmor;
 
         int eqAtk = equipped?.BonusAttack ?? 0;

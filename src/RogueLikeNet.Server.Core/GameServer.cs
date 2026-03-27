@@ -278,13 +278,17 @@ public class GameServer : IDisposable
             conn.LastSentHudBytes = stateBytes;
         }
 
+        var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.EcsWorld, fov, conn.LastSentEntities);
+
         return new WorldDeltaMsg
         {
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
             IsSnapshot = isSnapshot,
             Chunks = newChunks,
-            EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(_engine.EcsWorld, fov, conn.LastSentEntities),
+            EntityUpdates = serializedEntityData.FullUpdates,
+            EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
+            EntityRemovals = serializedEntityData.Removals,
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
             PlayerState = deltaState,
         };

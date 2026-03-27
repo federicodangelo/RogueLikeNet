@@ -9,18 +9,29 @@ namespace RogueLikeNet.Protocol.Tests;
 public class GameStateSerializerTests
 {
     [Fact]
-    public void EntitySnapshot_EqualityWorks()
+    public void EntityUpdateMsg_SameValues_DetectsEquality()
     {
-        var a = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0, -1, 0);
-        var b = new EntitySnapshot(1, 2, 64, 0xFFFFFF, 10, 10, 0, -1, 0);
-        var c = new EntitySnapshot(1, 3, 64, 0xFFFFFF, 10, 10, 0, -1, 0);
+        var a = new EntityUpdateMsg { Id = 1, X = 2, Y = 3, GlyphId = 64, FgColor = 0xFFFFFF, Health = 10, MaxHealth = 10 };
+        var b = new EntityUpdateMsg { Id = 1, X = 2, Y = 3, GlyphId = 64, FgColor = 0xFFFFFF, Health = 10, MaxHealth = 10 };
+        var c = new EntityUpdateMsg { Id = 1, X = 2, Y = 4, GlyphId = 64, FgColor = 0xFFFFFF, Health = 10, MaxHealth = 10 };
 
-        Assert.Equal(a, b);
-        Assert.NotEqual(a, c);
+        Assert.True(a.SameValues(b));
+        Assert.False(a.SameValues(c));
     }
 
     [Fact]
-    public void SerializeEntityUpdatesDelta_OnlyReturnsChangedEntities()
+    public void EntityUpdateMsg_HasOnlyPositionChanges_DetectsDiff()
+    {
+        var prev = new EntityUpdateMsg { Id = 1, X = 2, Y = 3, GlyphId = 64, FgColor = 0xFFFFFF, Health = 10, MaxHealth = 10 };
+        var posOnly = new EntityUpdateMsg { Id = 1, X = 5, Y = 6, GlyphId = 64, FgColor = 0xFFFFFF, Health = 8, MaxHealth = 10 };
+        var full = new EntityUpdateMsg { Id = 1, X = 5, Y = 6, GlyphId = 65, FgColor = 0xFFFFFF, Health = 8, MaxHealth = 10 };
+
+        Assert.True(posOnly.HasOnlyPositionHealthChanges(prev));
+        Assert.False(full.HasOnlyPositionHealthChanges(prev));
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_OnlyReturnsChangedEntities()
     {
         var world = World.Create();
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF), new Health(10));
@@ -28,23 +39,26 @@ public class GameStateSerializerTests
         var fov = new FOVData(10);
         fov.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
 
-        var previousState = new Dictionary<long, EntitySnapshot>();
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
 
-        // First call — entity is new, should be included
-        var result1 = GameStateSerializer.SerializeEntityUpdatesDelta(world, fov, previousState);
-        Assert.Single(result1);
-        Assert.Equal(entity.Id, result1[0].Id);
-        Assert.False(result1[0].Removed);
+        // First call — entity is new, should be included as full update
+        var (full1, pos1, rem1) = GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
+        Assert.Single(full1);
+        Assert.Equal(entity.Id, full1[0].Id);
+        Assert.Empty(pos1);
+        Assert.Empty(rem1);
 
-        // Second call — nothing changed, entity should NOT be included
-        var result2 = GameStateSerializer.SerializeEntityUpdatesDelta(world, fov, previousState);
-        Assert.Empty(result2);
+        // Second call — nothing changed, should NOT be included
+        var (full2, pos2, rem2) = GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
+        Assert.Empty(full2);
+        Assert.Empty(pos2);
+        Assert.Empty(rem2);
 
         World.Destroy(world);
     }
 
     [Fact]
-    public void SerializeEntityUpdatesDelta_IncludesEntityWhenPositionChanges()
+    public void SerializeEntityDelta_PositionOnlyUpdate()
     {
         var world = World.Create();
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
@@ -53,23 +67,25 @@ public class GameStateSerializerTests
         fov.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
         fov.VisibleTiles!.Add(FOVData.PackCoord(6, 5));
 
-        var previousState = new Dictionary<long, EntitySnapshot>();
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
 
         // Seed previous state
-        GameStateSerializer.SerializeEntityUpdatesDelta(world, fov, previousState);
+        GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
 
-        // Move entity
+        // Move entity — only position changed
         world.Set(entity, new Position(6, 5));
 
-        var result = GameStateSerializer.SerializeEntityUpdatesDelta(world, fov, previousState);
-        Assert.Single(result);
-        Assert.Equal(6, result[0].X);
+        var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
+        Assert.Empty(full);
+        Assert.Single(pos);
+        Assert.Equal(6, pos[0].X);
+        Assert.Empty(rem);
 
         World.Destroy(world);
     }
 
     [Fact]
-    public void SerializeEntityUpdatesDelta_MarksRemovedEntitiesLeavingFOV()
+    public void SerializeEntityDelta_RemovedEntitiesLeavingFOV()
     {
         var world = World.Create();
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
@@ -77,19 +93,20 @@ public class GameStateSerializerTests
         var fovAll = new FOVData(10);
         fovAll.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
 
-        var previousState = new Dictionary<long, EntitySnapshot>();
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
 
         // Seed previous state — entity visible
-        GameStateSerializer.SerializeEntityUpdatesDelta(world, fovAll, previousState);
+        GameStateSerializer.SerializeEntityDelta(world, fov: fovAll, previousState);
 
         // Now entity moves out of FOV (or FOV shrinks)
         var fovNone = new FOVData(10);
         // No visible tiles
 
-        var result = GameStateSerializer.SerializeEntityUpdatesDelta(world, fovNone, previousState);
-        Assert.Single(result);
-        Assert.Equal(entity.Id, result[0].Id);
-        Assert.True(result[0].Removed);
+        var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(world, fovNone, previousState);
+        Assert.Empty(full);
+        Assert.Empty(pos);
+        Assert.Single(rem);
+        Assert.Equal(entity.Id, rem[0].Id);
         Assert.Empty(previousState); // Cleaned up
 
         World.Destroy(world);
@@ -128,14 +145,17 @@ public class GameStateSerializerTests
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
         ref var fov = ref engine.EcsWorld.Get<FOVData>(player);
 
-        var previousState = new Dictionary<long, EntitySnapshot>();
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+        var (fullUpdates, posUpdates, removals) = GameStateSerializer.SerializeEntityDelta(engine.EcsWorld, fov, previousState);
         var snapshot = new WorldDeltaMsg
         {
             FromTick = 0,
             ToTick = engine.CurrentTick,
             IsSnapshot = true,
             Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y),
-            EntityUpdates = GameStateSerializer.SerializeEntityUpdatesDelta(engine.EcsWorld, fov, previousState),
+            EntityUpdates = fullUpdates,
+            EntityPositionHealthUpdates = posUpdates,
+            EntityRemovals = removals,
             PlayerState = GameStateSerializer.BuildPlayerState(engine, player),
         };
 
