@@ -2,8 +2,9 @@ using MessagePack;
 
 namespace RogueLikeNet.Protocol.Messages;
 
+// This needs to be a struct, otherwise it doesn't play well with MessagePackSerializer AOT compilation.
 [MessagePackObject]
-public struct ItemDataMsg
+public class ItemDataMsg
 {
     [Key(0)] public int ItemTypeId { get; set; }
     [Key(1)] public int StackCount { get; set; }
@@ -17,15 +18,13 @@ public struct ItemDataMsg
     {
         if (a is null) return b is null;
         if (b is null) return false;
-        var av = a.Value;
-        var bv = b.Value;
         return
-            av.ItemTypeId == bv.ItemTypeId &&
-            av.StackCount == bv.StackCount &&
-            av.Rarity == bv.Rarity &&
-            av.Category == bv.Category &&
-            av.BonusAttack == bv.BonusAttack &&
-            av.BonusDefense == bv.BonusDefense &&
-            av.BonusHealth == bv.BonusHealth;
+            a.ItemTypeId == b.ItemTypeId &&
+            a.StackCount == b.StackCount &&
+            a.Rarity == b.Rarity &&
+            a.Category == b.Category &&
+            a.BonusAttack == b.BonusAttack &&
+            a.BonusDefense == b.BonusDefense &&
+            a.BonusHealth == b.BonusHealth;
     }
 }

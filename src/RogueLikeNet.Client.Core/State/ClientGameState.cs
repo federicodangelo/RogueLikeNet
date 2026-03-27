@@ -147,8 +147,8 @@ public class ClientGameState
         var items = new List<(int, int)>();
         foreach (var entity in _entities.Values)
         {
-            if (entity.Item.HasValue && entity.X == PlayerX && entity.Y == PlayerY)
-                items.Add((entity.Item.Value.ItemTypeId, entity.Item.Value.Rarity));
+            if (entity.Item != null && entity.X == PlayerX && entity.Y == PlayerY)
+                items.Add((entity.Item.ItemTypeId, entity.Item.Rarity));
         }
         return items.ToArray();
     }

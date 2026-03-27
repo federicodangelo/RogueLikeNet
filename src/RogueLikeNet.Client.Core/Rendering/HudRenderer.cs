@@ -105,10 +105,10 @@ public sealed class HudRenderer
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
                     if (row >= maxRow) break;
                     {
-                        string wpn = hud.EquippedWeapon.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.Value.ItemTypeId, hud.EquippedWeapon.Value.Rarity) : "---";
-                        string arm = hud.EquippedArmor.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.Value.ItemTypeId, hud.EquippedArmor.Value.Rarity) : "---";
-                        var wpnColor = hud.EquippedWeapon.HasValue ? AsciiDraw.RarityColor(hud.EquippedWeapon.Value.Rarity) : RenderingTheme.Item;
-                        var armColor = hud.EquippedArmor.HasValue ? AsciiDraw.RarityColor(hud.EquippedArmor.Value.Rarity) : RenderingTheme.Item;
+                        string wpn = hud.EquippedWeapon != null ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.ItemTypeId, hud.EquippedWeapon.Rarity) : "---";
+                        string arm = hud.EquippedArmor != null ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.ItemTypeId, hud.EquippedArmor.Rarity) : "---";
+                        var wpnColor = hud.EquippedWeapon != null ? AsciiDraw.RarityColor(hud.EquippedWeapon.Rarity) : RenderingTheme.Item;
+                        var armColor = hud.EquippedArmor != null ? AsciiDraw.RarityColor(hud.EquippedArmor.Rarity) : RenderingTheme.Item;
                         AsciiDraw.DrawString(r, col, row, $"W: {wpn}", wpnColor); row++;
                         if (row >= maxRow) break;
                         AsciiDraw.DrawString(r, col, row, $"A: {arm}", armColor);

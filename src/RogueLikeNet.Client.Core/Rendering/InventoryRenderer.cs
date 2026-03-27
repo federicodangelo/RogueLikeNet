@@ -236,10 +236,10 @@ public sealed class InventoryRenderer
         {
             bool sel = focused && section.SelectedIndex == 0;
             string prefix = sel ? "\u25ba" : " ";
-            string wpn = hud.EquippedWeapon.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.Value.ItemTypeId, hud.EquippedWeapon.Value.Rarity) : "---";
+            string wpn = hud.EquippedWeapon != null ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.ItemTypeId, hud.EquippedWeapon.Rarity) : "---";
             string text = $"{prefix}[W][Wpn]{wpn}";
             if (text.Length > innerW) text = text[..innerW];
-            var wpnColor = sel ? RenderingTheme.InvSel : hud.EquippedWeapon.HasValue ? AsciiDraw.RarityColor(hud.EquippedWeapon.Value.Rarity) : RenderingTheme.Item;
+            var wpnColor = sel ? RenderingTheme.InvSel : hud.EquippedWeapon != null ? AsciiDraw.RarityColor(hud.EquippedWeapon.Rarity) : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, wpnColor);
             row++;
         }
@@ -247,10 +247,10 @@ public sealed class InventoryRenderer
         {
             bool sel = focused && section.SelectedIndex == 1;
             string prefix = sel ? "\u25ba" : " ";
-            string arm = hud.EquippedArmor.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.Value.ItemTypeId, hud.EquippedArmor.Value.Rarity) : "---";
+            string arm = hud.EquippedArmor != null ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.ItemTypeId, hud.EquippedArmor.Rarity) : "---";
             string text = $"{prefix}[A][Arm]{arm}";
             if (text.Length > innerW) text = text[..innerW];
-            var armColor = sel ? RenderingTheme.InvSel : hud.EquippedArmor.HasValue ? AsciiDraw.RarityColor(hud.EquippedArmor.Value.Rarity) : RenderingTheme.Item;
+            var armColor = sel ? RenderingTheme.InvSel : hud.EquippedArmor != null ? AsciiDraw.RarityColor(hud.EquippedArmor.Rarity) : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, armColor);
         }
     }
