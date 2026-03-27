@@ -323,8 +323,10 @@ public class GameEngine : IDisposable
             int lx = hx - 0 * Chunk.Size;
             int ly = hy - 0 * Chunk.Size;
             if (lx >= 0 && lx < Chunk.Size && ly >= 0 && ly < Chunk.Size
-                && chunk.Tiles[lx, ly].Type == TileType.Floor)
+                && chunk.Tiles[lx, ly].IsWalkable)
+            {
                 return (hx, hy);
+            }
         }
 
         // Collect enemy positions to enforce safety radius

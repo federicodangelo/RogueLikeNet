@@ -9,9 +9,7 @@ namespace RogueLikeNet.Protocol.Messages;
 public class NetworkEnvelope
 {
     [Key(0)] public byte MessageType { get; set; }
-    /// <summary>1 if Payload is deflate-compressed, 0 otherwise.</summary>
-    [Key(1)] public byte IsCompressed { get; set; } = 0;
-    [Key(2)] public byte[] Payload { get; set; } = [];
+    [Key(1)] public byte[] Payload { get; set; } = [];
 }
 
 

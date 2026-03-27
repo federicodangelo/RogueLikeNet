@@ -89,6 +89,7 @@ public class OverworldGenerator : IDungeonGenerator
 
         // Pass 2: Determine per-tile biome and apply tint + decorations + liquids
         for (int lx = 0; lx < Chunk.Size; lx++)
+        {
             for (int ly = 0; ly < Chunk.Size; ly++)
             {
                 double wx = worldOffsetX + lx;
@@ -180,31 +181,29 @@ public class OverworldGenerator : IDungeonGenerator
                     }
                 }
             }
-        // Spawn point: find a floor tile near the center of the origin chunk
+        }
+
         if (chunkX == 0 && chunkY == 0)
         {
-            int midX = Chunk.Size / 2;
-            int midY = Chunk.Size / 2;
-            // Spiral outward from center until we find an open floor tile
-            bool spawnFound = false;
-            for (int radius = 0; radius < Chunk.Size / 2 && !spawnFound; radius++)
+            // Find spawn point for starting chunk: look for a floor tile near the center, and clear nearby area for safety
+            var spawnPoint = DungeonHelper.FindSpawnPoint(chunk);
+            if (spawnPoint != null)
             {
-                for (int dx = -radius; dx <= radius && !spawnFound; dx++)
-                {
-                    for (int dy = -radius; dy <= radius && !spawnFound; dy++)
-                    {
-                        if (Math.Abs(dx) != radius && Math.Abs(dy) != radius) continue;
-                        int cx = midX + dx, cy = midY + dy;
-                        if (cx < 1 || cy < 1 || cx >= Chunk.Size - 1 || cy >= Chunk.Size - 1) continue;
-                        if (chunk.Tiles[cx, cy].Type == TileType.Floor)
-                        {
-                            result.SpawnPosition = (worldOffsetX + cx, worldOffsetY + cy);
-                            spawnFound = true;
-                        }
-                    }
-                }
+                result.SpawnPosition = spawnPoint.Value;
+
+                const int ClearRadius = 7;
+                DungeonHelper.RemoveEnemiesInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
+                DungeonHelper.MakeTilesFloorInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
+
+                // Add torch
+                result.Elements.Add(new DungeonElement(
+                    new Position(spawnPoint.Value.X, spawnPoint.Value.Y),
+                    new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+                    new LightSource(6, TileDefinitions.ColorTorchFg))
+                );
             }
         }
+
         return result;
     }
 }

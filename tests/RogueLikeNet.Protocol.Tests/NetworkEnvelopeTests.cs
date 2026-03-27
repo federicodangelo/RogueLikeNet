@@ -10,7 +10,6 @@ public class NetworkEnvelopeTests
         var msg = new NetworkEnvelope();
         Assert.Equal(0, msg.MessageType);
         Assert.Empty(msg.Payload);
-        Assert.Equal(0, msg.IsCompressed);
     }
 
     [Fact]

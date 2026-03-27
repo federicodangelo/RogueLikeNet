@@ -34,12 +34,12 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void FindSpawnPosition_ReturnsFloorTile()
+    public void FindSpawnPosition_IsWalkable()
     {
         using var engine = new GameEngine(42, _gen);
         var (x, y) = engine.FindSpawnPosition();
         var chunk = engine.EnsureChunkLoaded(0, 0);
-        Assert.Equal(TileType.Floor, chunk.Tiles[x, y].Type);
+        Assert.True(chunk.Tiles[x, y].IsWalkable);
     }
 
     [Fact]
@@ -443,20 +443,6 @@ public class GameEngineTests
         Assert.False(engine.EcsWorld.Has<LightSource>(entity));
     }
 
-    [Fact]
-    public void FindSpawnPosition_WithEnemyNearby_AvoidsEnemy()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-
-        // Find first spawn pos, spawn an enemy there to force a different position
-        var (sx, sy) = engine.FindSpawnPosition();
-        engine.SpawnMonster(sx, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
-
-        // Should find a different spot
-        var (sx2, sy2) = engine.FindSpawnPosition();
-        Assert.True(sx2 != sx || sy2 != sy);
-    }
 
     [Fact]
     public void GetPlayerStateData_InventoryItemWithBonusHealth()

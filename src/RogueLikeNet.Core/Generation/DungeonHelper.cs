@@ -84,17 +84,24 @@ internal static class DungeonHelper
             if (rng.Next(100) >= liq.RoomChance) continue;
             var room = rooms[i];
             if (room.Width < 6 || room.Height < 6) continue;
+            bool circular = rng.NextBool();
 
             int poolX = room.X + 2;
             int poolY = room.Y + 2;
             int poolW = room.Width - 4;
             int poolH = room.Height - 4;
+            int poolCenterX = poolX + poolW / 2;
+            int poolCenterY = poolY + poolH / 2;
 
             for (int x = poolX; x < poolX + poolW; x++)
+            {
                 for (int y = poolY; y < poolY + poolH; y++)
                 {
                     if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                     {
+                        if (circular && Position.ManhattanDistance(x, y, poolCenterX, poolCenterY) > Math.Min(poolW, poolH) / 2)
+                            continue; // Make the pool roughly circular
+
                         ref var tile = ref chunk.Tiles[x, y];
                         tile.Type = liq.Type;
                         tile.GlyphId = liq.GlyphId;
@@ -102,6 +109,7 @@ internal static class DungeonHelper
                         tile.BgColor = liq.BgColor;
                     }
                 }
+            }
         }
     }
 
@@ -111,6 +119,7 @@ internal static class DungeonHelper
         if (decorations.Length == 0) return;
 
         for (int x = 0; x < Chunk.Size; x++)
+        {
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref chunk.Tiles[x, y];
@@ -127,52 +136,79 @@ internal static class DungeonHelper
                     }
                 }
             }
+        }
     }
 
     public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY)
     {
         int monsterCount = 1 + rng.Next(3);
-        for (int m = 0; m < monsterCount; m++)
+
+        bool IsChunkCoordinateWalkable(int cx, int cy)
         {
-            int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
-            int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
-            var def = NpcDefinitions.Pick(rng, difficulty);
-            int hpScale = 1 + difficulty / 2;
-            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData
+            if (cx < 0 || cx >= Chunk.Size || cy < 0 || cy >= Chunk.Size) return false;
+            return result.Chunk.Tiles[cx, cy].IsWalkable;
+        }
+
+        bool FindRandomRoomWalkableCoordinate(out int x, out int y)
+        {
+            for (int attempt = 0; attempt < 20; attempt++)
             {
-                MonsterTypeId = def.TypeId,
-                Health = def.Health * hpScale,
-                Attack = def.Attack + difficulty,
-                Defense = def.Defense + difficulty / 2,
-                Speed = def.Speed,
-            }));
+                x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
+                y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
+                if (IsChunkCoordinateWalkable(x, y))
+                    return true;
+            }
+            x = 0;
+            y = 0;
+            return false;
+        }
+
+        for (int i = 0; i < monsterCount; i++)
+        {
+            if (FindRandomRoomWalkableCoordinate(out var x, out var y))
+            {
+                var def = NpcDefinitions.Pick(rng, difficulty);
+                int hpScale = 1 + difficulty / 2;
+                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData
+                {
+                    MonsterTypeId = def.TypeId,
+                    Health = def.Health * hpScale,
+                    Attack = def.Attack + difficulty,
+                    Defense = def.Defense + difficulty / 2,
+                    Speed = def.Speed,
+                }));
+            }
         }
 
         if (rng.Next(100) < 30)
         {
-            int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
-            int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
-            var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-            int rarityMult = 100 + loot.Rarity * 50;
-            result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y), new ItemData
+            if (FindRandomRoomWalkableCoordinate(out var x, out var y))
             {
-                ItemTypeId = loot.Definition.TypeId,
-                Rarity = loot.Rarity,
-                BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
-                BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
-                BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
-                StackCount = loot.Definition.Stackable
-                    ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
-                    : 1,
-            }));
+                var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
+                int rarityMult = 100 + loot.Rarity * 50;
+                result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y), new ItemData
+                {
+                    ItemTypeId = loot.Definition.TypeId,
+                    Rarity = loot.Rarity,
+                    BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
+                    BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
+                    BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
+                    StackCount = loot.Definition.Stackable
+                        ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
+                        : 1,
+                }));
+            }
         }
 
         if (rng.Next(100) < 40)
         {
-            result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(6, TileDefinitions.ColorTorchFg)));
+            if (IsChunkCoordinateWalkable(room.CenterX, room.CenterY))
+            {
+                result.Elements.Add(new DungeonElement(
+                    new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY),
+                    new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+                    new LightSource(6, TileDefinitions.ColorTorchFg)));
+            }
         }
     }
 
@@ -220,6 +256,60 @@ internal static class DungeonHelper
         {
             CarveVLine(chunk, y1, y2, x1);
             CarveHLine(chunk, x1, x2, y2);
+        }
+    }
+
+    public static (int X, int Y)? FindSpawnPoint(Chunk chunk)
+    {
+        int worldOffsetX = chunk.ChunkX * Chunk.Size;
+        int worldOffsetY = chunk.ChunkY * Chunk.Size;
+        int midX = Chunk.Size / 2;
+        int midY = Chunk.Size / 2;
+        // Spiral outward from center until we find an open floor tile
+        for (int radius = 0; radius < Chunk.Size / 2; radius++)
+        {
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    if (Math.Abs(dx) != radius && Math.Abs(dy) != radius) continue;
+                    int cx = midX + dx, cy = midY + dy;
+                    if (cx < 1 || cy < 1 || cx >= Chunk.Size - 1 || cy >= Chunk.Size - 1) continue;
+                    if (chunk.Tiles[cx, cy].Type == TileType.Floor)
+                    {
+                        return (worldOffsetX + cx, worldOffsetY + cy);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static void RemoveEnemiesInRadius(GenerationResult result, int x, int y, int radius)
+    {
+        result.Monsters.RemoveAll(m =>
+            Position.ManhattanDistance(m.Position.X, m.Position.Y, x, y) <= radius
+        );
+    }
+
+    public static void MakeTilesFloorInRadius(GenerationResult result, int x, int y, int radius)
+    {
+        var chunk = result.Chunk;
+
+        for (var dx = -radius; dx <= radius; dx++)
+        {
+            for (var dy = -radius; dy <= radius; dy++)
+            {
+                int cx = x + dx, cy = y + dy;
+                if (Position.ManhattanDistance(x, y, cx, cy) > radius)
+                    continue;
+                if (cx < 0 || cy < 0 || cx >= Chunk.Size || cy >= Chunk.Size)
+                    continue;
+                chunk.Tiles[cx, cy].Type = TileType.Floor;
+                chunk.Tiles[cx, cy].GlyphId = TileDefinitions.GlyphFloor;
+                chunk.Tiles[cx, cy].FgColor = TileDefinitions.ColorFloorFg;
+                chunk.Tiles[cx, cy].BgColor = TileDefinitions.ColorBlack;
+            }
         }
     }
 }

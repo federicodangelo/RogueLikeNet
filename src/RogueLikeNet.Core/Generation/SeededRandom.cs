@@ -48,6 +48,11 @@ public class SeededRandom
         return Next() % maxExclusive;
     }
 
+    public bool NextBool()
+    {
+        return (Next() & 1) == 0;
+    }
+
     /// <summary>Returns a value in [min, maxExclusive).</summary>
     public int Next(int min, int maxExclusive)
     {
