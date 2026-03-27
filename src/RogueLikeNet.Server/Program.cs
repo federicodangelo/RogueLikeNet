@@ -5,7 +5,7 @@ var app = builder.Build();
 
 // Create game loop
 long worldSeed = 12345; // TODO: configurable
-var gameServer = new GameServer(worldSeed);
+var gameServer = new GameServer(worldSeed, logWriter: Console.Out);
 gameServer.Start();
 
 app.UseWebSockets();
@@ -15,7 +15,7 @@ app.Map("/ws", async context =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         var socket = await context.WebSockets.AcceptWebSocketAsync();
-        await ServerWebSocketHandler.HandleConnection(socket, gameServer);
+        await ServerWebSocketHandler.HandleConnection(socket, gameServer, Console.Out);
     }
     else
     {

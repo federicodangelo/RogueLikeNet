@@ -25,7 +25,7 @@ public class Program
         _game.Initialize(platform);
 
         _game.StartOfflineRequested += (seed, classId, playerName) => OnStartOffline(seed, classId, playerName);
-        _game.StartOnlineRequested += (seed, classId, playerName) => OnStartOnline(seed, classId, playerName);
+        _game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         _game.QuitRequested += () => _running = false;
 
@@ -40,7 +40,7 @@ public class Program
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
-        _embeddedServer = new GameServer(seed);
+        _embeddedServer = new GameServer(seed, logWriter: Console.Out);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
@@ -51,7 +51,7 @@ public class Program
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline(long seed, int classId, string playerName)
+    private static async void OnStartOnline(int classId, string playerName)
     {
         _game!.TransitionToConnecting();
 

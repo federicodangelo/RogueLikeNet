@@ -14,7 +14,7 @@
 
     <!-- Use Invariant Globalization only -->
     <InvariantGlobalization>true</InvariantGlobalization>
-    <InvariantTimezone>true</InvariantTimezone>    
+    <InvariantTimezone>true</InvariantTimezone>
   </PropertyGroup>
 
   <ItemGroup>

@@ -15,19 +15,21 @@ namespace RogueLikeNet.Server;
 public class GameServer : IDisposable
 {
     private const int TickRateMs = 50; // 20 ticks/sec
-
-    private readonly GameEngine _engine;
+    protected readonly GameEngine _engine;
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
+    private readonly ConcurrentQueue<Func<Task>> _commandQueue = new();
     private readonly CancellationTokenSource _cts = new();
     private Task? _serverTask;
     private long _nextConnectionId = 1;
+    private readonly TextWriter _logWriter;
 
-    public GameEngine Engine => _engine;
     public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
 
-    public GameServer(long worldSeed, IDungeonGenerator? generator = null)
+    public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null)
     {
+        _logWriter = logWriter ?? TextWriter.Null;
+
         _engine = new GameEngine(worldSeed, generator);
         // Pre-generate spawn chunk
         _engine.EnsureChunkLoaded(0, 0);
@@ -35,6 +37,9 @@ public class GameServer : IDisposable
 
     public void Start()
     {
+        if (IsRunning)
+            throw new InvalidOperationException("Server is already running");
+
         _serverTask = Task.Run(() => RunServer(_cts.Token));
     }
 
@@ -42,17 +47,25 @@ public class GameServer : IDisposable
     {
         long id = Interlocked.Increment(ref _nextConnectionId);
         var conn = new PlayerConnection(id, sendFunc);
-        _connections[id] = conn;
+        if (!_connections.TryAdd(id, conn))
+            throw new Exception("Failed to add connection");
         return conn;
     }
 
     public void RemoveConnection(long connectionId)
     {
-        if (_connections.TryRemove(connectionId, out var conn) && conn.PlayerEntity.HasValue)
+        if (_connections.TryRemove(connectionId, out var conn))
         {
-            // Remove player entity when they disconnect
-            if (_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
-                _engine.EcsWorld.Destroy(conn.PlayerEntity.Value);
+            EnqueueCommand(() =>
+            {
+                if (conn.PlayerEntity.HasValue)
+                {
+                    var entity = conn.PlayerEntity.Value;
+                    if (_engine.EcsWorld.IsAlive(entity))
+                        _engine.EcsWorld.Destroy(entity);
+                }
+                return Task.CompletedTask;
+            });
         }
     }
 
@@ -62,7 +75,12 @@ public class GameServer : IDisposable
             conn.InputQueue.Enqueue(input);
     }
 
-    public async Task BroadcastChat(long senderConnectionId, string text)
+    public void BroadcastChat(long senderConnectionId, string text)
+    {
+        EnqueueCommand(() => BroadcastChatInternal(senderConnectionId, text));
+    }
+
+    private async Task BroadcastChatInternal(long senderConnectionId, string text)
     {
         string senderName = "Player";
         if (_connections.TryGetValue(senderConnectionId, out var sender))
@@ -79,12 +97,23 @@ public class GameServer : IDisposable
 
         foreach (var conn in _connections.Values)
         {
-            try { await conn.SendAsync(data); }
-            catch { /* connection closing */ }
+            try
+            {
+                await conn.SendAsync(data);
+            }
+            catch
+            {
+                /* connection closing */
+            }
         }
     }
 
-    public async Task SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
+    public void SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
+    {
+        EnqueueCommand(() => SpawnPlayerForConnectionInternal(connectionId, classId, playerName));
+    }
+
+    private async Task SpawnPlayerForConnectionInternal(long connectionId, int classId, string playerName)
     {
         if (!_connections.TryGetValue(connectionId, out var conn)) return;
 
@@ -109,6 +138,24 @@ public class GameServer : IDisposable
         await conn.SendAsync(data);
     }
 
+    /// <summary>
+    /// Enqueues a command for execution on the server thread.
+    /// If the server loop is not running (e.g. in tests), executes immediately.
+    /// </summary>
+    private void EnqueueCommand(Func<Task> command)
+    {
+        if (IsRunning)
+            _commandQueue.Enqueue(command);
+        else
+            command().GetAwaiter().GetResult();
+    }
+
+    private async Task ProcessCommandsAsync()
+    {
+        while (_commandQueue.TryDequeue(out var command))
+            await command();
+    }
+
     private async Task RunServer(CancellationToken ct)
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickRateMs));
@@ -116,29 +163,47 @@ public class GameServer : IDisposable
         long lastTotalSent = 0;
         long lastTotalRecv = 0;
 
-        while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
+        _logWriter.WriteLine("[Server] Starting server loop...");
+
+        try
         {
-            ProcessInputs();
-            _engine.Tick();
-            await BroadcastDeltas();
-
-            if (statsStopwatch.ElapsedMilliseconds >= 5000)
+            while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
             {
-                long totalSent = 0, totalRecv = 0;
-                foreach (var c in _connections.Values)
-                {
-                    totalSent += c.BytesSent;
-                    totalRecv += c.BytesReceived;
-                }
-                double elapsed = statsStopwatch.Elapsed.TotalSeconds;
-                double sentKBps = (totalSent - lastTotalSent) / 1024.0 / elapsed;
-                double recvKBps = (totalRecv - lastTotalRecv) / 1024.0 / elapsed;
-                lastTotalSent = totalSent;
-                lastTotalRecv = totalRecv;
+                await ProcessCommandsAsync();
+                ProcessInputs();
+                _engine.Tick();
+                await BroadcastDeltas();
 
-                Console.WriteLine($"[Server] tick={_engine.CurrentTick} players={_connections.Count} out={sentKBps:F1}KB/s in={recvKBps:F1}KB/s");
-                statsStopwatch.Restart();
+                if (statsStopwatch.ElapsedMilliseconds >= 5000)
+                {
+                    long totalSent = 0, totalRecv = 0;
+                    foreach (var c in _connections.Values)
+                    {
+                        totalSent += c.BytesSent;
+                        totalRecv += c.BytesReceived;
+                    }
+                    double elapsed = statsStopwatch.Elapsed.TotalSeconds;
+                    double sentKBps = (totalSent - lastTotalSent) / 1024.0 / elapsed;
+                    double recvKBps = (totalRecv - lastTotalRecv) / 1024.0 / elapsed;
+                    lastTotalSent = totalSent;
+                    lastTotalRecv = totalRecv;
+
+                    _logWriter.WriteLine($"[Server] tick={_engine.CurrentTick} players={_connections.Count} out={sentKBps:F1}KB/s in={recvKBps:F1}KB/s");
+                    statsStopwatch.Restart();
+                }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on shutdown
+        }
+        catch (Exception ex)
+        {
+            _logWriter.WriteLine("[Server] Exception in server loop: " + ex);
+        }
+        finally
+        {
+            _logWriter.WriteLine("[Server] Shutting down server loop...");
         }
     }
 
@@ -227,9 +292,38 @@ public class GameServer : IDisposable
 
     public void Dispose()
     {
-        try { _cts.Cancel(); } catch (ObjectDisposedException) { }
-        try { _serverTask?.Wait(TimeSpan.FromSeconds(2)); } catch (AggregateException) { }
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        try
+        {
+            _cts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            _logWriter.WriteLine("[Server] Cancellation token already disposed");
+        }
+
+        try
+        {
+            _serverTask?.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (AggregateException e)
+        {
+            _logWriter.WriteLine("[Server] Server task did not shut down gracefully: " + e.ToString());
+        }
+
         _engine.Dispose();
-        try { _cts.Dispose(); } catch (ObjectDisposedException) { }
+
+        try
+        {
+            _cts.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            _logWriter.WriteLine("[Server] Cancellation token already disposed");
+        }
     }
 }

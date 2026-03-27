@@ -24,7 +24,7 @@ public partial class WebMain
         _game.Initialize(platform);
 
         _game.StartOfflineRequested += (seed, classId, playerName) => OnStartOffline(seed, classId, playerName);
-        _game.StartOnlineRequested += (seed, classId, playerName) => OnStartOnline(seed, classId, playerName);
+        _game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         // Web platform cannot quit — QuitRequested is ignored
 
@@ -39,7 +39,7 @@ public partial class WebMain
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
-        _embeddedServer = new GameServer(seed);
+        _embeddedServer = new GameServer(seed, logWriter: Console.Out);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
@@ -50,7 +50,7 @@ public partial class WebMain
         _game.TransitionToPlaying();
     }
 
-    private static async void OnStartOnline(long seed, int classId, string playerName)
+    private static async void OnStartOnline(int classId, string playerName)
     {
         _game!.TransitionToConnecting();
 

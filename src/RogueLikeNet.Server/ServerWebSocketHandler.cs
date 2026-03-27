@@ -9,8 +9,10 @@ namespace RogueLikeNet.Server;
 /// </summary>
 public static class ServerWebSocketHandler
 {
-    public static async Task HandleConnection(WebSocket socket, GameServer gameServer)
+    public static async Task HandleConnection(WebSocket socket, GameServer gameServer, TextWriter? logWriter = null)
     {
+        logWriter ??= TextWriter.Null;
+
         // Create connection with send function
         var conn = gameServer.AddConnection(async data =>
         {
@@ -24,7 +26,7 @@ public static class ServerWebSocketHandler
             }
         });
 
-        Console.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameServer.ConnectionCount} online)");
+        logWriter.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameServer.ConnectionCount} online)");
 
         try
         {
@@ -67,7 +69,7 @@ public static class ServerWebSocketHandler
         finally
         {
             gameServer.RemoveConnection(conn.ConnectionId);
-            Console.WriteLine($"[Server] Player {conn.ConnectionId} disconnected ({gameServer.ConnectionCount} online)");
+            logWriter.WriteLine($"[Server] Player {conn.ConnectionId} disconnected ({gameServer.ConnectionCount} online)");
             if (socket.State == WebSocketState.Open)
             {
                 await socket.CloseAsync(
@@ -89,7 +91,7 @@ public static class ServerWebSocketHandler
                     if (conn.PlayerEntity == null)
                     {
                         var login = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
-                        _ = gameServer.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
+                        gameServer.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
                     }
                     else
                     {
@@ -105,7 +107,7 @@ public static class ServerWebSocketHandler
 
                 case MessageTypes.ChatSend:
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
-                    _ = gameServer.BroadcastChat(conn.ConnectionId, chat.Text);
+                    gameServer.BroadcastChat(conn.ConnectionId, chat.Text);
                     break;
 
                 default:

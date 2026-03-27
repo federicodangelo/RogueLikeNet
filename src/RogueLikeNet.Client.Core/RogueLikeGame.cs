@@ -82,7 +82,7 @@ public sealed class RogueLikeGame : GameBase
     public event Action<long, int, string>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
-    public event Action<long, int, string>? StartOnlineRequested;
+    public event Action<int, string>? StartOnlineRequested;
 
     /// <summary>Fired when the player selects "Return to Main Menu" from the pause menu.</summary>
     public event Action? ReturnToMenuRequested;
@@ -465,7 +465,7 @@ public sealed class RogueLikeGame : GameBase
         {
             int classId = ClassDefinitions.All[_selectedClassIndex].ClassId;
             if (_classSelectIsOnline)
-                StartOnlineRequested?.Invoke(_worldSeed, classId, _playerName);
+                StartOnlineRequested?.Invoke(classId, _playerName);
             else
                 StartOfflineRequested?.Invoke(_worldSeed, classId, _playerName);
         }

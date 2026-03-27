@@ -1,12 +1,29 @@
-using Arch.Core;
+using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
-using RogueLikeNet.Server;
 
 namespace RogueLikeNet.Server.Tests;
+
+// A test subclass that exposes internal state for testing purposes.
+public class TestGameServer : GameServer
+{
+    public TestGameServer(int worldSeed, BspDungeonGenerator generator) : base(worldSeed, generator)
+    {
+    }
+
+    public GameEngine Engine
+    {
+        get
+        {
+            if (IsRunning)
+                throw new InvalidOperationException("Cannot access Engine while server is running");
+            return _engine;
+        }
+    }
+}
 
 public class GameServerTests
 {
@@ -15,7 +32,7 @@ public class GameServerTests
     [Fact]
     public void GameServer_StartsAndStops()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         loop.Start();
         Assert.True(loop.IsRunning);
         loop.Dispose();
@@ -24,18 +41,18 @@ public class GameServerTests
     [Fact]
     public void AddConnection_ReturnsValidConnection()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         Assert.NotNull(conn);
         Assert.True(conn.ConnectionId > 0);
     }
 
     [Fact]
-    public async Task SpawnPlayerForConnection_CreatesEntity()
+    public void SpawnPlayerForConnection_CreatesEntity()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
         Assert.NotNull(conn.PlayerEntity);
         Assert.True(loop.Engine.EcsWorld.IsAlive(conn.PlayerEntity.Value));
     }
@@ -43,11 +60,9 @@ public class GameServerTests
     [Fact]
     public void RemoveConnection_DestroysEntity()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
-#pragma warning disable xUnit1031 // Do not use blocking task operations in test method
-        loop.SpawnPlayerForConnection(conn.ConnectionId).Wait();
-#pragma warning restore xUnit1031 // Do not use blocking task operations in test method
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         var entity = conn.PlayerEntity!.Value;
         loop.RemoveConnection(conn.ConnectionId);
@@ -58,7 +73,7 @@ public class GameServerTests
     [Fact]
     public void EnqueueInput_QueuesCorrectly()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
 
         var input = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 };
@@ -70,17 +85,17 @@ public class GameServerTests
     }
 
     [Fact]
-    public async Task SpawnPlayer_SendsSnapshot()
+    public void SpawnPlayer_SendsSnapshot()
     {
         byte[]? receivedData = null;
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
             return Task.CompletedTask;
         });
 
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
@@ -95,13 +110,13 @@ public class GameServerTests
     public async Task RunLoop_BroadcastsDeltas()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
         messages.Clear(); // Clear the initial snapshot
 
         loop.Start();
@@ -121,13 +136,13 @@ public class GameServerTests
     public async Task ProcessInputs_AppliesPlayerInput()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         var input = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 };
         loop.EnqueueInput(conn.ConnectionId, input);
@@ -143,7 +158,7 @@ public class GameServerTests
     [Fact]
     public void RemoveConnection_WithoutEntity_NoError()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.RemoveConnection(conn.ConnectionId);
     }
@@ -151,14 +166,14 @@ public class GameServerTests
     [Fact]
     public void RemoveConnection_NonExistent_NoError()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         loop.RemoveConnection(9999);
     }
 
     [Fact]
     public void EnqueueInput_NonExistentConnection_NoError()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         loop.EnqueueInput(9999, new ClientInputMsg { ActionType = 1 });
     }
 
@@ -166,14 +181,14 @@ public class GameServerTests
     public async Task BroadcastDeltas_HandlesSendException()
     {
         int sendCount = 0;
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             sendCount++;
             if (sendCount > 1) throw new InvalidOperationException("send failed");
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         loop.Start();
         await Task.Delay(200);
@@ -184,38 +199,38 @@ public class GameServerTests
     [Fact]
     public void Dispose_WithoutStart()
     {
-        var loop = new GameServer(42, _gen);
+        var loop = new TestGameServer(42, _gen);
         loop.Dispose();
     }
 
     [Fact]
     public void Dispose_WithStart()
     {
-        var loop = new GameServer(42, _gen);
+        var loop = new TestGameServer(42, _gen);
         loop.Start();
         Assert.True(loop.IsRunning);
         loop.Dispose();
     }
 
     [Fact]
-    public async Task SpawnPlayerForConnection_InvalidConnection_NoOp()
+    public void SpawnPlayerForConnection_InvalidConnection_NoOp()
     {
-        using var loop = new GameServer(42, _gen);
-        await loop.SpawnPlayerForConnection(9999); // Non-existent connection
+        using var loop = new TestGameServer(42, _gen);
+        loop.SpawnPlayerForConnection(9999); // Non-existent connection
     }
 
     [Fact]
-    public async Task Snapshot_ContainsEntitiesAndChunks()
+    public void Snapshot_ContainsEntitiesAndChunks()
     {
         byte[]? receivedData = null;
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
             return Task.CompletedTask;
         });
 
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
@@ -243,13 +258,13 @@ public class GameServerTests
     public async Task Delta_ContainsEntityUpdates()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
         messages.Clear();
 
         loop.Start();
@@ -269,7 +284,7 @@ public class GameServerTests
     {
         var messages1 = new List<byte[]>();
         var messages2 = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
 
         var conn1 = loop.AddConnection(data =>
         {
@@ -282,8 +297,8 @@ public class GameServerTests
             return Task.CompletedTask;
         });
 
-        await loop.SpawnPlayerForConnection(conn1.ConnectionId);
-        await loop.SpawnPlayerForConnection(conn2.ConnectionId);
+        loop.SpawnPlayerForConnection(conn1.ConnectionId);
+        loop.SpawnPlayerForConnection(conn2.ConnectionId);
         messages1.Clear();
         messages2.Clear();
 
@@ -298,14 +313,14 @@ public class GameServerTests
     [Fact]
     public void Engine_IsAccessible()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         Assert.NotNull(loop.Engine);
     }
 
     [Fact]
     public void IsRunning_FalseBeforeStart()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         Assert.False(loop.IsRunning);
     }
 
@@ -313,7 +328,7 @@ public class GameServerTests
     public async Task ProcessInputs_SkipsConnectionWithoutEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
 
         // Add connection but don't spawn player
         var connNoEntity = loop.AddConnection(data =>
@@ -337,13 +352,13 @@ public class GameServerTests
     public async Task ProcessInputs_SkipsDeadEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Kill the entity
         var entity = conn.PlayerEntity!.Value;
@@ -363,13 +378,13 @@ public class GameServerTests
     public async Task Delta_ContainsCombatEvents()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Get the player's position and spawn a monster right next to them
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
@@ -415,7 +430,7 @@ public class GameServerTests
     public async Task BuildPlayerState_ReturnsNullForNoEntity()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
@@ -436,13 +451,13 @@ public class GameServerTests
     public async Task ProcessInputs_AppliesMultipleInputsFromQueue()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Enqueue multiple inputs
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
@@ -459,17 +474,17 @@ public class GameServerTests
     [Fact]
     public void AddConnection_AssignsUniqueIds()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn1 = loop.AddConnection(_ => Task.CompletedTask);
         var conn2 = loop.AddConnection(_ => Task.CompletedTask);
         Assert.NotEqual(conn1.ConnectionId, conn2.ConnectionId);
     }
 
     [Fact]
-    public async Task Snapshot_IncludesEntitiesWithoutHealth()
+    public void Snapshot_IncludesEntitiesWithoutHealth()
     {
         byte[]? receivedData = null;
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             receivedData = data;
@@ -485,7 +500,7 @@ public class GameServerTests
             new TileAppearance(42, 0x00FF00)
         );
 
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         Assert.NotNull(receivedData);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
@@ -502,14 +517,14 @@ public class GameServerTests
     public async Task Delta_IncludesEntitiesWithoutHealth()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
 
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
         messages.Clear();
 
         // Get the player's position so the entity is within FOV
@@ -539,13 +554,13 @@ public class GameServerTests
     public async Task ProcessInputs_DrainsAllKeepsLatest()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Record starting position
         ref var startPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
@@ -582,13 +597,13 @@ public class GameServerTests
     public async Task Delta_IncludesFloorItemsViaEntityUpdates()
     {
         var messages = new List<byte[]>();
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(data =>
         {
             messages.Add(data.ToArray());
             return Task.CompletedTask;
         });
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Place an item at the player's position
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
@@ -625,7 +640,7 @@ public class GameServerTests
     [Fact]
     public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var chunk = loop.Engine.EnsureChunkLoaded(0, 0);
 
         var msg = GameStateSerializer.SerializeChunk(chunk);
@@ -640,11 +655,11 @@ public class GameServerTests
     }
 
     [Fact]
-    public async Task GameStateSerializer_BuildPlayerState_PopulatesAllFields()
+    public void GameStateSerializer_BuildPlayerState_PopulatesAllFields()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, conn.PlayerEntity!.Value);
         Assert.NotNull(hudMsg);
@@ -658,11 +673,11 @@ public class GameServerTests
     }
 
     [Fact]
-    public async Task GameStateSerializer_BuildPlayerState_NullForDeadEntity()
+    public void GameStateSerializer_BuildPlayerState_NullForDeadEntity()
     {
-        using var loop = new GameServer(42, _gen);
+        using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
-        await loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         var entity = conn.PlayerEntity!.Value;
         loop.Engine.EcsWorld.Destroy(entity);

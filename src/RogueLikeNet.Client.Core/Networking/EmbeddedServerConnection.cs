@@ -28,20 +28,21 @@ public class EmbeddedServerConnection : IGameServerConnection
         _gameServer = gameServer;
     }
 
-    public async Task ConnectAsync(string uri, CancellationToken ct = default)
+    public Task ConnectAsync(string uri, CancellationToken ct = default)
     {
         // Register with the embedded game loop using a callback that deserializes and dispatches
         var conn = _gameServer.AddConnection(ProcessServerData);
         _connectionId = conn.ConnectionId;
         _connected = true;
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public async Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
+    public Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
     {
-        if (!_connected) return;
-        await _gameServer.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
+        if (!_connected) return Task.CompletedTask;
+        _gameServer.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
+        return Task.CompletedTask;
     }
 
     public Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default)
@@ -51,10 +52,11 @@ public class EmbeddedServerConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
-    public async Task SendChatAsync(string text, CancellationToken ct = default)
+    public Task SendChatAsync(string text, CancellationToken ct = default)
     {
-        if (!_connected) return;
-        await _gameServer.BroadcastChat(_connectionId, text);
+        if (!_connected) return Task.CompletedTask;
+        _gameServer.BroadcastChat(_connectionId, text);
+        return Task.CompletedTask;
     }
 
     private Task ProcessServerData(byte[] data)
