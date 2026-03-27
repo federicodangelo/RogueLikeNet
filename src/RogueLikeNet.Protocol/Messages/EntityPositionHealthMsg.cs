@@ -6,7 +6,7 @@ namespace RogueLikeNet.Protocol.Messages;
 /// Lightweight entity update sent when only position and/or health changed.
 /// </summary>
 [MessagePackObject]
-public struct EntityPositionHealthMsg
+public class EntityPositionHealthMsg
 {
     [Key(0)] public long Id { get; set; }
     [Key(1)] public int X { get; set; }
