@@ -27,6 +27,7 @@ public class GameEngine : IDisposable
     private readonly SkillSystem _skillSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
+    private (int X, int Y)? _generatorSpawnHint;
 
     public Arch.Core.World EcsWorld => _ecsWorld;
     public WorldMap WorldMap => _worldMap;
@@ -65,6 +66,11 @@ public class GameEngine : IDisposable
 
     private void ProcessGenerationResult(GenerationResult result)
     {
+        // Store the spawn hint from chunk (0,0) — each subsequent chunk may overwrite
+        // only if it's the origin chunk (generators only set it for chunkX==0, chunkY==0).
+        if (result.SpawnPosition.HasValue && result.Chunk.ChunkX == 0 && result.Chunk.ChunkY == 0)
+            _generatorSpawnHint = result.SpawnPosition;
+
         foreach (var (pos, monster) in result.Monsters)
         {
             SpawnMonster(pos.X, pos.Y, monster);
@@ -301,11 +307,25 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
-    /// Finds a suitable spawn position in the first room of chunk (0,0).
+    /// Finds a suitable spawn position for the player.
+    /// Uses the generator's suggested spawn point when available, otherwise
+    /// falls back to a floor-scan of chunk (0,0).
     /// </summary>
     public (int X, int Y) FindSpawnPosition()
     {
         var chunk = EnsureChunkLoaded(0, 0);
+
+        // Use the generator's hint if it points at a walkable floor tile
+        if (_generatorSpawnHint.HasValue)
+        {
+            var (hx, hy) = _generatorSpawnHint.Value;
+            // Convert world coords to local chunk coords
+            int lx = hx - 0 * Chunk.Size;
+            int ly = hy - 0 * Chunk.Size;
+            if (lx >= 0 && lx < Chunk.Size && ly >= 0 && ly < Chunk.Size
+                && chunk.Tiles[lx, ly].Type == TileType.Floor)
+                return (hx, hy);
+        }
 
         // Collect enemy positions to enforce safety radius
         var enemyPositions = new List<(int X, int Y)>();

@@ -1,5 +1,6 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Client.Core.Screens;
 
@@ -13,11 +14,13 @@ public sealed class MainMenuScreen : IScreen
 
     private int _menuIndex;
     private long _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
+    private int _generatorIndex = GeneratorRegistry.DefaultIndex;
     private bool _seedEditing;
     private string _seedEditText = "";
 
     public ScreenState ScreenState => ScreenState.MainMenu;
     public long WorldSeed => _worldSeed;
+    public int GeneratorIndex => _generatorIndex;
 
     public MainMenuScreen(ScreenContext ctx, MenuRenderer menuRenderer)
     {
@@ -33,12 +36,23 @@ public sealed class MainMenuScreen : IScreen
             return;
         }
 
-        int itemCount = 6;
+        int itemCount = 7;
         if (input.IsActionPressed(InputAction.MenuUp))
             _menuIndex = (_menuIndex + itemCount - 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % itemCount;
-        else if (input.IsActionPressed(InputAction.MenuConfirm))
+
+        // Left/right arrows cycle the generator when on the Generator row
+        if (_menuIndex == 3)
+        {
+            int genCount = GeneratorRegistry.Count;
+            if (input.IsActionPressed(InputAction.MoveLeft))
+                _generatorIndex = (_generatorIndex + genCount - 1) % genCount;
+            else if (input.IsActionPressed(InputAction.MoveRight))
+                _generatorIndex = (_generatorIndex + 1) % genCount;
+        }
+
+        if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
             {
@@ -56,9 +70,10 @@ public sealed class MainMenuScreen : IScreen
                     _seedEditing = true;
                     _seedEditText = _worldSeed.ToString();
                     break;
-                case 3: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
-                case 4: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
-                case 5: _ctx.OnQuit(); break;
+                case 3: break; // Generator — left/right only, no action on Enter
+                case 4: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
+                case 5: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
+                case 6: _ctx.OnQuit(); break;
             }
         }
     }
@@ -67,7 +82,7 @@ public sealed class MainMenuScreen : IScreen
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
-        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _seedEditing, _seedEditText);
+        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _generatorIndex, _seedEditing, _seedEditText);
     }
 
     public void ResetMenuIndex()

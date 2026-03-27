@@ -65,7 +65,7 @@ public sealed class ClassSelectScreen : IScreen
             if (_isOnline)
                 _ctx.OnStartOnline(classId, _playerName);
             else
-                _ctx.OnStartOffline(_mainMenuScreen.WorldSeed, classId, _playerName);
+                _ctx.OnStartOffline(_mainMenuScreen.WorldSeed, classId, _playerName, _mainMenuScreen.GeneratorIndex);
         }
     }
 

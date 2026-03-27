@@ -33,7 +33,7 @@ public sealed class RogueLikeGame : GameBase
     public ScreenState CurrentScreen => _screenManager.CurrentState;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu.</summary>
-    public event Action<long, int, string>? StartOfflineRequested;
+    public event Action<long, int, string, int>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
     public event Action<int, string>? StartOnlineRequested;
@@ -56,7 +56,7 @@ public sealed class RogueLikeGame : GameBase
             Performance = _performance,
             ScreenShake = _screenShake,
             RequestTransition = state => _screenManager!.TransitionTo(state),
-            OnStartOffline = (seed, classId, name) => StartOfflineRequested?.Invoke(seed, classId, name),
+            OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex),
             OnStartOnline = (classId, name) => StartOnlineRequested?.Invoke(classId, name),
             OnReturnToMenu = () => ReturnToMenuRequested?.Invoke(),
             OnQuit = () => QuitRequested?.Invoke(),

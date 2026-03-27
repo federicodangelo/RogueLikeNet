@@ -57,6 +57,10 @@ public class BspDungeonGenerator : IDungeonGenerator
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
         DungeonHelper.ApplyBiomeTint(chunk, biome);
 
+        // Spawn point: center of the first room (before any monsters are placed there)
+        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
+            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY);
+
         return result;
     }
 

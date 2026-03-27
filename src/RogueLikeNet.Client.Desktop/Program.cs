@@ -2,6 +2,7 @@ using Engine.Platform;
 using Engine.Platform.Sdl;
 using RogueLikeNet.Client.Core;
 using RogueLikeNet.Client.Core.Networking;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
 
@@ -24,7 +25,7 @@ public class Program
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += (seed, classId, playerName) => OnStartOffline(seed, classId, playerName);
+        _game.StartOfflineRequested += (seed, classId, playerName, genIndex) => OnStartOffline(seed, classId, playerName, genIndex);
         _game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         _game.QuitRequested += () => _running = false;
@@ -38,11 +39,12 @@ public class Program
         _game.Dispose();
     }
 
-    private static async void OnStartOffline(long seed, int classId, string playerName)
+    private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex)
     {
         _game!.TransitionToConnecting();
 
-        _embeddedServer = new GameServer(seed, logWriter: Console.Out);
+        var generator = GeneratorRegistry.Create(generatorIndex, seed);
+        _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out);
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);

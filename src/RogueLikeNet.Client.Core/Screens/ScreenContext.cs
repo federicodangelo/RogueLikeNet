@@ -24,7 +24,7 @@ public sealed class ScreenContext
     public required Action<ScreenState> RequestTransition { get; init; }
 
     // Game event callbacks — wired to RogueLikeGame public events
-    public required Action<long, int, string> OnStartOffline { get; init; }
+    public required Action<long, int, string, int> OnStartOffline { get; init; }
     public required Action<int, string> OnStartOnline { get; init; }
     public required Action OnReturnToMenu { get; init; }
     public required Action OnQuit { get; init; }

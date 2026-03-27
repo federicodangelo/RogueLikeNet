@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -9,7 +10,7 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Randomize Seed", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Generator:", "Randomize Seed", "Help", "Quit"];
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
 
     private static readonly string[] HelpLines =
@@ -36,12 +37,12 @@ public sealed class MenuRenderer
     ];
 
     public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
-        long worldSeed, bool seedEditing, string seedEditText)
+        long worldSeed, int generatorIndex, bool seedEditing, string seedEditText)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
         int boxW = 40;
-        int boxH = 22;
+        int boxH = 24;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -67,6 +68,11 @@ public sealed class MenuRenderer
                 string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
                 label = prefix + "Seed: " + seedDisplay;
             }
+            else if (i == 3)
+            {
+                string genName = GeneratorRegistry.GetName(generatorIndex);
+                label = prefix + "Generator: \u25c4 " + genName + " \u25ba";
+            }
             else
             {
                 label = prefix + MainMenuItems[i];
@@ -78,7 +84,9 @@ public sealed class MenuRenderer
 
         string footer = seedEditing
             ? "Type seed   Enter Confirm   Esc Cancel"
-            : "\u2191\u2193 Navigate   Enter Select";
+            : selectedIndex == 3
+                ? "\u2190\u2192 Change Generator   \u2191\u2193 Navigate"
+                : "\u2191\u2193 Navigate   Enter Select";
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, footer, RenderingTheme.Dim);
     }
 

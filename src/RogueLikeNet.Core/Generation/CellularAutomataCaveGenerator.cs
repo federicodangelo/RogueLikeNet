@@ -120,6 +120,10 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         // Step 11: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);
 
+        // Spawn point: center of the first extracted room
+        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
+            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY);
+
         return result;
     }
 
