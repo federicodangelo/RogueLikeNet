@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "RogueLikeNet.Client.Desktop",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet: build",
+            "program": "${workspaceFolder}/src/RogueLikeNet.Client.Desktop/bin/Debug/net10.0/RogueLikeNet.Client.Desktop.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/RogueLikeNet.Client.Desktop",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        }
+    ]
+}
