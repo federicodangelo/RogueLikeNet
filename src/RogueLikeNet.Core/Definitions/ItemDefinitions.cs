@@ -13,6 +13,13 @@ public static class ItemDefinitions
     public const int CategoryPotion = 2;
     public const int CategoryGold = 3;
 
+    // Item rarities
+    public const int RarityCommon = 0;
+    public const int RarityUncommon = 1;
+    public const int RarityRare = 2;
+    public const int RarityEpic = 3;
+    public const int RarityLegendary = 4;
+
     // Specific item types
     public const int ShortSword = 0;
     public const int LongSword = 1;

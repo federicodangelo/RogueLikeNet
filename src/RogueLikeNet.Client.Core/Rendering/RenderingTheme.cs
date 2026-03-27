@@ -57,4 +57,11 @@ public static class RenderingTheme
 
     // HUD panel background
     public static readonly Color4 HudBg = new(15, 15, 20, 255);
+
+    // Rarity colors
+    public static readonly Color4 RarityCommon = new(180, 180, 180, 255);
+    public static readonly Color4 RarityUncommon = new(30, 255, 30, 255);
+    public static readonly Color4 RarityRare = new(80, 140, 255, 255);
+    public static readonly Color4 RarityEpic = new(180, 80, 255, 255);
+    public static readonly Color4 RarityLegendary = new(255, 165, 0, 255);
 }

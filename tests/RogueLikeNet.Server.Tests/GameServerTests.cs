@@ -625,7 +625,7 @@ public class GameServerTests
                 var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
                 foreach (var eu in delta.EntityUpdates)
                 {
-                    if (eu.ItemName == template.Name)
+                    if (eu.ItemTypeId == template.TypeId)
                     {
                         hasItemEntity = true;
                         break;
@@ -634,7 +634,7 @@ public class GameServerTests
                 if (hasItemEntity) break;
             }
         }
-        Assert.True(hasItemEntity, "Delta should contain an entity update with ItemName for the floor item");
+        Assert.True(hasItemEntity, "Delta should contain an entity update with ItemTypeId for the floor item");
     }
 
     [Fact]
@@ -667,8 +667,8 @@ public class GameServerTests
         Assert.True(hudMsg.Attack > 0);
         Assert.True(hudMsg.Defense > 0);
         Assert.Equal(4, hudMsg.Skills.Length);
-        Assert.Equal("", hudMsg.EquippedWeaponName); // Nothing equipped yet
-        Assert.Equal("", hudMsg.EquippedArmorName);
+        Assert.Null(hudMsg!.EquippedWeapon); // Nothing equipped yet
+        Assert.Null(hudMsg.EquippedArmor);
         Assert.Empty(hudMsg.InventoryItems);
     }
 

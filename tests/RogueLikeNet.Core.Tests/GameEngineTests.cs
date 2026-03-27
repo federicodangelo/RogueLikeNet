@@ -104,7 +104,7 @@ public class GameEngineTests
         Assert.NotNull(hud);
         Assert.True(hud!.InventoryCount > 0);
         Assert.NotEmpty(hud.InventoryItems);
-        Assert.Equal("Short Sword", hud.InventoryItems[0].Name);
+        Assert.Equal(ItemDefinitions.ShortSword, hud.InventoryItems[0].ItemTypeId);
     }
 
     [Fact]
@@ -292,8 +292,10 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal("Short Sword", hud!.EquippedWeaponName);
-        Assert.Equal("Leather Armor", hud.EquippedArmorName);
+        Assert.NotNull(hud!.EquippedWeapon);
+        Assert.Equal(ItemDefinitions.ShortSword, hud.EquippedWeapon!.Value.ItemTypeId);
+        Assert.NotNull(hud.EquippedArmor);
+        Assert.Equal(ItemDefinitions.LeatherArmor, hud.EquippedArmor!.Value.ItemTypeId);
     }
 
     [Fact]

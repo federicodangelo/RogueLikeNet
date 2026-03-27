@@ -422,10 +422,13 @@ public class GameEngine : IDisposable
                     var def = ItemDefinitions.Get(item.ItemTypeId);
                     items.Add(new InventoryItemData
                     {
-                        Name = def.Name ?? "Unknown",
+                        ItemTypeId = item.ItemTypeId,
                         StackCount = item.StackCount,
                         Rarity = item.Rarity,
                         Category = def.Category,
+                        BonusAttack = item.BonusAttack,
+                        BonusDefense = item.BonusDefense,
+                        BonusHealth = item.BonusHealth,
                     });
                 }
                 state.InventoryItems = items.ToArray();
@@ -436,9 +439,35 @@ public class GameEngine : IDisposable
         {
             ref var equip = ref _ecsWorld.Get<Equipment>(playerEntity);
             if (equip.HasWeapon)
-                state.EquippedWeaponName = ItemDefinitions.Get(equip.Weapon!.Value.ItemTypeId).Name ?? "";
+            {
+                var w = equip.Weapon!.Value;
+                var wDef = ItemDefinitions.Get(w.ItemTypeId);
+                state.EquippedWeapon = new InventoryItemData
+                {
+                    ItemTypeId = w.ItemTypeId,
+                    StackCount = w.StackCount,
+                    Rarity = w.Rarity,
+                    Category = wDef.Category,
+                    BonusAttack = w.BonusAttack,
+                    BonusDefense = w.BonusDefense,
+                    BonusHealth = w.BonusHealth,
+                };
+            }
             if (equip.HasArmor)
-                state.EquippedArmorName = ItemDefinitions.Get(equip.Armor!.Value.ItemTypeId).Name ?? "";
+            {
+                var a = equip.Armor!.Value;
+                var aDef = ItemDefinitions.Get(a.ItemTypeId);
+                state.EquippedArmor = new InventoryItemData
+                {
+                    ItemTypeId = a.ItemTypeId,
+                    StackCount = a.StackCount,
+                    Rarity = a.Rarity,
+                    Category = aDef.Category,
+                    BonusAttack = a.BonusAttack,
+                    BonusDefense = a.BonusDefense,
+                    BonusHealth = a.BonusHealth,
+                };
+            }
         }
 
         if (_ecsWorld.Has<QuickSlots>(playerEntity))

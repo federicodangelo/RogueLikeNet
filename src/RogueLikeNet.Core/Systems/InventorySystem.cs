@@ -172,11 +172,11 @@ public class InventorySystem
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
-                    EquipWeapon(world, player, slot);
+                    EquipItem(world, player, slot);
                     break;
 
                 case ItemDefinitions.CategoryArmor:
-                    EquipArmor(world, player, slot);
+                    EquipItem(world, player, slot);
                     break;
             }
         }
@@ -191,16 +191,36 @@ public class InventorySystem
             health.Current = Math.Min(health.Max, health.Current + itemData.BonusHealth);
         if (itemData.BonusAttack > 0)
             stats.Attack += itemData.BonusAttack;
+        if (itemData.BonusDefense > 0)
+            stats.Defense += itemData.BonusDefense;
     }
 
-    private static void EquipWeapon(Arch.Core.World world, Entity player, int slot)
+    private static void ApplyItemStats(ref CombatStats stats, ref Health health, ItemData item)
+    {
+        stats.Attack += item.BonusAttack;
+        stats.Defense += item.BonusDefense;
+        health.Max += item.BonusHealth;
+        health.Current = Math.Min(health.Current, health.Max);
+    }
+
+    private static void RemoveItemStats(ref CombatStats stats, ref Health health, ItemData item)
+    {
+        stats.Attack -= item.BonusAttack;
+        stats.Defense -= item.BonusDefense;
+        health.Max -= item.BonusHealth;
+        health.Current = Math.Min(health.Current, health.Max);
+    }
+
+    private static void EquipItem(Arch.Core.World world, Entity player, int slot)
     {
         if (!world.Has<Equipment>(player)) return;
         ref var equip = ref world.Get<Equipment>(player);
         ref var inv = ref world.Get<Inventory>(player);
         ref var stats = ref world.Get<CombatStats>(player);
+        ref var health = ref world.Get<Health>(player);
 
-        var newWeapon = inv.Items![slot];
+        var newItem = inv.Items![slot];
+        var def = ItemDefinitions.Get(newItem.ItemTypeId);
         inv.Items.RemoveAt(slot);
 
         // Adjust quick-slot references after removal
@@ -210,47 +230,27 @@ public class InventorySystem
             qs.OnItemRemoved(slot);
         }
 
-        // Unequip current weapon if any
-        if (equip.HasWeapon)
+        // Unequip current item in the same slot category and return it to inventory
+        if (def.Category == ItemDefinitions.CategoryWeapon)
         {
-            var oldData = equip.Weapon!.Value;
-            stats.Attack -= oldData.BonusAttack;
-            inv.Items.Add(oldData);
+            if (equip.HasWeapon)
+            {
+                RemoveItemStats(ref stats, ref health, equip.Weapon!.Value);
+                inv.Items.Add(equip.Weapon!.Value);
+            }
+            equip.Weapon = newItem;
+        }
+        else // Armor
+        {
+            if (equip.HasArmor)
+            {
+                RemoveItemStats(ref stats, ref health, equip.Armor!.Value);
+                inv.Items.Add(equip.Armor!.Value);
+            }
+            equip.Armor = newItem;
         }
 
-        // Equip new weapon
-        equip.Weapon = newWeapon;
-        stats.Attack += newWeapon.BonusAttack;
-    }
-
-    private static void EquipArmor(Arch.Core.World world, Entity player, int slot)
-    {
-        if (!world.Has<Equipment>(player)) return;
-        ref var equip = ref world.Get<Equipment>(player);
-        ref var inv = ref world.Get<Inventory>(player);
-        ref var stats = ref world.Get<CombatStats>(player);
-
-        var newArmor = inv.Items![slot];
-        inv.Items.RemoveAt(slot);
-
-        // Adjust quick-slot references after removal
-        if (world.Has<QuickSlots>(player))
-        {
-            ref var qs = ref world.Get<QuickSlots>(player);
-            qs.OnItemRemoved(slot);
-        }
-
-        // Unequip current armor if any
-        if (equip.HasArmor)
-        {
-            var oldData = equip.Armor!.Value;
-            stats.Defense -= oldData.BonusDefense;
-            inv.Items.Add(oldData);
-        }
-
-        // Equip new armor
-        equip.Armor = newArmor;
-        stats.Defense += newArmor.BonusDefense;
+        ApplyItemStats(ref stats, ref health, newItem);
     }
 
     private void ProcessSwapItems(Arch.Core.World world)
@@ -312,14 +312,14 @@ public class InventorySystem
             if (equipSlot == 0 && equip.HasWeapon)
             {
                 var old = equip.Weapon!.Value;
-                stats.Attack -= old.BonusAttack;
+                RemoveItemStats(ref stats, ref world.Get<Health>(player), old);
                 inv.Items.Add(old);
                 equip.Weapon = null;
             }
             else if (equipSlot == 1 && equip.HasArmor)
             {
                 var old = equip.Armor!.Value;
-                stats.Defense -= old.BonusDefense;
+                RemoveItemStats(ref stats, ref world.Get<Health>(player), old);
                 inv.Items.Add(old);
                 equip.Armor = null;
             }
@@ -350,10 +350,8 @@ public class InventorySystem
             switch (def.Category)
             {
                 case ItemDefinitions.CategoryWeapon:
-                    EquipWeapon(world, player, slot);
-                    break;
                 case ItemDefinitions.CategoryArmor:
-                    EquipArmor(world, player, slot);
+                    EquipItem(world, player, slot);
                     break;
             }
         }
@@ -441,11 +439,8 @@ public class InventorySystem
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
-                    EquipWeapon(world, player, invIndex);
-                    break;
-
                 case ItemDefinitions.CategoryArmor:
-                    EquipArmor(world, player, invIndex);
+                    EquipItem(world, player, invIndex);
                     break;
             }
         }

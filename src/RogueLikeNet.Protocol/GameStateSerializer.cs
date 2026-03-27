@@ -11,7 +11,7 @@ namespace RogueLikeNet.Protocol;
 /// <summary>
 /// Compact snapshot of entity state for delta comparison.
 /// </summary>
-public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius, string? ItemName);
+public readonly record struct EntitySnapshot(int X, int Y, int GlyphId, int FgColor, int Health, int MaxHealth, int LightRadius, int ItemTypeId, int ItemRarity);
 
 /// <summary>
 /// Shared helpers for building snapshot/delta/HUD messages from game state.
@@ -123,14 +123,16 @@ public static class GameStateSerializer
                 maxHp = health.Max;
             }
             int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
-            string? itemName = null;
+            int itemTypeId = -1;
+            int itemRarity = 0;
             if (world.Has<GroundItemTag>(e) && world.Has<ItemData>(e))
             {
-                var def = ItemDefinitions.Get(world.Get<ItemData>(e).ItemTypeId);
-                itemName = def.Name ?? "Unknown";
+                var itemData = world.Get<ItemData>(e);
+                itemTypeId = itemData.ItemTypeId;
+                itemRarity = itemData.Rarity;
             }
 
-            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius, itemName);
+            var snap = new EntitySnapshot(ePos.X, ePos.Y, appearance.GlyphId, appearance.FgColor, hp, maxHp, lightRadius, itemTypeId, itemRarity);
 
             // Only send if changed or new
             if (!previousState.TryGetValue(id, out var prev) || prev != snap)
@@ -145,7 +147,8 @@ public static class GameStateSerializer
                     Health = hp,
                     MaxHealth = maxHp,
                     LightRadius = lightRadius,
-                    ItemName = itemName,
+                    ItemTypeId = itemTypeId,
+                    ItemRarity = itemRarity,
                 });
             }
 
@@ -193,9 +196,9 @@ public static class GameStateSerializer
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
             Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),
-            InventoryItems = stateData.InventoryItems.Select(i => new InventoryItemMsg { Name = i.Name, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category }).ToArray(),
-            EquippedWeaponName = stateData.EquippedWeaponName,
-            EquippedArmorName = stateData.EquippedArmorName,
+            InventoryItems = stateData.InventoryItems.Select(i => new InventoryItemMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category, BonusAttack = i.BonusAttack, BonusDefense = i.BonusDefense, BonusHealth = i.BonusHealth }).ToArray(),
+            EquippedWeapon = stateData.EquippedWeapon.HasValue ? new InventoryItemMsg { ItemTypeId = stateData.EquippedWeapon.Value.ItemTypeId, StackCount = stateData.EquippedWeapon.Value.StackCount, Rarity = stateData.EquippedWeapon.Value.Rarity, Category = stateData.EquippedWeapon.Value.Category, BonusAttack = stateData.EquippedWeapon.Value.BonusAttack, BonusDefense = stateData.EquippedWeapon.Value.BonusDefense, BonusHealth = stateData.EquippedWeapon.Value.BonusHealth } : null,
+            EquippedArmor = stateData.EquippedArmor.HasValue ? new InventoryItemMsg { ItemTypeId = stateData.EquippedArmor.Value.ItemTypeId, StackCount = stateData.EquippedArmor.Value.StackCount, Rarity = stateData.EquippedArmor.Value.Rarity, Category = stateData.EquippedArmor.Value.Category, BonusAttack = stateData.EquippedArmor.Value.BonusAttack, BonusDefense = stateData.EquippedArmor.Value.BonusDefense, BonusHealth = stateData.EquippedArmor.Value.BonusHealth } : null,
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = playerEntity.Id,
         };

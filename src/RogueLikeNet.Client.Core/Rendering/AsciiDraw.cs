@@ -114,4 +114,32 @@ public static class AsciiDraw
         ItemDefinitions.CategoryGold => "[Gld]",
         _ => "     ",
     };
+
+    public static string RarityTag(int rarity) => rarity switch
+    {
+        ItemDefinitions.RarityCommon => "",
+        ItemDefinitions.RarityUncommon => "Uncommon ",
+        ItemDefinitions.RarityRare => "Rare ",
+        ItemDefinitions.RarityEpic => "Epic ",
+        ItemDefinitions.RarityLegendary => "Legendary ",
+        _ => "",
+    };
+
+    public static Color4 RarityColor(int rarity) => rarity switch
+    {
+        ItemDefinitions.RarityCommon => RenderingTheme.RarityCommon,
+        ItemDefinitions.RarityUncommon => RenderingTheme.RarityUncommon,
+        ItemDefinitions.RarityRare => RenderingTheme.RarityRare,
+        ItemDefinitions.RarityEpic => RenderingTheme.RarityEpic,
+        ItemDefinitions.RarityLegendary => RenderingTheme.RarityLegendary,
+        _ => RenderingTheme.RarityCommon,
+    };
+
+    public static string ItemDisplayName(int itemTypeId, int rarity)
+    {
+        var def = ItemDefinitions.Get(itemTypeId);
+        string name = def.Name ?? "Unknown";
+        string tag = RarityTag(rarity);
+        return tag.Length > 0 ? $"{tag}{name}" : name;
+    }
 }

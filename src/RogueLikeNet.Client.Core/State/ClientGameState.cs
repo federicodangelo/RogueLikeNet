@@ -100,7 +100,8 @@ public class ClientGameState
             entity.Health = entityUpdate.Health;
             entity.MaxHealth = entityUpdate.MaxHealth;
             entity.LightRadius = entityUpdate.LightRadius;
-            entity.ItemName = entityUpdate.ItemName;
+            entity.ItemTypeId = entityUpdate.ItemTypeId;
+            entity.ItemRarity = entityUpdate.ItemRarity;
         }
 
         if (delta.PlayerState != null)
@@ -130,18 +131,17 @@ public class ClientGameState
     }
 
     /// <summary>
-    /// Returns item names on the ground at the player's current position,
-    /// derived from entity data.
+    /// Returns floor items at the player's current position.
     /// </summary>
-    public string[] GetFloorItemNames()
+    public (int ItemTypeId, int Rarity)[] GetFloorItems()
     {
-        var names = new List<string>();
+        var items = new List<(int, int)>();
         foreach (var entity in _entities.Values)
         {
-            if (entity.ItemName != null && entity.X == PlayerX && entity.Y == PlayerY)
-                names.Add(entity.ItemName);
+            if (entity.ItemTypeId >= 0 && entity.X == PlayerX && entity.Y == PlayerY)
+                items.Add((entity.ItemTypeId, entity.ItemRarity));
         }
-        return names.ToArray();
+        return items.ToArray();
     }
 
     private void ApplyChunkData(ChunkDataMsg msg)
@@ -250,5 +250,6 @@ public class ClientEntity
     public int Health { get; set; }
     public int MaxHealth { get; set; }
     public int LightRadius { get; set; }
-    public string? ItemName { get; set; }
+    public int ItemTypeId { get; set; } = -1;
+    public int ItemRarity { get; set; }
 }

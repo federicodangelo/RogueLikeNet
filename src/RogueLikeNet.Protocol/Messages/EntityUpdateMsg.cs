@@ -14,5 +14,6 @@ public class EntityUpdateMsg
     [Key(6)] public int MaxHealth { get; set; }
     [Key(7)] public bool Removed { get; set; }
     [Key(8)] public int LightRadius { get; set; }
-    [Key(9)] public string? ItemName { get; set; }
+    [Key(9)] public int ItemTypeId { get; set; } = -1;
+    [Key(10)] public int ItemRarity { get; set; }
 }

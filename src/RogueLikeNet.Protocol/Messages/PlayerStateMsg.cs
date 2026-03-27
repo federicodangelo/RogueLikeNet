@@ -15,8 +15,8 @@ public class PlayerStateMsg
     [Key(7)] public int InventoryCapacity { get; set; }
     [Key(8)] public SkillSlotMsg[] Skills { get; set; } = [];
     [Key(9)] public InventoryItemMsg[] InventoryItems { get; set; } = [];
-    [Key(10)] public string EquippedWeaponName { get; set; } = "";
-    [Key(11)] public string EquippedArmorName { get; set; } = "";
+    [Key(10)] public InventoryItemMsg? EquippedWeapon { get; set; }
+    [Key(11)] public InventoryItemMsg? EquippedArmor { get; set; }
     [Key(12)] public int[] QuickSlotIndices { get; set; } = [];
     [Key(13)] public long PlayerEntityId { get; set; }
 }

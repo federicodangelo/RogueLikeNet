@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Definitions;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -103,11 +104,15 @@ public sealed class HudRenderer
                     if (row >= maxRow) break;
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
                     if (row >= maxRow) break;
-                    string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
-                    string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
-                    AsciiDraw.DrawString(r, col, row, $"W: {wpn}", RenderingTheme.Item); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, $"A: {arm}", RenderingTheme.Item);
+                    {
+                        string wpn = hud.EquippedWeapon.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.Value.ItemTypeId, hud.EquippedWeapon.Value.Rarity) : "---";
+                        string arm = hud.EquippedArmor.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.Value.ItemTypeId, hud.EquippedArmor.Value.Rarity) : "---";
+                        var wpnColor = hud.EquippedWeapon.HasValue ? AsciiDraw.RarityColor(hud.EquippedWeapon.Value.Rarity) : RenderingTheme.Item;
+                        var armColor = hud.EquippedArmor.HasValue ? AsciiDraw.RarityColor(hud.EquippedArmor.Value.Rarity) : RenderingTheme.Item;
+                        AsciiDraw.DrawString(r, col, row, $"W: {wpn}", wpnColor); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, $"A: {arm}", armColor);
+                    }
                     break;
 
                 case "QuickSlots":
@@ -144,11 +149,13 @@ public sealed class HudRenderer
         for (int i = 0; i < 4 && row < maxRow; i++)
         {
             int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
-            if (invIdx >= 0 && invIdx < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[invIdx].Name))
+            if (invIdx >= 0 && invIdx < hud.InventoryItems.Length)
             {
-                int stack = hud.InventoryItems[invIdx].StackCount;
+                var item = hud.InventoryItems[invIdx];
+                string name = AsciiDraw.ItemDisplayName(item.ItemTypeId, item.Rarity);
+                int stack = item.StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                AsciiDraw.DrawString(r, col, row, $"[{i + 1}]{hud.InventoryItems[invIdx].Name}{stackStr}", RenderingTheme.Item);
+                AsciiDraw.DrawString(r, col, row, $"[{i + 1}]{name}{stackStr}", AsciiDraw.RarityColor(item.Rarity));
             }
             else
             {
@@ -164,17 +171,19 @@ public sealed class HudRenderer
     private static void RenderFloorItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         ClientGameState state)
     {
-        var floorNames = state.GetFloorItemNames();
-        if (floorNames.Length == 0) return;
+        var floorItems = state.GetFloorItems();
+        if (floorItems.Length == 0) return;
 
         if (row >= maxRow) return;
         AsciiDraw.DrawString(r, col, row, "On Ground", RenderingTheme.Title); row++;
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
-        int floorToShow = Math.Min(floorNames.Length, 4);
+        int floorToShow = Math.Min(floorItems.Length, 4);
         for (int i = 0; i < floorToShow && row < maxRow; i++)
         {
-            AsciiDraw.DrawString(r, col, row, $"  {floorNames[i]}", RenderingTheme.Floor);
+            var (itemTypeId, rarity) = floorItems[i];
+            string name = AsciiDraw.ItemDisplayName(itemTypeId, rarity);
+            AsciiDraw.DrawString(r, col, row, $"  {name}", AsciiDraw.RarityColor(rarity));
             row++;
         }
         if (row < maxRow)

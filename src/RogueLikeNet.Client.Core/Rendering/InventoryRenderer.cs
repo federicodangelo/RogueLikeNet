@@ -1,6 +1,8 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -16,6 +18,7 @@ public sealed class InventoryRenderer
         var layout = new HudLayout();
         layout.AddSection(new HudSection { Name = "InvHeader", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "InvItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true });
+        layout.AddSection(new HudSection { Name = "InvPreview", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "InvEquipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "InvActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 9 });
         layout.SetFocus(1);
@@ -74,6 +77,10 @@ public sealed class InventoryRenderer
                     RenderItemsSection(r, col, innerW, row, maxRow, hud, section, focused);
                     break;
 
+                case "InvPreview":
+                    RenderPreviewSection(r, col, innerW, row, maxRow, hud);
+                    break;
+
                 case "InvEquipment":
                     RenderEquipmentSection(r, col, innerW, row, maxRow, hud, section, focused);
                     break;
@@ -100,7 +107,7 @@ public sealed class InventoryRenderer
     }
 
     private static void RenderItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        Protocol.Messages.PlayerStateMsg hud, HudSection section, bool focused)
+        PlayerStateMsg hud, HudSection section, bool focused)
     {
         int cap = Math.Max(hud.InventoryCapacity, 4);
         int visibleRows = section.RowCount;
@@ -131,14 +138,24 @@ public sealed class InventoryRenderer
 
             string catTag = i < hud.InventoryItems.Length
                 ? AsciiDraw.CategoryTag(hud.InventoryItems[i].Category) : "     ";
-            string name = i < hud.InventoryItems.Length && !string.IsNullOrEmpty(hud.InventoryItems[i].Name)
-                ? hud.InventoryItems[i].Name : "---";
+            string name;
+            int rarity = 0;
+            if (i < hud.InventoryItems.Length)
+            {
+                var item = hud.InventoryItems[i];
+                rarity = item.Rarity;
+                name = AsciiDraw.ItemDisplayName(item.ItemTypeId, item.Rarity);
+            }
+            else
+            {
+                name = "---";
+            }
             int stack = i < hud.InventoryItems.Length ? hud.InventoryItems[i].StackCount : 1;
             string stackStr = stack > 1 ? $" x{stack}" : "";
             string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
             if (text.Length > innerW) text = text[..innerW];
             bool isQuickSlot = slotTag != "   ";
-            var color = sel ? RenderingTheme.InvSel : isQuickSlot ? RenderingTheme.Item : RenderingTheme.Inv;
+            var color = sel ? RenderingTheme.InvSel : isQuickSlot ? AsciiDraw.RarityColor(rarity) : AsciiDraw.RarityColor(rarity);
             AsciiDraw.DrawString(r, col, row, text, color);
             row++;
         }
@@ -149,8 +166,66 @@ public sealed class InventoryRenderer
         }
     }
 
+    private void RenderPreviewSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        PlayerStateMsg hud)
+    {
+        // Always render the section header and separator, even if no item is selected, to keep the layout consistent
+        if (row >= maxRow) return;
+        AsciiDraw.DrawString(r, col, row, "If equipped:", RenderingTheme.Dim); row++;
+        if (row >= maxRow) return;
+        AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+
+        // Show stat change preview for the selected inventory item
+        var itemsSection = InventoryLayout.Sections.FirstOrDefault(s => s.Name == "InvItems");
+        if (itemsSection == null || InventoryLayout.FocusedSection?.Name != "InvItems") return;
+
+        int selIdx = itemsSection.SelectedIndex;
+        if (selIdx < 0 || selIdx >= hud.InventoryItems.Length) return;
+
+        var item = hud.InventoryItems[selIdx];
+        var def = ItemDefinitions.Get(item.ItemTypeId);
+
+        // Only show preview for equippable items (weapons and armor)
+        if (def.Category != ItemDefinitions.CategoryWeapon && def.Category != ItemDefinitions.CategoryArmor)
+            return;
+
+        // Find the currently equipped item in the same slot
+        InventoryItemMsg? equipped = def.Category == ItemDefinitions.CategoryWeapon
+            ? hud.EquippedWeapon : hud.EquippedArmor;
+
+        int eqAtk = equipped?.BonusAttack ?? 0;
+        int eqDef = equipped?.BonusDefense ?? 0;
+        int eqHp = equipped?.BonusHealth ?? 0;
+
+        int diffAtk = item.BonusAttack - eqAtk;
+        int diffDef = item.BonusDefense - eqDef;
+        int diffHp = item.BonusHealth - eqHp;
+
+
+        if (row < maxRow && diffAtk != 0)
+        {
+            string sign = diffAtk > 0 ? "+" : "";
+            var color = diffAtk > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  ATK: {sign}{diffAtk}", color);
+            row++;
+        }
+        if (row < maxRow && diffDef != 0)
+        {
+            string sign = diffDef > 0 ? "+" : "";
+            var color = diffDef > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  DEF: {sign}{diffDef}", color);
+            row++;
+        }
+        if (row < maxRow && diffHp != 0)
+        {
+            string sign = diffHp > 0 ? "+" : "";
+            var color = diffHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  HP:  {sign}{diffHp}", color);
+        }
+    }
+
     private static void RenderEquipmentSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        Protocol.Messages.PlayerStateMsg hud, HudSection section, bool focused)
+        PlayerStateMsg hud, HudSection section, bool focused)
     {
         if (row >= maxRow) return;
         AsciiDraw.DrawString(r, col, row, "Equipment", RenderingTheme.Title); row++;
@@ -161,20 +236,22 @@ public sealed class InventoryRenderer
         {
             bool sel = focused && section.SelectedIndex == 0;
             string prefix = sel ? "\u25ba" : " ";
-            string wpn = !string.IsNullOrEmpty(hud.EquippedWeaponName) ? hud.EquippedWeaponName : "---";
+            string wpn = hud.EquippedWeapon.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.Value.ItemTypeId, hud.EquippedWeapon.Value.Rarity) : "---";
             string text = $"{prefix}[W][Wpn]{wpn}";
             if (text.Length > innerW) text = text[..innerW];
-            AsciiDraw.DrawString(r, col, row, text, sel ? RenderingTheme.InvSel : RenderingTheme.Item);
+            var wpnColor = sel ? RenderingTheme.InvSel : hud.EquippedWeapon.HasValue ? AsciiDraw.RarityColor(hud.EquippedWeapon.Value.Rarity) : RenderingTheme.Item;
+            AsciiDraw.DrawString(r, col, row, text, wpnColor);
             row++;
         }
         if (row < maxRow)
         {
             bool sel = focused && section.SelectedIndex == 1;
             string prefix = sel ? "\u25ba" : " ";
-            string arm = !string.IsNullOrEmpty(hud.EquippedArmorName) ? hud.EquippedArmorName : "---";
+            string arm = hud.EquippedArmor.HasValue ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.Value.ItemTypeId, hud.EquippedArmor.Value.Rarity) : "---";
             string text = $"{prefix}[A][Arm]{arm}";
             if (text.Length > innerW) text = text[..innerW];
-            AsciiDraw.DrawString(r, col, row, text, sel ? RenderingTheme.InvSel : RenderingTheme.Item);
+            var armColor = sel ? RenderingTheme.InvSel : hud.EquippedArmor.HasValue ? AsciiDraw.RarityColor(hud.EquippedArmor.Value.Rarity) : RenderingTheme.Item;
+            AsciiDraw.DrawString(r, col, row, text, armColor);
         }
     }
 }

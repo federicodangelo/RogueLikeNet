@@ -62,7 +62,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal("Long Sword", hud!.EquippedWeaponName);
+        Assert.NotNull(hud!.EquippedWeapon);
+        Assert.Equal(ItemDefinitions.LongSword, hud.EquippedWeapon!.Value.ItemTypeId);
     }
 
     [Fact]
@@ -87,7 +88,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal("Chain Mail", hud!.EquippedArmorName);
+        Assert.NotNull(hud!.EquippedArmor);
+        Assert.Equal(ItemDefinitions.ChainMail, hud.EquippedArmor!.Value.ItemTypeId);
     }
 
     [Fact]
@@ -142,7 +144,7 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Equal("", hud!.EquippedWeaponName);
-        Assert.Equal("", hud.EquippedArmorName);
+        Assert.Null(hud!.EquippedWeapon);
+        Assert.Null(hud.EquippedArmor);
     }
 }

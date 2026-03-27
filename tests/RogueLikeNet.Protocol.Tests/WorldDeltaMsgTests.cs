@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -61,9 +62,9 @@ public class WorldDeltaMsgTests
                 new SkillSlotMsg { Id = 3, Cooldown = 10, Name = "" },
             ],
             InventoryItems = [
-                new InventoryItemMsg { Name = "Sword", StackCount = 1, Rarity = 0, Category = 0 },
-                new InventoryItemMsg { Name = "Shield", StackCount = 1, Rarity = 0, Category = 1 },
-                new InventoryItemMsg { Name = "Potion", StackCount = 1, Rarity = 0, Category = 2 },
+                new InventoryItemMsg { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryWeapon },
+                new InventoryItemMsg { ItemTypeId = ItemDefinitions.Shield, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryArmor },
+                new InventoryItemMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
             ],
         };
         var data = NetSerializer.Serialize(msg);
@@ -80,8 +81,8 @@ public class WorldDeltaMsgTests
         Assert.Equal(1, result.Skills[0].Id);
         Assert.Equal(5, result.Skills[1].Cooldown);
         Assert.Equal(3, result.InventoryItems.Length);
-        Assert.Equal("Sword", result.InventoryItems[0].Name);
-        Assert.Equal(1, result.InventoryItems[1].Category);
+        Assert.Equal(ItemDefinitions.ShortSword, result.InventoryItems[0].ItemTypeId);
+        Assert.Equal(ItemDefinitions.CategoryArmor, result.InventoryItems[1].Category);
     }
 
     [Fact]
@@ -201,19 +202,21 @@ public class WorldDeltaMsgTests
                 new SkillSlotMsg { Id = 4, Cooldown = 0, Name = "Dodge" },
             ],
             InventoryItems = [
-                new InventoryItemMsg { Name = "Sword", StackCount = 1, Rarity = 2, Category = 0 },
-                new InventoryItemMsg { Name = "Potion", StackCount = 5, Rarity = 0, Category = 0 },
+                new InventoryItemMsg { ItemTypeId = ItemDefinitions.LongSword, StackCount = 1, Rarity = 2, Category = ItemDefinitions.CategoryWeapon },
+                new InventoryItemMsg { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5, Rarity = 0, Category = ItemDefinitions.CategoryPotion },
             ],
-            EquippedWeaponName = "Long Sword",
-            EquippedArmorName = "Chain Mail",
+            EquippedWeapon = new InventoryItemMsg { ItemTypeId = ItemDefinitions.LongSword, Rarity = 0, Category = ItemDefinitions.CategoryWeapon, BonusAttack = 5 },
+            EquippedArmor = new InventoryItemMsg { ItemTypeId = ItemDefinitions.ChainMail, Rarity = 0, Category = ItemDefinitions.CategoryArmor, BonusDefense = 4 },
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<PlayerStateMsg>(data);
         Assert.Equal(4, result.Skills.Length);
         Assert.Equal("Power Strike", result.Skills[0].Name);
         Assert.Equal("Dodge", result.Skills[3].Name);
-        Assert.Equal("Long Sword", result.EquippedWeaponName);
-        Assert.Equal("Chain Mail", result.EquippedArmorName);
+        Assert.NotNull(result.EquippedWeapon);
+        Assert.Equal(ItemDefinitions.LongSword, result.EquippedWeapon!.Value.ItemTypeId);
+        Assert.NotNull(result.EquippedArmor);
+        Assert.Equal(ItemDefinitions.ChainMail, result.EquippedArmor!.Value.ItemTypeId);
         Assert.Equal(2, result.InventoryItems.Length);
         Assert.Equal(1, result.InventoryItems[0].StackCount);
         Assert.Equal(2, result.InventoryItems[0].Rarity);
@@ -225,8 +228,8 @@ public class WorldDeltaMsgTests
     {
         var msg = new PlayerStateMsg();
         Assert.Empty(msg.Skills);
-        Assert.Equal("", msg.EquippedWeaponName);
-        Assert.Equal("", msg.EquippedArmorName);
+        Assert.Null(msg.EquippedWeapon);
+        Assert.Null(msg.EquippedArmor);
         Assert.Empty(msg.InventoryItems);
     }
 }
