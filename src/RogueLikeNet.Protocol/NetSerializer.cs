@@ -10,7 +10,15 @@ namespace RogueLikeNet.Protocol;
 public static class NetSerializer
 {
     private static readonly MessagePackSerializerOptions Options =
-        MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.UntrustedData);
+        MessagePackSerializerOptions.Standard
+            .WithSecurity(MessagePackSecurity.UntrustedData)
+            .WithResolver(
+                // Using these resolver we can be sure that non-AOT compatible formatters slip through (Nullable<structs> don't work in AOT contexts)
+                MessagePack.Resolvers.CompositeResolver.Create(
+                    MessagePack.Resolvers.BuiltinResolver.Instance,
+                    MessagePack.Resolvers.SourceGeneratedFormatterResolver.Instance
+                )
+            );
 
     private const int CompressionThreshold = 4096;
 

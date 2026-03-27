@@ -755,7 +755,8 @@ public class InventorySystemTests
 
         ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
         // Should merge into one slot because same type + same rarity
-        Assert.Single(invAfter.Items!);
+        Assert.NotNull(invAfter.Items);
+        Assert.Single(invAfter.Items);
         Assert.Equal(ItemDefinitions.RarityRare, invAfter.Items[0].Rarity);
         Assert.Equal(4, invAfter.Items[0].StackCount);
     }
@@ -887,6 +888,7 @@ public class InventorySystemTests
             BonusDefense = 5,
             Rarity = 0,
         };
+        Assert.NotNull(inv.Items);
         inv.Items.Add(healthArmor);
 
         // Equip it manually

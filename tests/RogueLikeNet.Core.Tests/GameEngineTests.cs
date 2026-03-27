@@ -468,6 +468,7 @@ public class GameEngineTests
 
         // Add an item with BonusHealth to inventory directly
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.NotNull(inv.Items);
         inv.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
