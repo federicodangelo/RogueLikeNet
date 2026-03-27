@@ -86,7 +86,7 @@ public class SkillSystemTests
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -109,7 +109,7 @@ public class SkillSystemTests
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -132,7 +132,7 @@ public class SkillSystemTests
         using var engine = CreateEngine();
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Rogue);
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -176,7 +176,7 @@ public class SkillSystemTests
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
         // Spawn monster near the target area
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -200,7 +200,7 @@ public class SkillSystemTests
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
         // Spawn monster at distance
-        var monster = engine.SpawnMonster(0, sx + 3, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -368,7 +368,7 @@ public class SkillSystemTests
         var (sx, sy) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
         // Spawn monster well beyond PowerShot range (range=5)
-        var monster = engine.SpawnMonster(0, sx + 10, sy, 103, 0x00FF00, 100, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 10, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;

@@ -16,7 +16,7 @@ public class LootAndDeathTests
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
 
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 1, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
         ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
         mHealth.Current = 0;
 
@@ -79,7 +79,7 @@ public class LootAndDeathTests
         // Kill multiple monsters to increase chance of loot drop
         for (int i = 0; i < 10; i++)
         {
-            var monster = engine.SpawnMonster(0, sx + i + 1, sy, 103, 0x00FF00, 1, 5, 0, 8);
+            var monster = engine.SpawnMonster(sx + i + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
             ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
             mHealth.Current = 0;
         }

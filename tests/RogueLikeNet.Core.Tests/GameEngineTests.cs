@@ -113,7 +113,7 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0);
         var (sx, sy) = engine.FindSpawnPosition();
-        var monster = engine.SpawnMonster(0, sx + 1, sy, 103, 0x00FF00, 1, 5, 0, 8);
+        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
 
         // Kill monster
         ref var health = ref engine.EcsWorld.Get<Health>(monster);

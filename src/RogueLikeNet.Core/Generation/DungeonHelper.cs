@@ -136,8 +136,16 @@ internal static class DungeonHelper
         {
             int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
             int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
-            var template = NpcDefinitions.Pick(rng, difficulty);
-            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData { MonsterTypeId = template.TypeId }));
+            var def = NpcDefinitions.Pick(rng, difficulty);
+            int hpScale = 1 + difficulty / 2;
+            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData
+            {
+                MonsterTypeId = def.TypeId,
+                Health = def.Health * hpScale,
+                Attack = def.Attack + difficulty,
+                Defense = def.Defense + difficulty / 2,
+                Speed = def.Speed,
+            }));
         }
 
         if (rng.Next(100) < 30)

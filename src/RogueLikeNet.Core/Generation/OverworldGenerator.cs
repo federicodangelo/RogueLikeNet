@@ -144,8 +144,16 @@ public class OverworldGenerator : IDungeonGenerator
                 {
                     if (rng.Next(1000) < MonsterChance)
                     {
-                        var template = NpcDefinitions.Pick(rng, difficulty);
-                        result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData { MonsterTypeId = template.TypeId }));
+                        var def = NpcDefinitions.Pick(rng, difficulty);
+                        int hpScale = 1 + difficulty / 2;
+                        result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData
+                        {
+                            MonsterTypeId = def.TypeId,
+                            Health = def.Health * hpScale,
+                            Attack = def.Attack + difficulty,
+                            Defense = def.Defense + difficulty / 2,
+                            Speed = def.Speed,
+                        }));
                     }
                     else if (rng.Next(1000) < ItemChance)
                     {

@@ -390,7 +390,7 @@ public class GameServerTests
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
         int monsterX = playerPos.X + 1;
         int monsterY = playerPos.Y;
-        loop.Engine.SpawnMonster(1, monsterX, monsterY, 77, 0xFF0000);
+        loop.Engine.SpawnMonster(monsterX, monsterY, new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
 
         // Send an attack input targeting the monster
         var attack = new ClientInputMsg

@@ -67,12 +67,7 @@ public class GameEngine : IDisposable
     {
         foreach (var (pos, monster) in result.Monsters)
         {
-            var template = NpcDefinitions.Get(monster.MonsterTypeId);
-            int difficulty = Math.Max(Math.Abs(pos.X / Chunk.Size), Math.Abs(pos.Y / Chunk.Size));
-            int hpScale = 1 + difficulty / 2;
-            SpawnMonster(template.TypeId, pos.X, pos.Y, template.GlyphId, template.Color,
-                template.Health * hpScale, template.Attack + difficulty,
-                template.Defense + difficulty / 2, template.Speed);
+            SpawnMonster(pos.X, pos.Y, monster);
         }
 
         foreach (var (pos, item) in result.Items)
@@ -114,21 +109,22 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
-    /// Spawns a monster at the given position.
+    /// Spawns a monster at the given position using fully-populated MonsterData.
     /// </summary>
-    public Entity SpawnMonster(int monsterTypeId, int x, int y, int glyphId, int color,
-        int health = 20, int attack = 5, int defense = 2, int speed = 8)
+    public Entity SpawnMonster(int x, int y, MonsterData data)
     {
+        var def = NpcDefinitions.Get(data.MonsterTypeId);
+
         // Speed maps to move delay: higher speed → lower delay.
         // Speed 10 = every tick (0 delay), speed 6 = every 3rd tick, etc.
-        int moveInterval = Math.Max(0, 10 - speed);
+        int moveInterval = Math.Max(0, 10 - data.Speed);
 
         return _ecsWorld.Create(
             new Position(x, y),
-            new Health(health),
-            new CombatStats(attack, defense, speed),
-            new TileAppearance(glyphId, color),
-            new MonsterData { MonsterTypeId = monsterTypeId },
+            new Health(data.Health),
+            new CombatStats(data.Attack, data.Defense, data.Speed),
+            new TileAppearance(def.GlyphId, def.Color),
+            data,
             new AIState { StateId = AIStates.Idle },
             new MoveDelay(moveInterval),
             new AttackDelay(moveInterval)
