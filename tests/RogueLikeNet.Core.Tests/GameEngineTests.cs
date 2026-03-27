@@ -306,4 +306,180 @@ public class GameEngineTests
         Assert.Equal(1, hud.InventoryItems[0].StackCount); // Sword is not stackable
         Assert.Equal(1, hud.InventoryItems[0].Rarity); // Rarity 1 (Uncommon)
     }
+
+    [Fact]
+    public void PlayerDeath_RespawnsWithHalfHealth()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Kill the player by reducing health to 0
+        ref var health = ref engine.EcsWorld.Get<Health>(player);
+        int maxHp = health.Max;
+        health.Current = 0;
+        engine.EcsWorld.Add(player, new DeadTag());
+
+        engine.Tick();
+
+        // Player should be alive with half health
+        Assert.True(engine.EcsWorld.IsAlive(player));
+        ref var healthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(maxHp / 2, healthAfter.Current);
+    }
+
+    [Fact]
+    public void PlayerDeath_LosesExperience()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Give the player some experience
+        ref var classData = ref engine.EcsWorld.Get<ClassData>(player);
+        classData.Experience = 100;
+
+        // Kill the player
+        ref var health = ref engine.EcsWorld.Get<Health>(player);
+        health.Current = 0;
+        engine.EcsWorld.Add(player, new DeadTag());
+
+        engine.Tick();
+
+        ref var classDataAfter = ref engine.EcsWorld.Get<ClassData>(player);
+        Assert.Equal(75, classDataAfter.Experience); // Lost 25% (100 - 100/4)
+    }
+
+    [Fact]
+    public void PlayerDeath_ZeroExperience_StaysZero()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Player starts with 0 experience
+        ref var health = ref engine.EcsWorld.Get<Health>(player);
+        health.Current = 0;
+        engine.EcsWorld.Add(player, new DeadTag());
+
+        engine.Tick();
+
+        ref var classData = ref engine.EcsWorld.Get<ClassData>(player);
+        Assert.Equal(0, classData.Experience);
+    }
+
+    [Fact]
+    public void SpawnPlayer_HighSpeed_ZeroMoveDelay()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        // Rogue has speed 4, so delay = max(0, 10 - (6+4)) = 0
+        var player = engine.SpawnPlayer(1, 10, 10, ClassDefinitions.Rogue);
+        ref var delay = ref engine.EcsWorld.Get<MoveDelay>(player);
+        Assert.Equal(0, delay.Interval);
+    }
+
+    [Fact]
+    public void FindDropPosition_OriginFree_ReturnsOrigin()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (x, y) = GameEngine.FindDropPosition(engine.EcsWorld, 10, 10);
+        Assert.Equal(10, x);
+        Assert.Equal(10, y);
+    }
+
+    [Fact]
+    public void FindDropPosition_OriginOccupied_FindsNearby()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+
+        // Place an item at the origin
+        var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        engine.SpawnItemOnGround(template, 0, sx, sy);
+
+        var (x, y) = GameEngine.FindDropPosition(engine.EcsWorld, sx, sy);
+        Assert.True(x != sx || y != sy, "Should find a different position when origin is occupied");
+    }
+
+    [Fact]
+    public void SpawnElement_WithLight_CreatesLightSource()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+
+        var element = new DungeonElement
+        {
+            Position = new Position(10, 10),
+            Appearance = new TileAppearance('*', 0xFFAA00),
+            Light = new LightSource { Radius = 5 }
+        };
+
+        var entity = engine.SpawnElement(element);
+        Assert.True(engine.EcsWorld.Has<LightSource>(entity));
+        ref var light = ref engine.EcsWorld.Get<LightSource>(entity);
+        Assert.Equal(5, light.Radius);
+    }
+
+    [Fact]
+    public void SpawnElement_WithoutLight_NoLightSource()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+
+        var element = new DungeonElement
+        {
+            Position = new Position(10, 10),
+            Appearance = new TileAppearance('#', 0x888888),
+            Light = null
+        };
+
+        var entity = engine.SpawnElement(element);
+        Assert.False(engine.EcsWorld.Has<LightSource>(entity));
+    }
+
+    [Fact]
+    public void FindSpawnPosition_WithEnemyNearby_AvoidsEnemy()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+
+        // Find first spawn pos, spawn an enemy there to force a different position
+        var (sx, sy) = engine.FindSpawnPosition();
+        engine.SpawnMonster(sx, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+
+        // Should find a different spot
+        var (sx2, sy2) = engine.FindSpawnPosition();
+        Assert.True(sx2 != sx || sy2 != sy);
+    }
+
+    [Fact]
+    public void GetPlayerStateData_InventoryItemWithBonusHealth()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Add an item with BonusHealth to inventory directly
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            StackCount = 1,
+            BonusHealth = 25,
+            BonusAttack = 0,
+            BonusDefense = 0,
+        });
+
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        Assert.Single(state!.InventoryItems);
+        Assert.Equal(25, state.InventoryItems[0].BonusHealth);
+    }
 }

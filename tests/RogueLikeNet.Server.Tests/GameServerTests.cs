@@ -685,4 +685,198 @@ public class GameServerTests
         var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, entity);
         Assert.Null(hudMsg);
     }
+
+    [Fact]
+    public void BroadcastChat_DeliversToAllConnections()
+    {
+        var messages1 = new List<byte[]>();
+        var messages2 = new List<byte[]>();
+        using var loop = new TestGameServer(42, _gen);
+        var conn1 = loop.AddConnection(data =>
+        {
+            messages1.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+        var conn2 = loop.AddConnection(data =>
+        {
+            messages2.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+        loop.SpawnPlayerForConnection(conn1.ConnectionId, playerName: "Alice");
+        loop.SpawnPlayerForConnection(conn2.ConnectionId, playerName: "Bob");
+
+        messages1.Clear();
+        messages2.Clear();
+
+        loop.BroadcastChat(conn1.ConnectionId, "Hello!");
+
+        // Both connections should receive the chat message
+        Assert.Single(messages1);
+        Assert.Single(messages2);
+
+        var env = NetSerializer.UnwrapMessage(messages1[0]);
+        Assert.Equal(MessageTypes.ChatReceive, env.MessageType);
+        var chat = NetSerializer.Deserialize<ChatMsg>(env.Payload);
+        Assert.Equal("Hello!", chat.Text);
+        Assert.Equal("Alice", chat.SenderName);
+    }
+
+    [Fact]
+    public void BroadcastChat_EmptyPlayerName_UsesFallback()
+    {
+        var messages = new List<byte[]>();
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(data =>
+        {
+            messages.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+        loop.SpawnPlayerForConnection(conn.ConnectionId, playerName: "");
+
+        messages.Clear();
+        loop.BroadcastChat(conn.ConnectionId, "Hello!");
+
+        Assert.Single(messages);
+        var env = NetSerializer.UnwrapMessage(messages[0]);
+        var chat = NetSerializer.Deserialize<ChatMsg>(env.Payload);
+        Assert.StartsWith("Player ", chat.SenderName);
+    }
+
+    [Fact]
+    public void Start_AlreadyRunning_Throws()
+    {
+        using var loop = new TestGameServer(42, _gen);
+        loop.Start();
+        Assert.Throws<InvalidOperationException>(() => loop.Start());
+        loop.Dispose();
+    }
+
+    [Fact]
+    public async Task RunLoop_LogsStats_AfterFiveSeconds()
+    {
+        var logOutput = new StringWriter();
+        using var loop = new GameServer(42, _gen, logWriter: logOutput);
+
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        loop.Start();
+        // Wait enough time for at least one stats log (5 seconds)
+        await Task.Delay(5500);
+        loop.Dispose();
+
+        string log = logOutput.ToString();
+        Assert.Contains("tick=", log);
+        Assert.Contains("KB/s", log);
+    }
+
+    [Fact]
+    public void SpawnPlayerForConnection_WithClass_RespectsClassId()
+    {
+        byte[]? receivedData = null;
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(data =>
+        {
+            receivedData = data;
+            return Task.CompletedTask;
+        });
+
+        loop.SpawnPlayerForConnection(conn.ConnectionId, classId: RogueLikeNet.Core.Definitions.ClassDefinitions.Mage);
+
+        Assert.NotNull(conn.PlayerEntity);
+        ref var classData = ref loop.Engine.EcsWorld.Get<RogueLikeNet.Core.Components.ClassData>(conn.PlayerEntity.Value);
+        Assert.Equal(RogueLikeNet.Core.Definitions.ClassDefinitions.Mage, classData.ClassId);
+    }
+
+    [Fact]
+    public async Task RunningServer_CommandQueue_ProcessesEnqueuedCommands()
+    {
+        var messages = new List<byte[]>();
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(data =>
+        {
+            messages.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+
+        loop.Start();
+        // Give server time to start
+        await Task.Delay(100);
+
+        // SpawnPlayerForConnection enqueues a command when server is running
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
+        await Task.Delay(200);
+
+        loop.Dispose();
+
+        // Should have received at least the snapshot
+        Assert.True(messages.Count > 0);
+        Assert.NotNull(conn.PlayerEntity);
+    }
+
+    [Fact]
+    public async Task RunningServer_RemoveConnection_ProcessesCommand()
+    {
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+
+        loop.Start();
+        await Task.Delay(100);
+
+        // SpawnPlayer while running
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
+        await Task.Delay(200);
+
+        Assert.NotNull(conn.PlayerEntity);
+        var entity = conn.PlayerEntity.Value;
+
+        // RemoveConnection while running enqueues destroy command
+        loop.RemoveConnection(conn.ConnectionId);
+        await Task.Delay(200);
+
+        loop.Dispose();
+    }
+
+    [Fact]
+    public async Task RunningServer_BroadcastChat_ProcessesCommand()
+    {
+        var messages = new List<byte[]>();
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(data =>
+        {
+            messages.Add(data.ToArray());
+            return Task.CompletedTask;
+        });
+
+        loop.Start();
+        await Task.Delay(100);
+
+        // SpawnPlayer and broadcast chat while running
+        loop.SpawnPlayerForConnection(conn.ConnectionId, playerName: "Test");
+        await Task.Delay(200);
+
+        messages.Clear();
+        loop.BroadcastChat(conn.ConnectionId, "Hello from running server");
+        await Task.Delay(200);
+
+        loop.Dispose();
+
+        // Should have received the chat message
+        bool hasChatMsg = messages.Any(m =>
+        {
+            var env = NetSerializer.UnwrapMessage(m);
+            return env.MessageType == MessageTypes.ChatReceive;
+        });
+        Assert.True(hasChatMsg);
+    }
+
+    [Fact]
+    public void Dispose_AlreadyDisposed_DoesNotThrow()
+    {
+        var loop = new TestGameServer(42, _gen);
+        loop.Start();
+        loop.Dispose();
+        // Second dispose should not throw
+        loop.Dispose();
+    }
 }

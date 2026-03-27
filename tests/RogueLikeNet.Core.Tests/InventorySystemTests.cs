@@ -805,4 +805,47 @@ public class InventorySystemTests
         // At least 3 distinct positions near player (the 3 drops; possibly more from dungeon gen)
         Assert.True(nearPositions.Count >= 3);
     }
+
+    [Fact]
+    public void UnequipItem_WithBonusHealth_ClampsCurrentHealth()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Get a weapon with BonusHealth (create a custom item)
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        var healthArmor = new ItemData
+        {
+            ItemTypeId = ItemDefinitions.LeatherArmor,
+            StackCount = 1,
+            BonusHealth = 50,
+            BonusAttack = 0,
+            BonusDefense = 5,
+            Rarity = 0,
+        };
+        inv.Items.Add(healthArmor);
+
+        // Equip it manually
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.Equip;
+        input.ItemSlot = 0; // First inventory slot
+        engine.Tick();
+
+        // Player now has +50 max health from armor; heal to full
+        ref var health = ref engine.EcsWorld.Get<Health>(player);
+        health.Current = health.Max;
+        int maxWithArmor = health.Max;
+
+        // Unequip the armor
+        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input2.ActionType = ActionTypes.Unequip;
+        input2.ItemSlot = 1; // Armor slot
+        engine.Tick();
+
+        // After unequip, health.Max is reduced by 50, and health.Current should be clamped
+        ref var healthAfter = ref engine.EcsWorld.Get<Health>(player);
+        Assert.Equal(maxWithArmor - 50, healthAfter.Max);
+        Assert.True(healthAfter.Current <= healthAfter.Max);
+    }
 }

@@ -423,4 +423,89 @@ public class HudLayoutTests
         Assert.Equal(0, section.ScrollOffset);
         Assert.Equal(3, section.SelectedIndex);
     }
+
+    [Fact]
+    public void FocusedSection_WhenNoFocus_ReturnsNull()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "A", IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
+        Assert.Equal(-1, layout.FocusedSectionIndex);
+        Assert.Null(layout.FocusedSection);
+    }
+
+    [Fact]
+    public void FocusedSection_WhenFocused_ReturnsCorrectSection()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "A", IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
+        layout.SetFocus(0);
+        Assert.NotNull(layout.FocusedSection);
+        Assert.Equal("A", layout.FocusedSection!.Name);
+    }
+
+    [Fact]
+    public void CycleFocus_NoInputSections_StaysNegativeOne()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "A", IsFixedHeight = true, FixedHeight = 5, AcceptsInput = false });
+        layout.AddSection(new HudSection { Name = "B", IsFixedHeight = true, FixedHeight = 5, AcceptsInput = false });
+
+        layout.CycleFocus();
+        Assert.Equal(-1, layout.FocusedSectionIndex);
+    }
+
+    [Fact]
+    public void SetFocus_OutOfRange_DoesNotChange()
+    {
+        var layout = new HudLayout();
+        layout.AddSection(new HudSection { Name = "A", IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
+        layout.SetFocus(0);
+        Assert.Equal(0, layout.FocusedSectionIndex);
+
+        layout.SetFocus(99);
+        Assert.Equal(0, layout.FocusedSectionIndex); // Unchanged
+    }
+
+    [Fact]
+    public void HudSection_EnsureSelectionVisible_NoParam_ScrollsDownWhenNeeded()
+    {
+        var section = new HudSection { Name = "S", IsFixedHeight = false, RowCount = 3 };
+        section.SelectedIndex = 5;
+        section.ScrollOffset = 0;
+
+        section.EnsureSelectionVisible();
+
+        // SelectedIndex 5 should be visible in a 3-row window
+        Assert.True(section.SelectedIndex >= section.ScrollOffset);
+        Assert.True(section.SelectedIndex < section.ScrollOffset + section.VisibleContentRows);
+    }
+
+    [Fact]
+    public void HudSection_EnsureSelectionVisible_NoParam_ScrollsUpWhenNeeded()
+    {
+        var section = new HudSection { Name = "S", IsFixedHeight = false, RowCount = 3 };
+        section.SelectedIndex = 1;
+        section.ScrollOffset = 5;
+
+        section.EnsureSelectionVisible();
+
+        Assert.Equal(1, section.ScrollOffset);
+    }
+
+    [Fact]
+    public void HudSection_EnsureSelectionVisible_WithIndicators_ConvergesForEdgeCase()
+    {
+        // Set up a scenario where the do/while loop needs 2 iterations:
+        // SelectedIndex right at the boundary where adding an indicator shifts the visible range
+        var section = new HudSection { Name = "S", IsFixedHeight = false, RowCount = 5, UseScrollIndicators = true };
+        section.SelectedIndex = 4;
+        section.ScrollOffset = 1; // top indicator present, initially 3 effective rows
+
+        section.EnsureSelectionVisible(10);
+
+        // After stabilization, selected index should be visible
+        int rows = section.EffectiveItemRows(10);
+        Assert.True(section.SelectedIndex >= section.ScrollOffset);
+        Assert.True(section.SelectedIndex < section.ScrollOffset + rows);
+    }
 }

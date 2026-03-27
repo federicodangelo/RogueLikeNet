@@ -453,4 +453,176 @@ public class ClientGameStateTests
         var tile = state.GetTile(9999, 9999);
         Assert.Equal(TileType.Void, tile.Type);
     }
+
+    [Fact]
+    public void GetFloorItems_NoItems_ReturnsEmpty()
+    {
+        var state = new ClientGameState();
+        state.ApplyDelta(MakeSnapshot(32, 32));
+        var items = state.GetFloorItems();
+        Assert.Empty(items);
+    }
+
+    [Fact]
+    public void GetFloorItems_ItemAtPlayerPosition_ReturnsItem()
+    {
+        var state = new ClientGameState();
+        state.ApplyDelta(MakeSnapshot(32, 32));
+
+        // Add an item entity at the player's position
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [new EntityUpdateMsg
+            {
+                Id = 99,
+                X = 32,
+                Y = 32,
+                GlyphId = 33,
+                FgColor = 0x00FF00,
+                Health = 0,
+                MaxHealth = 0,
+                Item = new ItemDataMsg { ItemTypeId = 5, Rarity = 1 }
+            }],
+        });
+
+        var items = state.GetFloorItems();
+        Assert.Single(items);
+        Assert.Equal(5, items[0].ItemTypeId);
+        Assert.Equal(1, items[0].Rarity);
+    }
+
+    [Fact]
+    public void GetFloorItems_ItemAtDifferentPosition_ReturnsEmpty()
+    {
+        var state = new ClientGameState();
+        state.ApplyDelta(MakeSnapshot(32, 32));
+
+        // Add an item entity at a different position
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [new EntityUpdateMsg
+            {
+                Id = 99,
+                X = 50,
+                Y = 50,
+                GlyphId = 33,
+                FgColor = 0x00FF00,
+                Health = 0,
+                MaxHealth = 0,
+                Item = new ItemDataMsg { ItemTypeId = 5, Rarity = 0 }
+            }],
+        });
+
+        var items = state.GetFloorItems();
+        Assert.Empty(items);
+    }
+
+    [Fact]
+    public void ApplyDelta_PositionHealthUpdate_UpdatesExistingEntity()
+    {
+        var state = new ClientGameState();
+        state.ApplyDelta(MakeSnapshot(32, 32));
+
+        // Add entity
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [new EntityUpdateMsg { Id = 99, X = 35, Y = 35, GlyphId = 103, FgColor = 0xFF0000, Health = 20, MaxHealth = 20 }],
+        });
+
+        // Send a position-health-only update
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 2,
+            ToTick = 3,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
+            EntityPositionHealthUpdates = [new EntityPositionHealthMsg { Id = 99, X = 36, Y = 37, Health = 15 }],
+        });
+
+        Assert.Equal(36, state.Entities[99].X);
+        Assert.Equal(37, state.Entities[99].Y);
+        Assert.Equal(15, state.Entities[99].Health);
+        // GlyphId and FgColor should remain from original
+        Assert.Equal(103, state.Entities[99].GlyphId);
+        Assert.Equal(0xFF0000, state.Entities[99].FgColor);
+    }
+
+    [Fact]
+    public void ApplyDelta_LightSourceEntity_ComputesLighting()
+    {
+        var state = new ClientGameState();
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
+            Chunks = [MakeFloorChunk(0, 0)],
+            EntityUpdates =
+            [
+                new EntityUpdateMsg { Id = 1, X = 32, Y = 32, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 },
+                new EntityUpdateMsg { Id = 2, X = 35, Y = 32, GlyphId = 42, FgColor = 0xFFAA00, LightRadius = 5 },
+            ],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
+        });
+
+        // The light source at (35,32) should illuminate nearby tiles
+        var tile = state.GetTile(35, 32);
+        Assert.True(tile.LightLevel > 0, "Tile at light source should be illuminated");
+    }
+
+    [Fact]
+    public void ApplyChunkData_StoresChunkCorrectly()
+    {
+        var state = new ClientGameState();
+
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
+            Chunks = [MakeFloorChunk(0, 0)],
+            EntityUpdates = [],
+        });
+
+        Assert.Single(state.Chunks);
+        var tile = state.GetTile(5, 5);
+        Assert.Equal(TileType.Floor, tile.Type);
+    }
+
+    [Fact]
+    public void WorldTick_TracksLatestTick()
+    {
+        var state = new ClientGameState();
+        Assert.Equal(0, state.WorldTick);
+        state.ApplyDelta(MakeSnapshot(32, 32));
+        Assert.Equal(1, state.WorldTick);
+
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 1,
+            ToTick = 5,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
+        });
+        Assert.Equal(5, state.WorldTick);
+    }
 }

@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Engine\Engine.csproj" />
     <ProjectReference Include="..\..\src\RogueLikeNet.Client.Core\RogueLikeNet.Client.Core.csproj" />
     <ProjectReference Include="..\..\src\RogueLikeNet.Protocol\RogueLikeNet.Protocol.csproj" />
   </ItemGroup>

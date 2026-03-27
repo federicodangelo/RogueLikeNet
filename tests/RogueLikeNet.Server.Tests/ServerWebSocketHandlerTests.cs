@@ -156,6 +156,42 @@ public class ServerWebSocketHandlerTests
         // Send should have been skipped since socket reports as closed
         Assert.Empty(socket.SentMessages);
     }
+
+    [Fact]
+    public async Task HandleConnection_DoubleLogin_ClosesConnection()
+    {
+        using var loop = new GameServer(42, _gen);
+        var socket = new FakeWebSocket();
+
+        // Send login twice
+        socket.EnqueueReceive(MakeLoginMessage());
+        socket.EnqueueReceive(MakeLoginMessage());
+        socket.EnqueueClose();
+
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
+
+        // Second login should cause the connection to break (ProcessMessage returns false)
+        // The socket should still close cleanly
+        Assert.Equal(WebSocketState.Closed, socket.State);
+    }
+
+    [Fact]
+    public async Task HandleConnection_UnknownMessageType_ClosesConnection()
+    {
+        using var loop = new GameServer(42, _gen);
+        var socket = new FakeWebSocket();
+
+        // Create a message with an unknown message type
+        var payload = new byte[] { 1, 2, 3 };
+        var wrapped = NetSerializer.WrapMessage(255, payload); // 255 = unknown type
+        socket.EnqueueReceive(wrapped);
+        socket.EnqueueClose();
+
+        await ServerWebSocketHandler.HandleConnection(socket, loop);
+
+        // Unknown message type causes ProcessMessage to return false, closing the read loop
+        Assert.Equal(WebSocketState.Closed, socket.State);
+    }
 }
 
 internal class FakeWebSocket : WebSocket

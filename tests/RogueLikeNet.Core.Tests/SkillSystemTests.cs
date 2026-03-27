@@ -383,4 +383,64 @@ public class SkillSystemTests
         ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
         Assert.Equal(hpBefore, mHealthAfter.Current);
     }
+
+    [Fact]
+    public void Trap_IsNotImplemented_DoesNotSetCooldown()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+
+        // Assign Trap to slot 1
+        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
+        slots.Skill1 = SkillDefinitions.Trap;
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.UseSkill;
+        input.ItemSlot = 1;
+        input.TargetX = 1;
+        input.TargetY = 0;
+        engine.Tick();
+
+        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
+        Assert.Equal(0, slotsAfter.Cooldown1); // Trap returns false, no cooldown
+    }
+
+    [Fact]
+    public void Fireball_NoEnemiesInArea_NoCooldown()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+
+        // No monsters nearby
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.UseSkill;
+        input.ItemSlot = 0;
+        input.TargetX = 3;
+        input.TargetY = 0;
+        engine.Tick();
+
+        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
+        // Fireball missed (no enemies) → no cooldown set
+        Assert.Equal(0, slots.Cooldown0);
+    }
+
+    [Fact]
+    public void PowerShot_OutOfRange_NoCooldown()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.UseSkill;
+        input.ItemSlot = 0;
+        input.TargetX = 10; // Beyond range 5
+        input.TargetY = 0;
+        engine.Tick();
+
+        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
+        Assert.Equal(0, slots.Cooldown0);
+    }
 }

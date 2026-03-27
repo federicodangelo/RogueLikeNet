@@ -1,3 +1,4 @@
+using Engine.Platform.Null;
 using RogueLikeNet.Client.Core.Rendering;
 
 namespace RogueLikeNet.Client.Core.Tests;
@@ -72,5 +73,42 @@ public class ParticleSystemTests
         var ps = new ParticleSystem();
         ps.Update(1.0f);
         Assert.Equal(0, ps.ActiveCount);
+    }
+
+    [Fact]
+    public void Render_ActiveParticles_DoesNotThrow()
+    {
+        var ps = new ParticleSystem();
+        ps.SpawnDamageNumber(5, 5, 10, killed: false);
+        ps.SpawnHitSparks(5, 5, 6, 5, killed: true);
+
+        using var renderer = new NullSpriteRenderer(800, 600);
+        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0);
+
+        // All particles should still be active (Render doesn't remove them)
+        Assert.Equal(7, ps.ActiveCount); // 1 damage number + 6 kill sparks
+    }
+
+    [Fact]
+    public void Render_NoParticles_DoesNotThrow()
+    {
+        var ps = new ParticleSystem();
+        using var renderer = new NullSpriteRenderer(800, 600);
+        ps.Render(renderer, cameraCenterX: 0, cameraCenterY: 0, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0);
+        Assert.Equal(0, ps.ActiveCount);
+    }
+
+    [Fact]
+    public void Render_AfterPartialDecay_StillRenders()
+    {
+        var ps = new ParticleSystem();
+        ps.SpawnDamageNumber(5, 5, 10, killed: false);
+        ps.Update(0.4f); // Partially decayed but still alive
+
+        Assert.Equal(1, ps.ActiveCount);
+
+        using var renderer = new NullSpriteRenderer(800, 600);
+        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 1f, shakeY: 2f);
+        Assert.Equal(1, ps.ActiveCount);
     }
 }

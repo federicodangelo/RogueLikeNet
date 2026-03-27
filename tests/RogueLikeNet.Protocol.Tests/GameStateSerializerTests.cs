@@ -176,4 +176,36 @@ public class GameStateSerializerTests
 
         engine.Dispose();
     }
+
+    [Fact]
+    public void SerializeEntityDelta_PositionHealthOnlyChange_EmitsPositionHealthUpdate()
+    {
+        var world = World.Create();
+        // Entity with Health — position + health changes should use the compressed path
+        var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF), new Health(20));
+
+        var fov = new FOVData(10);
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(7, 5));
+
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+
+        // Seed previous state
+        GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
+
+        // Change only position and health — glyph and color stay the same
+        world.Set(entity, new Position(7, 5));
+        ref var health = ref world.Get<Health>(entity);
+        health.Current = 15;
+
+        var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
+        Assert.Empty(full); // Not a full update
+        Assert.Single(pos); // Should be a position-health update
+        Assert.Equal(7, pos[0].X);
+        Assert.Equal(5, pos[0].Y);
+        Assert.Equal(15, pos[0].Health);
+        Assert.Empty(rem);
+
+        World.Destroy(world);
+    }
 }
