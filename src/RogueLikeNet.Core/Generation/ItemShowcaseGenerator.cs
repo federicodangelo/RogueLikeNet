@@ -100,7 +100,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                 result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new ItemData
                 {
                     ItemTypeId = def.TypeId,
-                    Rarity = rarity,
+                    Rarity = ItemDefinitions.CapRarity(def.Category, rarity),
                     BonusAttack = def.BaseAttack * rarityMult / 100,
                     BonusDefense = def.BaseDefense * rarityMult / 100,
                     BonusHealth = def.BaseHealth * rarityMult / 100,

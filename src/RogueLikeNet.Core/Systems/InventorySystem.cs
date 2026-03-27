@@ -63,6 +63,7 @@ public class InventorySystem
                 for (int i = 0; i < inv.Items.Count; i++)
                 {
                     if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
+                        inv.Items[i].Rarity == itemData.Rarity &&
                         inv.Items[i].StackCount < def.MaxStackSize)
                     {
                         var existing = inv.Items[i];

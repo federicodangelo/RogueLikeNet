@@ -697,6 +697,69 @@ public class InventorySystemTests
         Assert.Equal(7, invAfter.Items[1].StackCount); // Was 5, absorbed 2
     }
 
+    [Fact]
+    public void PickUp_StackableItem_DifferentRarity_DoesNotStack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Add a Common health potion to inventory
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            Rarity = ItemDefinitions.RarityCommon,
+            StackCount = 3
+        });
+
+        // Spawn a Rare health potion on the ground
+        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var groundItem = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        // Should be two separate slots because rarities differ
+        Assert.Equal(2, invAfter.Items!.Count);
+        Assert.Equal(ItemDefinitions.RarityCommon, invAfter.Items[0].Rarity);
+        Assert.Equal(3, invAfter.Items[0].StackCount);
+        Assert.Equal(ItemDefinitions.RarityRare, invAfter.Items[1].Rarity);
+    }
+
+    [Fact]
+    public void PickUp_StackableItem_SameRarity_Stacks()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Add a Rare health potion to inventory
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData
+        {
+            ItemTypeId = ItemDefinitions.HealthPotion,
+            Rarity = ItemDefinitions.RarityRare,
+            StackCount = 3
+        });
+
+        // Spawn another Rare health potion on the ground
+        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var groundItem = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var invAfter = ref engine.EcsWorld.Get<Inventory>(player);
+        // Should merge into one slot because same type + same rarity
+        Assert.Single(invAfter.Items!);
+        Assert.Equal(ItemDefinitions.RarityRare, invAfter.Items[0].Rarity);
+        Assert.Equal(4, invAfter.Items[0].StackCount);
+    }
+
     // === Drop Position Spreading Tests ===
 
     [Fact]

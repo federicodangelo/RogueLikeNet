@@ -105,4 +105,15 @@ public class ItemDefinitionsTests
         Assert.Equal(expectedStackable, def.Stackable);
         Assert.Equal(expectedMaxStack, def.MaxStackSize);
     }
+
+    [Fact]
+    public void GenerateItemData_Gold_AlwaysCommonRarity()
+    {
+        var goldDef = ItemDefinitions.Get(ItemDefinitions.Gold);
+        var rng = new SeededRandom(123);
+
+        // Even when requesting Legendary rarity, gold should always be Common
+        var itemData = ItemDefinitions.GenerateItemData(goldDef, ItemDefinitions.RarityLegendary, rng);
+        Assert.Equal(ItemDefinitions.RarityCommon, itemData.Rarity);
+    }
 }

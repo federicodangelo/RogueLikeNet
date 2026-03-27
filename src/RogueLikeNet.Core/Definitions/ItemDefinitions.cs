@@ -85,12 +85,23 @@ public static class ItemDefinitions
 
         // Higher difficulty slightly boosts rarity
         rarity = Math.Min(4, rarity + difficulty / 3);
+        rarity = CapRarity(def.Category, rarity);
 
         return new Loot(def, rarity);
     }
 
+    public static int CapRarity(int itemCategory, int rarity)
+    {
+        // Gold is always Common rarity
+        if (itemCategory == CategoryGold)
+            return RarityCommon;
+        return rarity;
+    }
+
     public static ItemData GenerateItemData(ItemDefinition def, int rarity, SeededRandom rnd)
     {
+        rarity = CapRarity(def.Category, rarity);
+
         int rarityMult = 100 + rarity * 50;
         return new ItemData
         {
