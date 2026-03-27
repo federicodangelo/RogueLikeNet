@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Components;
+
 namespace RogueLikeNet.Core.Algorithms;
 
 /// <summary>
@@ -24,8 +26,8 @@ public static class AStarPathfinder
         var cameFrom = new Dictionary<long, long>();
         var gScore = new Dictionary<long, int>();
 
-        long startKey = Pack(startX, startY);
-        long goalKey = Pack(goalX, goalY);
+        long startKey = Position.PackCoord(startX, startY);
+        long goalKey = Position.PackCoord(goalX, goalY);
 
         gScore[startKey] = 0;
         openSet.Enqueue((startX, startY), ManhattanDistance(startX, startY, goalX, goalY));
@@ -39,7 +41,7 @@ public static class AStarPathfinder
         while (openSet.Count > 0 && steps++ < maxSteps)
         {
             var (cx, cy) = openSet.Dequeue();
-            long currentKey = Pack(cx, cy);
+            long currentKey = Position.PackCoord(cx, cy);
 
             if (currentKey == goalKey)
                 return ReconstructPath(cameFrom, goalKey, startKey);
@@ -53,7 +55,7 @@ public static class AStarPathfinder
 
                 if (!isWalkable(nx, ny)) continue;
 
-                long neighborKey = Pack(nx, ny);
+                long neighborKey = Position.PackCoord(nx, ny);
                 int tentativeG = currentG + 1; // uniform cost
 
                 if (!gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
@@ -74,11 +76,11 @@ public static class AStarPathfinder
         var path = new List<(int X, int Y)>();
         while (current != start)
         {
-            var (x, y) = Unpack(current);
+            var (x, y) = Position.UnpackCoord(current);
             path.Add((x, y));
             current = cameFrom[current];
         }
-        var (sx, sy) = Unpack(start);
+        var (sx, sy) = Position.UnpackCoord(start);
         path.Add((sx, sy));
         path.Reverse();
         return path;
@@ -86,7 +88,4 @@ public static class AStarPathfinder
 
     private static int ManhattanDistance(int x0, int y0, int x1, int y1)
         => Math.Abs(x0 - x1) + Math.Abs(y0 - y1);
-
-    private static long Pack(int x, int y) => ((long)x << 32) | (uint)y;
-    private static (int, int) Unpack(long packed) => ((int)(packed >> 32), (int)(packed & 0xFFFFFFFF));
 }

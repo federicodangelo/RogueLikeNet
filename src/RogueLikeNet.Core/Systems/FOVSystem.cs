@@ -29,7 +29,7 @@ public class FOVSystem
                 isOpaque: (x, y) => !map.IsTransparent(x, y),
                 markVisible: (x, y) =>
                 {
-                    visibleTiles.Add(FOVData.PackCoord(x, y));
+                    visibleTiles.Add(Position.PackCoord(x, y));
                 });
         });
     }

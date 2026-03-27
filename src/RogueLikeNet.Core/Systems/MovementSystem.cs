@@ -19,7 +19,7 @@ public class MovementSystem
         world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
         {
             if (h.IsAlive)
-                actorPositions.Add(FOVData.PackCoord(aPos.X, aPos.Y));
+                actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y));
         });
 
         var query = new QueryDescription().WithAll<Position, PlayerInput, MoveDelay>();
@@ -40,7 +40,7 @@ public class MovementSystem
             }
 
             // Check if an actor occupies the destination
-            if (actorPositions.Contains(FOVData.PackCoord(newX, newY)))
+            if (actorPositions.Contains(Position.PackCoord(newX, newY)))
             {
                 // Convert move into attack (CombatSystem will handle it)
                 input.ActionType = ActionTypes.Attack;
@@ -63,7 +63,7 @@ public class MovementSystem
             int newX = pos.X + vel.DX;
             int newY = pos.Y + vel.DY;
 
-            if (map.IsWalkable(newX, newY) && !actorPositions.Contains(FOVData.PackCoord(newX, newY)))
+            if (map.IsWalkable(newX, newY) && !actorPositions.Contains(Position.PackCoord(newX, newY)))
             {
                 pos.X = newX;
                 pos.Y = newY;

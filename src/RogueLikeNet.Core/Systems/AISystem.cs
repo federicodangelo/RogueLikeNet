@@ -33,7 +33,7 @@ public class AISystem
         world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
         {
             if (h.IsAlive)
-                actorPositions.Add(FOVData.PackCoord(aPos.X, aPos.Y));
+                actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y));
         });
 
         // Tick down move delays
@@ -108,11 +108,11 @@ public class AISystem
                     if (path != null && path.Count >= 2)
                     {
                         var next = path[1];
-                        long nextKey = FOVData.PackCoord(next.X, next.Y);
+                        long nextKey = Position.PackCoord(next.X, next.Y);
                         if (map.IsWalkable(next.X, next.Y) && !actorPositions.Contains(nextKey))
                         {
                             // Remove old position, move, add new position
-                            actorPositions.Remove(FOVData.PackCoord(pos.X, pos.Y));
+                            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y));
                             pos.X = next.X;
                             pos.Y = next.Y;
                             actorPositions.Add(nextKey);

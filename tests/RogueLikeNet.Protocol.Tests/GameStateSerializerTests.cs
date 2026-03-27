@@ -37,7 +37,7 @@ public class GameStateSerializerTests
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF), new Health(10));
 
         var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -64,8 +64,8 @@ public class GameStateSerializerTests
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
 
         var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
-        fov.VisibleTiles!.Add(FOVData.PackCoord(6, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(6, 5));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -91,7 +91,7 @@ public class GameStateSerializerTests
         var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
 
         var fovAll = new FOVData(10);
-        fovAll.VisibleTiles!.Add(FOVData.PackCoord(5, 5));
+        fovAll.VisibleTiles!.Add(Position.PackCoord(5, 5));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 

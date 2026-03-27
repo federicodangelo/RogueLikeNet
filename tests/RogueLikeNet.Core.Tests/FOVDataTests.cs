@@ -7,8 +7,8 @@ public class FOVDataTests
     [Fact]
     public void PackCoord_UnpackCoord_RoundTrips()
     {
-        long packed = FOVData.PackCoord(10, 20);
-        var (x, y) = FOVData.UnpackCoord(packed);
+        long packed = Position.PackCoord(10, 20);
+        var (x, y) = Position.UnpackCoord(packed);
         Assert.Equal(10, x);
         Assert.Equal(20, y);
     }
@@ -16,8 +16,8 @@ public class FOVDataTests
     [Fact]
     public void PackCoord_UnpackCoord_NegativeValues()
     {
-        long packed = FOVData.PackCoord(-5, -10);
-        var (x, y) = FOVData.UnpackCoord(packed);
+        long packed = Position.PackCoord(-5, -10);
+        var (x, y) = Position.UnpackCoord(packed);
         Assert.Equal(-5, x);
         Assert.Equal(-10, y);
     }
@@ -26,7 +26,7 @@ public class FOVDataTests
     public void IsVisible_ReturnsTrueForVisibleTile()
     {
         var fov = new FOVData(5);
-        fov.VisibleTiles!.Add(FOVData.PackCoord(3, 4));
+        fov.VisibleTiles!.Add(Position.PackCoord(3, 4));
         Assert.True(fov.IsVisible(3, 4));
         Assert.False(fov.IsVisible(5, 6));
     }

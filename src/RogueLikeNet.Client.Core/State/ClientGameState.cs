@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Algorithms;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
@@ -61,7 +62,7 @@ public class ClientGameState
         foreach (var tileUpdate in delta.TileUpdates)
         {
             var (cx, cy) = Chunk.WorldToChunkCoord(tileUpdate.X, tileUpdate.Y);
-            long key = Chunk.PackChunkKey(cx, cy);
+            long key = Position.PackCoord(cx, cy);
             if (_chunks.TryGetValue(key, out var chunk))
             {
                 int lx = tileUpdate.X - cx * Chunk.Size;
@@ -165,14 +166,14 @@ public class ClientGameState
                 tile.FgColor = msg.TileFgColors[idx];
                 tile.BgColor = msg.TileBgColors[idx];
             }
-        long key = Chunk.PackChunkKey(msg.ChunkX, msg.ChunkY);
+        long key = Position.PackCoord(msg.ChunkX, msg.ChunkY);
         _chunks[key] = chunk;
     }
 
     public TileInfo GetTile(int worldX, int worldY)
     {
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
-        long key = Chunk.PackChunkKey(cx, cy);
+        long key = Position.PackCoord(cx, cy);
         if (!_chunks.TryGetValue(key, out var chunk))
             return default;
         int lx = worldX - cx * Chunk.Size;
@@ -183,10 +184,10 @@ public class ClientGameState
     }
 
     public bool IsExplored(int worldX, int worldY) =>
-        _exploredTiles.Contains(((long)worldX << 32) | (uint)worldY);
+        _exploredTiles.Contains(Position.PackCoord(worldX, worldY));
 
     public bool IsVisible(int worldX, int worldY) =>
-        _visibleTiles.Contains(((long)worldX << 32) | (uint)worldY);
+        _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
 
     private void ComputeVisibility()
     {
@@ -195,7 +196,7 @@ public class ClientGameState
             isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
             markVisible: (x, y) =>
             {
-                long key = ((long)x << 32) | (uint)y;
+                long key = Position.PackCoord(x, y);
                 _visibleTiles.Add(key);
                 _exploredTiles.Add(key);
             });
@@ -235,7 +236,7 @@ public class ClientGameState
                 if (lightAmount <= 0) return;
 
                 var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
-                long key = Chunk.PackChunkKey(cx, cy);
+                long key = Position.PackCoord(cx, cy);
                 if (!_chunks.TryGetValue(key, out var chunk)) return;
 
                 int lx = x - cx * Chunk.Size;

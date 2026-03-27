@@ -241,11 +241,11 @@ public class GameEngine : IDisposable
         var groundQuery = new QueryDescription().WithAll<Position, GroundItemTag>();
         world.Query(in groundQuery, (ref Position gPos) =>
         {
-            occupied.Add(FOVData.PackCoord(gPos.X, gPos.Y));
+            occupied.Add(Position.PackCoord(gPos.X, gPos.Y));
         });
 
         // Try origin first, then spiral outward up to radius 5
-        if (!occupied.Contains(FOVData.PackCoord(originX, originY)))
+        if (!occupied.Contains(Position.PackCoord(originX, originY)))
             return (originX, originY);
 
         for (int r = 1; r <= 5; r++)
@@ -256,7 +256,7 @@ public class GameEngine : IDisposable
                     if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
                     int x = originX + dx;
                     int y = originY + dy;
-                    if (!occupied.Contains(FOVData.PackCoord(x, y)))
+                    if (!occupied.Contains(Position.PackCoord(x, y)))
                         return (x, y);
                 }
         }
@@ -333,14 +333,14 @@ public class GameEngine : IDisposable
         var posQuery = new QueryDescription().WithAll<Position>();
         _ecsWorld.Query(in posQuery, (ref Position p) =>
         {
-            occupied.Add(FOVData.PackCoord(p.X, p.Y));
+            occupied.Add(Position.PackCoord(p.X, p.Y));
         });
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
                 if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
-                if (occupied.Contains(FOVData.PackCoord(x, y))) continue;
+                if (occupied.Contains(Position.PackCoord(x, y))) continue;
 
                 // Require 2-tile clear floor radius (all tiles within Chebyshev 2 must be floor)
                 bool clearArea = true;
@@ -371,7 +371,7 @@ public class GameEngine : IDisposable
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
-                if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(FOVData.PackCoord(x, y)))
+                if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(Position.PackCoord(x, y)))
                     return (x, y);
             }
         return (Chunk.Size / 2, Chunk.Size / 2);

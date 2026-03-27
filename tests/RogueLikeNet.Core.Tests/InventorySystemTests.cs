@@ -800,7 +800,7 @@ public class InventorySystemTests
         engine.EcsWorld.Query(in gqAfter, (ref Position gPos) =>
         {
             if (Math.Abs(gPos.X - sx) <= 5 && Math.Abs(gPos.Y - sy) <= 5)
-                nearPositions.Add(((long)gPos.X << 32) | (uint)gPos.Y);
+                nearPositions.Add(Position.PackCoord(gPos.X, gPos.Y));
         });
         // At least 3 distinct positions near player (the 3 drops; possibly more from dungeon gen)
         Assert.True(nearPositions.Count >= 3);

@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
@@ -52,9 +53,9 @@ public class ChunkTests
     [Fact]
     public void PackChunkKey_UniquePerCoord()
     {
-        long k1 = Chunk.PackChunkKey(0, 0);
-        long k2 = Chunk.PackChunkKey(1, 0);
-        long k3 = Chunk.PackChunkKey(0, 1);
+        long k1 = Position.PackCoord(0, 0);
+        long k2 = Position.PackCoord(1, 0);
+        long k3 = Position.PackCoord(0, 1);
         Assert.NotEqual(k1, k2);
         Assert.NotEqual(k1, k3);
         Assert.NotEqual(k2, k3);

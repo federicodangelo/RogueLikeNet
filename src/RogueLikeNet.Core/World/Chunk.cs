@@ -38,6 +38,4 @@ public class Chunk
         int cy = worldY >= 0 ? worldY / Size : (worldY - Size + 1) / Size;
         return (cx, cy);
     }
-
-    public static long PackChunkKey(int chunkX, int chunkY) => ((long)chunkX << 32) | (uint)chunkY;
 }

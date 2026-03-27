@@ -68,7 +68,7 @@ public static class GameStateSerializer
             for (int dy = -1; dy <= 1; dy++)
             {
                 int ccx = cx + dx, ccy = cy + dy;
-                long key = Chunk.PackChunkKey(ccx, ccy);
+                long key = Position.PackCoord(ccx, ccy);
 
                 if (!sentChunkKeys.Contains(key))
                 {
@@ -81,8 +81,7 @@ public static class GameStateSerializer
         // Prune chunk keys far from current position (5×5 around player chunk)
         sentChunkKeys.RemoveWhere(key =>
         {
-            int kx = (int)(key >> 32);
-            int ky = (int)(key & 0xFFFFFFFF);
+            var (kx, ky) = Position.UnpackCoord(key);
             return Math.Abs(kx - cx) > 2 || Math.Abs(ky - cy) > 2;
         });
 

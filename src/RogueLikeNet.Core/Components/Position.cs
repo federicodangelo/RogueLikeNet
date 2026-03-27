@@ -26,4 +26,7 @@ public struct Position
     public static bool operator !=(Position a, Position b) => !(a == b);
     public override bool Equals(object? obj) => obj is Position p && this == p;
     public override int GetHashCode() => HashCode.Combine(X, Y);
+
+    public static long PackCoord(int x, int y) => ((long)x << 32) | (uint)y;
+    public static (int X, int Y) UnpackCoord(long packed) => ((int)(packed >> 32), (int)(packed & 0xFFFFFFFF));
 }

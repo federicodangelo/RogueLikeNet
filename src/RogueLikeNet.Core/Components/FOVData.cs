@@ -14,8 +14,5 @@ public struct FOVData
         VisibleTiles = new HashSet<long>();
     }
 
-    public static long PackCoord(int x, int y) => ((long)x << 32) | (uint)y;
-    public static (int X, int Y) UnpackCoord(long packed) => ((int)(packed >> 32), (int)(packed & 0xFFFFFFFF));
-
-    public bool IsVisible(int x, int y) => VisibleTiles?.Contains(PackCoord(x, y)) ?? false;
+    public bool IsVisible(int x, int y) => VisibleTiles?.Contains(Position.PackCoord(x, y)) ?? false;
 }

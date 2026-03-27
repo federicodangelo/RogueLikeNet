@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Components;
+
 namespace RogueLikeNet.Core.World;
 
 /// <summary>
@@ -17,7 +19,7 @@ public class WorldMap
 
     public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(int chunkX, int chunkY, Generation.IDungeonGenerator generator)
     {
-        long key = Chunk.PackChunkKey(chunkX, chunkY);
+        long key = Position.PackCoord(chunkX, chunkY);
         if (_chunks.TryGetValue(key, out var chunk))
             return (chunk, null);
 
@@ -30,7 +32,7 @@ public class WorldMap
 
     public Chunk? TryGetChunk(int chunkX, int chunkY)
     {
-        long key = Chunk.PackChunkKey(chunkX, chunkY);
+        long key = Position.PackCoord(chunkX, chunkY);
         return _chunks.TryGetValue(key, out var chunk) ? chunk : null;
     }
 
