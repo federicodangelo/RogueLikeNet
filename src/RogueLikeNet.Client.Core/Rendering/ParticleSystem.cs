@@ -75,8 +75,8 @@ public sealed class ParticleSystem
             float sx = p.WorldX - (cameraCenterX - halfW);
             float sy = p.WorldY - (cameraCenterY - halfH);
 
-            float px = sx * TileRenderer.TileWidth + shakeX;
-            float py = sy * TileRenderer.TileHeight + shakeY;
+            float px = sx * AsciiDraw.TileWidth + shakeX;
+            float py = sy * AsciiDraw.TileHeight + shakeY;
 
             byte alpha = (byte)(Math.Clamp(p.Life, 0f, 1f) * 255);
             var color = new Color4(p.Color.R, p.Color.G, p.Color.B, alpha);
