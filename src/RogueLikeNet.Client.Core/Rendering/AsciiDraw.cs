@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Engine.Core;
 using Engine.Platform;
 using Engine.Rendering.Base;
@@ -14,6 +15,8 @@ public static class AsciiDraw
     public const int TileHeight = (int)(MiniBitmapFont.GlyphHeight * FontScale);
     public const int HudColumns = 30;
     public const float FontScale = 1.5f;
+
+    public const float FogBrightness = 0.12f;
 
     public static readonly char[] Cp437 = MiniBitmapFont.Cp437ToUnicode;
 
@@ -85,24 +88,30 @@ public static class AsciiDraw
         DrawString(r, valX, y, valStr, valColor);
     }
 
-    public static Color4 IntToColor4(int packedRgb, int lightLevel)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Color4 IntToColor4(int packedRgb)
     {
-        if (lightLevel <= 0) return RenderingTheme.Black;
+        var cr = (byte)Math.Min(255, packedRgb >> 16 & 0xFF);
+        var cg = (byte)Math.Min(255, packedRgb >> 8 & 0xFF);
+        var cb = (byte)Math.Min(255, packedRgb & 0xFF);
 
-        float raw = Math.Clamp(lightLevel / 10f, 0f, 1f);
-        float brightness = 0.12f + 0.88f * MathF.Pow(raw, 0.65f);
-        byte cr = (byte)Math.Min(255, (int)((packedRgb >> 16 & 0xFF) * brightness));
-        byte cg = (byte)Math.Min(255, (int)((packedRgb >> 8 & 0xFF) * brightness));
-        byte cb = (byte)Math.Min(255, (int)((packedRgb & 0xFF) * brightness));
         return new Color4(cr, cg, cb, 255);
     }
 
-    public static Color4 FogColor(int packedRgb)
+    public static float LightLevelToBrightness(int lightLevel)
     {
-        const float dim = 0.22f;
-        byte cr = (byte)((packedRgb >> 16 & 0xFF) * dim);
-        byte cg = (byte)((packedRgb >> 8 & 0xFF) * dim);
-        byte cb = (byte)((packedRgb & 0xFF) * dim);
+        if (lightLevel <= 0) return 0;
+        var raw = Math.Clamp(lightLevel / 10f, 0f, 1f);
+        var brightness = 0.12f + 0.88f * MathF.Pow(raw, 0.65f);
+        return brightness;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Color4 ApplyBrightness(Color4 color, float brightness)
+    {
+        var cr = (byte)Math.Min(255, color.R * brightness);
+        var cg = (byte)Math.Min(255, color.G * brightness);
+        var cb = (byte)Math.Min(255, color.B * brightness);
         return new Color4(cr, cg, cb, 255);
     }
 

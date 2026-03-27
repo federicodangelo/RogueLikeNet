@@ -23,35 +23,28 @@ public sealed class GameWorldRenderer
         r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, AsciiDraw.TileWidth, AsciiDraw.TileHeight, AsciiDraw.FontScale,
             (col, row) =>
             {
-                int worldX = cameraCenterX - halfW + col;
-                int worldY = cameraCenterY - halfH + row;
+                var worldX = cameraCenterX - halfW + col;
+                var worldY = cameraCenterY - halfH + row;
                 var tile = state.GetTile(worldX, worldY);
 
-                bool visible = state.IsVisible(worldX, worldY);
-                bool explored = state.IsExplored(worldX, worldY);
+                var visible = state.IsVisible(worldX, worldY);
+                var explored = state.IsExplored(worldX, worldY);
 
-                if (visible)
-                {
-                    var bgColor = AsciiDraw.IntToColor4(tile.BgColor, tile.LightLevel);
-                    if (tile.GlyphId > 0 && tile.LightLevel > 0)
-                    {
-                        var fgColor = AsciiDraw.IntToColor4(tile.FgColor, tile.LightLevel);
-                        char ch = tile.GlyphId < 256 ? AsciiDraw.Cp437[tile.GlyphId] : '?';
-                        return new GlyphTile(ch, fgColor, bgColor);
-                    }
-                    return new GlyphTile('\0', default, bgColor);
-                }
-                else if (explored && tile.GlyphId > 0)
-                {
-                    var bgColor = AsciiDraw.FogColor(tile.BgColor);
-                    var fgColor = AsciiDraw.FogColor(tile.FgColor);
-                    char ch = tile.GlyphId < 256 ? AsciiDraw.Cp437[tile.GlyphId] : '?';
-                    return new GlyphTile(ch, fgColor, bgColor);
-                }
-                else
+                var bgColor = AsciiDraw.IntToColor4(tile.BgColor);
+                var fgColor = AsciiDraw.IntToColor4(tile.FgColor);
+                var emptyTile = tile.GlyphId == 0;
+                var minBrightness = explored ? AsciiDraw.FogBrightness : 0f;
+
+                if (emptyTile || (!visible && !explored))
                 {
                     return new GlyphTile('\0', default, RenderingTheme.Black);
                 }
+
+                var brightness = visible ? Math.Max(AsciiDraw.LightLevelToBrightness(tile.LightLevel), minBrightness) : AsciiDraw.FogBrightness;
+                bgColor = AsciiDraw.ApplyBrightness(bgColor, brightness);
+                fgColor = AsciiDraw.ApplyBrightness(fgColor, brightness);
+                var ch = tile.GlyphId < 256 ? AsciiDraw.Cp437[tile.GlyphId] : '?';
+                return new GlyphTile(ch, fgColor, bgColor);
             });
 
         // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
@@ -98,7 +91,7 @@ public sealed class GameWorldRenderer
             float px = sx * AsciiDraw.TileWidth + shakeX;
             float py = sy * AsciiDraw.TileHeight + shakeY;
 
-            var fgColor = AsciiDraw.IntToColor4(entity.FgColor, 10);
+            var fgColor = AsciiDraw.IntToColor4(entity.FgColor);
             char ch = entity.GlyphId < 256 ? AsciiDraw.Cp437[entity.GlyphId] : '?';
             r.DrawTextScreen(px, py, ch.ToString(), fgColor, AsciiDraw.FontScale);
 
