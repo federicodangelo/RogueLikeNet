@@ -39,6 +39,8 @@ public partial class WebMain
 
     private static async void OnStartOffline(long seed, int classId, string playerName)
     {
+        _game!.TransitionToConnecting();
+
         _embeddedServer = new GameServer(seed, logWriter: Console.Out);
         _embeddedServer.Start();
 
@@ -47,6 +49,12 @@ public partial class WebMain
         _game!.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
         await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
+
+        while (!_game.IsFirstDeltaProcessed)
+        {
+            await Task.Delay(50);
+        }
+
         _game.TransitionToPlaying();
     }
 

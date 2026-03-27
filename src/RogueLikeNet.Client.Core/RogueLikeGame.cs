@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Rendering;
@@ -20,6 +21,7 @@ public sealed class RogueLikeGame : GameBase
     private readonly ClientGameState _gameState = new();
     private readonly ParticleSystem _particles = new();
     private IGameServerConnection? _connection;
+    private volatile bool _connectionFirstDeltaProcessed;
 
     private ScreenState _screenState = ScreenState.MainMenu;
     private int _menuIndex;
@@ -90,6 +92,8 @@ public sealed class RogueLikeGame : GameBase
     /// <summary>Fired when the player selects "Quit" from the main menu.</summary>
     public event Action? QuitRequested;
 
+    public bool IsFirstDeltaProcessed => _connectionFirstDeltaProcessed;
+
     public RogueLikeGame()
     {
         _tileRenderer = new TileRenderer();
@@ -135,16 +139,17 @@ public sealed class RogueLikeGame : GameBase
     public void SetConnection(IGameServerConnection connection)
     {
         _connection = connection;
-        _connection.OnWorldDelta += OnWorldDelta;
-        _connection.OnChatReceived += OnChatReceived;
+        _connectionFirstDeltaProcessed = false;
+        _connection.OnWorldDelta += OnNetworkWorldDelta;
+        _connection.OnChatReceived += OnNetworkChatReceived;
     }
 
     public void ClearConnection()
     {
         if (_connection != null)
         {
-            _connection.OnWorldDelta -= OnWorldDelta;
-            _connection.OnChatReceived -= OnChatReceived;
+            _connection.OnWorldDelta -= OnNetworkWorldDelta;
+            _connection.OnChatReceived -= OnNetworkChatReceived;
             _connection = null;
         }
     }
@@ -259,42 +264,15 @@ public sealed class RogueLikeGame : GameBase
             shakeY = (_shakeRng.NextSingle() - 0.5f) * 8f;
         }
 
-        switch (_screenState)
+        void RenderGameScreen(bool inventoryMode = false)
         {
-            case ScreenState.MainMenu:
-                _tileRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _seedEditing, _seedEditText);
-                break;
-            case ScreenState.MainMenuHelp:
-                _tileRenderer.RenderHelp(renderer, totalCols, totalRows);
-                break;
-            case ScreenState.ClassSelect:
-                _tileRenderer.RenderClassSelect(renderer, totalCols, totalRows, _selectedClassIndex, _playerName, _nameEditing, _nameEditText);
-                break;
-            case ScreenState.Connecting:
-                _tileRenderer.RenderConnecting(renderer, totalCols, totalRows, _connectionError);
-                break;
-            case ScreenState.Playing:
-                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
-                    layout: _hudLayout);
-                break;
-            case ScreenState.Inventory:
-                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
-                    inventoryMode: true, layout: _inventoryLayout);
-                break;
-            case ScreenState.Paused:
-                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY);
-                _tileRenderer.RenderPauseOverlay(renderer, totalCols, totalRows, _pauseIndex);
-                break;
-            case ScreenState.PausedHelp:
-                _tileRenderer.RenderGame(renderer, _gameState, totalCols, totalRows, shakeX, shakeY);
-                _tileRenderer.RenderHelp(renderer, totalCols, totalRows, isOverlay: true);
-                break;
-        }
+            _tileRenderer.RenderGame(
+                renderer, _gameState, totalCols, totalRows, shakeX, shakeY,
+                layout: inventoryMode ? _inventoryLayout : _hudLayout,
+                inventoryMode: inventoryMode
+            );
 
-        if (_screenState is ScreenState.Playing or ScreenState.Inventory
-            or ScreenState.Paused or ScreenState.PausedHelp)
-        {
-            // Render particles and minimap over the game world
+            // Render particles
             int gameCols = totalCols - TileRenderer.HudColumns;
             int halfW = gameCols / 2;
             int halfH = totalRows / 2;
@@ -310,6 +288,36 @@ public sealed class RogueLikeGame : GameBase
                 _bwInKBps, _bwOutKBps);
         }
 
+        switch (_screenState)
+        {
+            case ScreenState.MainMenu:
+                _tileRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _seedEditing, _seedEditText);
+                break;
+            case ScreenState.MainMenuHelp:
+                _tileRenderer.RenderHelp(renderer, totalCols, totalRows);
+                break;
+            case ScreenState.ClassSelect:
+                _tileRenderer.RenderClassSelect(renderer, totalCols, totalRows, _selectedClassIndex, _playerName, _nameEditing, _nameEditText);
+                break;
+            case ScreenState.Connecting:
+                _tileRenderer.RenderConnecting(renderer, totalCols, totalRows, _connectionError);
+                break;
+            case ScreenState.Playing:
+                RenderGameScreen();
+                break;
+            case ScreenState.Inventory:
+                RenderGameScreen(inventoryMode: true);
+                break;
+            case ScreenState.Paused:
+                RenderGameScreen();
+                _tileRenderer.RenderPauseOverlay(renderer, totalCols, totalRows, _pauseIndex);
+                break;
+            case ScreenState.PausedHelp:
+                RenderGameScreen();
+                _tileRenderer.RenderHelp(renderer, totalCols, totalRows, isOverlay: true);
+                break;
+        }
+
         renderer.EndFrame();
         input.EndFrame();
     }
@@ -317,7 +325,10 @@ public sealed class RogueLikeGame : GameBase
     private void DrainNetworkMessages()
     {
         while (_pendingDeltas.TryDequeue(out var delta))
+        {
+            _connectionFirstDeltaProcessed = true;
             _gameState.ApplyDelta(delta);
+        }
 
         // Feed combat events to particle system
         foreach (var evt in _gameState.PendingCombatEvents)
@@ -844,15 +855,22 @@ public sealed class RogueLikeGame : GameBase
 
     // ── Server Messages ────────────────────────────────────────
 
-    private void OnWorldDelta(WorldDeltaMsg delta)
+    private void OnNetworkWorldDelta(WorldDeltaMsg delta)
     {
+        // Called from network thread, so just enqueue the delta for processing on the main thread. 
+        // Also track latency based on when deltas are received.
         long now = Stopwatch.GetTimestamp();
         if (_lastDeltaTicks > 0)
             _latencyMs = (int)((now - _lastDeltaTicks) * 1000 / Stopwatch.Frequency);
         _lastDeltaTicks = now;
         _pendingDeltas.Enqueue(delta);
     }
-    private void OnChatReceived(ChatMsg msg) => _pendingChats.Enqueue(msg);
+
+    private void OnNetworkChatReceived(ChatMsg msg)
+    {
+        // Called from network thread, so just enqueue for processing on the main thread.
+        _pendingChats.Enqueue(msg);
+    }
 
     public override void Dispose()
     {
