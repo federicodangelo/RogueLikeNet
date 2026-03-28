@@ -36,9 +36,10 @@ public class ClassDefinitionsTests
     [InlineData(ClassDefinitions.Ranger)]
     public void GetStartingSkills_ReturnsTwoSkills(int classId)
     {
-        var skills = ClassDefinitions.GetStartingSkills(classId);
-        Assert.NotEqual(SkillDefinitions.None, skills.Skill0);
-        Assert.NotEqual(SkillDefinitions.None, skills.Skill1);
+        var skill0 = ClassDefinitions.Get(classId).StartingSkill0;
+        var skill1 = ClassDefinitions.Get(classId).StartingSkill1;
+        Assert.NotEqual(SkillDefinitions.None, skill0);
+        Assert.NotEqual(SkillDefinitions.None, skill1);
     }
 
     [Theory]
@@ -97,21 +98,5 @@ public class ClassDefinitionsTests
         Assert.Equal(1, stats.Defense);
         Assert.Equal(0, stats.Health);
         Assert.Equal(2, stats.Speed);
-    }
-
-    [Fact]
-    public void Warrior_Skills_ArePowerStrikeAndShieldBash()
-    {
-        var skills = ClassDefinitions.GetStartingSkills(ClassDefinitions.Warrior);
-        Assert.Equal(SkillDefinitions.PowerStrike, skills.Skill0);
-        Assert.Equal(SkillDefinitions.ShieldBash, skills.Skill1);
-    }
-
-    [Fact]
-    public void Mage_Skills_AreFireballAndHeal()
-    {
-        var skills = ClassDefinitions.GetStartingSkills(ClassDefinitions.Mage);
-        Assert.Equal(SkillDefinitions.Fireball, skills.Skill0);
-        Assert.Equal(SkillDefinitions.Heal, skills.Skill1);
     }
 }

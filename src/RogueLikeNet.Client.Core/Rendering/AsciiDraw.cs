@@ -18,7 +18,9 @@ public static class AsciiDraw
 
     public const float FogBrightness = 0.12f;
 
-    public static readonly char[] Cp437 = MiniBitmapFont.Cp437ToUnicode;
+    private static readonly char[] Cp437 = MiniBitmapFont.Cp437ToUnicode;
+
+    public static char GlyphIdToChar(int glyphId) => glyphId < 256 ? Cp437[glyphId] : '?';
 
     public static void DrawChar(ISpriteRenderer r, int tileX, int tileY, char ch, Color4 color)
     {

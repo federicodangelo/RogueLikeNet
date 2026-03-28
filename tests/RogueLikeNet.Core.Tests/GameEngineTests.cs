@@ -53,8 +53,8 @@ public class GameEngineTests
         engine.Tick();
 
         var chunk = engine.WorldMap.TryGetChunk(0, 0)!;
-        Assert.True(chunk.Tiles[sx, sy].LightLevel > 0,
-            $"Player tile ({sx},{sy}) has LightLevel={chunk.Tiles[sx, sy].LightLevel}, expected > 0");
+        Assert.True(chunk.LightLevels[sx, sy] > 0,
+            $"Player tile ({sx},{sy}) has LightLevel={chunk.LightLevels[sx, sy]}, expected > 0");
 
         int litCount = 0;
         for (int dx = -3; dx <= 3; dx++)
@@ -63,7 +63,7 @@ public class GameEngineTests
                 int nx = sx + dx, ny = sy + dy;
                 if (nx >= 0 && nx < Chunk.Size && ny >= 0 && ny < Chunk.Size)
                 {
-                    if (chunk.Tiles[nx, ny].LightLevel > 0)
+                    if (chunk.LightLevels[nx, ny] > 0)
                         litCount++;
                 }
             }

@@ -36,6 +36,9 @@ public sealed class PausedScreen : IScreen
             return;
         }
 
+        // Debug key toggles (only in debug mode)
+        _ctx.Debug.HandleDebugKeys(input, _ctx.DebugSyncRequested);
+
         if (input.IsActionPressed(InputAction.MenuUp))
             _pauseIndex = (_pauseIndex + 2) % 3;
         else if (input.IsActionPressed(InputAction.MenuDown))

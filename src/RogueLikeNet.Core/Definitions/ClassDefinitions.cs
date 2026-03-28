@@ -17,6 +17,13 @@ public static class ClassDefinitions
 
     public const int NumClasses = 4;
 
+
+    private const int BaseHealth = 100;
+    private const int BaseAttack = 10;
+    private const int BaseDefense = 5;
+    private const int BaseSpeed = 10;
+    public static ClassStats BaseStats => new(BaseAttack, BaseDefense, BaseHealth, BaseSpeed);
+
     public static readonly ClassDefinition[] All =
     [
         // Warrior - sword and shield
@@ -67,16 +74,6 @@ public static class ClassDefinitions
         return def.StartingStats;
     }
 
-    public static SkillSlots GetStartingSkills(int classId)
-    {
-        var def = Get(classId);
-        return new SkillSlots()
-        {
-            Skill0 = def.StartingSkill0,
-            Skill1 = def.StartingSkill1,
-        };
-    }
-
     public static string[] GetAsciiArt(int classId)
     {
         var def = Get(classId);
@@ -84,7 +81,11 @@ public static class ClassDefinitions
     }
 }
 
-public readonly record struct ClassStats(int Attack, int Defense, int Health, int Speed);
+public readonly record struct ClassStats(int Attack, int Defense, int Health, int Speed)
+{
+    public static ClassStats operator +(ClassStats a, ClassStats b) =>
+        new(a.Attack + b.Attack, a.Defense + b.Defense, a.Health + b.Health, a.Speed + b.Speed);
+};
 
 public readonly record struct ClassDefinition(
     int ClassId, string Name, ClassStats StartingStats, int StartingSkill0, int StartingSkill1, string[] AsciiArt

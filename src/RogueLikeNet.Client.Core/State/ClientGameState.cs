@@ -77,7 +77,7 @@ public class ClientGameState
                     tile.GlyphId = tileUpdate.GlyphId;
                     tile.FgColor = tileUpdate.FgColor;
                     tile.BgColor = tileUpdate.BgColor;
-                    tile.LightLevel = tileUpdate.LightLevel;
+                    chunk.LightLevels[lx, ly] = tileUpdate.LightLevel;
                 }
             }
         }
@@ -175,15 +175,25 @@ public class ClientGameState
 
     public TileInfo GetTile(int worldX, int worldY)
     {
+        return GetTileAndLightLevel(worldX, worldY).Item1;
+    }
+
+    public int GetLightLevel(int worldX, int worldY)
+    {
+        return GetTileAndLightLevel(worldX, worldY).Item2;
+    }
+
+    public (TileInfo, int) GetTileAndLightLevel(int worldX, int worldY)
+    {
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         long key = Position.PackCoord(cx, cy);
         if (!_chunks.TryGetValue(key, out var chunk))
-            return default;
+            return (default, 0);
         int lx = worldX - cx * Chunk.Size;
         int ly = worldY - cy * Chunk.Size;
         if (!chunk.InBounds(lx, ly))
-            return default;
-        return chunk.Tiles[lx, ly];
+            return (default, 0);
+        return (chunk.Tiles[lx, ly], chunk.LightLevels[lx, ly]);
     }
 
     public bool IsExplored(int worldX, int worldY) =>
@@ -211,11 +221,8 @@ public class ClientGameState
         var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius);
         var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius);
         foreach (var chunk in _chunks.Values)
-            if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx &&
-                chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
-                for (int x = 0; x < Chunk.Size; x++)
-                    for (int y = 0; y < Chunk.Size; y++)
-                        chunk.Tiles[x, y].LightLevel = 0;
+            if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx && chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
+                chunk.ResetLight();
 
         // Player emits light at FOV radius
         FloodLight(PlayerX, PlayerY, ClassDefinitions.FOVRadius);
@@ -246,8 +253,7 @@ public class ClientGameState
                 int ly = y - cy * Chunk.Size;
                 if (!chunk.InBounds(lx, ly)) return;
 
-                ref var tile = ref chunk.Tiles[lx, ly];
-                tile.LightLevel = Math.Max(tile.LightLevel, lightAmount);
+                chunk.LightLevels[lx, ly] = Math.Max(chunk.LightLevels[lx, ly], lightAmount);
             });
     }
 }

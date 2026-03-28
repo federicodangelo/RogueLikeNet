@@ -111,6 +111,8 @@ public class Program
         _embeddedServer.DebugInvulnerable = debug.Invulnerable;
         _embeddedServer.DebugMaxSpeed = debug.MaxSpeed;
         _embeddedServer.DebugChunkRange = debug.ChunkRange;
+        _embeddedServer.DebugVisibilityOff = debug.VisibilityOff;
+        _game.GameState.DebugSeeAll = debug.VisibilityOff;
     }
 
     private static void CleanupConnection()

@@ -318,11 +318,11 @@ public class ClientGameStateTests
             TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileType = (byte)TileType.Wall, GlyphId = '#', FgColor = 0xAAAAAA, BgColor = 0x111111, LightLevel = 3 }],
         });
 
-        var tile = state.GetTile(32, 32);
+        var (tile, lightlevel) = state.GetTileAndLightLevel(32, 32);
         Assert.Equal(TileType.Wall, tile.Type);
         Assert.Equal('#', tile.GlyphId);
         // LightLevel is now computed client-side (player at 32,32 illuminates this tile)
-        Assert.True(tile.LightLevel > 0);
+        Assert.True(lightlevel > 0);
     }
 
     [Fact]
@@ -583,8 +583,8 @@ public class ClientGameStateTests
         });
 
         // The light source at (35,32) should illuminate nearby tiles
-        var tile = state.GetTile(35, 32);
-        Assert.True(tile.LightLevel > 0, "Tile at light source should be illuminated");
+        var lightLevel = state.GetLightLevel(35, 32);
+        Assert.True(lightLevel > 0, "Tile at light source should be illuminated");
     }
 
     [Fact]

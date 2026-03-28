@@ -50,6 +50,10 @@ public class GameServer : IDisposable
     /// <summary>Debug: chunk range override for zoomed-out views.</summary>
     public int DebugChunkRange { get; set; } = 1;
 
+    /// <summary>Debug: when true, all tiles are treated as visible (no FOV). Only applies to player visibility, not explored state.</summary>
+    public bool DebugVisibilityOff { get; set; } = false;
+
+
     public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null)
     {
         _logWriter = logWriter ?? TextWriter.Null;
@@ -303,7 +307,7 @@ public class GameServer : IDisposable
             conn.LastSentHudBytes = stateBytes;
         }
 
-        var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.EcsWorld, fov, conn.LastSentEntities);
+        var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.EcsWorld, fov, conn.LastSentEntities, DebugVisibilityOff);
 
         return new WorldDeltaMsg
         {

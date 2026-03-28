@@ -1,3 +1,5 @@
+using CommunityToolkit.HighPerformance;
+
 namespace RogueLikeNet.Core.World;
 
 public class Chunk
@@ -8,11 +10,14 @@ public class Chunk
     public int ChunkY { get; }
     public TileInfo[,] Tiles { get; }
 
+    public int[,] LightLevels { get; }
+
     public Chunk(int chunkX, int chunkY)
     {
         ChunkX = chunkX;
         ChunkY = chunkY;
         Tiles = new TileInfo[Size, Size];
+        LightLevels = new int[Size, Size];
     }
 
     public ref TileInfo GetTile(int localX, int localY) => ref Tiles[localX, localY];
@@ -37,5 +42,10 @@ public class Chunk
         int cx = worldX >= 0 ? worldX / Size : (worldX - Size + 1) / Size;
         int cy = worldY >= 0 ? worldY / Size : (worldY - Size + 1) / Size;
         return (cx, cy);
+    }
+
+    public void ResetLight()
+    {
+        LightLevels.AsSpan().Clear();
     }
 }

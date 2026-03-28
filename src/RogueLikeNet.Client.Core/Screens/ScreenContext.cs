@@ -31,5 +31,5 @@ public sealed class ScreenContext
     public required Action OnQuit { get; init; }
 
     /// <summary>Invoked when debug settings change at runtime and need syncing to the server.</summary>
-    public Action? DebugSyncRequested { get; set; }
+    public required Action DebugSyncRequested { get; init; }
 }

@@ -61,10 +61,7 @@ public sealed class PlayingScreen : IScreen
         }
 
         // Debug key toggles (only in debug mode)
-        if (_ctx.Debug.Enabled)
-        {
-            HandleDebugKeys(input);
-        }
+        _ctx.Debug.HandleDebugKeys(input, _ctx.DebugSyncRequested);
 
         ClientInputMsg? msg = null;
 
@@ -148,53 +145,6 @@ public sealed class PlayingScreen : IScreen
             msg.Tick = _ctx.GameState.WorldTick;
             _ = _ctx.Connection.SendInputAsync(msg);
         }
-    }
-
-    private void HandleDebugKeys(IInputManager input)
-    {
-        string typed = input.TextInput;
-        foreach (char c in typed)
-        {
-            switch (c)
-            {
-                case 'v' or 'V':
-                    _ctx.Debug.VisibilityOff = !_ctx.Debug.VisibilityOff;
-                    _ctx.GameState.DebugSeeAll = _ctx.Debug.VisibilityOff;
-                    break;
-                case 'c' or 'C':
-                    _ctx.Debug.CollisionsOff = !_ctx.Debug.CollisionsOff;
-                    SyncDebugToServer();
-                    break;
-                case 'h' or 'H':
-                    _ctx.Debug.Invulnerable = !_ctx.Debug.Invulnerable;
-                    SyncDebugToServer();
-                    break;
-                case 'l' or 'L':
-                    _ctx.Debug.LightOff = !_ctx.Debug.LightOff;
-                    break;
-                case 'm' or 'M':
-                    _ctx.Debug.MaxSpeed = !_ctx.Debug.MaxSpeed;
-                    SyncDebugToServer();
-                    break;
-                case '+' or '=':
-                    _ctx.Debug.ZoomLevel = Math.Max(-5, _ctx.Debug.ZoomLevel - 1);
-                    SyncDebugToServer();
-                    break;
-                case '-' or '_':
-                    _ctx.Debug.ZoomLevel = Math.Min(5, _ctx.Debug.ZoomLevel + 1);
-                    SyncDebugToServer();
-                    break;
-                case '0':
-                    _ctx.Debug.ZoomLevel = 0;
-                    SyncDebugToServer();
-                    break;
-            }
-        }
-    }
-
-    private void SyncDebugToServer()
-    {
-        _ctx.DebugSyncRequested?.Invoke();
     }
 
     public void Update(float deltaTime)

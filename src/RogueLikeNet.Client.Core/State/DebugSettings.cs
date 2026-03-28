@@ -1,3 +1,5 @@
+using Engine.Platform;
+
 namespace RogueLikeNet.Client.Core.State;
 
 /// <summary>
@@ -59,5 +61,54 @@ public sealed class DebugSettings
         if (!Enabled || ZoomLevel == 0) return size;
         float scale = MathF.Pow(1.25f, -ZoomLevel);
         return size * scale;
+    }
+
+    public void HandleDebugKeys(IInputManager input, Action syncDebugToServer)
+    {
+        if (!Enabled) return;
+
+        string typed = input.TextInput;
+        var changes = false;
+        foreach (char c in typed)
+        {
+            switch (c)
+            {
+                case 'v' or 'V':
+                    VisibilityOff = !VisibilityOff;
+                    changes = true;
+                    break;
+                case 'c' or 'C':
+                    CollisionsOff = !CollisionsOff;
+                    changes = true;
+                    break;
+                case 'h' or 'H':
+                    Invulnerable = !Invulnerable;
+                    changes = true;
+                    break;
+                case 'l' or 'L':
+                    LightOff = !LightOff;
+                    changes = true;
+                    break;
+                case 'm' or 'M':
+                    MaxSpeed = !MaxSpeed;
+                    changes = true;
+                    break;
+                case '+' or '=':
+                    ZoomLevel = Math.Max(-5, ZoomLevel - 1);
+                    changes = true;
+                    break;
+                case '-' or '_':
+                    ZoomLevel = Math.Min(5, ZoomLevel + 1);
+                    changes = true;
+                    break;
+                case '0':
+                    ZoomLevel = 0;
+                    changes = true;
+                    break;
+            }
+        }
+
+        if (changes)
+            syncDebugToServer();
     }
 }

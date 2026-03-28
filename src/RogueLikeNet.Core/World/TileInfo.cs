@@ -19,8 +19,6 @@ public struct TileInfo
     public int GlyphId;
     public int FgColor;
     public int BgColor;
-    public int LightLevel;
-    public bool Explored;
 
     public bool IsWalkable => Type is TileType.Floor or TileType.Door or TileType.StairsDown or TileType.StairsUp or TileType.Decoration;
     public bool IsTransparent => Type is not TileType.Wall;

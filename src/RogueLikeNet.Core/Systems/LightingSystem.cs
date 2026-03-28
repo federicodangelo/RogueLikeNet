@@ -16,11 +16,7 @@ public class LightingSystem
     {
         // Reset light levels for all loaded chunks
         foreach (var chunk in map.LoadedChunks)
-        {
-            for (int x = 0; x < Chunk.Size; x++)
-                for (int y = 0; y < Chunk.Size; y++)
-                    chunk.Tiles[x, y].LightLevel = 0;
-        }
+            chunk.ResetLight();
 
         // Gather all light sources
         var query = new QueryDescription().WithAll<Position, LightSource>();
@@ -58,8 +54,7 @@ public class LightingSystem
                 int ly = y - cy * Chunk.Size;
                 if (!chunk.InBounds(lx, ly)) return;
 
-                ref var tile = ref chunk.Tiles[lx, ly];
-                tile.LightLevel = Math.Max(tile.LightLevel, lightAmount);
+                chunk.LightLevels[lx, ly] = (short)Math.Max(chunk.LightLevels[lx, ly], lightAmount);
             });
     }
 }

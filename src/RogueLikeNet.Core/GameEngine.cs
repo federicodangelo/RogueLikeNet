@@ -102,24 +102,29 @@ public class GameEngine : IDisposable
     /// </summary>
     public Entity SpawnPlayer(long connectionId, int x, int y, int classId)
     {
-        var stats = ClassDefinitions.GetStartingStats(classId);
-        var skills = ClassDefinitions.GetStartingSkills(classId);
+        var def = ClassDefinitions.Get(classId);
+        var classStats = def.StartingStats; ;
+        var stats = classStats + ClassDefinitions.BaseStats;
+
+        // Speed maps to delay: higher speed → lower delay
+        var moveDelay = Math.Max(0, 10 - (6 + classStats.Speed));
+        var attackDelay = Math.Max(0, 10 - (6 + classStats.Speed));
 
         return _ecsWorld.Create(
             new Position(x, y),
-            new Health(100 + stats.Health),
-            new CombatStats(10 + stats.Attack, 5 + stats.Defense, 10 + stats.Speed),
+            new Health(stats.Health),
+            new CombatStats(stats.Attack, stats.Defense, stats.Speed),
             new FOVData(ClassDefinitions.FOVRadius),
             new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             new PlayerTag { ConnectionId = connectionId },
             new PlayerInput(),
             new ClassData { ClassId = classId, Level = 1 },
-            skills,
+            new SkillSlots { Skill0 = def.StartingSkill0, Skill1 = def.StartingSkill1 },
             new Inventory(ClassDefinitions.InventorySlots),
             new Equipment(),
             new QuickSlots(),
-            new MoveDelay(Math.Max(0, 10 - (6 + stats.Speed))),
-            new AttackDelay(Math.Max(0, 10 - (6 + stats.Speed)))
+            new MoveDelay(moveDelay),
+            new AttackDelay(attackDelay)
         );
     }
 

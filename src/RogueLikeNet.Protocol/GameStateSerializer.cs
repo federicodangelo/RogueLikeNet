@@ -95,7 +95,7 @@ public static class GameStateSerializer
     /// Returns updated previousState for the next tick.
     /// </summary>
     public static SerializedEntityData SerializeEntityDelta(World world, FOVData fov,
-            Dictionary<long, EntityUpdateMsg> previousState)
+            Dictionary<long, EntityUpdateMsg> previousState, bool debugVisibilityOff = false)
     {
         var fullUpdates = new List<EntityUpdateMsg>();
         var positionHealthUpdates = new List<EntityPositionHealthMsg>();
@@ -105,7 +105,7 @@ public static class GameStateSerializer
 
         world.Query(in query, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
         {
-            if (!fov.IsVisible(ePos.X, ePos.Y)) return;
+            if (!debugVisibilityOff && !fov.IsVisible(ePos.X, ePos.Y)) return;
 
             long id = e.Id;
             currentIds.Add(id);
