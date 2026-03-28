@@ -59,13 +59,13 @@ public static class GameStateSerializer
     /// lighting is computed client-side.
     /// </summary>
     public static ChunkDataMsg[] SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, HashSet<long> sentChunkKeys)
+        GameEngine engine, int worldX, int worldY, HashSet<long> sentChunkKeys, int chunkRange)
     {
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         var newChunks = new List<ChunkDataMsg>();
 
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -chunkRange; dx <= chunkRange; dx++)
+            for (int dy = -chunkRange; dy <= chunkRange; dy++)
             {
                 int ccx = cx + dx, ccy = cy + dy;
                 long key = Position.PackCoord(ccx, ccy);
@@ -82,7 +82,7 @@ public static class GameStateSerializer
         sentChunkKeys.RemoveWhere(key =>
         {
             var (kx, ky) = Position.UnpackCoord(key);
-            return Math.Abs(kx - cx) > 2 || Math.Abs(ky - cy) > 2;
+            return Math.Abs(kx - cx) > chunkRange + 1 || Math.Abs(ky - cy) > chunkRange + 1;
         });
 
         return newChunks.ToArray();

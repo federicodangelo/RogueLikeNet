@@ -21,6 +21,7 @@ public sealed class RogueLikeGame : GameBase
     private readonly ChatSystem _chat = new();
     private readonly ScreenShakeEffect _screenShake = new();
     private readonly NetworkMessageDrainer _networkDrainer = new();
+    private readonly DebugSettings _debug = new();
 
     private readonly ScreenContext _ctx;
     private readonly ScreenManager _screenManager;
@@ -31,9 +32,10 @@ public sealed class RogueLikeGame : GameBase
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenManager.CurrentState;
+    public DebugSettings Debug => _debug;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu.</summary>
-    public event Action<long, int, string, int>? StartOfflineRequested;
+    public event Action<long, int, string, int, bool>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
     public event Action<int, string>? StartOnlineRequested;
@@ -43,6 +45,9 @@ public sealed class RogueLikeGame : GameBase
 
     /// <summary>Fired when the player selects "Quit" from the main menu.</summary>
     public event Action? QuitRequested;
+
+    /// <summary>Fired when debug settings change at runtime and need syncing to the embedded server.</summary>
+    public event Action? DebugSyncRequested;
 
     public bool IsFirstDeltaProcessed => _networkDrainer.FirstDeltaProcessed;
 
@@ -55,11 +60,13 @@ public sealed class RogueLikeGame : GameBase
             Chat = _chat,
             Performance = _performance,
             ScreenShake = _screenShake,
+            Debug = _debug,
             RequestTransition = state => _screenManager!.TransitionTo(state),
-            OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex),
+            OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex, _debug.Enabled),
             OnStartOnline = (classId, name) => StartOnlineRequested?.Invoke(classId, name),
             OnReturnToMenu = () => ReturnToMenuRequested?.Invoke(),
             OnQuit = () => QuitRequested?.Invoke(),
+            DebugSyncRequested = () => DebugSyncRequested?.Invoke(),
         };
 
         // Create renderers

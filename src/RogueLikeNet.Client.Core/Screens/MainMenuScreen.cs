@@ -36,7 +36,7 @@ public sealed class MainMenuScreen : IScreen
             return;
         }
 
-        int itemCount = 7;
+        int itemCount = 8;
         if (input.IsActionPressed(InputAction.MenuUp))
             _menuIndex = (_menuIndex + itemCount - 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuDown))
@@ -72,8 +72,9 @@ public sealed class MainMenuScreen : IScreen
                     break;
                 case 3: break; // Generator — left/right only, no action on Enter
                 case 4: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
-                case 5: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
-                case 6: _ctx.OnQuit(); break;
+                case 5: _ctx.Debug.Enabled = !_ctx.Debug.Enabled; break;
+                case 6: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
+                case 7: _ctx.OnQuit(); break;
             }
         }
     }
@@ -82,7 +83,7 @@ public sealed class MainMenuScreen : IScreen
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
-        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _generatorIndex, _seedEditing, _seedEditText);
+        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _worldSeed, _generatorIndex, _seedEditing, _seedEditText, _ctx.Debug.Enabled);
     }
 
     public void ResetMenuIndex()

@@ -57,6 +57,6 @@ public sealed class PausedScreen : IScreen
     {
         // Render the game world behind the overlay
         _playingScreen.Render(renderer, totalCols, totalRows);
-        _menuRenderer.RenderPauseOverlay(renderer, totalCols, totalRows, _pauseIndex);
+        _menuRenderer.RenderPauseOverlay(renderer, totalCols, totalRows, _pauseIndex, _ctx.Debug);
     }
 }

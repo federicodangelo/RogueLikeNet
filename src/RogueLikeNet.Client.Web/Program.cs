@@ -24,9 +24,10 @@ public partial class WebMain
         _game = new RogueLikeGame();
         _game.Initialize(platform);
 
-        _game.StartOfflineRequested += (seed, classId, playerName, genIndex) => OnStartOffline(seed, classId, playerName, genIndex);
+        _game.StartOfflineRequested += (seed, classId, playerName, genIndex, debugMode) => OnStartOffline(seed, classId, playerName, genIndex, debugMode);
         _game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
+        _game.DebugSyncRequested += OnDebugSync;
         // Web platform cannot quit — QuitRequested is ignored
 
         await Task.CompletedTask;
@@ -38,12 +39,16 @@ public partial class WebMain
         _game?.RunFrame();
     }
 
-    private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex)
+    private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
     {
         _game!.TransitionToConnecting();
 
         var generator = GeneratorRegistry.Create(generatorIndex, seed);
         _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out);
+
+        if (debugMode)
+            ApplyDebugSettings();
+
         _embeddedServer.Start();
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
@@ -56,6 +61,9 @@ public partial class WebMain
         {
             await Task.Delay(50);
         }
+
+        if (debugMode)
+            _game.GameState.DebugSeeAll = _game.Debug.VisibilityOff;
 
         _game.TransitionToPlaying();
     }
@@ -89,6 +97,22 @@ public partial class WebMain
         _connection = null;
         _embeddedServer?.Dispose();
         _embeddedServer = null;
+    }
+
+    private static void OnDebugSync()
+    {
+        if (_embeddedServer != null && _game != null)
+            ApplyDebugSettings();
+    }
+
+    private static void ApplyDebugSettings()
+    {
+        if (_embeddedServer == null || _game == null) return;
+        var debug = _game.Debug;
+        _embeddedServer.DebugNoCollision = debug.CollisionsOff;
+        _embeddedServer.DebugInvulnerable = debug.Invulnerable;
+        _embeddedServer.DebugMaxSpeed = debug.MaxSpeed;
+        _embeddedServer.DebugChunkRange = debug.ChunkRange;
     }
 
     private sealed class NullMusicProvider : IMusicProvider

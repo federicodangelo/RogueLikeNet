@@ -26,6 +26,30 @@ public class GameServer : IDisposable
     public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
 
+    /// <summary>Debug: when true, player movement ignores tile collision.</summary>
+    public bool DebugNoCollision
+    {
+        get => _engine.DebugNoCollision;
+        set => _engine.DebugNoCollision = value;
+    }
+
+    /// <summary>Debug: when true, player cannot take damage.</summary>
+    public bool DebugInvulnerable
+    {
+        get => _engine.DebugInvulnerable;
+        set => _engine.DebugInvulnerable = value;
+    }
+
+    /// <summary>Debug: when true, player has zero move/attack delay.</summary>
+    public bool DebugMaxSpeed
+    {
+        get => _engine.DebugMaxSpeed;
+        set => _engine.DebugMaxSpeed = value;
+    }
+
+    /// <summary>Debug: chunk range override for zoomed-out views.</summary>
+    public int DebugChunkRange { get; set; } = 1;
+
     public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null)
     {
         _logWriter = logWriter ?? TextWriter.Null;
@@ -259,9 +283,10 @@ public class GameServer : IDisposable
         var playerEntity = conn.PlayerEntity!.Value;
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
+        var playerChunkRange = Math.Max(1, DebugChunkRange);
 
         var newChunks = GameStateSerializer.SerializeChunksDelta(
-            _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys);
+            _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys, playerChunkRange);
 
         // State delta compression: always send on snapshot, otherwise only when changed
         var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);

@@ -18,6 +18,9 @@ public class ClientGameState
     private readonly HashSet<long> _exploredTiles = new();
     private readonly HashSet<long> _visibleTiles = new();
 
+    /// <summary>Debug: when true, all tiles are treated as visible and explored.</summary>
+    public bool DebugSeeAll { get; set; }
+
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
     public long PlayerEntityId { get; private set; }
@@ -184,10 +187,10 @@ public class ClientGameState
     }
 
     public bool IsExplored(int worldX, int worldY) =>
-        _exploredTiles.Contains(Position.PackCoord(worldX, worldY));
+        DebugSeeAll || _exploredTiles.Contains(Position.PackCoord(worldX, worldY));
 
     public bool IsVisible(int worldX, int worldY) =>
-        _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
+        DebugSeeAll || _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
 
     private void ComputeVisibility()
     {

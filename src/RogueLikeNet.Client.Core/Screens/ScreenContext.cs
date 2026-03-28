@@ -16,6 +16,7 @@ public sealed class ScreenContext
     public required ChatSystem Chat { get; init; }
     public required PerformanceMonitor Performance { get; init; }
     public required ScreenShakeEffect ScreenShake { get; init; }
+    public required DebugSettings Debug { get; init; }
 
     public IGameServerConnection? Connection { get; set; }
     public ISpriteRenderer SpriteRenderer { get; set; } = null!;
@@ -28,4 +29,7 @@ public sealed class ScreenContext
     public required Action<int, string> OnStartOnline { get; init; }
     public required Action OnReturnToMenu { get; init; }
     public required Action OnQuit { get; init; }
+
+    /// <summary>Invoked when debug settings change at runtime and need syncing to the server.</summary>
+    public Action? DebugSyncRequested { get; set; }
 }

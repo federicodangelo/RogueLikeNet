@@ -11,6 +11,21 @@ namespace RogueLikeNet.Client.Core.Rendering;
 public sealed class HudRenderer
 {
     private HudLayout _layout = CreateHudLayout();
+    private int _tw;
+    private int _th;
+    private float _fs;
+
+    private void Dc(ISpriteRenderer r, int tx, int ty, char ch, Color4 c) =>
+        r.DrawTextScreen(tx * _tw, ty * _th, ch.ToString(), c, _fs);
+
+    private void Ds(ISpriteRenderer r, int tx, int ty, string text, Color4 c) =>
+        r.DrawTextScreen(tx * _tw, ty * _th, text, c, _fs);
+
+    private void Sep(ISpriteRenderer r, int col, int row, int width)
+    {
+        for (int i = 0; i < width; i++)
+            Dc(r, col + i, row, '\u2500', RenderingTheme.Dim);
+    }
 
     private static HudLayout CreateHudLayout()
     {
@@ -25,16 +40,21 @@ public sealed class HudRenderer
         return layout;
     }
 
-    public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows)
+    public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
+        int tileW = 0, int tileH = 0, float fontScale = 0f)
     {
-        float hx = hudStartCol * AsciiDraw.TileWidth;
-        r.DrawRectScreen(hx, 0, AsciiDraw.HudColumns * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.HudBg);
+        _tw = tileW > 0 ? tileW : AsciiDraw.TileWidth;
+        _th = tileH > 0 ? tileH : AsciiDraw.TileHeight;
+        _fs = fontScale > 0f ? fontScale : AsciiDraw.FontScale;
+
+        float hx = hudStartCol * _tw;
+        r.DrawRectScreen(hx, 0, AsciiDraw.HudColumns * _tw, totalRows * _th, RenderingTheme.HudBg);
 
         // Vertical separator
-        AsciiDraw.DrawChar(r, hudStartCol, 0, '\u252C', RenderingTheme.Border);
+        Dc(r, hudStartCol, 0, '\u252C', RenderingTheme.Border);
         for (int y = 1; y < totalRows - 1; y++)
-            AsciiDraw.DrawChar(r, hudStartCol, y, '\u2502', RenderingTheme.Border);
-        AsciiDraw.DrawChar(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
+            Dc(r, hudStartCol, y, '\u2502', RenderingTheme.Border);
+        Dc(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
 
         int col = hudStartCol + 1;
         int innerW = AsciiDraw.HudColumns - 2;
@@ -42,7 +62,7 @@ public sealed class HudRenderer
         var hud = state.PlayerState;
         if (hud == null)
         {
-            AsciiDraw.DrawString(r, col, 1, "No data", RenderingTheme.Dim);
+            Ds(r, col, 1, "No data", RenderingTheme.Dim);
             return;
         }
 
@@ -57,34 +77,34 @@ public sealed class HudRenderer
             {
                 case "HP":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "HP", RenderingTheme.HpText);
+                    Ds(r, col, row, "HP", RenderingTheme.HpText);
                     row++;
                     if (row >= maxRow) break;
                     int barW = innerW;
                     float hpRatio = hud.MaxHealth > 0 ? (float)hud.Health / hud.MaxHealth : 0;
                     int filled = (int)(barW * hpRatio);
                     for (int i = 0; i < barW; i++)
-                        AsciiDraw.DrawChar(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? RenderingTheme.HpFill : RenderingTheme.HpBar);
+                        Dc(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? RenderingTheme.HpFill : RenderingTheme.HpBar);
                     row++;
                     if (row >= maxRow) break;
                     string hpText = $"{hud.Health}/{hud.MaxHealth}";
-                    AsciiDraw.DrawString(r, col, row, hpText, RenderingTheme.HpText);
+                    Ds(r, col, row, hpText, RenderingTheme.HpText);
                     break;
 
                 case "Stats":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, $"ATK: {hud.Attack}", RenderingTheme.Stats); row++;
+                    Ds(r, col, row, $"ATK: {hud.Attack}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, $"DEF: {hud.Defense}", RenderingTheme.Stats); row++;
+                    Ds(r, col, row, $"DEF: {hud.Defense}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, $"Lv:  {hud.Level}", RenderingTheme.Level);
+                    Ds(r, col, row, $"Lv:  {hud.Level}", RenderingTheme.Level);
                     break;
 
                 case "Skills":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "Skills", RenderingTheme.Title); row++;
+                    Ds(r, col, row, "Skills", RenderingTheme.Title); row++;
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+                    Sep(r, col, row, innerW); row++;
                     for (int i = 0; i < Math.Min(hud.Skills.Length, 2) && row < maxRow; i++)
                     {
                         if (hud.Skills[i].Id == 0) continue;
@@ -93,25 +113,25 @@ public sealed class HudRenderer
                             ? hud.Skills[i].Name : $"Skill {i + 1}";
                         int cd = hud.Skills[i].Cooldown;
                         string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
-                        AsciiDraw.DrawString(r, col, row, text, cd > 0 ? RenderingTheme.SkillCd : RenderingTheme.SkillReady);
+                        Ds(r, col, row, text, cd > 0 ? RenderingTheme.SkillCd : RenderingTheme.SkillReady);
                         row++;
                     }
                     break;
 
                 case "Equipment":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "Equipment", RenderingTheme.Title); row++;
+                    Ds(r, col, row, "Equipment", RenderingTheme.Title); row++;
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+                    Sep(r, col, row, innerW); row++;
                     if (row >= maxRow) break;
                     {
                         string wpn = hud.EquippedWeapon != null ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.ItemTypeId, hud.EquippedWeapon.Rarity) : "---";
                         string arm = hud.EquippedArmor != null ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.ItemTypeId, hud.EquippedArmor.Rarity) : "---";
                         var wpnColor = hud.EquippedWeapon != null ? AsciiDraw.RarityColor(hud.EquippedWeapon.Rarity) : RenderingTheme.Item;
                         var armColor = hud.EquippedArmor != null ? AsciiDraw.RarityColor(hud.EquippedArmor.Rarity) : RenderingTheme.Item;
-                        AsciiDraw.DrawString(r, col, row, $"W: {wpn}", wpnColor); row++;
+                        Ds(r, col, row, $"W: {wpn}", wpnColor); row++;
                         if (row >= maxRow) break;
-                        AsciiDraw.DrawString(r, col, row, $"A: {arm}", armColor);
+                        Ds(r, col, row, $"A: {arm}", armColor);
                     }
                     break;
 
@@ -125,24 +145,24 @@ public sealed class HudRenderer
 
                 case "Controls":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
+                    Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Esc] Menu", RenderingTheme.Dim);
+                    Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim);
                     break;
             }
         }
     }
 
-    private static void RenderQuickSlotsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+    private void RenderQuickSlotsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         Protocol.Messages.PlayerStateMsg hud, HudLayout layout)
     {
         bool focused = layout.FocusedSection?.Name == "QuickSlots";
 
         if (row >= maxRow) return;
-        AsciiDraw.DrawString(r, col, row, focused ? "\u25ba Quick Use Slots" : "Quick Use Slots", focused ? RenderingTheme.Selected : RenderingTheme.Title);
+        Ds(r, col, row, focused ? "\u25ba Quick Use Slots" : "Quick Use Slots", focused ? RenderingTheme.Selected : RenderingTheme.Title);
         row++;
         if (row >= maxRow) return;
-        AsciiDraw.DrawHudSeparator(r, col, row, innerW);
+        Sep(r, col, row, innerW);
         row++;
 
         int[] qsIndices = hud.QuickSlotIndices;
@@ -155,38 +175,38 @@ public sealed class HudRenderer
                 string name = AsciiDraw.ItemDisplayName(item.ItemTypeId, item.Rarity);
                 int stack = item.StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                AsciiDraw.DrawString(r, col, row, $"[{i + 1}]{name}{stackStr}", AsciiDraw.RarityColor(item.Rarity));
+                Ds(r, col, row, $"[{i + 1}]{name}{stackStr}", AsciiDraw.RarityColor(item.Rarity));
             }
             else
             {
-                AsciiDraw.DrawString(r, col, row, $"[{i + 1}] ---", RenderingTheme.Dim);
+                Ds(r, col, row, $"[{i + 1}] ---", RenderingTheme.Dim);
             }
             row++;
         }
 
         if (row < maxRow)
-            AsciiDraw.DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", RenderingTheme.Inv);
+            Ds(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", RenderingTheme.Inv);
     }
 
-    private static void RenderFloorItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+    private void RenderFloorItemsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         ClientGameState state)
     {
         var floorItems = state.GetFloorItems();
         if (floorItems.Length == 0) return;
 
         if (row >= maxRow) return;
-        AsciiDraw.DrawString(r, col, row, "On Ground", RenderingTheme.Title); row++;
+        Ds(r, col, row, "On Ground", RenderingTheme.Title); row++;
         if (row >= maxRow) return;
-        AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+        Sep(r, col, row, innerW); row++;
         int floorToShow = Math.Min(floorItems.Length, 4);
         for (int i = 0; i < floorToShow && row < maxRow; i++)
         {
             var (itemTypeId, rarity) = floorItems[i];
             string name = AsciiDraw.ItemDisplayName(itemTypeId, rarity);
-            AsciiDraw.DrawString(r, col, row, $"  {name}", AsciiDraw.RarityColor(rarity));
+            Ds(r, col, row, $"  {name}", AsciiDraw.RarityColor(rarity));
             row++;
         }
         if (row < maxRow)
-            AsciiDraw.DrawString(r, col, row, "[G] Pick up", RenderingTheme.Dim);
+            Ds(r, col, row, "[G] Pick up", RenderingTheme.Dim);
     }
 }

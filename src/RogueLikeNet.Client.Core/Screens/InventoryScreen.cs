@@ -79,12 +79,26 @@ public sealed class InventoryScreen : IScreen
         float shakeX = _ctx.ScreenShake.OffsetX;
         float shakeY = _ctx.ScreenShake.OffsetY;
 
+        // Zoom only affects the game world area, not HUD or UI
+        var debug = _ctx.Debug;
+        int tileW = debug.EffectiveTileWidth;
+        int tileH = debug.EffectiveTileHeight;
+        float fontScale = debug.EffectiveFontScale;
+
+        // Compute how many zoomed tiles fit in the game area pixel space
+        int gamePixelW = gameCols * AsciiDraw.TileWidth;
+        int gamePixelH = totalRows * AsciiDraw.TileHeight;
+        int zoomedGameCols = Math.Max(1, gamePixelW / tileW);
+        int zoomedRows = Math.Max(1, gamePixelH / tileH);
+
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
-        _worldRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, shakeX, shakeY);
+        bool debugLightOff = debug is { Enabled: true, LightOff: true };
+        _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
         _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows);
 
-        int halfW = gameCols / 2;
-        int halfH = totalRows / 2;
+        // Render particles
+        int halfW = zoomedGameCols / 2;
+        int halfH = zoomedRows / 2;
         _ctx.Particles.Render(renderer, _ctx.GameState.PlayerX, _ctx.GameState.PlayerY,
             halfW, halfH, shakeX, shakeY);
 

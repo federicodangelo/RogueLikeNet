@@ -35,6 +35,15 @@ public class GameEngine : IDisposable
     public CombatSystem Combat => _combatSystem;
     public InventorySystem Inventory => _inventorySystem;
 
+    /// <summary>Debug: when true, player movement ignores tile collision.</summary>
+    public bool DebugNoCollision { get; set; }
+
+    /// <summary>Debug: when true, player cannot take damage.</summary>
+    public bool DebugInvulnerable { get; set; }
+
+    /// <summary>Debug: when true, player has zero move/attack delay.</summary>
+    public bool DebugMaxSpeed { get; set; }
+
     public GameEngine(long worldSeed, IDungeonGenerator? generator = null)
     {
         _ecsWorld = Arch.Core.World.Create();
@@ -183,8 +192,8 @@ public class GameEngine : IDisposable
     /// </summary>
     public void Tick()
     {
-        _movementSystem.Update(_ecsWorld, _worldMap);
-        _combatSystem.Update(_ecsWorld);
+        _movementSystem.Update(_ecsWorld, _worldMap, DebugNoCollision, DebugMaxSpeed);
+        _combatSystem.Update(_ecsWorld, DebugInvulnerable);
         _aiSystem.Update(_ecsWorld, _worldMap);
         _inventorySystem.Update(_ecsWorld, _worldMap);
         _skillSystem.Update(_ecsWorld);

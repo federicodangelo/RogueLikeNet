@@ -11,7 +11,7 @@ namespace RogueLikeNet.Core.Systems;
 /// </summary>
 public class MovementSystem
 {
-    public void Update(Arch.Core.World world, WorldMap map)
+    public void Update(Arch.Core.World world, WorldMap map, bool debugNoCollision = false, bool debugMaxSpeed = false)
     {
         // Collect all actor positions (entities with Position + Health, alive)
         var actorPositions = new HashSet<long>();
@@ -28,19 +28,19 @@ public class MovementSystem
             if (input.ActionType != ActionTypes.Move) return;
 
             // Respect player action cooldown — preserve action to execute next tick
-            if (delay.Current > 0) return;
+            if (!debugMaxSpeed && delay.Current > 0) return;
 
             int newX = pos.X + input.TargetX;
             int newY = pos.Y + input.TargetY;
 
-            if (!map.IsWalkable(newX, newY))
+            if (!debugNoCollision && !map.IsWalkable(newX, newY))
             {
                 input.ActionType = ActionTypes.None;
                 return;
             }
 
-            // Check if an actor occupies the destination
-            if (actorPositions.Contains(Position.PackCoord(newX, newY)))
+            // Check if an actor occupies the destination (skip in debug no-collision mode)
+            if (!debugNoCollision && actorPositions.Contains(Position.PackCoord(newX, newY)))
             {
                 // Convert move into attack (CombatSystem will handle it)
                 input.ActionType = ActionTypes.Attack;

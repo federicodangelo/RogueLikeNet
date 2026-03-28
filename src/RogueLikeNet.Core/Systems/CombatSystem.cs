@@ -17,7 +17,7 @@ public class CombatSystem
 
     public IReadOnlyList<CombatEvent> LastTickEvents => _events;
 
-    public void Update(Arch.Core.World world)
+    public void Update(Arch.Core.World world, bool debugInvulnerable = false)
     {
         _events.Clear();
 
@@ -83,7 +83,7 @@ public class CombatSystem
         });
 
         // Monster attacks: AI entities in Attack state hit adjacent players
-        ProcessMonsterAttacks(world);
+        ProcessMonsterAttacks(world, debugInvulnerable);
 
         // Mark dead entities
         var deathQuery = new QueryDescription().WithAll<Health>().WithNone<DeadTag>();
@@ -100,7 +100,7 @@ public class CombatSystem
     /// Process monster attacks: monsters in Attack state hit an adjacent player each tick.
     /// Called from <see cref="Update"/> after player attacks.
     /// </summary>
-    private void ProcessMonsterAttacks(Arch.Core.World world)
+    private void ProcessMonsterAttacks(Arch.Core.World world, bool debugInvulnerable)
     {
         // Collect player positions
         var players = new List<(Entity Entity, int X, int Y)>();
@@ -111,6 +111,9 @@ public class CombatSystem
                 players.Add((entity, pos.X, pos.Y));
         });
         if (players.Count == 0) return;
+
+        // Skip monster attacks entirely when player is invulnerable
+        if (debugInvulnerable) return;
 
         // Process monster attacks
         var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health, AttackDelay>().WithNone<DeadTag>();

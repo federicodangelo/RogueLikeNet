@@ -18,6 +18,7 @@ public sealed class PlayingScreen : IScreen
 
     // Movement hold-to-repeat
     private static readonly long MoveRepeatDelayTicks = Stopwatch.Frequency / 4; // 250 ms
+    private static readonly long MoveRepeatDelayTicksFast = Stopwatch.Frequency / 20; // 50 ms (max speed)
     private InputAction? _heldMoveAction;
     private long _moveHeldSinceTicks;
 
@@ -59,9 +60,18 @@ public sealed class PlayingScreen : IScreen
             return;
         }
 
+        // Debug key toggles (only in debug mode)
+        if (_ctx.Debug.Enabled)
+        {
+            HandleDebugKeys(input);
+        }
+
         ClientInputMsg? msg = null;
 
-        // Determine held movement direction, applying a 250ms initial-repeat delay
+        bool maxSpeed = _ctx.Debug is { Enabled: true, MaxSpeed: true };
+        long repeatDelay = maxSpeed ? MoveRepeatDelayTicksFast : MoveRepeatDelayTicks;
+
+        // Determine held movement direction, applying a repeat delay
         InputAction? activeMoveAction = null;
         if (input.IsActionDown(InputAction.MoveUp)) activeMoveAction = InputAction.MoveUp;
         else if (input.IsActionDown(InputAction.MoveDown)) activeMoveAction = InputAction.MoveDown;
@@ -78,17 +88,26 @@ public sealed class PlayingScreen : IScreen
             }
 
             bool fireMove = input.IsActionPressed(activeMoveAction.Value)
-                            || now - _moveHeldSinceTicks >= MoveRepeatDelayTicks;
+                            || now - _moveHeldSinceTicks >= repeatDelay;
             if (fireMove)
             {
-                msg = activeMoveAction.Value switch
+                int dx = 0, dy = 0;
+                switch (activeMoveAction.Value)
                 {
-                    InputAction.MoveUp => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = -1 },
-                    InputAction.MoveDown => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 0, TargetY = 1 },
-                    InputAction.MoveLeft => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = -1, TargetY = 0 },
-                    InputAction.MoveRight => new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 },
-                    _ => null
-                };
+                    case InputAction.MoveUp: dy = -1; break;
+                    case InputAction.MoveDown: dy = 1; break;
+                    case InputAction.MoveLeft: dx = -1; break;
+                    case InputAction.MoveRight: dx = 1; break;
+                }
+
+                // In max speed mode, move 4 tiles at a time by sending 4 commands
+                int steps = maxSpeed ? 4 : 1;
+                for (int i = 0; i < steps; i++)
+                {
+                    msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = dx, TargetY = dy };
+                    SendInput(msg);
+                }
+                msg = null; // already sent
             }
         }
         else
@@ -118,11 +137,64 @@ public sealed class PlayingScreen : IScreen
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
         }
 
-        if (msg != null && _ctx.Connection != null)
+        if (msg != null)
+            SendInput(msg);
+    }
+
+    private void SendInput(ClientInputMsg msg)
+    {
+        if (_ctx.Connection != null)
         {
             msg.Tick = _ctx.GameState.WorldTick;
             _ = _ctx.Connection.SendInputAsync(msg);
         }
+    }
+
+    private void HandleDebugKeys(IInputManager input)
+    {
+        string typed = input.TextInput;
+        foreach (char c in typed)
+        {
+            switch (c)
+            {
+                case 'v' or 'V':
+                    _ctx.Debug.VisibilityOff = !_ctx.Debug.VisibilityOff;
+                    _ctx.GameState.DebugSeeAll = _ctx.Debug.VisibilityOff;
+                    break;
+                case 'c' or 'C':
+                    _ctx.Debug.CollisionsOff = !_ctx.Debug.CollisionsOff;
+                    SyncDebugToServer();
+                    break;
+                case 'h' or 'H':
+                    _ctx.Debug.Invulnerable = !_ctx.Debug.Invulnerable;
+                    SyncDebugToServer();
+                    break;
+                case 'l' or 'L':
+                    _ctx.Debug.LightOff = !_ctx.Debug.LightOff;
+                    break;
+                case 'm' or 'M':
+                    _ctx.Debug.MaxSpeed = !_ctx.Debug.MaxSpeed;
+                    SyncDebugToServer();
+                    break;
+                case '+' or '=':
+                    _ctx.Debug.ZoomLevel = Math.Max(-5, _ctx.Debug.ZoomLevel - 1);
+                    SyncDebugToServer();
+                    break;
+                case '-' or '_':
+                    _ctx.Debug.ZoomLevel = Math.Min(5, _ctx.Debug.ZoomLevel + 1);
+                    SyncDebugToServer();
+                    break;
+                case '0':
+                    _ctx.Debug.ZoomLevel = 0;
+                    SyncDebugToServer();
+                    break;
+            }
+        }
+    }
+
+    private void SyncDebugToServer()
+    {
+        _ctx.DebugSyncRequested?.Invoke();
     }
 
     public void Update(float deltaTime)
@@ -137,13 +209,26 @@ public sealed class PlayingScreen : IScreen
         float shakeX = _ctx.ScreenShake.OffsetX;
         float shakeY = _ctx.ScreenShake.OffsetY;
 
+        // Zoom only affects the game world area, not HUD or UI
+        var debug = _ctx.Debug;
+        int tileW = debug.EffectiveTileWidth;
+        int tileH = debug.EffectiveTileHeight;
+        float fontScale = debug.EffectiveFontScale;
+
+        // Compute how many zoomed tiles fit in the game area pixel space
+        int gamePixelW = gameCols * AsciiDraw.TileWidth;
+        int gamePixelH = totalRows * AsciiDraw.TileHeight;
+        int zoomedGameCols = Math.Max(1, gamePixelW / tileW);
+        int zoomedRows = Math.Max(1, gamePixelH / tileH);
+
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
-        _worldRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, shakeX, shakeY);
+        bool debugLightOff = debug is { Enabled: true, LightOff: true };
+        _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
         _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows);
 
         // Render particles
-        int halfW = gameCols / 2;
-        int halfH = totalRows / 2;
+        int halfW = zoomedGameCols / 2;
+        int halfH = zoomedRows / 2;
         _ctx.Particles.Render(renderer, _ctx.GameState.PlayerX, _ctx.GameState.PlayerY,
             halfW, halfH, shakeX, shakeY);
 

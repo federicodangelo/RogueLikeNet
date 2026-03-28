@@ -1,5 +1,6 @@
 using Engine.Core;
 using Engine.Platform;
+using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
@@ -10,7 +11,7 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Generator:", "Randomize Seed", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
 
     private static readonly string[] HelpLines =
@@ -37,12 +38,12 @@ public sealed class MenuRenderer
     ];
 
     public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
-        long worldSeed, int generatorIndex, bool seedEditing, string seedEditText)
+        long worldSeed, int generatorIndex, bool seedEditing, string seedEditText, bool debugEnabled)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
         int boxW = 40;
-        int boxH = 24;
+        int boxH = 26;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -72,6 +73,10 @@ public sealed class MenuRenderer
             {
                 string genName = GeneratorRegistry.GetName(generatorIndex);
                 label = prefix + "Generator: \u25c4 " + genName + " \u25ba";
+            }
+            else if (i == 5)
+            {
+                label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
             }
             else
             {
@@ -215,12 +220,14 @@ public sealed class MenuRenderer
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, "Press Esc to go back", RenderingTheme.Dim);
     }
 
-    public void RenderPauseOverlay(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex)
+    public void RenderPauseOverlay(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex, DebugSettings? debug = null)
     {
         AsciiDraw.FillOverlay(r, totalCols, totalRows);
 
+        bool showDebug = debug is { Enabled: true };
+        int debugLines = showDebug ? 9 : 0;
         int boxW = 38;
-        int boxH = PauseMenuItems.Length + 6;
+        int boxH = PauseMenuItems.Length + 6 + debugLines;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -240,6 +247,27 @@ public sealed class MenuRenderer
             string text = prefix + PauseMenuItems[i];
             int tx = bx + 4;
             AsciiDraw.DrawString(r, tx, itemY + i, text, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
+        }
+
+        if (showDebug)
+        {
+            int debugY = itemY + PauseMenuItems.Length + 1;
+            for (int i = bx + 2; i < bx + boxW - 2; i++)
+                AsciiDraw.DrawChar(r, i, debugY, '\u2500', RenderingTheme.Dim);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, "DEBUG MODE", RenderingTheme.Title);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"V  Visibility: {(debug!.VisibilityOff ? "OFF" : "ON")}", debug.VisibilityOff ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"C  Collisions: {(debug.CollisionsOff ? "OFF" : "ON")}", debug.CollisionsOff ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"H  Invulnerable: {(debug.Invulnerable ? "ON" : "OFF")}", debug.Invulnerable ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"L  Lighting: {(debug.LightOff ? "OFF" : "ON")}", debug.LightOff ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"M  Max Speed: {(debug.MaxSpeed ? "ON" : "OFF")}", debug.MaxSpeed ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"+/-/0  Zoom: {debug.ZoomLevel}", RenderingTheme.Normal);
         }
 
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", RenderingTheme.Dim);

@@ -12,15 +12,19 @@ namespace RogueLikeNet.Client.Core.Rendering;
 public sealed class GameWorldRenderer
 {
     public void Render(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows,
-        float shakeX, float shakeY)
+        float shakeX, float shakeY, int tileW = 0, int tileH = 0, float fontScale = 0f, bool debugLightOff = false)
     {
+        if (tileW <= 0) tileW = AsciiDraw.TileWidth;
+        if (tileH <= 0) tileH = AsciiDraw.TileHeight;
+        if (fontScale <= 0f) fontScale = AsciiDraw.FontScale;
+
         int cameraCenterX = state.PlayerX;
         int cameraCenterY = state.PlayerY;
         int halfW = gameCols / 2;
         int halfH = totalRows / 2;
 
         // Pass 1: tile backgrounds and foreground glyphs (batched)
-        r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, AsciiDraw.TileWidth, AsciiDraw.TileHeight, AsciiDraw.FontScale,
+        r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, tileW, tileH, fontScale,
             (col, row) =>
             {
                 var worldX = cameraCenterX - halfW + col;
@@ -40,7 +44,7 @@ public sealed class GameWorldRenderer
                     return new GlyphTile('\0', default, RenderingTheme.Black);
                 }
 
-                var brightness = visible ? Math.Max(AsciiDraw.LightLevelToBrightness(tile.LightLevel), minBrightness) : AsciiDraw.FogBrightness;
+                var brightness = debugLightOff ? 1f : visible ? Math.Max(AsciiDraw.LightLevelToBrightness(tile.LightLevel), minBrightness) : AsciiDraw.FogBrightness;
                 bgColor = AsciiDraw.ApplyBrightness(bgColor, brightness);
                 fgColor = AsciiDraw.ApplyBrightness(fgColor, brightness);
                 var ch = tile.GlyphId < 256 ? AsciiDraw.Cp437[tile.GlyphId] : '?';
@@ -62,18 +66,18 @@ public sealed class GameWorldRenderer
 
                 if (tile.GlyphId == TileDefinitions.GlyphTorch)
                 {
-                    float cx = sx * AsciiDraw.TileWidth + AsciiDraw.TileWidth * 0.5f + shakeX;
-                    float cy = sy * AsciiDraw.TileHeight + AsciiDraw.TileHeight * 0.5f + shakeY;
-                    float radius = AsciiDraw.TileWidth * 2.5f;
+                    float cx = sx * tileW + tileW * 0.5f + shakeX;
+                    float cy = sy * tileH + tileH * 0.5f + shakeY;
+                    float radius = tileW * 2.5f;
                     var inner = new Color4(255, 200, 100, 40);
                     var outer = new Color4(255, 150, 50, 0);
                     r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
                 }
                 else if (tile.Type == TileType.Lava)
                 {
-                    float cx = sx * AsciiDraw.TileWidth + AsciiDraw.TileWidth * 0.5f + shakeX;
-                    float cy = sy * AsciiDraw.TileHeight + AsciiDraw.TileHeight * 0.5f + shakeY;
-                    float radius = AsciiDraw.TileWidth * 1.5f;
+                    float cx = sx * tileW + tileW * 0.5f + shakeX;
+                    float cy = sy * tileH + tileH * 0.5f + shakeY;
+                    float radius = tileW * 1.5f;
                     var inner = new Color4(255, 80, 20, 25);
                     var outer = new Color4(255, 40, 0, 0);
                     r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
@@ -88,18 +92,18 @@ public sealed class GameWorldRenderer
 
             if (sx < 0 || sx >= gameCols || sy < 0 || sy >= totalRows) continue;
 
-            float px = sx * AsciiDraw.TileWidth + shakeX;
-            float py = sy * AsciiDraw.TileHeight + shakeY;
+            float px = sx * tileW + shakeX;
+            float py = sy * tileH + shakeY;
 
             var fgColor = AsciiDraw.IntToColor4(entity.FgColor);
             char ch = entity.GlyphId < 256 ? AsciiDraw.Cp437[entity.GlyphId] : '?';
-            r.DrawTextScreen(px, py, ch.ToString(), fgColor, AsciiDraw.FontScale);
+            r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
 
             if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
             {
                 float ratio = (float)entity.Health / entity.MaxHealth;
-                r.DrawRectScreen(px, py - 2, AsciiDraw.TileWidth, 2, new Color4(255, 0, 0, 180));
-                r.DrawRectScreen(px, py - 2, AsciiDraw.TileWidth * ratio, 2, new Color4(0, 255, 0, 180));
+                r.DrawRectScreen(px, py - 2, tileW, 2, new Color4(255, 0, 0, 180));
+                r.DrawRectScreen(px, py - 2, tileW * ratio, 2, new Color4(0, 255, 0, 180));
             }
         }
     }
