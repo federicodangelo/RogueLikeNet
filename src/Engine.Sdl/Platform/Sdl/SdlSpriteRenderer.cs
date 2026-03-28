@@ -572,8 +572,10 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
     // ── Batched glyph grid ───────────────────────────────────────────
 
     // Dedicated buffers for glyph grid rendering to avoid conflicting with shape buffers.
-    private static SDL.Vertex[] _gridVertexBuf = new SDL.Vertex[4096];
-    private static int[] _gridIndexBuf = new int[6144];
+    private static SDL.Vertex[] _gridVertexBufBg = new SDL.Vertex[4096];
+    private static int[] _gridIndexBufBg = new int[6144];
+    private static SDL.Vertex[] _gridVertexBufGl = new SDL.Vertex[4096];
+    private static int[] _gridIndexBufGl = new int[6144];
 
     public override void DrawGlyphGridScreen(float x, float y, int cols, int rows,
         float tileW, float tileH, float fontScale,
@@ -588,83 +590,71 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
         int maxVerts = cellCount * 4;
         int maxIndices = cellCount * 6;
 
-        if (_gridVertexBuf.Length < maxVerts * 2)
-            _gridVertexBuf = new SDL.Vertex[maxVerts * 2];
-        if (_gridIndexBuf.Length < maxIndices * 2)
-            _gridIndexBuf = new int[maxIndices * 2];
+        if (_gridVertexBufBg.Length < maxVerts * 2)
+            _gridVertexBufBg = new SDL.Vertex[maxVerts * 2];
+        if (_gridIndexBufBg.Length < maxIndices * 2)
+            _gridIndexBufBg = new int[maxIndices * 2];
+        if (_gridVertexBufGl.Length < maxVerts * 2)
+            _gridVertexBufGl = new SDL.Vertex[maxVerts * 2];
+        if (_gridIndexBufGl.Length < maxIndices * 2)
+            _gridIndexBufGl = new int[maxIndices * 2];
 
-        int glyphW = (int)MathF.Round(MiniBitmapFont.GlyphWidth * fontScale);
-        int glyphH = (int)MathF.Round(MiniBitmapFont.GlyphHeight * fontScale);
-
-        // Pass 1: collect all backgrounds
-        int bgVi = 0, bgIi = 0;
+        int bgVi = 0, bgIi = 0, glVi = 0, glIi = 0;
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
             {
                 var tile = getTile(col, row);
-                if (tile.BgColor.A == 0) continue;
 
                 float left = x + col * tileW;
                 float top = y + row * tileH;
                 float right = left + tileW;
                 float bottom = top + tileH;
 
-                var fc = new SDL.FColor
+                if (tile.BgColor.A != 0)
                 {
-                    R = tile.BgColor.R / 255f,
-                    G = tile.BgColor.G / 255f,
-                    B = tile.BgColor.B / 255f,
-                    A = tile.BgColor.A / 255f
-                };
+                    var fc = new SDL.FColor
+                    {
+                        R = tile.BgColor.R / 255f,
+                        G = tile.BgColor.G / 255f,
+                        B = tile.BgColor.B / 255f,
+                        A = tile.BgColor.A / 255f
+                    };
 
-                int bv = bgVi;
-                _gridVertexBuf[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = top }, Color = fc };
-                _gridVertexBuf[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = top }, Color = fc };
-                _gridVertexBuf[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = bottom }, Color = fc };
-                _gridVertexBuf[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = bottom }, Color = fc };
-                _gridIndexBuf[bgIi++] = bv; _gridIndexBuf[bgIi++] = bv + 1; _gridIndexBuf[bgIi++] = bv + 2;
-                _gridIndexBuf[bgIi++] = bv; _gridIndexBuf[bgIi++] = bv + 2; _gridIndexBuf[bgIi++] = bv + 3;
+                    int bv = bgVi;
+                    _gridVertexBufBg[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = top }, Color = fc };
+                    _gridVertexBufBg[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = top }, Color = fc };
+                    _gridVertexBufBg[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = bottom }, Color = fc };
+                    _gridVertexBufBg[bgVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = bottom }, Color = fc };
+                    _gridIndexBufBg[bgIi++] = bv; _gridIndexBufBg[bgIi++] = bv + 1; _gridIndexBufBg[bgIi++] = bv + 2;
+                    _gridIndexBufBg[bgIi++] = bv; _gridIndexBufBg[bgIi++] = bv + 2; _gridIndexBufBg[bgIi++] = bv + 3;
+                }
+
+                if (tile.Glyph > ' ' && tile.FgColor.A != 0 && glyphUV.TryGetValue(tile.Glyph, out var uv))
+                {
+                    var fc = new SDL.FColor
+                    {
+                        R = tile.FgColor.R / 255f,
+                        G = tile.FgColor.G / 255f,
+                        B = tile.FgColor.B / 255f,
+                        A = tile.FgColor.A / 255f
+                    };
+
+                    int gv = glVi;
+                    _gridVertexBufGl[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = top }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U0, Y = uv.V0 } };
+                    _gridVertexBufGl[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = top }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U1, Y = uv.V0 } };
+                    _gridVertexBufGl[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = bottom }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U1, Y = uv.V1 } };
+                    _gridVertexBufGl[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = bottom }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U0, Y = uv.V1 } };
+                    _gridIndexBufGl[glIi++] = gv; _gridIndexBufGl[glIi++] = gv + 1; _gridIndexBufGl[glIi++] = gv + 2;
+                    _gridIndexBufGl[glIi++] = gv; _gridIndexBufGl[glIi++] = gv + 2; _gridIndexBufGl[glIi++] = gv + 3;
+                }
             }
         }
 
         if (bgVi > 0)
-            SDL.RenderGeometry(_renderer, nint.Zero, _gridVertexBuf, bgVi, _gridIndexBuf, bgIi);
-
-        // Pass 2: collect all glyphs
-        int glVi = 0, glIi = 0;
-        for (int row = 0; row < rows; row++)
-        {
-            for (int col = 0; col < cols; col++)
-            {
-                var tile = getTile(col, row);
-                if (tile.Glyph <= ' ' || tile.FgColor.A == 0) continue;
-                if (!glyphUV.TryGetValue(tile.Glyph, out var uv)) continue;
-
-                float left = x + col * tileW;
-                float top = y + row * tileH;
-                float right = left + glyphW;
-                float bottom = top + glyphH;
-
-                var fc = new SDL.FColor
-                {
-                    R = tile.FgColor.R / 255f,
-                    G = tile.FgColor.G / 255f,
-                    B = tile.FgColor.B / 255f,
-                    A = tile.FgColor.A / 255f
-                };
-
-                int gv = glVi;
-                _gridVertexBuf[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = top }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U0, Y = uv.V0 } };
-                _gridVertexBuf[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = top }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U1, Y = uv.V0 } };
-                _gridVertexBuf[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = right, Y = bottom }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U1, Y = uv.V1 } };
-                _gridVertexBuf[glVi++] = new SDL.Vertex { Position = new SDL.FPoint { X = left, Y = bottom }, Color = fc, TexCoord = new SDL.FPoint { X = uv.U0, Y = uv.V1 } };
-                _gridIndexBuf[glIi++] = gv; _gridIndexBuf[glIi++] = gv + 1; _gridIndexBuf[glIi++] = gv + 2;
-                _gridIndexBuf[glIi++] = gv; _gridIndexBuf[glIi++] = gv + 2; _gridIndexBuf[glIi++] = gv + 3;
-            }
-        }
+            SDL.RenderGeometry(_renderer, nint.Zero, _gridVertexBufBg, bgVi, _gridIndexBufBg, bgIi);
 
         if (glVi > 0)
-            SDL.RenderGeometry(_renderer, atlas.Texture, _gridVertexBuf, glVi, _gridIndexBuf, glIi);
+            SDL.RenderGeometry(_renderer, atlas.Texture, _gridVertexBufGl, glVi, _gridIndexBufGl, glIi);
     }
 }
