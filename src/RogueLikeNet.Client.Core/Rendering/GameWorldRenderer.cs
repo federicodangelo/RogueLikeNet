@@ -74,6 +74,7 @@ public sealed class GameWorldRenderer
 
         int cameraCenterX = state.PlayerX;
         int cameraCenterY = state.PlayerY;
+        long tick = state.WorldTick;
 
         // Precalculate tile brightness and colors for the entire viewport in a single pass.
         var precalculated = PrecalculateTiles(state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, debugLightOff);
@@ -92,6 +93,20 @@ public sealed class GameWorldRenderer
                     if (emptyTile || brightness <= 0f)
                     {
                         return new GlyphTile('\0', default, RenderingTheme.Black);
+                    }
+
+                    if (tile.Type == TileType.Water || tile.Type == TileType.Lava)
+                    {
+                        var worldY = cameraCenterY - visibleRows / 2 + row;
+                        var worldX = cameraCenterX - visibleCols / 2 + col;
+                        // Animate water and lava, making some tiles slightly brighter or darker over time without using a sine wave to avoid uniformity. 
+                        // This adds a bit of life to the environment.
+                        float variation =
+                            (float)((((worldX * 73856093 ^ worldY * 19349663 ^ tick / 20) % 10) - 5) / 10.0f * 0.3);
+
+                        //float brightnessOffset = (float)(Math.Sin(tick * 0.1 + (worldX + worldY) * 0.5) * 0.2);
+                        float brightnessOffset = variation;
+                        brightness = Math.Clamp(brightness + brightnessOffset, 0f, 1f);
                     }
 
                     var bgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.BgColor), brightness);

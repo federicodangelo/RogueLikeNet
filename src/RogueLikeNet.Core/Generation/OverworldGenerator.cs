@@ -23,9 +23,10 @@ public class OverworldGenerator : IDungeonGenerator
     private const double DetailScale = 0.10;
     private const double DetailWeight = 0.15;
 
-    // Liquid noise layer
-    private const double LiquidScale = 0.08;
-    private const double LiquidThreshold = 0.55;
+    // Liquid height threshold: floor tiles with terrain height below this value form liquid pools.
+    // FloorThreshold is the minimum height for a floor tile (~-0.15), so the range
+    // (FloorThreshold, LiquidHeightThreshold) defines the "low-lying" zone that floods.
+    private const double LiquidHeightThreshold = 0.05;
 
     // Spawn density: chance per floor tile (out of 1000)
     private const int MonsterChance = 4;
@@ -51,11 +52,13 @@ public class OverworldGenerator : IDungeonGenerator
         var detailNoise = new PerlinNoise(_seed ^ 0x5DEECE66DL);
         var tempNoise = new PerlinNoise(_seed ^ 0x27BB2EE687B0B0FDL);
         var moistNoise = new PerlinNoise(_seed ^ 0x12345678ABCDEF0L);
-        var liquidNoise = new PerlinNoise(_seed ^ 0x3141592653589793L);
 
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
         int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+
+        // Height map: stores the combined terrain noise value per tile for use in Pass 2
+        var heightMap = new double[Chunk.Size, Chunk.Size];
 
         // Pass 1: Carve terrain (floor vs wall) using continuous noise
         for (int lx = 0; lx < Chunk.Size; lx++)
@@ -69,6 +72,7 @@ public class OverworldGenerator : IDungeonGenerator
                 // Detail layer adds small variation
                 double detail = detailNoise.FBM(wx * DetailScale, wy * DetailScale, 2);
                 double combined = terrain + detail * DetailWeight;
+                heightMap[lx, ly] = combined;
 
                 ref var tile = ref chunk.Tiles[lx, ly];
                 if (combined > FloorThreshold)
@@ -108,20 +112,16 @@ public class OverworldGenerator : IDungeonGenerator
 
                 if (tile.Type != TileType.Floor) continue;
 
-                // Liquid placement using noise for natural pools
+                // Liquid placement: low-lying floor tiles form natural pools in biomes that allow liquids
                 var liquidDef = BiomeDefinitions.GetLiquid(biome);
-                if (liquidDef != null)
+                if (liquidDef != null && heightMap[lx, ly] < LiquidHeightThreshold)
                 {
-                    double liq = liquidNoise.FBM(wx * LiquidScale, wy * LiquidScale, 2);
-                    if (liq > LiquidThreshold)
-                    {
-                        var l = liquidDef.Value;
-                        tile.Type = l.Type;
-                        tile.GlyphId = l.GlyphId;
-                        tile.FgColor = l.FgColor;
-                        tile.BgColor = l.BgColor;
-                        continue; // Don't place decorations or spawns on liquid
-                    }
+                    var l = liquidDef.Value;
+                    tile.Type = l.Type;
+                    tile.GlyphId = l.GlyphId;
+                    tile.FgColor = l.FgColor;
+                    tile.BgColor = l.BgColor;
+                    continue; // Don't place decorations or spawns on liquid
                 }
 
                 // Decorations — use RNG seeded per-tile for determinism
