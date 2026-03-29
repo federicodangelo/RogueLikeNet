@@ -2,6 +2,7 @@ using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -36,12 +37,12 @@ public sealed class HudRenderer
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
-        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 3 });
+        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 5 });
         return layout;
     }
 
     public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
-        int tileW = 0, int tileH = 0, float fontScale = 0f)
+        int tileW = 0, int tileH = 0, float fontScale = 0f, bool isPickingUpPlaced = false)
     {
         _tw = tileW > 0 ? tileW : AsciiDraw.TileWidth;
         _th = tileH > 0 ? tileH : AsciiDraw.TileHeight;
@@ -144,11 +145,7 @@ public sealed class HudRenderer
                     break;
 
                 case "Controls":
-                    if (row >= maxRow) break;
-                    Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
-                    Ds(r, col, row, "[C] Crafting", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim);
+                    RenderControlsSection(r, col, innerW, row, maxRow, state, isPickingUpPlaced);
                     break;
             }
         }
@@ -209,5 +206,45 @@ public sealed class HudRenderer
         }
         if (row < maxRow)
             Ds(r, col, row, "[G] Pick up", RenderingTheme.Dim);
+    }
+
+    private void RenderControlsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        ClientGameState state, bool isPickingUpPlaced)
+    {
+        if (row >= maxRow) return;
+        Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
+        if (row >= maxRow) return;
+        Ds(r, col, row, "[C] Crafting", RenderingTheme.Dim); row++;
+        if (row >= maxRow) return;
+        Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim); row++;
+
+        if (isPickingUpPlaced)
+        {
+            if (row >= maxRow) return;
+            Ds(r, col, row, "Pick dir: ↑↓←→", RenderingTheme.Selected); row++;
+            if (row >= maxRow) return;
+            Ds(r, col, row, "[Esc] Cancel", RenderingTheme.Dim);
+        }
+        else if (HasAdjacentPickableTile(state))
+        {
+            if (row >= maxRow) return;
+            Ds(r, col, row, "[P] Pick up tile", RenderingTheme.Stats);
+        }
+    }
+
+    private static bool HasAdjacentPickableTile(ClientGameState state)
+    {
+        int px = state.PlayerX, py = state.PlayerY;
+        ReadOnlySpan<(int, int)> offsets = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+        foreach (var (dx, dy) in offsets)
+        {
+            var tile = state.GetTile(px + dx, py + dy);
+            if (tile.Type is TileType.Door or TileType.DoorClosed or TileType.Wall or TileType.Window)
+            {
+                if (RogueLikeNet.Core.Systems.BuildingSystem.GetItemFromTile(tile) != null)
+                    return true;
+            }
+        }
+        return false;
     }
 }

@@ -56,6 +56,9 @@ public class GameServer : IDisposable
     /// <summary>Debug: when true, all tiles are treated as visible (no FOV). Only applies to player visibility, not explored state.</summary>
     public bool DebugVisibilityOff { get; set; } = false;
 
+    /// <summary>Debug: when true, newly spawned players receive 9999 of each resource.</summary>
+    public bool DebugGiveResources { get; set; } = false;
+
 
     public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null)
     {
@@ -165,6 +168,9 @@ public class GameServer : IDisposable
         var (spawnX, spawnY) = _engine.FindSpawnPosition();
         var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, classId);
         conn.PlayerEntity = entity;
+
+        if (DebugGiveResources)
+            _engine.GiveDebugResources(entity);
 
         // Run a tick so lighting is computed before the initial snapshot
         _engine.Tick();

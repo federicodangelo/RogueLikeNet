@@ -71,10 +71,10 @@ public static class ItemDefinitions
         // Currency (stackable)
         new(Gold, CategoryGold, "Gold", TileDefinitions.GlyphGold, TileDefinitions.ColorYellow, 0, 0, 0, true, 999),
         // Resources (stackable)
-        new(Wood,      CategoryResource, "Wood",       TileDefinitions.GlyphTree,   TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
-        new(CopperOre, CategoryResource, "Copper Ore", TileDefinitions.GlyphRock,   TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
-        new(IronOre,   CategoryResource, "Iron Ore",   TileDefinitions.GlyphRock,   TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
-        new(GoldOre,   CategoryResource, "Gold Ore",   TileDefinitions.GlyphRock,   TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        new(Wood,      CategoryResource, "Wood",       TileDefinitions.GlyphLog,        TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(CopperOre, CategoryResource, "Copper Ore", TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(IronOre,   CategoryResource, "Iron Ore",   TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(GoldOre,   CategoryResource, "Gold Ore",   TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
         // Buildable items (stackable)
         new(WoodenDoor,   CategoryBuildable, "Wooden Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
         new(WoodenWall,   CategoryBuildable, "Wooden Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),

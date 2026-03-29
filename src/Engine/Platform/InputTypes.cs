@@ -44,6 +44,7 @@ public enum InputAction
     CycleSection,
     OpenCrafting,
     Place,
+    PickUpPlaced,
 }
 
 public enum InputActionAxis

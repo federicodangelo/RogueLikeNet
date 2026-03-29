@@ -110,6 +110,7 @@ public class Program
         _embeddedServer.DebugInvulnerable = debug.Invulnerable;
         _embeddedServer.DebugMaxSpeed = debug.MaxSpeed;
         _embeddedServer.DebugVisibilityOff = debug.VisibilityOff;
+        _embeddedServer.DebugGiveResources = debug.Enabled;
         _game.GameState.DebugSeeAll = debug.VisibilityOff;
     }
 

@@ -102,6 +102,19 @@ public sealed class DebugSettings
                     ZoomLevel = 0;
                     changes = true;
                     break;
+                case 'z' or 'Z':
+                {
+                    // Toggle all boolean flags at once
+                    bool anyOn = VisibilityOff || CollisionsOff || Invulnerable || LightOff || MaxSpeed;
+                    bool newVal = !anyOn;
+                    VisibilityOff = newVal;
+                    CollisionsOff = newVal;
+                    Invulnerable = newVal;
+                    LightOff = newVal;
+                    MaxSpeed = newVal;
+                    changes = true;
+                    break;
+                }
             }
         }
 

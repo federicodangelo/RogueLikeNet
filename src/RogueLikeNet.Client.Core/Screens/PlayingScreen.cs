@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -21,6 +22,14 @@ public sealed class PlayingScreen : IScreen
     private InputAction? _heldMoveAction;
     private long _moveHeldSinceTicks;
 
+    // Pick-up-placed direction selection mode
+    private bool _pickingUpPlaced;
+    public bool IsPickingUpPlaced => _pickingUpPlaced;
+
+    // Quick-slot placement direction selection mode (-1 = inactive, >= 0 = inventory slot to place)
+    private int _placingFromSlot = -1;
+    public bool IsPlacingFromSlot => _placingFromSlot >= 0;
+
     public ScreenState ScreenState => ScreenState.Playing;
 
     public PlayingScreen(ScreenContext ctx, GameWorldRenderer worldRenderer, HudRenderer hudRenderer,
@@ -37,6 +46,61 @@ public sealed class PlayingScreen : IScreen
         if (_ctx.Chat.InputActive)
         {
             _ctx.Chat.HandleInput(input, _ctx.Connection);
+            return;
+        }
+
+        // Direction selection mode for picking up placed buildable tiles
+        if (_pickingUpPlaced)
+        {
+            if (input.IsActionPressed(InputAction.MenuBack))
+            {
+                _pickingUpPlaced = false;
+                return;
+            }
+            int dx = 0, dy = 0;
+            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+            if (dx != 0 || dy != 0)
+            {
+                SendInput(new ClientInputMsg
+                {
+                    ActionType = ActionTypes.PickUpPlaced,
+                    TargetX = dx,
+                    TargetY = dy,
+                    Tick = _ctx.GameState.WorldTick
+                });
+                _pickingUpPlaced = false;
+            }
+            return;
+        }
+
+        // Direction selection mode for placing a buildable item from quick slot
+        if (_placingFromSlot >= 0)
+        {
+            if (input.IsActionPressed(InputAction.MenuBack))
+            {
+                _placingFromSlot = -1;
+                return;
+            }
+            int dx = 0, dy = 0;
+            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+            if (dx != 0 || dy != 0)
+            {
+                SendInput(new ClientInputMsg
+                {
+                    ActionType = ActionTypes.PlaceItem,
+                    ItemSlot = _placingFromSlot,
+                    TargetX = dx,
+                    TargetY = dy,
+                    Tick = _ctx.GameState.WorldTick
+                });
+                _placingFromSlot = -1;
+            }
             return;
         }
 
@@ -119,21 +183,43 @@ public sealed class PlayingScreen : IScreen
             else if (input.IsActionPressed(InputAction.PickUp))
                 msg = new ClientInputMsg { ActionType = ActionTypes.PickUp };
             else if (input.IsActionPressed(InputAction.UseItem1))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 0 };
+                msg = TryQuickSlotAction(0);
             else if (input.IsActionPressed(InputAction.UseItem2))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 1 };
+                msg = TryQuickSlotAction(1);
             else if (input.IsActionPressed(InputAction.UseItem3))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 2 };
+                msg = TryQuickSlotAction(2);
             else if (input.IsActionPressed(InputAction.UseItem4))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = 3 };
+                msg = TryQuickSlotAction(3);
             else if (input.IsActionPressed(InputAction.UseSkill1))
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
             else if (input.IsActionPressed(InputAction.UseSkill2))
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
+            else if (input.IsActionPressed(InputAction.Place))
+                _pickingUpPlaced = true;
         }
 
         if (msg != null)
             SendInput(msg);
+    }
+
+    /// <summary>
+    /// Resolves a quick-slot press: if the item is buildable, enters placement direction mode;
+    /// otherwise returns a UseQuickSlot message.
+    /// </summary>
+    private ClientInputMsg? TryQuickSlotAction(int slotNum)
+    {
+        var ps = _ctx.GameState.PlayerState;
+        if (ps != null && slotNum < ps.QuickSlotIndices.Length)
+        {
+            int invIndex = ps.QuickSlotIndices[slotNum];
+            if (invIndex >= 0 && invIndex < ps.InventoryItems.Length &&
+                ps.InventoryItems[invIndex].Category == ItemDefinitions.CategoryBuildable)
+            {
+                _placingFromSlot = invIndex;
+                return null;
+            }
+        }
+        return new ClientInputMsg { ActionType = ActionTypes.UseQuickSlot, ItemSlot = slotNum };
     }
 
     private void SendInput(ClientInputMsg msg)
@@ -172,7 +258,7 @@ public sealed class PlayingScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows);
+        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, isPickingUpPlaced: _pickingUpPlaced || _placingFromSlot >= 0);
 
         // Render particles
         int halfW = zoomedGameCols / 2;

@@ -309,4 +309,23 @@ public class QuickSlotsTests
         Assert.Equal(-1, stateData.QuickSlotIndices[2]);
         Assert.Equal(-1, stateData.QuickSlotIndices[3]);
     }
+
+    [Fact]
+    public void PickUp_BuildableItem_AutoAssignsToQuickSlot()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        // Spawn a buildable item (Wooden Door) at player's position
+        var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.WoodenDoor);
+        engine.SpawnItemOnGround(template, 0, sx, sy);
+
+        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
+        input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        ref var qs = ref engine.EcsWorld.Get<QuickSlots>(player);
+        Assert.Equal(0, qs[0]); // Buildable should auto-assign to quick slot 0
+    }
 }

@@ -459,7 +459,8 @@ public class InventorySystem
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
         if (def.Category != ItemDefinitions.CategoryWeapon &&
             def.Category != ItemDefinitions.CategoryArmor &&
-            def.Category != ItemDefinitions.CategoryPotion)
+            def.Category != ItemDefinitions.CategoryPotion &&
+            def.Category != ItemDefinitions.CategoryBuildable)
             return;
         ref var qs = ref world.Get<QuickSlots>(player);
         int emptySlot = qs.FirstEmptySlot();

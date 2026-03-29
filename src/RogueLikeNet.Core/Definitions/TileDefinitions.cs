@@ -10,7 +10,10 @@ public static class TileDefinitions
     public const int GlyphVoid = 0;       // null character
     public const int GlyphFloor = 250;    // middle dot ·
     public const int GlyphWall = 219;     // full block █
-    public const int GlyphDoor = 43;      // +
+    public const int GlyphDoor = 43;      // + (open door, fallback)
+    public const int GlyphDoorClosed = 197; // ┼ (closed door, fallback)
+    public const int GlyphDoorVertical = 124;   // | (door between N/S walls)
+    public const int GlyphDoorHorizontal = 45;  // - (door between E/W walls)
     public const int GlyphStairsDown = 62; // >
     public const int GlyphStairsUp = 60;   // <
     public const int GlyphWater = 247;    // ≈
@@ -48,6 +51,10 @@ public static class TileDefinitions
     public const int GlyphTree = 5;        // ♣
     public const int GlyphRock = 8;        // ◘
     public const int GlyphWindow = 176;    // ░
+
+    // Dropped resource item glyphs (distinct from nodes)
+    public const int GlyphLog = 61;        // = (log)
+    public const int GlyphOreNugget = 7;   // • (nugget)
 
     // Colors (packed 0xRRGGBB)
     public const int ColorWhite = 0xFFFFFF;

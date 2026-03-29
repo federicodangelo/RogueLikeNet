@@ -222,17 +222,13 @@ public sealed class CraftingScreen : IScreen
             row++;
         }
 
-        // Show all owned resource counts
+        // Show how many of the crafted item the player already owns
         if (row < maxRow) { AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++; }
-        if (row < maxRow) { AsciiDraw.DrawString(r, col, row, "Owned resources:", RenderingTheme.Dim); row++; }
-        ReadOnlySpan<int> resourceIds = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
-        foreach (int resId in resourceIds)
+        if (row < maxRow)
         {
-            if (row >= maxRow) break;
-            var resDef = ItemDefinitions.Get(resId);
-            int owned = CountItem(hud, resId);
-            string resText = $"  {resDef.Name}: {owned}";
-            AsciiDraw.DrawString(r, col, row, resText, owned > 0 ? RenderingTheme.Stats : RenderingTheme.Dim);
+            int owned = CountItem(hud, recipe.ResultItemTypeId);
+            string ownedText = $"  Owned: {owned}";
+            AsciiDraw.DrawString(r, col, row, ownedText, owned > 0 ? RenderingTheme.Stats : RenderingTheme.Dim);
             row++;
         }
 

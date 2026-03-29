@@ -469,4 +469,41 @@ public class GameEngineTests
         Assert.Single(state!.InventoryItems);
         Assert.Equal(25, state.InventoryItems[0].BonusHealth);
     }
+
+    [Fact]
+    public void GiveDebugResources_Adds9999OfEachResource()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+
+        engine.GiveDebugResources(player);
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        Assert.NotNull(inv.Items);
+
+        int[] expectedResources = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
+        foreach (int resId in expectedResources)
+        {
+            var item = inv.Items!.Find(i => i.ItemTypeId == resId);
+            Assert.Equal(9999, item.StackCount);
+        }
+    }
+
+    [Fact]
+    public void ResourceItems_UseDifferentGlyphs()
+    {
+        var wood = ItemDefinitions.Get(ItemDefinitions.Wood);
+        Assert.Equal(TileDefinitions.GlyphLog, wood.GlyphId);
+
+        var copper = ItemDefinitions.Get(ItemDefinitions.CopperOre);
+        Assert.Equal(TileDefinitions.GlyphOreNugget, copper.GlyphId);
+
+        var iron = ItemDefinitions.Get(ItemDefinitions.IronOre);
+        Assert.Equal(TileDefinitions.GlyphOreNugget, iron.GlyphId);
+
+        var gold = ItemDefinitions.Get(ItemDefinitions.GoldOre);
+        Assert.Equal(TileDefinitions.GlyphOreNugget, gold.GlyphId);
+    }
 }

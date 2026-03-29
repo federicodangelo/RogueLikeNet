@@ -111,7 +111,17 @@ public sealed class GameWorldRenderer
 
                     var bgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.BgColor), brightness);
                     var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.FgColor), brightness);
-                    var ch = AsciiDraw.GlyphIdToChar(tile.GlyphId);
+                    var glyphId = tile.GlyphId;
+
+                    // Client-side door glyph override: pick | or - based on surrounding walls
+                    if (tile.Type is TileType.Door or TileType.DoorClosed)
+                    {
+                        var worldX2 = cameraCenterX - visibleCols / 2 + col;
+                        var worldY2 = cameraCenterY - visibleRows / 2 + row;
+                        glyphId = GetDoorGlyph(state, worldX2, worldY2);
+                    }
+
+                    var ch = AsciiDraw.GlyphIdToChar(glyphId);
                     return new GlyphTile(ch, fgColor, bgColor);
                 });
         }
@@ -148,36 +158,52 @@ public sealed class GameWorldRenderer
             }
         }
 
-        // Pass 3: entities
+        // Pass 3: entities (players drawn last so they appear on top)
         using (new TimeMeasurer("Pass 3: Entities"))
         {
+            ClientEntity? playerEntity = null;
+
             foreach (var entity in state.Entities.Values)
             {
-                var sx = entity.X - (cameraCenterX - visibleCols / 2);
-                var sy = entity.Y - (cameraCenterY - visibleRows / 2);
-
-                if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) continue;
-
-                var precalc = precalculated[sy * visibleCols + sx];
-                var px = sx * tileW + shakeX;
-                var py = sy * tileH + shakeY;
-
-                var brightness = precalc.brightness;
-
-                if (brightness <= 0f)
-                    continue;
-
-                var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(entity.FgColor), brightness);
-                var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
-                r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
-
-                if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
+                if (entity.GlyphId == TileDefinitions.GlyphPlayer)
                 {
-                    var ratio = (float)entity.Health / entity.MaxHealth;
-                    r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
-                    r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
+                    playerEntity = entity;
+                    continue;
                 }
+                DrawEntity(r, entity, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculated);
             }
+
+            // Draw player on top of everything
+            if (playerEntity != null)
+                DrawEntity(r, playerEntity, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculated);
+        }
+    }
+
+    private static void DrawEntity(ISpriteRenderer r, ClientEntity entity,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale,
+        PrecalculatedTile[] precalculated)
+    {
+        var sx = entity.X - (cameraCenterX - visibleCols / 2);
+        var sy = entity.Y - (cameraCenterY - visibleRows / 2);
+
+        if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) return;
+
+        var precalc = precalculated[sy * visibleCols + sx];
+        var brightness = precalc.brightness;
+        if (brightness <= 0f) return;
+
+        var px = sx * tileW + shakeX;
+        var py = sy * tileH + shakeY;
+        var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(entity.FgColor), brightness);
+        var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
+        r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
+
+        if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
+        {
+            var ratio = (float)entity.Health / entity.MaxHealth;
+            r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
+            r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
         }
     }
 
@@ -220,7 +246,8 @@ public sealed class GameWorldRenderer
                     dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
                 else if (tile.GlyphId == TileDefinitions.GlyphTorch)
                     dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
-                else if (tile.GlyphId == TileDefinitions.GlyphDoor)
+                else if (tile.GlyphId is TileDefinitions.GlyphDoor or TileDefinitions.GlyphDoorClosed
+                         or TileDefinitions.GlyphDoorVertical or TileDefinitions.GlyphDoorHorizontal)
                     dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
                 else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
                     dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
@@ -249,4 +276,23 @@ public sealed class GameWorldRenderer
         r.DrawRectScreen(baseX + half * pixelSize, baseY + half * pixelSize,
             pixelSize, pixelSize, new Color4(255, 255, 255, 255));
     }
+
+    /// <summary>
+    /// Determines the door glyph based on surrounding wall tiles (client-side only).
+    /// Walls N/S → vertical |, walls E/W → horizontal -.
+    /// </summary>
+    private static int GetDoorGlyph(ClientGameState state, int x, int y)
+    {
+        bool wallN = IsWallLike(state.GetTile(x, y - 1));
+        bool wallS = IsWallLike(state.GetTile(x, y + 1));
+        bool wallE = IsWallLike(state.GetTile(x + 1, y));
+        bool wallW = IsWallLike(state.GetTile(x - 1, y));
+
+        if (wallN && wallS) return TileDefinitions.GlyphDoorVertical;
+        if (wallE && wallW) return TileDefinitions.GlyphDoorHorizontal;
+        return TileDefinitions.GlyphDoorVertical; // default
+    }
+
+    private static bool IsWallLike(TileInfo tile) =>
+        tile.Type is TileType.Wall or TileType.Window;
 }

@@ -138,6 +138,27 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
+    /// Gives the player 9999 of each resource type. Used for debug mode.
+    /// </summary>
+    public void GiveDebugResources(Entity playerEntity)
+    {
+        if (!_ecsWorld.IsAlive(playerEntity)) return;
+        ref var inv = ref _ecsWorld.Get<Inventory>(playerEntity);
+        if (inv.Items == null) return;
+
+        ReadOnlySpan<int> resourceIds = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
+        foreach (int resId in resourceIds)
+        {
+            inv.Items.Add(new ItemData
+            {
+                ItemTypeId = resId,
+                Rarity = ItemDefinitions.RarityCommon,
+                StackCount = 9999,
+            });
+        }
+    }
+
+    /// <summary>
     /// Spawns a monster at the given position using fully-populated MonsterData.
     /// </summary>
     public Entity SpawnMonster(int x, int y, MonsterData data)
