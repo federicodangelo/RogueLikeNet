@@ -20,6 +20,17 @@ public static class CraftingDefinitions
         new(6,  "Iron Wall",     ItemDefinitions.IronWall,     1, [new(ItemDefinitions.IronOre, 4)]),
         new(7,  "Gold Door",     ItemDefinitions.GoldDoor,     1, [new(ItemDefinitions.GoldOre, 5), new(ItemDefinitions.Wood, 2)]),
         new(8,  "Gold Wall",     ItemDefinitions.GoldWall,     1, [new(ItemDefinitions.GoldOre, 4)]),
+        // Furniture
+        new(9,  "Wooden Table",     ItemDefinitions.WoodenTable,     1, [new(ItemDefinitions.Wood, 4)]),
+        new(10, "Wooden Chair",     ItemDefinitions.WoodenChair,     1, [new(ItemDefinitions.Wood, 2)]),
+        new(11, "Wooden Bed",       ItemDefinitions.WoodenBed,       1, [new(ItemDefinitions.Wood, 6)]),
+        new(12, "Wooden Bookshelf", ItemDefinitions.WoodenBookshelf, 1, [new(ItemDefinitions.Wood, 5)]),
+        // Floor tiles
+        new(13, "Wooden Floor",  ItemDefinitions.WoodenFloorTile, 4, [new(ItemDefinitions.Wood, 2)]),
+        new(14, "Stone Floor",   ItemDefinitions.StoneFloorTile,  4, [new(ItemDefinitions.CopperOre, 1)]),
+        new(15, "Copper Floor",  ItemDefinitions.CopperFloorTile, 4, [new(ItemDefinitions.CopperOre, 2)]),
+        new(16, "Iron Floor",    ItemDefinitions.IronFloorTile,   4, [new(ItemDefinitions.IronOre, 2)]),
+        new(17, "Gold Floor",    ItemDefinitions.GoldFloorTile,   4, [new(ItemDefinitions.GoldOre, 2)]),
     ];
 
     public static CraftingRecipe Get(int recipeId) =>

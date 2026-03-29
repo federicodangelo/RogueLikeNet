@@ -189,6 +189,18 @@ public class OverworldGenerator : IDungeonGenerator
             }
         }
 
+        // Town generation: ~10% of non-origin chunks get a town
+        if (TownGenerator.ShouldHaveTown(chunkX, chunkY, _seed))
+        {
+            // Determine biome at chunk center for construction material
+            double centerWx = worldOffsetX + Chunk.Size / 2;
+            double centerWy = worldOffsetY + Chunk.Size / 2;
+            double centerTemp = tempNoise.FBM(centerWx * BiomeScale, centerWy * BiomeScale, 3);
+            double centerMoist = moistNoise.FBM(centerWx * BiomeScale, centerWy * BiomeScale, 3);
+            var townBiome = BiomeDefinitions.GetBiomeFromClimate(centerTemp, centerMoist);
+            TownGenerator.Generate(chunk, result, rng, townBiome, worldOffsetX, worldOffsetY);
+        }
+
         if (chunkX == 0 && chunkY == 0)
         {
             // Find spawn point for starting chunk: look for a floor tile near the center, and clear nearby area for safety

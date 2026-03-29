@@ -47,6 +47,13 @@ public static class TileDefinitions
     public const int GlyphBarrel = 232;   // Φ
     public const int GlyphStatue = 234;   // Ω
 
+    // Furniture / indoor decoration glyphs
+    public const int GlyphTable = 209;     // ┬ (table)
+    public const int GlyphChair = 210;     // ┤ (chair)
+    public const int GlyphBed = 235;       // δ (bed)
+    public const int GlyphBookshelf = 222; // ▐ (bookshelf)
+    public const int GlyphFloorTile = 249; // ∙ (tiled floor, distinct from ·)
+
     // Resource node glyphs
     public const int GlyphTree = 5;        // ♣
     public const int GlyphRock = 8;        // ◘
@@ -94,6 +101,13 @@ public static class TileDefinitions
     public const int ColorBarrelFg = 0x996633;
     public const int ColorStatueFg = 0x999999;
 
+    // Furniture colors
+    public const int ColorTableFg = 0x8B6914;
+    public const int ColorChairFg = 0x7A5C10;
+    public const int ColorBedFg = 0xCC4444;
+    public const int ColorBookshelfFg = 0x6B4E12;
+    public const int ColorStoneTileFg = 0x888888;
+
     // Resource and building colors
     public const int ColorWoodFg = 0x8B6914;
     public const int ColorCopperFg = 0xB87333;
@@ -101,6 +115,10 @@ public static class TileDefinitions
     public const int ColorGoldFg = 0xFFD700;
     public const int ColorTreeFg = 0x228B22;
     public const int ColorWindowFg = 0x88AACC;
+
+    // NPC glyphs
+    public const int GlyphTownNpc = 2;     // ☻ (smiling face)
+    public const int ColorTownNpcFg = 0x44AAFF;
 
     public const int ColorLavaBg = 0x331100;
     public const int ColorWaterBg = 0x001133;

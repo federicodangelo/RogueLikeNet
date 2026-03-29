@@ -68,7 +68,7 @@ public class ItemDefinitionsTests
     [Fact]
     public void All_ContainsAllDefinedItems()
     {
-        Assert.Equal(24, ItemDefinitions.All.Length);
+        Assert.Equal(33, ItemDefinitions.All.Length);
     }
 
     [Theory]

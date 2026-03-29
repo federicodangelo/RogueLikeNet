@@ -57,9 +57,20 @@ public class BuildingSystem
             }
             if (!adjacent) continue;
 
-            // Target tile must be a floor tile
+            // Target tile must be a floor tile (or decoration/floor for floor tile replacements)
             var tile = map.GetTile(targetX, targetY);
-            if (tile.Type != TileType.Floor) continue;
+            var (tileType, glyphId, fgColor) = GetBuildableTile(itemData.ItemTypeId);
+            bool isFloorOrDecor = tileType is TileType.Floor or TileType.Decoration;
+            if (isFloorOrDecor)
+            {
+                // Floor tiles and furniture can be placed on floor or decoration tiles
+                if (tile.Type is not (TileType.Floor or TileType.Decoration)) continue;
+            }
+            else
+            {
+                // Walls, doors, windows require a plain floor tile
+                if (tile.Type != TileType.Floor) continue;
+            }
 
             // Check no entity occupies the target position
             bool occupied = false;
@@ -70,9 +81,6 @@ public class BuildingSystem
                     occupied = true;
             });
             if (occupied) continue;
-
-            // Determine what tile to place
-            var (tileType, glyphId, fgColor) = GetBuildableTile(itemData.ItemTypeId);
 
             // Modify the world tile
             map.SetTile(targetX, targetY, new TileInfo
@@ -113,6 +121,17 @@ public class BuildingSystem
         ItemDefinitions.IronWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg),
         ItemDefinitions.GoldDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorGoldFg),
         ItemDefinitions.GoldWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg),
+        // Furniture — decoration tiles (walkable, not transparent for bookshelves? No, keep all decoration walkable)
+        ItemDefinitions.WoodenTable => (TileType.Decoration, TileDefinitions.GlyphTable, TileDefinitions.ColorTableFg),
+        ItemDefinitions.WoodenChair => (TileType.Decoration, TileDefinitions.GlyphChair, TileDefinitions.ColorChairFg),
+        ItemDefinitions.WoodenBed => (TileType.Decoration, TileDefinitions.GlyphBed, TileDefinitions.ColorBedFg),
+        ItemDefinitions.WoodenBookshelf => (TileType.Decoration, TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg),
+        // Floor tiles — floor type with distinct glyph/color
+        ItemDefinitions.WoodenFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg),
+        ItemDefinitions.StoneFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg),
+        ItemDefinitions.CopperFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg),
+        ItemDefinitions.IronFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg),
+        ItemDefinitions.GoldFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg),
         _ => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWallFg),
     };
 

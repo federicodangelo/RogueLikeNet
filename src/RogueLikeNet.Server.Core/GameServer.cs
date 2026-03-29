@@ -362,6 +362,7 @@ public class GameServer : IDisposable
             EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
             EntityRemovals = serializedEntityData.Removals,
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
+            NpcDialogueEvents = GameStateSerializer.SerializeNpcDialogueEvents(_engine),
             PlayerState = playerState,
         };
     }

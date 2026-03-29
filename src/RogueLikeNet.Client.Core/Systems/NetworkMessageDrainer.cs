@@ -19,7 +19,7 @@ public sealed class NetworkMessageDrainer
         _pendingDeltas.Enqueue(delta);
     }
 
-    public void Drain(ClientGameState gameState, ParticleSystem particles)
+    public void Drain(ClientGameState gameState, ParticleSystem particles, ChatSystem? chat = null)
     {
         while (_pendingDeltas.TryDequeue(out var delta))
         {
@@ -33,6 +33,16 @@ public sealed class NetworkMessageDrainer
             particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
         }
         gameState.DrainCombatEvents();
+
+        if (chat != null)
+        {
+            foreach (var dlg in gameState.PendingNpcDialogues)
+            {
+                chat.ChatLog.Add($"[{dlg.NpcName}]: {dlg.Text}");
+                if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
+            }
+        }
+        gameState.DrainNpcDialogues();
     }
 
     public void Reset()

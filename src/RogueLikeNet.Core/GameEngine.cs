@@ -55,7 +55,7 @@ public class GameEngine : IDisposable
         _fovSystem = new FOVSystem();
         _lightingSystem = new LightingSystem();
         _combatSystem = new CombatSystem();
-        _aiSystem = new AISystem();
+        _aiSystem = new AISystem(worldSeed);
         _inventorySystem = new InventorySystem();
         _skillSystem = new SkillSystem();
         _craftingSystem = new CraftingSystem();
@@ -102,6 +102,11 @@ public class GameEngine : IDisposable
         foreach (var (pos, nodeDef) in result.ResourceNodes)
         {
             SpawnResourceNode(pos.X, pos.Y, nodeDef);
+        }
+
+        foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
+        {
+            SpawnTownNpc(pos.X, pos.Y, name, tcx, tcy, radius);
         }
     }
 
@@ -239,6 +244,31 @@ public class GameEngine : IDisposable
                 MaxDrop = def.MaxDrop,
             },
             new AttackDelay(0)
+        );
+    }
+
+    /// <summary>
+    /// Spawns a peaceful town NPC that wanders within a radius.
+    /// </summary>
+    public Entity SpawnTownNpc(int x, int y, string name, int townCenterX, int townCenterY, int wanderRadius)
+    {
+        return _ecsWorld.Create(
+            new Position(x, y),
+            new Health(9999), // Effectively unkillable
+            new CombatStats(0, 999, 3),
+            new TileAppearance(TileDefinitions.GlyphTownNpc, TileDefinitions.ColorTownNpcFg),
+            new AIState { StateId = AIStates.Idle },
+            new MoveDelay(5),
+            new AttackDelay(0),
+            new TownNpcTag
+            {
+                Name = name,
+                TownCenterX = townCenterX,
+                TownCenterY = townCenterY,
+                WanderRadius = wanderRadius,
+                TalkTimer = 0,
+                DialogueIndex = 0,
+            }
         );
     }
 

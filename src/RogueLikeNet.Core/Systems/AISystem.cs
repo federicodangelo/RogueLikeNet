@@ -1,6 +1,7 @@
 using Arch.Core;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
@@ -9,11 +10,19 @@ namespace RogueLikeNet.Core.Systems;
 /// <summary>
 /// Simple monster AI: idle → chase player when in range → attack when adjacent.
 /// Uses A* pathfinding for chasing. Respects <see cref="MoveDelay"/> for walk speed.
+/// Also handles town NPC wandering behavior.
 /// </summary>
 public class AISystem
 {
     private const int DetectionRange = 8;
     private const int ChaseRange = 12;
+
+    private readonly SeededRandom _rng;
+
+    public AISystem(long seed)
+    {
+        _rng = new SeededRandom(seed ^ 0xA15EED);
+    }
 
     public void Update(Arch.Core.World world, WorldMap map)
     {
@@ -52,8 +61,8 @@ public class AISystem
                 attackDelay.Current--;
         });
 
-        // Process AI entities
-        var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag>();
+        // Process monster AI (exclude town NPCs — they have their own wandering logic)
+        var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag, TownNpcTag>();
         world.Query(in aiQuery, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
         {
             if (!health.IsAlive) return;
@@ -133,6 +142,41 @@ public class AISystem
                     // Actual damage dealt by CombatSystem
                     break;
             }
+        });
+
+        // Process town NPC wandering
+        var npcQuery = new QueryDescription().WithAll<Position, TownNpcTag, MoveDelay, Health>().WithNone<DeadTag>();
+        world.Query(in npcQuery, (Entity entity, ref Position pos, ref TownNpcTag npc, ref MoveDelay delay, ref Health health) =>
+        {
+            if (!health.IsAlive) return;
+
+            // Tick down talk timer
+            if (npc.TalkTimer > 0)
+                npc.TalkTimer--;
+
+            // Wait for move delay
+            if (delay.Current > 0) return;
+
+            // Random walk: pick a cardinal direction
+            int dir = _rng.Next(4);
+            int nx = pos.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
+            int ny = pos.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
+
+            // Stay within wander radius of town center
+            if (Math.Abs(nx - npc.TownCenterX) > npc.WanderRadius ||
+                Math.Abs(ny - npc.TownCenterY) > npc.WanderRadius)
+                return;
+
+            // Check walkability and no collision
+            if (!map.IsWalkable(nx, ny)) return;
+            long nextKey = Position.PackCoord(nx, ny);
+            if (actorPositions.Contains(nextKey)) return;
+
+            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y));
+            pos.X = nx;
+            pos.Y = ny;
+            actorPositions.Add(nextKey);
+            delay.Current = delay.Interval;
         });
     }
 }

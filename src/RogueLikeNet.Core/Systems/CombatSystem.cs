@@ -1,25 +1,30 @@
 using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Handles melee and ranged combat. All damage is integer.
 /// Melee attacks auto-target the closest adjacent enemy (cardinal + same tile).
+/// Bumping a town NPC triggers dialogue instead of damage.
 /// </summary>
 public class CombatSystem
 {
     private readonly List<CombatEvent> _events = new();
+    private readonly List<NpcDialogueEvent> _dialogueEvents = new();
 
     // Cardinal directions + same tile for melee auto-targeting
     private static readonly (int DX, int DY)[] MeleeOffsets =
         [(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)];
 
     public IReadOnlyList<CombatEvent> LastTickEvents => _events;
+    public IReadOnlyList<NpcDialogueEvent> LastTickDialogueEvents => _dialogueEvents;
 
     public void Update(Arch.Core.World world, bool debugInvulnerable = false)
     {
         _events.Clear();
+        _dialogueEvents.Clear();
 
         var attackQuery = new QueryDescription().WithAll<Position, PlayerInput, CombatStats, AttackDelay>();
         world.Query(in attackQuery, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats, ref AttackDelay delay) =>
@@ -55,26 +60,45 @@ public class CombatSystem
             // Find entity at target position (exclude self)
             var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>();
             Entity attackerEntity = attacker;
+            int atkX = attackerX, atkY = attackerY;
             world.Query(in targetQuery, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
             {
                 if (target == attackerEntity) return;
-                if (tPos.X == targetX && tPos.Y == targetY && tHealth.IsAlive)
-                {
-                    int damage = Math.Max(1, attackerAttack - tStats.Defense);
-                    tHealth.Current = Math.Max(0, tHealth.Current - damage);
+                if (tPos.X != targetX || tPos.Y != targetY || !tHealth.IsAlive) return;
 
-                    // Record position before potential death
-                    int tx2 = tPos.X, ty2 = tPos.Y;
-                    _events.Add(new CombatEvent
+                // Town NPC: trigger dialogue instead of damage
+                if (world.Has<TownNpcTag>(target))
+                {
+                    ref var npc = ref world.Get<TownNpcTag>(target);
+                    if (npc.TalkTimer <= 0) // Don't re-trigger while already talking
                     {
-                        AttackerX = attackerX,
-                        AttackerY = attackerY,
-                        TargetX = tx2,
-                        TargetY = ty2,
-                        Damage = damage,
-                        TargetDied = !tHealth.IsAlive
-                    });
+                        npc.TalkTimer = 60; // ~3 seconds at 20 ticks/sec
+                        string dialogue = TownNpcDefinitions.Dialogues[npc.DialogueIndex];
+                        npc.DialogueIndex = (npc.DialogueIndex + 1) % TownNpcDefinitions.Dialogues.Length;
+                        _dialogueEvents.Add(new NpcDialogueEvent
+                        {
+                            NpcX = tPos.X,
+                            NpcY = tPos.Y,
+                            NpcName = npc.Name,
+                            Text = dialogue,
+                        });
+                    }
+                    return;
                 }
+
+                int damage = Math.Max(1, attackerAttack - tStats.Defense);
+                tHealth.Current = Math.Max(0, tHealth.Current - damage);
+
+                int tx2 = tPos.X, ty2 = tPos.Y;
+                _events.Add(new CombatEvent
+                {
+                    AttackerX = atkX,
+                    AttackerY = atkY,
+                    TargetX = tx2,
+                    TargetY = ty2,
+                    Damage = damage,
+                    TargetDied = !tHealth.IsAlive
+                });
             });
 
             input.ActionType = ActionTypes.None;
@@ -115,8 +139,8 @@ public class CombatSystem
         // Skip monster attacks entirely when player is invulnerable
         if (debugInvulnerable) return;
 
-        // Process monster attacks
-        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health, AttackDelay>().WithNone<DeadTag>();
+        // Process monster attacks (exclude peaceful town NPCs)
+        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health, AttackDelay>().WithNone<DeadTag, TownNpcTag>();
         world.Query(in monsterQuery, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth, ref AttackDelay attackDelay) =>
         {
             if (!mHealth.IsAlive || ai.StateId != AIStates.Attack) return;
@@ -161,7 +185,7 @@ public class CombatSystem
         (int X, int Y)? best = null;
         int bestDist = int.MaxValue;
 
-        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>();
+        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>().WithNone<TownNpcTag>();
         world.Query(in targetQuery, (Entity candidate, ref Position cPos, ref Health cHealth) =>
         {
             if (candidate == attacker || !cHealth.IsAlive) return;
@@ -199,4 +223,11 @@ public struct CombatEvent
     public int TargetX, TargetY;
     public int Damage;
     public bool TargetDied;
+}
+
+public struct NpcDialogueEvent
+{
+    public int NpcX, NpcY;
+    public string NpcName;
+    public string Text;
 }

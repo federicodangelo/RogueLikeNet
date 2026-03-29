@@ -53,6 +53,17 @@ public static class ItemDefinitions
     public const int GoldDoor = 57;
     public const int GoldWall = 58;
 
+    // Furniture / decoration buildable items
+    public const int WoodenTable = 59;
+    public const int WoodenChair = 60;
+    public const int WoodenBed = 61;
+    public const int WoodenBookshelf = 62;
+    public const int WoodenFloorTile = 63;
+    public const int StoneFloorTile = 64;
+    public const int CopperFloorTile = 65;
+    public const int IronFloorTile = 66;
+    public const int GoldFloorTile = 67;
+
     public static readonly ItemDefinition[] All =
     [
         // Weapons (not stackable)
@@ -85,6 +96,17 @@ public static class ItemDefinitions
         new(IronWall,     CategoryBuildable, "Iron Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
         new(GoldDoor,     CategoryBuildable, "Gold Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
         new(GoldWall,     CategoryBuildable, "Gold Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        // Furniture (buildable)
+        new(WoodenTable,     CategoryBuildable, "Wooden Table",     TileDefinitions.GlyphTable,     TileDefinitions.ColorTableFg,     0, 0, 0, true, 99),
+        new(WoodenChair,     CategoryBuildable, "Wooden Chair",     TileDefinitions.GlyphChair,     TileDefinitions.ColorChairFg,     0, 0, 0, true, 99),
+        new(WoodenBed,       CategoryBuildable, "Wooden Bed",       TileDefinitions.GlyphBed,       TileDefinitions.ColorBedFg,       0, 0, 0, true, 99),
+        new(WoodenBookshelf, CategoryBuildable, "Wooden Bookshelf", TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg, 0, 0, 0, true, 99),
+        // Floor tiles (buildable)
+        new(WoodenFloorTile, CategoryBuildable, "Wooden Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg,      0, 0, 0, true, 99),
+        new(StoneFloorTile,  CategoryBuildable, "Stone Floor",   TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg, 0, 0, 0, true, 99),
+        new(CopperFloorTile, CategoryBuildable, "Copper Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg,    0, 0, 0, true, 99),
+        new(IronFloorTile,   CategoryBuildable, "Iron Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg,      0, 0, 0, true, 99),
+        new(GoldFloorTile,   CategoryBuildable, "Gold Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      0, 0, 0, true, 99),
     ];
 
     /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>

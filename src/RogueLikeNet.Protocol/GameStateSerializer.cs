@@ -194,6 +194,19 @@ public static class GameStateSerializer
         }).ToArray();
     }
 
+    public static NpcDialogueMsg[] SerializeNpcDialogueEvents(GameEngine engine)
+    {
+        var events = engine.Combat.LastTickDialogueEvents;
+        if (events.Count == 0) return [];
+        return events.Select(e => new NpcDialogueMsg
+        {
+            NpcX = e.NpcX,
+            NpcY = e.NpcY,
+            NpcName = e.NpcName,
+            Text = e.Text,
+        }).ToArray();
+    }
+
     public static PlayerStateMsg? BuildPlayerState(GameEngine engine, Entity playerEntity)
     {
         var stateData = engine.GetPlayerStateData(playerEntity);

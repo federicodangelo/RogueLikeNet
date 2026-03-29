@@ -164,7 +164,7 @@ public sealed class RogueLikeGame : GameBase
         }
 
         // Drain buffered network messages
-        _networkDrainer.Drain(_gameState, _particles);
+        _networkDrainer.Drain(_gameState, _particles, _chat);
         _chat.DrainPendingMessages();
 
         // Frame timing

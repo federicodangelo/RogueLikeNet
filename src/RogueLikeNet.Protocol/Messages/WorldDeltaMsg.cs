@@ -18,4 +18,5 @@ public class WorldDeltaMsg
     [Key(9)] public EntityRemovedMsg[] EntityRemovals { get; set; } = [];
     /// <summary>Packed chunk keys the client should discard (evicted from server LRU).</summary>
     [Key(10)] public long[] DiscardedChunkKeys { get; set; } = [];
+    [Key(11)] public NpcDialogueMsg[] NpcDialogueEvents { get; set; } = [];
 }

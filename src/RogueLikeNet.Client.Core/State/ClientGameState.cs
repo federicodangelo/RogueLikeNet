@@ -17,6 +17,7 @@ public class ClientGameState
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
+    private readonly List<NpcDialogueMsg> _pendingNpcDialogues = new();
     private readonly Dictionary<long, BitArray> _exploredTilesByChunk = new();
     private readonly HashSet<long> _visibleTiles = new();
     private (int x, int y, int x1, int y1) _visibleTilesBounds = (0, 0, 0, 0);
@@ -32,12 +33,14 @@ public class ClientGameState
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
     public PlayerStateMsg? PlayerState { get; private set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
+    public IReadOnlyList<NpcDialogueMsg> PendingNpcDialogues => _pendingNpcDialogues;
 
     public void Clear()
     {
         _chunks.Clear();
         _entities.Clear();
         _pendingCombatEvents.Clear();
+        _pendingNpcDialogues.Clear();
         _exploredTilesByChunk.Clear();
         _visibleTiles.Clear();
         PlayerX = 0;
@@ -57,6 +60,7 @@ public class ClientGameState
             _chunks.Clear();
             _entities.Clear();
             _pendingCombatEvents.Clear();
+            _pendingNpcDialogues.Clear();
             _visibleTiles.Clear();
             _exploredTilesByChunk.Clear();
         }
@@ -133,6 +137,10 @@ public class ClientGameState
         if (delta.CombatEvents.Length > 0)
             _pendingCombatEvents.AddRange(delta.CombatEvents);
 
+        // Queue NPC dialogue events for chat display
+        if (delta.NpcDialogueEvents.Length > 0)
+            _pendingNpcDialogues.AddRange(delta.NpcDialogueEvents);
+
         // Update player data (entity id, X, Y) and recompute visibility/lighting since it may have changed
         if (PlayerState != null)
             PlayerEntityId = PlayerState.PlayerEntityId;
@@ -150,6 +158,11 @@ public class ClientGameState
     public void DrainCombatEvents()
     {
         _pendingCombatEvents.Clear();
+    }
+
+    public void DrainNpcDialogues()
+    {
+        _pendingNpcDialogues.Clear();
     }
 
     /// <summary>

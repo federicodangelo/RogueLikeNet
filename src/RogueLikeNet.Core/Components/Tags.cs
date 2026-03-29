@@ -16,3 +16,24 @@ public struct PlayerTag
 /// </summary>
 [Component]
 public struct DeadTag { }
+
+/// <summary>
+/// Tag for peaceful town NPCs that wander within their town area.
+/// Hitting this NPC triggers a conversation instead of an attack.
+/// </summary>
+[Component]
+public struct TownNpcTag
+{
+    /// <summary>Display name of this NPC.</summary>
+    public string Name;
+    /// <summary>Center X of the town this NPC belongs to (world coords).</summary>
+    public int TownCenterX;
+    /// <summary>Center Y of the town this NPC belongs to (world coords).</summary>
+    public int TownCenterY;
+    /// <summary>Maximum wander radius from town center.</summary>
+    public int WanderRadius;
+    /// <summary>Ticks remaining before the conversation message disappears. 0 = not talking.</summary>
+    public int TalkTimer;
+    /// <summary>Index into TownNpcDefinitions.Dialogues for current conversation line.</summary>
+    public int DialogueIndex;
+}
