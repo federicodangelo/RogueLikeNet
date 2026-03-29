@@ -1,6 +1,7 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -15,6 +16,11 @@ public sealed class InventoryScreen : IScreen
     private readonly InventoryRenderer _inventoryRenderer;
     private readonly OverlayRenderer _overlayRenderer;
 
+    /// <summary>When >= 0, the player is choosing a direction to place the buildable item at this slot.</summary>
+    private int _placingSlot = -1;
+
+    public bool IsPlacingMode => _placingSlot >= 0;
+
     public ScreenState ScreenState => ScreenState.Inventory;
 
     public InventoryScreen(ScreenContext ctx, GameWorldRenderer worldRenderer,
@@ -28,6 +34,7 @@ public sealed class InventoryScreen : IScreen
 
     public void OnEnter()
     {
+        _placingSlot = -1;
         _inventoryRenderer.InventoryLayout.SetFocus(1); // InvItems section
         foreach (var s in _inventoryRenderer.InventoryLayout.Sections)
         {
@@ -38,6 +45,27 @@ public sealed class InventoryScreen : IScreen
 
     public void HandleInput(IInputManager input)
     {
+        // Direction selection mode for placing buildable items
+        if (_placingSlot >= 0)
+        {
+            if (input.IsActionPressed(InputAction.MenuBack))
+            {
+                _placingSlot = -1;
+                return;
+            }
+            int dx = 0, dy = 0;
+            if (input.IsActionPressed(InputAction.MoveUp) || input.IsActionPressed(InputAction.MenuUp)) { dy = -1; }
+            else if (input.IsActionPressed(InputAction.MoveDown) || input.IsActionPressed(InputAction.MenuDown)) { dy = 1; }
+            else if (input.IsActionPressed(InputAction.MoveLeft)) { dx = -1; }
+            else if (input.IsActionPressed(InputAction.MoveRight)) { dx = 1; }
+            if (dx != 0 || dy != 0)
+            {
+                SendPlaceAction(_placingSlot, dx, dy);
+                _placingSlot = -1;
+            }
+            return;
+        }
+
         int cap = _ctx.GameState.PlayerState?.InventoryCapacity ?? 4;
         if (cap < 1) cap = 4;
 
@@ -94,7 +122,7 @@ public sealed class InventoryScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows);
+        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, IsPlacingMode);
 
         // Render particles
         int halfW = zoomedGameCols / 2;
@@ -161,6 +189,8 @@ public sealed class InventoryScreen : IScreen
             SendInventoryAction(ActionTypes.Equip, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.Drop) && section.SelectedIndex < cap)
             SendInventoryAction(ActionTypes.Drop, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.Place) && section.SelectedIndex < cap)
+            TryBeginPlace(section.SelectedIndex);
     }
 
     private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
@@ -207,6 +237,28 @@ public sealed class InventoryScreen : IScreen
         {
             SendInventoryAction(ActionTypes.Unequip, section.SelectedIndex);
         }
+    }
+
+    private void TryBeginPlace(int slot)
+    {
+        var hud = _ctx.GameState.PlayerState;
+        if (hud == null || slot < 0 || slot >= hud.InventoryItems.Length) return;
+        if (hud.InventoryItems[slot].Category != ItemDefinitions.CategoryBuildable) return;
+        _placingSlot = slot;
+    }
+
+    private void SendPlaceAction(int slot, int dx, int dy)
+    {
+        if (_ctx.Connection == null) return;
+        var msg = new ClientInputMsg
+        {
+            ActionType = ActionTypes.PlaceItem,
+            ItemSlot = slot,
+            TargetX = dx,
+            TargetY = dy,
+            Tick = _ctx.GameState.WorldTick
+        };
+        _ = _ctx.Connection.SendInputAsync(msg);
     }
 
     private void SendInventoryAction(int actionType, int slot, int targetSlot = 0)

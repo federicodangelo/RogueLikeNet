@@ -27,6 +27,7 @@ public class GameServer : IDisposable
     private Task? _serverTask;
     private long _nextConnectionId = 1;
     private readonly TextWriter _logWriter;
+    private TileUpdateMsg[] _pendingTileUpdates = [];
 
     public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
@@ -214,7 +215,9 @@ public class GameServer : IDisposable
                 await ProcessCommandsAsync();
                 ProcessInputs();
                 _engine.Tick();
+                FlushDirtyTiles();
                 await BroadcastDeltas();
+                _pendingTileUpdates = [];
 
                 if (statsStopwatch.ElapsedMilliseconds >= 5000)
                 {
@@ -296,6 +299,26 @@ public class GameServer : IDisposable
         }
     }
 
+    private void FlushDirtyTiles()
+    {
+        var dirty = _engine.WorldMap.FlushDirtyTiles();
+        if (dirty.Count == 0) return;
+        _pendingTileUpdates = new TileUpdateMsg[dirty.Count];
+        for (int i = 0; i < dirty.Count; i++)
+        {
+            var (wx, wy, tile) = dirty[i];
+            _pendingTileUpdates[i] = new TileUpdateMsg
+            {
+                X = wx,
+                Y = wy,
+                TileType = (byte)tile.Type,
+                GlyphId = tile.GlyphId,
+                FgColor = tile.FgColor,
+                BgColor = tile.BgColor,
+            };
+        }
+    }
+
     private WorldDeltaMsg BuildDelta(PlayerConnection conn, bool isSnapshot = false)
     {
         var playerEntity = conn.PlayerEntity!.Value;
@@ -327,6 +350,7 @@ public class GameServer : IDisposable
             IsSnapshot = isSnapshot,
             Chunks = chunkDelta.NewChunks,
             DiscardedChunkKeys = chunkDelta.DiscardedKeys,
+            TileUpdates = _pendingTileUpdates,
             EntityUpdates = serializedEntityData.FullUpdates,
             EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
             EntityRemovals = serializedEntityData.Removals,

@@ -36,7 +36,7 @@ public sealed class HudRenderer
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
-        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 2 });
+        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 3 });
         return layout;
     }
 
@@ -146,6 +146,7 @@ public sealed class HudRenderer
                 case "Controls":
                     if (row >= maxRow) break;
                     Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
+                    Ds(r, col, row, "[C] Crafting", RenderingTheme.Dim); row++;
                     if (row >= maxRow) break;
                     Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim);
                     break;

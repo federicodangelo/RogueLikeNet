@@ -98,6 +98,8 @@ public class WebInputManager : BaseInputManager
         [InputAction.UnequipSlot1] = [InputBinding.Key("KeyU")],
         [InputAction.UnequipSlot2] = [InputBinding.Key("KeyR")],
         [InputAction.CycleSection] = [InputBinding.Key("Tab")],
+        [InputAction.OpenCrafting] = [InputBinding.Key("KeyC")],
+        [InputAction.Place] = [InputBinding.Key("KeyP")],
     };
 
     private readonly record struct InputBinding(string? KeyCode, int? MouseBtn, int? GamepadBtn)

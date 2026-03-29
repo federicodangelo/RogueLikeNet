@@ -13,6 +13,8 @@ public static class ItemDefinitions
     public const int CategoryArmor = 1;
     public const int CategoryPotion = 2;
     public const int CategoryGold = 3;
+    public const int CategoryResource = 4;
+    public const int CategoryBuildable = 5;
 
     // Item rarities
     public const int RarityCommon = 0;
@@ -34,6 +36,23 @@ public static class ItemDefinitions
     public const int StrengthPotion = 21;
     public const int Gold = 30;
 
+    // Resource items
+    public const int Wood = 40;
+    public const int CopperOre = 41;
+    public const int IronOre = 42;
+    public const int GoldOre = 43;
+
+    // Buildable items
+    public const int WoodenDoor = 50;
+    public const int WoodenWall = 51;
+    public const int WoodenWindow = 52;
+    public const int CopperDoor = 53;
+    public const int CopperWall = 54;
+    public const int IronDoor = 55;
+    public const int IronWall = 56;
+    public const int GoldDoor = 57;
+    public const int GoldWall = 58;
+
     public static readonly ItemDefinition[] All =
     [
         // Weapons (not stackable)
@@ -51,6 +70,21 @@ public static class ItemDefinitions
         new(StrengthPotion, CategoryPotion, "Strength Potion", TileDefinitions.GlyphPotion, TileDefinitions.ColorOrange, 3, 0, 0,  true, 10),
         // Currency (stackable)
         new(Gold, CategoryGold, "Gold", TileDefinitions.GlyphGold, TileDefinitions.ColorYellow, 0, 0, 0, true, 999),
+        // Resources (stackable)
+        new(Wood,      CategoryResource, "Wood",       TileDefinitions.GlyphTree,   TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(CopperOre, CategoryResource, "Copper Ore", TileDefinitions.GlyphRock,   TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(IronOre,   CategoryResource, "Iron Ore",   TileDefinitions.GlyphRock,   TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(GoldOre,   CategoryResource, "Gold Ore",   TileDefinitions.GlyphRock,   TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        // Buildable items (stackable)
+        new(WoodenDoor,   CategoryBuildable, "Wooden Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(WoodenWall,   CategoryBuildable, "Wooden Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(WoodenWindow, CategoryBuildable, "Wooden Window", TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg, 0, 0, 0, true, 99),
+        new(CopperDoor,   CategoryBuildable, "Copper Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(CopperWall,   CategoryBuildable, "Copper Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(IronDoor,     CategoryBuildable, "Iron Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(IronWall,     CategoryBuildable, "Iron Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(GoldDoor,     CategoryBuildable, "Gold Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        new(GoldWall,     CategoryBuildable, "Gold Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
     ];
 
     /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>
@@ -92,8 +126,8 @@ public static class ItemDefinitions
 
     public static int CapRarity(int itemCategory, int rarity)
     {
-        // Gold is always Common rarity
-        if (itemCategory == CategoryGold)
+        // Gold and resources are always Common rarity
+        if (itemCategory is CategoryGold or CategoryResource or CategoryBuildable)
             return RarityCommon;
         return rarity;
     }
@@ -111,7 +145,12 @@ public static class ItemDefinitions
             BonusDefense = def.BaseDefense * rarityMult / 100,
             BonusHealth = def.BaseHealth * rarityMult / 100,
             StackCount = def.Stackable
-                    ? (def.Category == ItemDefinitions.CategoryGold ? 10 + rnd.Next(50) : 1)
+                    ? def.Category switch
+                    {
+                        CategoryGold => 10 + rnd.Next(50),
+                        CategoryResource or CategoryBuildable => 1,
+                        _ => 1,
+                    }
                     : 1,
         };
     }

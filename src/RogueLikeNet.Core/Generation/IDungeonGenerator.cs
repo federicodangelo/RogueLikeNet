@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -19,6 +20,7 @@ public class GenerationResult
     public List<(Position Position, MonsterData Monster)> Monsters { get; } = new();
     public List<(Position Position, ItemData Item)> Items { get; } = new();
     public List<DungeonElement> Elements { get; } = new();
+    public List<(Position Position, ResourceNodeDefinition NodeDef)> ResourceNodes { get; } = new();
 
     /// <summary>
     /// Suggested world-space spawn position for the player.

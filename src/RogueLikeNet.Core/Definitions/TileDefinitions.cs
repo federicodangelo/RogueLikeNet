@@ -44,6 +44,11 @@ public static class TileDefinitions
     public const int GlyphBarrel = 232;   // Φ
     public const int GlyphStatue = 234;   // Ω
 
+    // Resource node glyphs
+    public const int GlyphTree = 5;        // ♣
+    public const int GlyphRock = 8;        // ◘
+    public const int GlyphWindow = 176;    // ░
+
     // Colors (packed 0xRRGGBB)
     public const int ColorWhite = 0xFFFFFF;
     public const int ColorGray = 0x808080;
@@ -81,6 +86,15 @@ public static class TileDefinitions
     public const int ColorCrackFg = 0x664422;
     public const int ColorBarrelFg = 0x996633;
     public const int ColorStatueFg = 0x999999;
+
+    // Resource and building colors
+    public const int ColorWoodFg = 0x8B6914;
+    public const int ColorCopperFg = 0xB87333;
+    public const int ColorIronFg = 0xA8A8A8;
+    public const int ColorGoldFg = 0xFFD700;
+    public const int ColorTreeFg = 0x228B22;
+    public const int ColorWindowFg = 0x88AACC;
+
     public const int ColorLavaBg = 0x331100;
     public const int ColorWaterBg = 0x001133;
     public const int ColorIceBg = 0x0A1122;

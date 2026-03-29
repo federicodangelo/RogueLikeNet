@@ -448,10 +448,19 @@ public class InventorySystem
 
     /// <summary>
     /// Auto-assigns a newly added inventory item to the first empty quick slot.
+    /// Only assigns items that are usable from quick slots (weapons, armor, potions).
     /// </summary>
     private static void AutoAssignQuickSlot(Arch.Core.World world, Entity player, int newIndex)
     {
         if (!world.Has<QuickSlots>(player)) return;
+        ref var inv = ref world.Get<Inventory>(player);
+        if (inv.Items == null || newIndex < 0 || newIndex >= inv.Items.Count) return;
+        var itemData = inv.Items[newIndex];
+        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+        if (def.Category != ItemDefinitions.CategoryWeapon &&
+            def.Category != ItemDefinitions.CategoryArmor &&
+            def.Category != ItemDefinitions.CategoryPotion)
+            return;
         ref var qs = ref world.Get<QuickSlots>(player);
         int emptySlot = qs.FirstEmptySlot();
         if (emptySlot >= 0)

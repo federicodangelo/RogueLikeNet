@@ -19,6 +19,7 @@ public sealed class ScreenManager
     private readonly HelpScreen? _help;
     private readonly MainMenuScreen? _mainMenu;
     private readonly InventoryScreen? _inventory;
+    private readonly CraftingScreen? _crafting;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -28,6 +29,7 @@ public sealed class ScreenManager
         ConnectingScreen connecting,
         PlayingScreen playing,
         InventoryScreen inventory,
+        CraftingScreen crafting,
         PausedScreen paused,
         HelpScreen help)
     {
@@ -37,12 +39,14 @@ public sealed class ScreenManager
         _paused = paused;
         _help = help;
         _inventory = inventory;
+        _crafting = crafting;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
         _screens[ScreenState.Connecting] = connecting;
         _screens[ScreenState.Playing] = playing;
         _screens[ScreenState.Inventory] = inventory;
+        _screens[ScreenState.Crafting] = crafting;
         _screens[ScreenState.Paused] = paused;
         _screens[ScreenState.MainMenuHelp] = help;
         _screens[ScreenState.PausedHelp] = help;
@@ -73,6 +77,9 @@ public sealed class ScreenManager
                 break;
             case ScreenState.Inventory:
                 _inventory?.OnEnter();
+                break;
+            case ScreenState.Crafting:
+                _crafting?.OnEnter();
                 break;
         }
 

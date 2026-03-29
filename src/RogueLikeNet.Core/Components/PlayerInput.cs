@@ -27,4 +27,6 @@ public static class ActionTypes
     public const int Equip = 10;
     public const int SetQuickSlot = 11;
     public const int UseQuickSlot = 12;
+    public const int Craft = 13;
+    public const int PlaceItem = 14;
 }

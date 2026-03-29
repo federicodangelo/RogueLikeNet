@@ -13,6 +13,15 @@ public class Chunk
 
     public int[,] LightLevels { get; }
 
+    /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
+    private readonly List<(int WorldX, int WorldY)> _dirtyTiles = new();
+
+    public IReadOnlyList<(int WorldX, int WorldY)> DirtyTiles => _dirtyTiles;
+
+    public void MarkTileDirty(int worldX, int worldY) => _dirtyTiles.Add((worldX, worldY));
+
+    public void ClearDirtyTiles() => _dirtyTiles.Clear();
+
     public Chunk(int chunkX, int chunkY)
     {
         ChunkX = chunkX;

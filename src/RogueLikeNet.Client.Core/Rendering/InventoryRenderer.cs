@@ -20,12 +20,12 @@ public sealed class InventoryRenderer
         layout.AddSection(new HudSection { Name = "InvItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true });
         layout.AddSection(new HudSection { Name = "InvPreview", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "InvEquipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
-        layout.AddSection(new HudSection { Name = "InvActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 9 });
+        layout.AddSection(new HudSection { Name = "InvActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 10 });
         layout.SetFocus(1);
         return layout;
     }
 
-    public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows)
+    public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows, bool isPlacingMode = false)
     {
         float hx = hudStartCol * AsciiDraw.TileWidth;
         r.DrawRectScreen(hx, 0, AsciiDraw.HudColumns * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.HudBg);
@@ -86,21 +86,37 @@ public sealed class InventoryRenderer
                     break;
 
                 case "InvActions":
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", RenderingTheme.Inv); row++;
-                    row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Enter] Use / Unequip", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[E] Equip  [X] Drop", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[1-4] Assign slot", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Tab] Switch section", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Esc] Close", RenderingTheme.Dim);
+                    if (isPlacingMode)
+                    {
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "PLACE: pick direction", RenderingTheme.Title); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[\u2190\u2191\u2192\u2193] Direction", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[Esc] Cancel", RenderingTheme.Dim);
+                    }
+                    else
+                    {
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, $"Inv:{hud.InventoryCount}/{hud.InventoryCapacity}", RenderingTheme.Inv); row++;
+                        row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[Enter] Use / Unequip", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[E] Equip  [X] Drop", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[P] Place buildable", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[1-4] Assign slot", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[Tab] Switch section", RenderingTheme.Dim); row++;
+                        if (row >= maxRow) break;
+                        AsciiDraw.DrawString(r, col, row, "[Esc] Close", RenderingTheme.Dim);
+                    }
                     break;
             }
         }

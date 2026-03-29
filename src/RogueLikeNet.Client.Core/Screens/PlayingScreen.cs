@@ -52,6 +52,12 @@ public sealed class PlayingScreen : IScreen
             return;
         }
 
+        if (input.IsActionPressed(InputAction.OpenCrafting))
+        {
+            _ctx.RequestTransition(Rendering.ScreenState.Crafting);
+            return;
+        }
+
         if (input.IsActionPressed(InputAction.OpenChat))
         {
             _ctx.Chat.InputActive = true;

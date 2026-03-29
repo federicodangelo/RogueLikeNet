@@ -116,6 +116,7 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY);
 
         // Step 11: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);

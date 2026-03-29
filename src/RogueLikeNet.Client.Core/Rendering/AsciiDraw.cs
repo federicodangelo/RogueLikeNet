@@ -123,6 +123,8 @@ public static class AsciiDraw
         ItemDefinitions.CategoryArmor => "[Arm]",
         ItemDefinitions.CategoryPotion => "[Pot]",
         ItemDefinitions.CategoryGold => "[Gld]",
+        ItemDefinitions.CategoryResource => "[Res]",
+        ItemDefinitions.CategoryBuildable => "[Bld]",
         _ => "     ",
     };
 

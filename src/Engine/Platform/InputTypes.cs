@@ -42,6 +42,8 @@ public enum InputAction
     UnequipSlot1,
     UnequipSlot2,
     CycleSection,
+    OpenCrafting,
+    Place,
 }
 
 public enum InputActionAxis

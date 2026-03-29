@@ -218,6 +218,29 @@ internal static class DungeonHelper
             PopulateRoom(rooms[i], rng, result, difficulty, worldOffsetX, worldOffsetY);
     }
 
+    public static void PlaceResourceNodes(List<Room> rooms, SeededRandom rng, GenerationResult result, BiomeType biome, int worldOffsetX, int worldOffsetY)
+    {
+        for (int i = 1; i < rooms.Count; i++)
+        {
+            int nodeCount = rng.Next(3); // 0-2 nodes per room
+            var room = rooms[i];
+            for (int n = 0; n < nodeCount; n++)
+            {
+                for (int attempt = 0; attempt < 10; attempt++)
+                {
+                    int x = room.X + 1 + rng.Next(Math.Max(1, room.Width - 2));
+                    int y = room.Y + 1 + rng.Next(Math.Max(1, room.Height - 2));
+                    if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
+                    if (result.Chunk.Tiles[x, y].Type != TileType.Floor) continue;
+
+                    var def = ResourceNodeDefinitions.Pick(rng, biome);
+                    result.ResourceNodes.Add((new Position(worldOffsetX + x, worldOffsetY + y), def));
+                    break;
+                }
+            }
+        }
+    }
+
     public static void ApplyBiomeTint(Chunk chunk, BiomeType biome)
     {
         for (int x = 0; x < Chunk.Size; x++)

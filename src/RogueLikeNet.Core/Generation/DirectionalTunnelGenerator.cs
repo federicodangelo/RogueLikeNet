@@ -60,6 +60,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY);
 
         // Step 7: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);

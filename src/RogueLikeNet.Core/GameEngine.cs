@@ -25,6 +25,8 @@ public class GameEngine : IDisposable
     private readonly AISystem _aiSystem;
     private readonly InventorySystem _inventorySystem;
     private readonly SkillSystem _skillSystem;
+    private readonly CraftingSystem _craftingSystem;
+    private readonly BuildingSystem _buildingSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private (int X, int Y)? _generatorSpawnHint;
@@ -56,6 +58,8 @@ public class GameEngine : IDisposable
         _aiSystem = new AISystem();
         _inventorySystem = new InventorySystem();
         _skillSystem = new SkillSystem();
+        _craftingSystem = new CraftingSystem();
+        _buildingSystem = new BuildingSystem();
         _worldRng = new SeededRandom(worldSeed);
     }
 
@@ -93,6 +97,11 @@ public class GameEngine : IDisposable
         foreach (var element in result.Elements)
         {
             SpawnElement(element);
+        }
+
+        foreach (var (pos, nodeDef) in result.ResourceNodes)
+        {
+            SpawnResourceNode(pos.X, pos.Y, nodeDef);
         }
     }
 
@@ -193,6 +202,26 @@ public class GameEngine : IDisposable
     }
 
     /// <summary>
+    /// Spawns a resource node (tree, ore rock) that can be mined.
+    /// </summary>
+    public Entity SpawnResourceNode(int x, int y, ResourceNodeDefinition def)
+    {
+        return _ecsWorld.Create(
+            new Position(x, y),
+            new Health(def.Health),
+            new CombatStats(0, def.Defense, 0),
+            new TileAppearance(def.GlyphId, def.Color),
+            new ResourceNodeData
+            {
+                ResourceItemTypeId = def.ResourceItemTypeId,
+                MinDrop = def.MinDrop,
+                MaxDrop = def.MaxDrop,
+            },
+            new AttackDelay(0)
+        );
+    }
+
+    /// <summary>
     /// Runs one game tick: process inputs → move → combat → AI → inventory → skills → FOV → lighting.
     /// </summary>
     public void Tick()
@@ -201,6 +230,8 @@ public class GameEngine : IDisposable
         _combatSystem.Update(_ecsWorld, DebugInvulnerable);
         _aiSystem.Update(_ecsWorld, _worldMap);
         _inventorySystem.Update(_ecsWorld, _worldMap);
+        _craftingSystem.Update(_ecsWorld);
+        _buildingSystem.Update(_ecsWorld, _worldMap);
         _skillSystem.Update(_ecsWorld);
         _fovSystem.Update(_ecsWorld, _worldMap);
         _lightingSystem.Update(_ecsWorld, _worldMap);
@@ -214,6 +245,7 @@ public class GameEngine : IDisposable
 
     /// <summary>
     /// Drop loot when monsters die (before entity destruction).
+    /// Also drop resources when resource nodes are destroyed.
     /// </summary>
     private void ProcessLootDrops()
     {
@@ -234,6 +266,27 @@ public class GameEngine : IDisposable
                 var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y);
                 SpawnItemOnGround(template, rarity, dropX, dropY);
             }
+        }
+
+        // Resource node drops
+        var deadNodes = new List<(int X, int Y, ResourceNodeData Data)>();
+        var nodeDeathQuery = new QueryDescription().WithAll<DeadTag, ResourceNodeData, Position>();
+        _ecsWorld.Query(in nodeDeathQuery, (ref Position pos, ref ResourceNodeData node) =>
+        {
+            deadNodes.Add((pos.X, pos.Y, node));
+        });
+
+        foreach (var (x, y, node) in deadNodes)
+        {
+            int dropCount = node.MinDrop + _worldRng.Next(Math.Max(1, node.MaxDrop - node.MinDrop + 1));
+            var resourceDef = ItemDefinitions.Get(node.ResourceItemTypeId);
+            var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y);
+            SpawnItemOnGround(new ItemData
+            {
+                ItemTypeId = node.ResourceItemTypeId,
+                Rarity = ItemDefinitions.RarityCommon,
+                StackCount = dropCount,
+            }, dropX, dropY);
         }
     }
 
@@ -311,6 +364,11 @@ public class GameEngine : IDisposable
         var toDestroy = new List<Entity>();
         var deadQuery = new QueryDescription().WithAll<DeadTag, MonsterData>();
         _ecsWorld.Query(in deadQuery, (Entity entity) =>
+        {
+            toDestroy.Add(entity);
+        });
+        var deadNodeQuery = new QueryDescription().WithAll<DeadTag, ResourceNodeData>();
+        _ecsWorld.Query(in deadNodeQuery, (Entity entity) =>
         {
             toDestroy.Add(entity);
         });

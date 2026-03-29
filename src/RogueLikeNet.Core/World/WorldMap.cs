@@ -54,5 +54,34 @@ public class WorldMap
         return GetTile(worldX, worldY).IsTransparent;
     }
 
+    public void SetTile(int worldX, int worldY, TileInfo tile)
+    {
+        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        var chunk = TryGetChunk(cx, cy);
+        if (chunk == null) return;
+        int lx = worldX - cx * Chunk.Size;
+        int ly = worldY - cy * Chunk.Size;
+        chunk.Tiles[lx, ly] = tile;
+        chunk.MarkTileDirty(worldX, worldY);
+    }
+
+    /// <summary>Collects all dirty tile updates from loaded chunks and clears the dirty state.</summary>
+    public List<(int WorldX, int WorldY, TileInfo Tile)> FlushDirtyTiles()
+    {
+        var result = new List<(int, int, TileInfo)>();
+        foreach (var chunk in _chunks.Values)
+        {
+            if (chunk.DirtyTiles.Count == 0) continue;
+            foreach (var (wx, wy) in chunk.DirtyTiles)
+            {
+                int lx = wx - chunk.ChunkX * Chunk.Size;
+                int ly = wy - chunk.ChunkY * Chunk.Size;
+                result.Add((wx, wy, chunk.Tiles[lx, ly]));
+            }
+            chunk.ClearDirtyTiles();
+        }
+        return result;
+    }
+
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
 }

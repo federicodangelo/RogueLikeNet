@@ -8,6 +8,7 @@ public enum ScreenState
     Connecting,
     Playing,
     Inventory,
+    Crafting,
     Paused,
     PausedHelp,
 }

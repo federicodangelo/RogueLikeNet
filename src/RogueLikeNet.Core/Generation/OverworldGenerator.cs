@@ -31,6 +31,7 @@ public class OverworldGenerator : IDungeonGenerator
     // Spawn density: chance per floor tile (out of 1000)
     private const int MonsterChance = 4;
     private const int ItemChance = 1;
+    private const int ResourceNodeChance = 3;
     private const int TorchChance = 0; // Disabled for now, it doesn't make sense for overworld
 
     private readonly long _seed;
@@ -178,6 +179,11 @@ public class OverworldGenerator : IDungeonGenerator
                             new Position(worldOffsetX + lx, worldOffsetY + ly),
                             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                             new LightSource(6, TileDefinitions.ColorTorchFg)));
+                    }
+                    else if (rng.Next(1000) < ResourceNodeChance)
+                    {
+                        var nodeDef = ResourceNodeDefinitions.Pick(rng, biome);
+                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), nodeDef));
                     }
                 }
             }

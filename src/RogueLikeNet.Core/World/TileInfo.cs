@@ -11,6 +11,7 @@ public enum TileType : byte
     Water = 6,
     Lava = 7,
     Decoration = 8,
+    Window = 9,
 }
 
 public struct TileInfo

@@ -84,12 +84,13 @@ public sealed class RogueLikeGame : GameBase
         var connecting = new ConnectingScreen(_ctx, menuRenderer);
         var playing = new PlayingScreen(_ctx, worldRenderer, hudRenderer, overlayRenderer);
         var inventory = new InventoryScreen(_ctx, worldRenderer, inventoryRenderer, overlayRenderer);
+        var crafting = new CraftingScreen(_ctx, worldRenderer, overlayRenderer);
         var paused = new PausedScreen(_ctx, playing, menuRenderer);
         var help = new HelpScreen(_ctx, menuRenderer, playing);
 
         _connectingScreen = connecting;
 
-        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, paused, help);
+        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help);
     }
 
     public void Initialize(IPlatform platform)
