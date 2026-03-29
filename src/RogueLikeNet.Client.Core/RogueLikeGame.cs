@@ -105,6 +105,7 @@ public sealed class RogueLikeGame : GameBase
         _connection.OnWorldDelta += OnNetworkWorldDelta;
         _connection.OnChatReceived += OnNetworkChatReceived;
         _ctx.Connection = _connection;
+        _lastSentVisibleChunks = 0; // Force update of visible chunk count on next frame
     }
 
     public void ClearConnection()

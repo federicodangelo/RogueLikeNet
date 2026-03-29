@@ -1,3 +1,4 @@
+using System.Collections;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
@@ -16,8 +17,9 @@ public class ClientGameState
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
-    private readonly HashSet<long> _exploredTiles = new();
+    private readonly Dictionary<long, BitArray> _exploredTilesByChunk = new();
     private readonly HashSet<long> _visibleTiles = new();
+    private (int x, int y, int x1, int y1) _visibleTilesBounds = (0, 0, 0, 0);
 
     /// <summary>Debug: when true, all tiles are treated as visible and explored.</summary>
     public bool DebugSeeAll { get; set; }
@@ -36,7 +38,7 @@ public class ClientGameState
         _chunks.Clear();
         _entities.Clear();
         _pendingCombatEvents.Clear();
-        _exploredTiles.Clear();
+        _exploredTilesByChunk.Clear();
         _visibleTiles.Clear();
         PlayerX = 0;
         PlayerY = 0;
@@ -56,6 +58,7 @@ public class ClientGameState
             _entities.Clear();
             _pendingCombatEvents.Clear();
             _visibleTiles.Clear();
+            _exploredTilesByChunk.Clear();
         }
 
         WorldTick = delta.ToTick;
@@ -203,24 +206,63 @@ public class ClientGameState
         return (chunk.Tiles[lx, ly], chunk.LightLevels[lx, ly]);
     }
 
-    public bool IsExplored(int worldX, int worldY) =>
-        DebugSeeAll || _exploredTiles.Contains(Position.PackCoord(worldX, worldY));
+    public bool IsExplored(int worldX, int worldY)
+    {
+        if (DebugSeeAll) return true;
 
-    public bool IsVisible(int worldX, int worldY) =>
-        DebugSeeAll || _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
+        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        var chunkKey = Position.PackCoord(cx, cy);
+
+        if (_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
+        {
+            var lx = worldX - cx * Chunk.Size;
+            var ly = worldY - cy * Chunk.Size;
+            return exploredBits.Get(lx + ly * Chunk.Size);
+        }
+        return false;
+    }
+
+    public bool IsVisible(int worldX, int worldY)
+    {
+        if (DebugSeeAll) return true;
+
+        if (worldX < _visibleTilesBounds.x || worldX > _visibleTilesBounds.x1 ||
+            worldY < _visibleTilesBounds.y || worldY > _visibleTilesBounds.y1)
+        {
+            return false;
+        }
+
+        return _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
+    }
 
     private void ComputeVisibility()
     {
         using var _ = TimeMeasurer.FromMethodName();
 
         _visibleTiles.Clear();
+        _visibleTilesBounds = (PlayerX, PlayerY, PlayerX, PlayerY);
         ShadowCastFov.Compute(PlayerX, PlayerY, ClassDefinitions.FOVRadius,
             isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
             markVisible: (x, y) =>
             {
                 long key = Position.PackCoord(x, y);
                 _visibleTiles.Add(key);
-                _exploredTiles.Add(key);
+                _visibleTilesBounds = (
+                    Math.Min(_visibleTilesBounds.x, x),
+                    Math.Min(_visibleTilesBounds.y, y),
+                    Math.Max(_visibleTilesBounds.x1, x),
+                    Math.Max(_visibleTilesBounds.y1, y)
+                );
+                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
+                var chunkKey = Position.PackCoord(cx, cy);
+                if (!_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
+                {
+                    exploredBits = new BitArray(Chunk.Size * Chunk.Size);
+                    _exploredTilesByChunk[chunkKey] = exploredBits;
+                }
+                var lx = x - cx * Chunk.Size;
+                var ly = y - cy * Chunk.Size;
+                exploredBits.Set(lx + ly * Chunk.Size, true);
             });
     }
 

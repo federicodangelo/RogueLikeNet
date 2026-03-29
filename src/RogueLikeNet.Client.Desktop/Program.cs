@@ -10,7 +10,7 @@ namespace RogueLikeNet.Client.Desktop;
 
 public class Program
 {
-    private static RogueLikeGame? _game;
+    private static readonly RogueLikeGame _game = new();
     private static IGameServerConnection? _connection;
     private static GameServer? _embeddedServer;
     private static bool _running = true;
@@ -22,7 +22,6 @@ public class Program
             "RogueLikeNet", 1280, 960,
             new NullMusicProvider(), new NullSfxProvider());
 
-        _game = new RogueLikeGame();
         _game.Initialize(platform);
 
         _game.StartOfflineRequested += (seed, classId, playerName, genIndex, debugMode) => OnStartOffline(seed, classId, playerName, genIndex, debugMode);
@@ -42,7 +41,7 @@ public class Program
 
     private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
     {
-        _game!.TransitionToConnecting();
+        _game.TransitionToConnecting();
 
         var generator = GeneratorRegistry.Create(generatorIndex, seed);
         _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out);
@@ -54,7 +53,7 @@ public class Program
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
         _connection = embeddedConnection;
-        _game!.SetConnection(_connection);
+        _game.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
         await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
 
@@ -72,7 +71,7 @@ public class Program
 
     private static async void OnStartOnline(int classId, string playerName)
     {
-        _game!.TransitionToConnecting();
+        _game.TransitionToConnecting();
 
         try
         {
@@ -93,7 +92,7 @@ public class Program
 
     private static void OnReturnToMenu()
     {
-        _game!.TransitionToMainMenu();
+        _game.TransitionToMainMenu();
         CleanupConnection();
     }
 

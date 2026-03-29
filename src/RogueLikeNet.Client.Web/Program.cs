@@ -11,7 +11,7 @@ namespace RogueLikeNet.Client.Web;
 
 public partial class WebMain
 {
-    private static RogueLikeGame? _game;
+    private static RogueLikeGame _game = new();
     private static IGameServerConnection? _connection;
     private static GameServer? _embeddedServer;
 
@@ -21,7 +21,6 @@ public partial class WebMain
             "RogueLikeNet", 1280, 960,
             new NullMusicProvider(), new NullSfxProvider());
 
-        _game = new RogueLikeGame();
         _game.Initialize(platform);
 
         _game.StartOfflineRequested += (seed, classId, playerName, genIndex, debugMode) => OnStartOffline(seed, classId, playerName, genIndex, debugMode);
@@ -41,7 +40,7 @@ public partial class WebMain
 
     private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
     {
-        _game!.TransitionToConnecting();
+        _game.TransitionToConnecting();
 
         var generator = GeneratorRegistry.Create(generatorIndex, seed);
         _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out);
@@ -53,7 +52,7 @@ public partial class WebMain
 
         var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
         _connection = embeddedConnection;
-        _game!.SetConnection(_connection);
+        _game.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
         await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
 
@@ -70,7 +69,7 @@ public partial class WebMain
 
     private static async void OnStartOnline(int classId, string playerName)
     {
-        _game!.TransitionToConnecting();
+        _game.TransitionToConnecting();
 
         try
         {
@@ -91,7 +90,7 @@ public partial class WebMain
 
     private static void OnReturnToMenu()
     {
-        _game!.TransitionToMainMenu();
+        _game.TransitionToMainMenu();
 
         _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
         _connection = null;

@@ -12,7 +12,58 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class GameWorldRenderer
 {
-    public void Render(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows,
+    private struct PrecalculatedTile
+    {
+        public TileInfo tile;
+        public float brightness;
+        public int lightLevel;
+        public bool visible;
+        public bool explored;
+    }
+
+    private PrecalculatedTile[] _precalculatedBuffer = Array.Empty<PrecalculatedTile>();
+
+    private PrecalculatedTile[] PrecalculateTiles(ClientGameState state, int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows, bool debugLightOff)
+    {
+        int requiredSize = visibleCols * visibleRows;
+        if (_precalculatedBuffer.Length < requiredSize)
+        {
+            _precalculatedBuffer = new PrecalculatedTile[requiredSize];
+        }
+
+        var precalculated = _precalculatedBuffer;
+        for (int row = 0; row < visibleRows; row++)
+        {
+            var worldY = cameraCenterY - visibleRows / 2 + row;
+            for (int col = 0; col < visibleCols; col++)
+            {
+                var worldX = cameraCenterX - visibleCols / 2 + col;
+                var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
+
+                var visible = state.IsVisible(worldX, worldY);
+                var explored = state.IsExplored(worldX, worldY);
+                var minBrightness = explored ? AsciiDraw.FogBrightness : 0f;
+                var brightness =
+                    !visible && !explored ? 0f :
+                        debugLightOff ? 1f :
+                        visible ?
+                            Math.Max(AsciiDraw.LightLevelToBrightness(lightLevel), minBrightness) :
+                            minBrightness;
+
+                precalculated[row * visibleCols + col] = new PrecalculatedTile
+                {
+                    tile = tile,
+                    brightness = brightness,
+                    lightLevel = lightLevel,
+                    visible = visible,
+                    explored = explored
+                };
+            }
+        }
+        return precalculated;
+    }
+
+    public void Render(ISpriteRenderer r, ClientGameState state, int visibleCols, int visibleRows,
         float shakeX, float shakeY, int tileW = 0, int tileH = 0, float fontScale = 0f, bool debugLightOff = false)
     {
         using var _ = new TimeMeasurer("GameWorldRenderer.Render");
@@ -23,33 +74,20 @@ public sealed class GameWorldRenderer
 
         int cameraCenterX = state.PlayerX;
         int cameraCenterY = state.PlayerY;
-        int halfW = gameCols / 2;
-        int halfH = totalRows / 2;
 
-        float GetTileBrightness(int worldX, int worldY, int lightLevel)
-        {
-            var visible = state.IsVisible(worldX, worldY);
-            var explored = state.IsExplored(worldX, worldY);
-            if (!visible && !explored)
-                return 0f;
-            var minBrightness = explored ? AsciiDraw.FogBrightness : 0f;
-            var brightness = debugLightOff ? 1f : visible ? Math.Max(AsciiDraw.LightLevelToBrightness(lightLevel), minBrightness) : AsciiDraw.FogBrightness;
-            return brightness;
-        }
+        // Precalculate tile brightness and colors for the entire viewport in a single pass.
+        var precalculated = PrecalculateTiles(state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, debugLightOff);
 
         // Pass 1: tile backgrounds and foreground glyphs (batched)
         using (new TimeMeasurer("Pass 1: Tiles"))
         {
-            r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, tileW, tileH, fontScale,
+            r.DrawGlyphGridScreen(shakeX, shakeY, visibleCols, visibleRows, tileW, tileH, fontScale,
                 (col, row) =>
                 {
-                    var worldX = cameraCenterX - halfW + col;
-                    var worldY = cameraCenterY - halfH + row;
-                    var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
-
+                    var precalc = precalculated[row * visibleCols + col];
+                    var tile = precalc.tile;
                     var emptyTile = tile.GlyphId == 0;
-
-                    var brightness = GetTileBrightness(worldX, worldY, lightLevel);
+                    var brightness = precalc.brightness;
 
                     if (emptyTile || brightness <= 0f)
                     {
@@ -66,19 +104,14 @@ public sealed class GameWorldRenderer
         // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
         using (new TimeMeasurer("Pass 2: Glow Effects"))
         {
-            for (int sx = 0; sx < gameCols; sx++)
-                for (int sy = 0; sy < totalRows; sy++)
+            for (int sx = 0; sx < visibleCols; sx++)
+            {
+                for (int sy = 0; sy < visibleRows; sy++)
                 {
-                    int worldX = cameraCenterX - halfW + sx;
-                    int worldY = cameraCenterY - halfH + sy;
+                    var precalc = precalculated[sy * visibleCols + sx];
+                    if (!precalc.visible || precalc.lightLevel < 5) continue;
 
-                    if (!state.IsVisible(worldX, worldY)) continue;
-
-                    var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
-
-                    if (lightLevel < 5) continue;
-
-                    if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                    if (precalc.tile.GlyphId == TileDefinitions.GlyphTorch)
                     {
                         float cx = sx * tileW + tileW * 0.5f + shakeX;
                         float cy = sy * tileH + tileH * 0.5f + shakeY;
@@ -87,7 +120,7 @@ public sealed class GameWorldRenderer
                         var outer = new Color4(255, 150, 50, 0);
                         r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
                     }
-                    else if (tile.Type == TileType.Lava)
+                    else if (precalc.tile.Type == TileType.Lava)
                     {
                         float cx = sx * tileW + tileW * 0.5f + shakeX;
                         float cy = sy * tileH + tileH * 0.5f + shakeY;
@@ -97,6 +130,7 @@ public sealed class GameWorldRenderer
                         r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
                     }
                 }
+            }
         }
 
         // Pass 3: entities
@@ -104,15 +138,16 @@ public sealed class GameWorldRenderer
         {
             foreach (var entity in state.Entities.Values)
             {
-                var sx = entity.X - (cameraCenterX - halfW);
-                var sy = entity.Y - (cameraCenterY - halfH);
+                var sx = entity.X - (cameraCenterX - visibleCols / 2);
+                var sy = entity.Y - (cameraCenterY - visibleRows / 2);
 
-                if (sx < 0 || sx >= gameCols || sy < 0 || sy >= totalRows) continue;
+                if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) continue;
 
+                var precalc = precalculated[sy * visibleCols + sx];
                 var px = sx * tileW + shakeX;
                 var py = sy * tileH + shakeY;
 
-                var brightness = GetTileBrightness(entity.X, entity.Y, state.GetLightLevel(entity.X, entity.Y));
+                var brightness = precalc.brightness;
 
                 if (brightness <= 0f)
                     continue;

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using CommunityToolkit.HighPerformance;
 
 namespace RogueLikeNet.Core.World;
@@ -22,13 +23,15 @@ public class Chunk
 
     public ref TileInfo GetTile(int localX, int localY) => ref Tiles[localX, localY];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool InBounds(int localX, int localY)
-        => localX >= 0 && localX < Size && localY >= 0 && localY < Size;
+            => localX >= 0 && localX < Size && localY >= 0 && localY < Size;
 
     /// <summary>
     /// Converts world coordinates to local chunk coordinates.
     /// Returns false if the world coords don't belong to this chunk.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool WorldToLocal(int worldX, int worldY, out int localX, out int localY)
     {
         localX = worldX - ChunkX * Size;
@@ -36,6 +39,7 @@ public class Chunk
         return InBounds(localX, localY);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static (int ChunkX, int ChunkY) WorldToChunkCoord(int worldX, int worldY)
     {
         // Use integer division that floors towards negative infinity
