@@ -156,7 +156,7 @@ public class GameServer : IDisposable
 
         // Reset per-connection tracking so BuildDelta treats this as a full snapshot
         conn.LastSentEntities.Clear();
-        conn.SentChunkKeys.Clear();
+        conn.SentChunkTracker.Clear();
         conn.LastSentHudBytes = null;
         conn.LastAckedTick = 0;
 
@@ -289,8 +289,8 @@ public class GameServer : IDisposable
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
         var playerChunkRange = Math.Max(1, DebugChunkRange);
 
-        var newChunks = GameStateSerializer.SerializeChunksDelta(
-            _engine, playerPos.X, playerPos.Y, conn.SentChunkKeys, playerChunkRange);
+        var chunkDelta = GameStateSerializer.SerializeChunksDelta(
+            _engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, playerChunkRange);
 
         // State delta compression: always send on snapshot, otherwise only when changed
         var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);
@@ -314,7 +314,8 @@ public class GameServer : IDisposable
             FromTick = conn.LastAckedTick,
             ToTick = _engine.CurrentTick,
             IsSnapshot = isSnapshot,
-            Chunks = newChunks,
+            Chunks = chunkDelta.NewChunks,
+            DiscardedChunkKeys = chunkDelta.DiscardedKeys,
             EntityUpdates = serializedEntityData.FullUpdates,
             EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
             EntityRemovals = serializedEntityData.Removals,

@@ -61,6 +61,10 @@ public class ClientGameState
         foreach (var chunkMsg in delta.Chunks)
             ApplyChunkData(chunkMsg);
 
+        // Discard chunks evicted by the server's LRU tracker
+        foreach (var key in delta.DiscardedChunkKeys)
+            _chunks.Remove(key);
+
         // Update tiles
         foreach (var tileUpdate in delta.TileUpdates)
         {

@@ -98,10 +98,10 @@ public class PlayerConnectionTests
     }
 
     [Fact]
-    public void SentChunkKeys_InitiallyEmpty()
+    public void SentChunkTracker_InitiallyEmpty()
     {
         var conn = new PlayerConnection(1, _ => Task.CompletedTask);
-        Assert.Empty(conn.SentChunkKeys);
+        Assert.Equal(0, conn.SentChunkTracker.Count);
     }
 
     [Fact]

@@ -54,13 +54,17 @@ public static class GameStateSerializer
     }
 
     /// <summary>
-    /// Delta-aware chunk serialization: sends full ChunkDataMsg only for new chunks.
-    /// Already-sent chunks are skipped since static data doesn't change and
-    /// lighting is computed client-side.
+    /// Delta-aware chunk serialization using an LRU tracker.
+    /// Sends full ChunkDataMsg only for new chunks. Already-tracked chunks are
+    /// touched (promoted in LRU). After adding new chunks, the tracker evicts
+    /// least-recently-used entries beyond its capacity, returning their keys so
+    /// the client can discard them.
     /// </summary>
-    public static ChunkDataMsg[] SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, HashSet<long> sentChunkKeys, int chunkRange)
+    public static ChunkDeltaResult SerializeChunksDelta(
+        GameEngine engine, int worldX, int worldY, ChunkTracker tracker, int chunkRange)
     {
+        tracker.UpdateCapacity(chunkRange);
+
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         var newChunks = new List<ChunkDataMsg>();
 
@@ -70,22 +74,16 @@ public static class GameStateSerializer
                 int ccx = cx + dx, ccy = cy + dy;
                 long key = Position.PackCoord(ccx, ccy);
 
-                if (!sentChunkKeys.Contains(key))
+                if (tracker.Touch(key))
                 {
                     var chunk = engine.EnsureChunkLoaded(ccx, ccy);
                     newChunks.Add(SerializeChunk(chunk));
-                    sentChunkKeys.Add(key);
                 }
             }
 
-        // Prune chunk keys far from current position (5×5 around player chunk)
-        sentChunkKeys.RemoveWhere(key =>
-        {
-            var (kx, ky) = Position.UnpackCoord(key);
-            return Math.Abs(kx - cx) > chunkRange + 1 || Math.Abs(ky - cy) > chunkRange + 1;
-        });
+        var discarded = tracker.Evict();
 
-        return newChunks.ToArray();
+        return new ChunkDeltaResult(newChunks.ToArray(), discarded);
     }
 
     /// <summary>
@@ -217,3 +215,5 @@ public static class GameStateSerializer
 }
 
 public readonly record struct SerializedEntityData(EntityUpdateMsg[] FullUpdates, EntityPositionHealthMsg[] PositionHealthUpdates, EntityRemovedMsg[] Removals);
+
+public readonly record struct ChunkDeltaResult(ChunkDataMsg[] NewChunks, long[] DiscardedKeys);

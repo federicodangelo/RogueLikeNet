@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Server;
@@ -17,8 +18,8 @@ public class PlayerConnection
     /// <summary>Tracks last-sent entity state per entity ID for delta compression.</summary>
     public Dictionary<long, EntityUpdateMsg> LastSentEntities { get; } = new();
 
-    /// <summary>Chunks whose full static data has already been sent.</summary>
-    public HashSet<long> SentChunkKeys { get; } = new();
+    /// <summary>LRU tracker for chunks whose full static data has been sent.</summary>
+    public ChunkTracker SentChunkTracker { get; } = new();
 
     /// <summary>Last serialized HUD bytes for delta compression.</summary>
     public byte[]? LastSentHudBytes { get; set; }

@@ -625,4 +625,41 @@ public class ClientGameStateTests
         });
         Assert.Equal(5, state.WorldTick);
     }
+
+    [Fact]
+    public void ApplyDelta_DiscardedChunkKeys_RemovesChunks()
+    {
+        var state = new ClientGameState();
+        // Apply snapshot with two chunks
+        var key0 = RogueLikeNet.Core.Components.Position.PackCoord(0, 0);
+        var key1 = RogueLikeNet.Core.Components.Position.PackCoord(1, 0);
+
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 0,
+            ToTick = 1,
+            IsSnapshot = true,
+            Chunks = [MakeFloorChunk(0, 0), MakeFloorChunk(1, 0)],
+            EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 32, Y = 32, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
+            PlayerState = new PlayerStateMsg { PlayerEntityId = 1 },
+        });
+
+        Assert.Equal(2, state.Chunks.Count);
+
+        // Apply delta that discards chunk (1,0)
+        state.ApplyDelta(new WorldDeltaMsg
+        {
+            FromTick = 1,
+            ToTick = 2,
+            Chunks = [],
+            TileUpdates = [],
+            CombatEvents = [],
+            EntityUpdates = [],
+            DiscardedChunkKeys = [key1],
+        });
+
+        Assert.Single(state.Chunks);
+        Assert.True(state.Chunks.ContainsKey(key0));
+        Assert.False(state.Chunks.ContainsKey(key1));
+    }
 }
