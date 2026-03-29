@@ -143,7 +143,7 @@ public class DoorMechanicsTests
         Assert.Equal(TileType.Door, engine.WorldMap.GetTile(doorX, doorY).Type);
 
         // Tick enough times for grace period to expire (6 ticks grace from open)
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 30; i++)
             engine.Tick();
 
         // Door should have auto-closed

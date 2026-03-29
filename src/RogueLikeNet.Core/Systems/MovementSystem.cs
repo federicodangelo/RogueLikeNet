@@ -15,7 +15,7 @@ public class MovementSystem
 {
     // Grace period (in ticks) before an opened door can auto-close.
     // Must exceed the max MoveDelay interval so the player can walk through.
-    private const int DoorGraceTicks = 6;
+    private const int DoorGraceTicks = 20; // 1 second
 
     // Tracks open door positions → remaining grace ticks before auto-close is allowed.
     private readonly Dictionary<long, int> _openDoorTimers = new();

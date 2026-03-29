@@ -14,7 +14,8 @@ namespace RogueLikeNet.Server;
 /// </summary>
 public class GameServer : IDisposable
 {
-    private const int TickRateMs = 50; // 20 ticks/sec
+    public const int TickRateMs = 1000 / TicksPerSecond;
+    public const int TicksPerSecond = 20;
 
     private const int MaxChunksPerTick = 4; // Limit how many new chunks to send per tick to avoid bandwidth spikes
 
