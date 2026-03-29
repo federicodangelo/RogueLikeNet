@@ -166,7 +166,7 @@ public class GameServer : IDisposable
         // Reset per-connection tracking so BuildDelta treats this as a full snapshot
         conn.LastSentEntities.Clear();
         conn.SentChunkTracker.Clear();
-        conn.LastSentHudBytes = null;
+        conn.LastSentPlayerState = null;
         conn.LastAckedTick = 0;
 
         var snapshot = BuildDelta(conn, isSnapshot: true);
@@ -301,19 +301,9 @@ public class GameServer : IDisposable
             _engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, conn.VisibleChunks);
 
         // State delta compression: always send on snapshot, otherwise only when changed
-        var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);
-        byte[]? stateBytes = state != null ? NetSerializer.Serialize(state) : null;
-        PlayerStateMsg? deltaState;
-        if (stateBytes != null && conn.LastSentHudBytes != null
-            && stateBytes.AsSpan().SequenceEqual(conn.LastSentHudBytes))
-        {
-            deltaState = null;
-        }
-        else
-        {
-            deltaState = state;
-            conn.LastSentHudBytes = stateBytes;
-        }
+        var playerState = GameStateSerializer.SerializePlayerStateDelta(_engine, playerEntity, conn.LastSentPlayerState);
+        if (playerState != null || isSnapshot)
+            conn.LastSentPlayerState = playerState;
 
         var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.EcsWorld, fov, conn.LastSentEntities, DebugVisibilityOff);
 
@@ -328,7 +318,7 @@ public class GameServer : IDisposable
             EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
             EntityRemovals = serializedEntityData.Removals,
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
-            PlayerState = deltaState,
+            PlayerState = playerState,
         };
     }
 

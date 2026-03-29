@@ -3,7 +3,7 @@ using MessagePack;
 namespace RogueLikeNet.Protocol.Messages;
 
 [MessagePackObject]
-public class PlayerStateMsg
+public class PlayerStateMsg : IEquatable<PlayerStateMsg>
 {
     [Key(0)] public int Health { get; set; }
     [Key(1)] public int MaxHealth { get; set; }
@@ -19,4 +19,31 @@ public class PlayerStateMsg
     [Key(11)] public ItemDataMsg? EquippedArmor { get; set; }
     [Key(12)] public int[] QuickSlotIndices { get; set; } = [];
     [Key(13)] public long PlayerEntityId { get; set; }
+
+    public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
+    {
+        if (a is null) return b is null;
+        if (b is null) return false;
+        if (a.Health != b.Health) return false;
+        if (a.MaxHealth != b.MaxHealth) return false;
+        if (a.Attack != b.Attack) return false;
+        if (a.Defense != b.Defense) return false;
+        if (a.Level != b.Level) return false;
+        if (a.Experience != b.Experience) return false;
+        if (a.InventoryCount != b.InventoryCount) return false;
+        if (a.InventoryCapacity != b.InventoryCapacity) return false;
+        if (!a.Skills.SequenceEqual(b.Skills)) return false;
+        if (!a.InventoryItems.SequenceEqual(b.InventoryItems)) return false;
+        if (!ItemDataMsg.Equals(a.EquippedWeapon, b.EquippedWeapon)) return false;
+        if (!ItemDataMsg.Equals(a.EquippedArmor, b.EquippedArmor)) return false;
+        if (!a.QuickSlotIndices.SequenceEqual(b.QuickSlotIndices)) return false;
+        if (a.PlayerEntityId != b.PlayerEntityId) return false;
+
+        return true;
+    }
+
+    public bool Equals(PlayerStateMsg? other)
+    {
+        return Equals(this, other);
+    }
 }

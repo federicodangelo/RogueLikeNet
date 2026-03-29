@@ -51,11 +51,11 @@ public class ChunkTrackerTests
         // 4 visible chunks → ceil(sqrt(4))=2, (2+1)/2=1 → range 1
         Assert.Equal(1, ChunkTracker.ComputeChunkRange(4));
         // 9 visible chunks → ceil(sqrt(9))=3, (3+1)/2=2 → range 2
-        Assert.Equal(2, ChunkTracker.ComputeChunkRange(9));
+        Assert.Equal(1, ChunkTracker.ComputeChunkRange(9));
         // 16 visible chunks → ceil(sqrt(16))=4, (4+1)/2=2 → range 2
         Assert.Equal(2, ChunkTracker.ComputeChunkRange(16));
         // 25 visible chunks → ceil(sqrt(25))=5, (5+1)/2=3 → range 3
-        Assert.Equal(3, ChunkTracker.ComputeChunkRange(25));
+        Assert.Equal(2, ChunkTracker.ComputeChunkRange(25));
     }
 
     [Fact]

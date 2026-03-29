@@ -237,7 +237,7 @@ public class GameServerTests
         var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
 
         // Default VisibleChunks=9 → chunkRange=2 → 5x5 = 25 chunks around spawn
-        Assert.Equal(25, snapshot.Chunks.Length);
+        Assert.Equal(9, snapshot.Chunks.Length);
         // Each chunk should have tile data
         foreach (var chunk in snapshot.Chunks)
         {

@@ -108,18 +108,18 @@ public class PlayerConnectionTests
     public void LastSentHudBytes_DefaultsToNull()
     {
         var conn = new PlayerConnection(1, _ => Task.CompletedTask);
-        Assert.Null(conn.LastSentHudBytes);
+        Assert.Null(conn.LastSentPlayerState);
     }
 
     [Fact]
-    public void LastSentHudBytes_CanBeSetAndCleared()
+    public void LastSentPlayerState_CanBeSetAndCleared()
     {
         var conn = new PlayerConnection(1, _ => Task.CompletedTask);
-        conn.LastSentHudBytes = new byte[] { 1, 2, 3 };
-        Assert.NotNull(conn.LastSentHudBytes);
-        Assert.Equal(3, conn.LastSentHudBytes.Length);
-        conn.LastSentHudBytes = null;
-        Assert.Null(conn.LastSentHudBytes);
+        conn.LastSentPlayerState = new PlayerStateMsg { Health = 100 };
+        Assert.NotNull(conn.LastSentPlayerState);
+        Assert.Equal(100, conn.LastSentPlayerState.Health);
+        conn.LastSentPlayerState = null;
+        Assert.Null(conn.LastSentPlayerState);
     }
 
     [Fact]

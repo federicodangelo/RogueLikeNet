@@ -32,7 +32,7 @@ public sealed class ChunkTracker
     {
         visibleChunks = Math.Clamp(visibleChunks, 1, MaxVisibleChunks);
         int side = (int)MathF.Ceiling(MathF.Sqrt(visibleChunks));
-        return Math.Max(1, (side + 1) / 2);
+        return Math.Max(1, side / 2);
     }
 
     /// <summary>Updates the max capacity based on a visible chunk count.</summary>

@@ -25,7 +25,7 @@ public class PlayerConnection
     public int VisibleChunks { get; set; } = 9;
 
     /// <summary>Last serialized HUD bytes for delta compression.</summary>
-    public byte[]? LastSentHudBytes { get; set; }
+    public PlayerStateMsg? LastSentPlayerState { get; set; }
 
     private readonly Func<byte[], Task> _sendFunc;
     private long _bytesSent;

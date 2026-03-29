@@ -4,7 +4,7 @@ namespace RogueLikeNet.Protocol.Messages;
 
 // This needs to be a struct, otherwise it doesn't play well with MessagePackSerializer AOT compilation.
 [MessagePackObject]
-public class ItemDataMsg
+public class ItemDataMsg : IEquatable<ItemDataMsg>
 {
     [Key(0)] public int ItemTypeId { get; set; }
     [Key(1)] public int StackCount { get; set; }
@@ -26,5 +26,10 @@ public class ItemDataMsg
             a.BonusAttack == b.BonusAttack &&
             a.BonusDefense == b.BonusDefense &&
             a.BonusHealth == b.BonusHealth;
+    }
+
+    public bool Equals(ItemDataMsg? other)
+    {
+        return Equals(this, other);
     }
 }

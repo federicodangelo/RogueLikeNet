@@ -208,4 +208,144 @@ public class GameStateSerializerTests
 
         World.Destroy(world);
     }
+
+    // ── SerializePlayerStateDelta ────────────────────────────────────────────
+
+    private static (RogueLikeNet.Core.GameEngine engine, Arch.Core.Entity player) CreateEngineWithPlayer()
+    {
+        var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator(42));
+        engine.EnsureChunkLoaded(0, 0);
+        var (sx, sy) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        return (engine, player);
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_ReturnsStateOnFirstCall()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var result = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+
+        Assert.NotNull(result);
+        Assert.Equal(player.Id, result.PlayerEntityId);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_ReturnsNullWhenStateUnchanged()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.Null(second);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_DetectsHealthChange()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+
+        ref var health = ref engine.EcsWorld.Get<Health>(player);
+        health.Current -= 5;
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.NotNull(second);
+        Assert.Equal(health.Current, second.Health);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_DetectsInventoryChange()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+        int initialCount = first.InventoryCount;
+
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.NotNull(second);
+        Assert.Equal(initialCount + 1, second.InventoryCount);
+        Assert.Single(second.InventoryItems);
+        Assert.Equal(ItemDefinitions.HealthPotion, second.InventoryItems[0].ItemTypeId);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_DetectsEquippedWeaponChange()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+        Assert.Null(first.EquippedWeapon);
+
+        ref var equip = ref engine.EcsWorld.Get<Equipment>(player);
+        equip.Weapon = new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1, Rarity = ItemDefinitions.RarityCommon, BonusAttack = 3 };
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.NotNull(second);
+        Assert.NotNull(second.EquippedWeapon);
+        Assert.Equal(ItemDefinitions.ShortSword, second.EquippedWeapon.ItemTypeId);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_DetectsEquippedArmorChange()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+        Assert.Null(first.EquippedArmor);
+
+        ref var equip = ref engine.EcsWorld.Get<Equipment>(player);
+        equip.Armor = new ItemData { ItemTypeId = ItemDefinitions.LeatherArmor, StackCount = 1, Rarity = ItemDefinitions.RarityCommon, BonusDefense = 2 };
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.NotNull(second);
+        Assert.NotNull(second.EquippedArmor);
+        Assert.Equal(ItemDefinitions.LeatherArmor, second.EquippedArmor.ItemTypeId);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_DetectsQuickSlotChange()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        // Add an item to inventory so there is something to assign to a slot
+        ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
+        inv.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+        Assert.Equal(-1, first.QuickSlotIndices[0]); // default: slot empty
+
+        ref var qs = ref engine.EcsWorld.Get<QuickSlots>(player);
+        qs.Slot0 = 0;
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.NotNull(second);
+        Assert.Equal(0, second.QuickSlotIndices[0]);
+
+        engine.Dispose();
+    }
 }

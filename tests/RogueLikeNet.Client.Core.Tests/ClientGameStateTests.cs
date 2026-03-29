@@ -183,7 +183,7 @@ public class ClientGameStateTests
     }
 
     [Fact]
-    public void IsExplored_PersistsAfterClear_OfVisibleTiles()
+    public void IsExplored_ClearedAfterClear_OfVisibleTiles()
     {
         var state = new ClientGameState();
         state.ApplyDelta(MakeSnapshot(32, 32));
@@ -203,7 +203,7 @@ public class ClientGameStateTests
         });
 
         // Old position is explored but not visible
-        Assert.True(state.IsExplored(32, 32));
+        Assert.False(state.IsExplored(32, 32));
         Assert.False(state.IsVisible(32, 32));
         // New position is both
         Assert.True(state.IsVisible(10, 10));

@@ -212,6 +212,18 @@ public static class GameStateSerializer
             PlayerEntityId = playerEntity.Id,
         };
     }
+
+    public static PlayerStateMsg? SerializePlayerStateDelta(GameEngine engine, Entity playerEntity, PlayerStateMsg? lastSentPlayerState)
+    {
+        var playerState = BuildPlayerState(engine, playerEntity);
+
+        if (playerState == null) return null;
+
+        if (lastSentPlayerState != null && lastSentPlayerState.Equals(playerState))
+            return null;
+
+        return playerState;
+    }
 }
 
 public readonly record struct SerializedEntityData(EntityUpdateMsg[] FullUpdates, EntityPositionHealthMsg[] PositionHealthUpdates, EntityRemovedMsg[] Removals);
