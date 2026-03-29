@@ -1,5 +1,6 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Core.Utilities;
 
 namespace RogueLikeNet.Client.Core.Screens;
 
@@ -84,5 +85,9 @@ public sealed class ScreenManager
 
     public void HandleInput(IInputManager input) => _current.HandleInput(input);
     public void Update(float deltaTime) => _current.Update(deltaTime);
-    public void Render(ISpriteRenderer renderer, int totalCols, int totalRows) => _current.Render(renderer, totalCols, totalRows);
+    public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
+    {
+        using var _ = new TimeMeasurer("ScreenManager.Render");
+        _current.Render(renderer, totalCols, totalRows);
+    }
 }

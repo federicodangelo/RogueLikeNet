@@ -2,6 +2,7 @@ using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
@@ -14,6 +15,8 @@ public sealed class GameWorldRenderer
     public void Render(ISpriteRenderer r, ClientGameState state, int gameCols, int totalRows,
         float shakeX, float shakeY, int tileW = 0, int tileH = 0, float fontScale = 0f, bool debugLightOff = false)
     {
+        using var _ = new TimeMeasurer("GameWorldRenderer.Render");
+
         if (tileW <= 0) tileW = AsciiDraw.TileWidth;
         if (tileH <= 0) tileH = AsciiDraw.TileHeight;
         if (fontScale <= 0f) fontScale = AsciiDraw.FontScale;
@@ -35,86 +38,95 @@ public sealed class GameWorldRenderer
         }
 
         // Pass 1: tile backgrounds and foreground glyphs (batched)
-        r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, tileW, tileH, fontScale,
-            (col, row) =>
-            {
-                var worldX = cameraCenterX - halfW + col;
-                var worldY = cameraCenterY - halfH + row;
-                var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
-
-                var emptyTile = tile.GlyphId == 0;
-
-                var brightness = GetTileBrightness(worldX, worldY, lightLevel);
-
-                if (emptyTile || brightness <= 0f)
+        using (new TimeMeasurer("Pass 1: Tiles"))
+        {
+            r.DrawGlyphGridScreen(shakeX, shakeY, gameCols, totalRows, tileW, tileH, fontScale,
+                (col, row) =>
                 {
-                    return new GlyphTile('\0', default, RenderingTheme.Black);
-                }
+                    var worldX = cameraCenterX - halfW + col;
+                    var worldY = cameraCenterY - halfH + row;
+                    var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
 
-                var bgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.BgColor), brightness);
-                var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.FgColor), brightness);
-                var ch = AsciiDraw.GlyphIdToChar(tile.GlyphId);
-                return new GlyphTile(ch, fgColor, bgColor);
-            });
+                    var emptyTile = tile.GlyphId == 0;
+
+                    var brightness = GetTileBrightness(worldX, worldY, lightLevel);
+
+                    if (emptyTile || brightness <= 0f)
+                    {
+                        return new GlyphTile('\0', default, RenderingTheme.Black);
+                    }
+
+                    var bgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.BgColor), brightness);
+                    var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.FgColor), brightness);
+                    var ch = AsciiDraw.GlyphIdToChar(tile.GlyphId);
+                    return new GlyphTile(ch, fgColor, bgColor);
+                });
+        }
 
         // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
-        for (int sx = 0; sx < gameCols; sx++)
-            for (int sy = 0; sy < totalRows; sy++)
-            {
-                int worldX = cameraCenterX - halfW + sx;
-                int worldY = cameraCenterY - halfH + sy;
-
-                if (!state.IsVisible(worldX, worldY)) continue;
-
-                var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
-
-                if (lightLevel < 5) continue;
-
-                if (tile.GlyphId == TileDefinitions.GlyphTorch)
+        using (new TimeMeasurer("Pass 2: Glow Effects"))
+        {
+            for (int sx = 0; sx < gameCols; sx++)
+                for (int sy = 0; sy < totalRows; sy++)
                 {
-                    float cx = sx * tileW + tileW * 0.5f + shakeX;
-                    float cy = sy * tileH + tileH * 0.5f + shakeY;
-                    float radius = tileW * 2.5f;
-                    var inner = new Color4(255, 200, 100, 40);
-                    var outer = new Color4(255, 150, 50, 0);
-                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+                    int worldX = cameraCenterX - halfW + sx;
+                    int worldY = cameraCenterY - halfH + sy;
+
+                    if (!state.IsVisible(worldX, worldY)) continue;
+
+                    var (tile, lightLevel) = state.GetTileAndLightLevel(worldX, worldY);
+
+                    if (lightLevel < 5) continue;
+
+                    if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                    {
+                        float cx = sx * tileW + tileW * 0.5f + shakeX;
+                        float cy = sy * tileH + tileH * 0.5f + shakeY;
+                        float radius = tileW * 2.5f;
+                        var inner = new Color4(255, 200, 100, 40);
+                        var outer = new Color4(255, 150, 50, 0);
+                        r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+                    }
+                    else if (tile.Type == TileType.Lava)
+                    {
+                        float cx = sx * tileW + tileW * 0.5f + shakeX;
+                        float cy = sy * tileH + tileH * 0.5f + shakeY;
+                        float radius = tileW * 1.5f;
+                        var inner = new Color4(255, 80, 20, 25);
+                        var outer = new Color4(255, 40, 0, 0);
+                        r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
+                    }
                 }
-                else if (tile.Type == TileType.Lava)
-                {
-                    float cx = sx * tileW + tileW * 0.5f + shakeX;
-                    float cy = sy * tileH + tileH * 0.5f + shakeY;
-                    float radius = tileW * 1.5f;
-                    var inner = new Color4(255, 80, 20, 25);
-                    var outer = new Color4(255, 40, 0, 0);
-                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
-                }
-            }
+        }
 
         // Pass 3: entities
-        foreach (var entity in state.Entities.Values)
+        using (new TimeMeasurer("Pass 3: Entities"))
         {
-            var sx = entity.X - (cameraCenterX - halfW);
-            var sy = entity.Y - (cameraCenterY - halfH);
-
-            if (sx < 0 || sx >= gameCols || sy < 0 || sy >= totalRows) continue;
-
-            var px = sx * tileW + shakeX;
-            var py = sy * tileH + shakeY;
-
-            var brightness = GetTileBrightness(entity.X, entity.Y, state.GetLightLevel(entity.X, entity.Y));
-
-            if (brightness <= 0f)
-                continue;
-
-            var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(entity.FgColor), brightness);
-            var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
-            r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
-
-            if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
+            foreach (var entity in state.Entities.Values)
             {
-                var ratio = (float)entity.Health / entity.MaxHealth;
-                r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
-                r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
+                var sx = entity.X - (cameraCenterX - halfW);
+                var sy = entity.Y - (cameraCenterY - halfH);
+
+                if (sx < 0 || sx >= gameCols || sy < 0 || sy >= totalRows) continue;
+
+                var px = sx * tileW + shakeX;
+                var py = sy * tileH + shakeY;
+
+                var brightness = GetTileBrightness(entity.X, entity.Y, state.GetLightLevel(entity.X, entity.Y));
+
+                if (brightness <= 0f)
+                    continue;
+
+                var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(entity.FgColor), brightness);
+                var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
+                r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
+
+                if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
+                {
+                    var ratio = (float)entity.Health / entity.MaxHealth;
+                    r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
+                    r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
+                }
             }
         }
     }

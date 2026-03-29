@@ -1,6 +1,7 @@
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 
@@ -46,6 +47,8 @@ public class ClientGameState
 
     public void ApplyDelta(WorldDeltaMsg delta)
     {
+        using var _ = new TimeMeasurer("ClientGameState.ApplyDelta", hidden: true);
+
         // Snapshot delta: clear transient state before applying (explored tiles persist for fog of war)
         if (delta.IsSnapshot)
         {
@@ -208,6 +211,8 @@ public class ClientGameState
 
     private void ComputeVisibility()
     {
+        using var _ = TimeMeasurer.FromMethodName();
+
         _visibleTiles.Clear();
         ShadowCastFov.Compute(PlayerX, PlayerY, ClassDefinitions.FOVRadius,
             isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
@@ -221,6 +226,8 @@ public class ClientGameState
 
     private void ComputeLighting()
     {
+        using var _ = TimeMeasurer.FromMethodName();
+
         // Reset light only for chunks within FOV range of the player
         var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius);
         var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius);

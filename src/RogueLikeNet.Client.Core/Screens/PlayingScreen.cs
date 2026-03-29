@@ -18,7 +18,6 @@ public sealed class PlayingScreen : IScreen
 
     // Movement hold-to-repeat
     private static readonly long MoveRepeatDelayTicks = Stopwatch.Frequency / 4; // 250 ms
-    private static readonly long MoveRepeatDelayTicksFast = Stopwatch.Frequency / 20; // 50 ms (max speed)
     private InputAction? _heldMoveAction;
     private long _moveHeldSinceTicks;
 
@@ -65,9 +64,6 @@ public sealed class PlayingScreen : IScreen
 
         ClientInputMsg? msg = null;
 
-        bool maxSpeed = _ctx.Debug is { Enabled: true, MaxSpeed: true };
-        long repeatDelay = maxSpeed ? MoveRepeatDelayTicksFast : MoveRepeatDelayTicks;
-
         // Determine held movement direction, applying a repeat delay
         InputAction? activeMoveAction = null;
         if (input.IsActionDown(InputAction.MoveUp)) activeMoveAction = InputAction.MoveUp;
@@ -85,7 +81,7 @@ public sealed class PlayingScreen : IScreen
             }
 
             bool fireMove = input.IsActionPressed(activeMoveAction.Value)
-                            || now - _moveHeldSinceTicks >= repeatDelay;
+                            || now - _moveHeldSinceTicks >= MoveRepeatDelayTicks;
             if (fireMove)
             {
                 int dx = 0, dy = 0;
@@ -98,12 +94,8 @@ public sealed class PlayingScreen : IScreen
                 }
 
                 // In max speed mode, move 4 tiles at a time by sending 4 commands
-                int steps = maxSpeed ? 4 : 1;
-                for (int i = 0; i < steps; i++)
-                {
-                    msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = dx, TargetY = dy };
-                    SendInput(msg);
-                }
+                msg = new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = dx, TargetY = dy };
+                SendInput(msg);
                 msg = null; // already sent
             }
         }
@@ -183,6 +175,6 @@ public sealed class PlayingScreen : IScreen
             halfW, halfH, shakeX, shakeY);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
-        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance);
+        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 }

@@ -5,6 +5,7 @@ using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Client.Core.Screens;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Client.Core.Systems;
+using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core;
@@ -144,6 +145,8 @@ public sealed class RogueLikeGame : GameBase
 
     public void RunFrame()
     {
+        using var _ = TimeMeasurer.FromMethodName();
+
         var input = Input;
         var renderer = SpriteRenderer;
 

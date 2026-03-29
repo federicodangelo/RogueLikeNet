@@ -30,8 +30,8 @@ public class MovementSystem
             // Respect player action cooldown — preserve action to execute next tick
             if (!debugMaxSpeed && delay.Current > 0) return;
 
-            int newX = pos.X + input.TargetX;
-            int newY = pos.Y + input.TargetY;
+            int newX = pos.X + input.TargetX * (debugMaxSpeed ? 4 : 1);
+            int newY = pos.Y + input.TargetY * (debugMaxSpeed ? 4 : 1);
 
             if (!debugNoCollision && !map.IsWalkable(newX, newY))
             {

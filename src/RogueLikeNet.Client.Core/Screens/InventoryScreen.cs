@@ -103,7 +103,7 @@ public sealed class InventoryScreen : IScreen
             halfW, halfH, shakeX, shakeY);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
-        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance);
+        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 
     private void HandleInvItemsInput(IInputManager input, HudSection section, int cap)
