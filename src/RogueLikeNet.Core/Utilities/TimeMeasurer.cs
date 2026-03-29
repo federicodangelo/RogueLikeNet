@@ -3,7 +3,7 @@ namespace RogueLikeNet.Core.Utilities;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-public class TimeMeasurerAccumulator
+public sealed class TimeMeasurerAccumulator
 {
     public static readonly ThreadLocal<TimeMeasurerAccumulator> ThreadInstance = new ThreadLocal<TimeMeasurerAccumulator>(() => new TimeMeasurerAccumulator());
 

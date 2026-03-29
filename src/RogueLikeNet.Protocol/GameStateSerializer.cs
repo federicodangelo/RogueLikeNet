@@ -2,6 +2,7 @@ using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -61,25 +62,28 @@ public static class GameStateSerializer
     /// the client can discard them.
     /// </summary>
     public static ChunkDeltaResult SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, ChunkTracker tracker, int visibleChunks)
+        GameEngine engine, int worldX, int worldY, ChunkTracker tracker,
+        int visibleChunks, int maxChunksToSerialize = int.MaxValue)
     {
         tracker.UpdateCapacity(visibleChunks);
         var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         var newChunks = new List<ChunkDataMsg>();
 
-        for (int dx = -chunkRange; dx <= chunkRange; dx++)
-            for (int dy = -chunkRange; dy <= chunkRange; dy++)
-            {
-                int ccx = cx + dx, ccy = cy + dy;
-                long key = Position.PackCoord(ccx, ccy);
+        foreach (var point in PointsAtDistance.GetPoints(chunkRange))
+        {
+            int ccx = cx + point.X, ccy = cy + point.Y;
+            long key = Position.PackCoord(ccx, ccy);
 
-                if (tracker.Touch(key))
-                {
-                    var chunk = engine.EnsureChunkLoaded(ccx, ccy);
-                    newChunks.Add(SerializeChunk(chunk));
-                }
+            if (tracker.Touch(key))
+            {
+                var chunk = engine.EnsureChunkLoaded(ccx, ccy);
+                newChunks.Add(SerializeChunk(chunk));
+                maxChunksToSerialize--;
+                if (maxChunksToSerialize <= 0)
+                    break;
             }
+        }
 
         var discarded = tracker.Evict();
 

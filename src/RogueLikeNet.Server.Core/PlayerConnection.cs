@@ -21,6 +21,9 @@ public class PlayerConnection
     /// <summary>LRU tracker for chunks whose full static data has been sent.</summary>
     public ChunkTracker SentChunkTracker { get; } = new();
 
+    /// <summary>Last tick for which chunks were sent, used to determine when to resend static chunk data.</summary>
+    public long LastSentChunksTick { get; set; }
+
     /// <summary>Number of chunks visible in the client's viewport (sent by client).</summary>
     public int VisibleChunks { get; set; } = 9;
 

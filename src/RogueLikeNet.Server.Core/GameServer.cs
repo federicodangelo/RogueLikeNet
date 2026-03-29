@@ -15,6 +15,11 @@ namespace RogueLikeNet.Server;
 public class GameServer : IDisposable
 {
     private const int TickRateMs = 50; // 20 ticks/sec
+
+    private const int MaxChunksPerTick = 4; // Limit how many new chunks to send per tick to avoid bandwidth spikes
+
+    private const int MinTicksBetweenChunkResend = 10; // Min delay between sending static chunk data to the same client
+
     protected readonly GameEngine _engine;
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
     private readonly ConcurrentQueue<Func<Task>> _commandQueue = new();
@@ -297,8 +302,16 @@ public class GameServer : IDisposable
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
 
-        var chunkDelta = GameStateSerializer.SerializeChunksDelta(
-            _engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, conn.VisibleChunks);
+        var ticksSinceLastSentChunks = _engine.CurrentTick - conn.LastSentChunksTick;
+        var shouldSendChunks = isSnapshot || ticksSinceLastSentChunks >= MinTicksBetweenChunkResend;
+
+        var chunkDelta =
+            shouldSendChunks ?
+                GameStateSerializer.SerializeChunksDelta(_engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
+
+        if (chunkDelta.NewChunks.Length > 0)
+            conn.LastSentChunksTick = _engine.CurrentTick;
 
         // State delta compression: always send on snapshot, otherwise only when changed
         var playerState = GameStateSerializer.SerializePlayerStateDelta(_engine, playerEntity, conn.LastSentPlayerState);

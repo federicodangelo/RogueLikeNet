@@ -54,7 +54,7 @@ public static class ServerWebSocketHandler
                 if (result.MessageType == WebSocketMessageType.Binary && ms.Length > 0)
                 {
                     conn.TrackReceived(ms.Length);
-                    if (!ProcessMessage(conn, ms.ToArray(), gameServer))
+                    if (!ProcessMessage(conn, ms.ToArray(), gameServer, logWriter))
                         break;
 
                 }
@@ -80,7 +80,7 @@ public static class ServerWebSocketHandler
         }
     }
 
-    private static bool ProcessMessage(PlayerConnection conn, byte[] data, GameServer gameServer)
+    private static bool ProcessMessage(PlayerConnection conn, byte[] data, GameServer gameServer, TextWriter logWriter)
     {
         try
         {
@@ -95,7 +95,7 @@ public static class ServerWebSocketHandler
                     }
                     else
                     {
-                        Console.Error.WriteLine($"Player {conn.ConnectionId} attempted to login but is already logged in");
+                        logWriter.WriteLine($"Player {conn.ConnectionId} attempted to login but is already logged in");
                         return false;
                     }
                     break;
@@ -116,14 +116,14 @@ public static class ServerWebSocketHandler
                     break;
 
                 default:
-                    Console.Error.WriteLine($"Unknown message type from {conn.ConnectionId}: {envelope.MessageType}");
+                    logWriter.WriteLine($"Unknown message type from {conn.ConnectionId}: {envelope.MessageType}");
                     return false;
             }
             return true;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error processing message from {conn.ConnectionId}: {ex.Message}");
+            logWriter.WriteLine($"Error processing message from {conn.ConnectionId}: {ex.Message}");
             return false;
         }
     }
