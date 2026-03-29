@@ -30,6 +30,7 @@ public sealed class RogueLikeGame : GameBase
 
     private IGameServerConnection? _connection;
     private long _lastFrameTicks;
+    private int _lastSentVisibleChunks;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenManager.CurrentState;
@@ -191,8 +192,55 @@ public sealed class RogueLikeGame : GameBase
         int totalRows = Math.Max(15, renderer.WindowHeight / AsciiDraw.TileHeight);
         _screenManager.Render(renderer, totalCols, totalRows);
 
+        // Compute visible chunk count and notify server if changed
+        UpdateVisibleChunks(renderer.WindowWidth, renderer.WindowHeight);
+
         renderer.EndFrame();
         input.EndFrame();
+    }
+
+    // ── Viewport Tracking ───────────────────────────────────
+
+    /// <summary>
+    /// Computes how many distinct chunks are visible in the viewport and notifies
+    /// the server whenever the count changes.
+    /// </summary>
+    private void UpdateVisibleChunks(int windowWidth, int windowHeight)
+    {
+        if (_connection == null) return;
+
+        int visibleChunks = ComputeVisibleChunks(windowWidth, windowHeight, _debug);
+        if (visibleChunks != _lastSentVisibleChunks)
+        {
+            _lastSentVisibleChunks = visibleChunks;
+            _ = _connection.SendViewportInfoAsync(
+                new ViewportInfoMsg { VisibleChunks = visibleChunks });
+        }
+    }
+
+    /// <summary>
+    /// Calculates the number of distinct chunks that can be visible given pixel
+    /// dimensions and zoom settings. Accounts for the HUD column reservation.
+    /// </summary>
+    public static int ComputeVisibleChunks(int windowWidth, int windowHeight, DebugSettings debug)
+    {
+        int tileW = debug.EffectiveTileWidth;
+        int tileH = debug.EffectiveTileHeight;
+
+        // The game area excludes the HUD panel
+        int gamePixelW = windowWidth - AsciiDraw.HudColumns * AsciiDraw.TileWidth;
+        if (gamePixelW < tileW) gamePixelW = tileW;
+
+        int visibleTileCols = gamePixelW / tileW;
+        int visibleTileRows = windowHeight / tileH;
+
+        // Number of chunk columns/rows: a visible span of N tiles on a 64-tile chunk
+        // can straddle ceil(N / ChunkSize) + 1 chunks (player can be at chunk boundary)
+        int chunkCols = visibleTileCols / RogueLikeNet.Core.World.Chunk.Size + 2;
+        int chunkRows = visibleTileRows / RogueLikeNet.Core.World.Chunk.Size + 2;
+        int maxSide = Math.Max(chunkCols, chunkRows);
+
+        return Math.Clamp(maxSide * maxSide, 1, Protocol.ChunkTracker.MaxVisibleChunks);
     }
 
     // ── Network Callbacks (called from network thread) ──────

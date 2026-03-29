@@ -59,6 +59,13 @@ public class EmbeddedServerConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
+    public Task SendViewportInfoAsync(ViewportInfoMsg info, CancellationToken ct = default)
+    {
+        if (!_connected) return Task.CompletedTask;
+        _gameServer.UpdateVisibleChunks(_connectionId, info.VisibleChunks);
+        return Task.CompletedTask;
+    }
+
     private Task ProcessServerData(byte[] data)
     {
         Interlocked.Add(ref _bytesReceived, data.Length);

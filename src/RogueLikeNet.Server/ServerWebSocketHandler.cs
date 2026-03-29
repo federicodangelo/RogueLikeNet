@@ -110,6 +110,11 @@ public static class ServerWebSocketHandler
                     gameServer.BroadcastChat(conn.ConnectionId, chat.Text);
                     break;
 
+                case MessageTypes.ViewportInfo:
+                    var viewport = NetSerializer.Deserialize<ViewportInfoMsg>(envelope.Payload);
+                    gameServer.UpdateVisibleChunks(conn.ConnectionId, viewport.VisibleChunks);
+                    break;
+
                 default:
                     Console.Error.WriteLine($"Unknown message type from {conn.ConnectionId}: {envelope.MessageType}");
                     return false;

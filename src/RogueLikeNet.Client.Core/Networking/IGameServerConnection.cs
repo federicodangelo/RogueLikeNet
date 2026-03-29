@@ -17,6 +17,7 @@ public interface IGameServerConnection : IAsyncDisposable
     Task SendLoginAsync(LoginMsg login, CancellationToken ct = default);
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);
     Task SendChatAsync(string text, CancellationToken ct = default);
+    Task SendViewportInfoAsync(ViewportInfoMsg info, CancellationToken ct = default);
 
     event Action<WorldDeltaMsg>? OnWorldDelta;
     event Action<ChatMsg>? OnChatReceived;

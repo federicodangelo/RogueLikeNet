@@ -47,9 +47,6 @@ public class GameServer : IDisposable
         set => _engine.DebugMaxSpeed = value;
     }
 
-    /// <summary>Debug: chunk range override for zoomed-out views.</summary>
-    public int DebugChunkRange { get; set; } = 1;
-
     /// <summary>Debug: when true, all tiles are treated as visible (no FOV). Only applies to player visibility, not explored state.</summary>
     public bool DebugVisibilityOff { get; set; } = false;
 
@@ -101,6 +98,18 @@ public class GameServer : IDisposable
     {
         if (_connections.TryGetValue(connectionId, out var conn))
             conn.InputQueue.Enqueue(input);
+    }
+
+    public void UpdateVisibleChunks(long connectionId, int visibleChunks)
+    {
+        if (_connections.TryGetValue(connectionId, out var conn))
+        {
+            EnqueueCommand(() =>
+            {
+                conn.VisibleChunks = Math.Clamp(visibleChunks, 1, ChunkTracker.MaxVisibleChunks);
+                return Task.CompletedTask;
+            });
+        }
     }
 
     public void BroadcastChat(long senderConnectionId, string text)
@@ -287,10 +296,9 @@ public class GameServer : IDisposable
         var playerEntity = conn.PlayerEntity!.Value;
         ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
         ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
-        var playerChunkRange = Math.Max(1, DebugChunkRange);
 
         var chunkDelta = GameStateSerializer.SerializeChunksDelta(
-            _engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, playerChunkRange);
+            _engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, conn.VisibleChunks);
 
         // State delta compression: always send on snapshot, otherwise only when changed
         var state = GameStateSerializer.BuildPlayerState(_engine, playerEntity);

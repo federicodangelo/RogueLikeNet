@@ -38,9 +38,6 @@ public sealed class DebugSettings
     /// <summary>Effective font scale considering zoom. Used by renderers.</summary>
     public float EffectiveFontScale => ComputeEffectiveSize(Rendering.AsciiDraw.FontScale);
 
-    /// <summary>Computed chunk range for the server based on zoom level.</summary>
-    public int ChunkRange => Math.Max(1, (int)MathF.Ceiling(1.0f / ComputeEffectiveSize(1.0f)));
-
     public void Reset()
     {
         VisibilityOff = true;

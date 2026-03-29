@@ -75,6 +75,20 @@ public class WebSocketServerConnection : IGameServerConnection
             ct);
     }
 
+    public async Task SendViewportInfoAsync(ViewportInfoMsg info, CancellationToken ct = default)
+    {
+        if (_socket?.State != WebSocketState.Open) return;
+
+        var payload = NetSerializer.Serialize(info);
+        var data = NetSerializer.WrapMessage(MessageTypes.ViewportInfo, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
+        await _socket.SendAsync(
+            new ArraySegment<byte>(data),
+            WebSocketMessageType.Binary,
+            endOfMessage: true,
+            ct);
+    }
+
     private async Task ReadLoop(CancellationToken ct)
     {
         var buffer = new byte[65536];

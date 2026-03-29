@@ -5,28 +5,63 @@ namespace RogueLikeNet.Protocol.Tests;
 
 public class ChunkTrackerTests
 {
+    private static ChunkTracker CreateTracker(int visibleChunks)
+    {
+        var tracker = new ChunkTracker();
+        tracker.UpdateCapacity(visibleChunks);
+        return tracker;
+    }
+
     [Fact]
     public void NewTracker_IsEmpty()
     {
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
         Assert.Equal(0, tracker.Count);
     }
 
     [Fact]
     public void ComputeCapacity_MatchesFormula()
     {
-        // chunkRange=1 → side=3, capacity=18
-        Assert.Equal(18, ChunkTracker.ComputeCapacity(1));
-        // chunkRange=2 → side=5, capacity=50
-        Assert.Equal(50, ChunkTracker.ComputeCapacity(2));
-        // chunkRange=3 → side=7, capacity=98
-        Assert.Equal(98, ChunkTracker.ComputeCapacity(3));
+        // visibleChunks=1 → max(9, 1*2)=9
+        Assert.Equal(9, ChunkTracker.ComputeCapacity(1));
+        // visibleChunks=4 → max(9, 4*2)=9
+        Assert.Equal(9, ChunkTracker.ComputeCapacity(4));
+        // visibleChunks=5 → max(9, 5*2)=10
+        Assert.Equal(10, ChunkTracker.ComputeCapacity(5));
+        // visibleChunks=9 → max(9, 9*2)=18
+        Assert.Equal(18, ChunkTracker.ComputeCapacity(9));
+        // visibleChunks=25 → max(9, 25*2)=50
+        Assert.Equal(50, ChunkTracker.ComputeCapacity(25));
+        // visibleChunks=100 → max(9, 100*2)=200
+        Assert.Equal(200, ChunkTracker.ComputeCapacity(100));
+    }
+
+    [Fact]
+    public void ComputeCapacity_CapsAtMaxVisibleChunks()
+    {
+        // Values above MaxVisibleChunks are clamped
+        Assert.Equal(400, ChunkTracker.ComputeCapacity(1000));
+    }
+
+    [Fact]
+    public void ComputeChunkRange_DerivedFromVisibleChunks()
+    {
+        // 1 visible chunk → range 1
+        Assert.Equal(1, ChunkTracker.ComputeChunkRange(1));
+        // 4 visible chunks → ceil(sqrt(4))=2, (2+1)/2=1 → range 1
+        Assert.Equal(1, ChunkTracker.ComputeChunkRange(4));
+        // 9 visible chunks → ceil(sqrt(9))=3, (3+1)/2=2 → range 2
+        Assert.Equal(2, ChunkTracker.ComputeChunkRange(9));
+        // 16 visible chunks → ceil(sqrt(16))=4, (4+1)/2=2 → range 2
+        Assert.Equal(2, ChunkTracker.ComputeChunkRange(16));
+        // 25 visible chunks → ceil(sqrt(25))=5, (5+1)/2=3 → range 3
+        Assert.Equal(3, ChunkTracker.ComputeChunkRange(25));
     }
 
     [Fact]
     public void Touch_NewKey_ReturnsTrue()
     {
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
         Assert.True(tracker.Touch(100));
         Assert.Equal(1, tracker.Count);
     }
@@ -34,7 +69,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Touch_ExistingKey_ReturnsFalse()
     {
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
         tracker.Touch(100);
         Assert.False(tracker.Touch(100));
         Assert.Equal(1, tracker.Count);
@@ -43,7 +78,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Contains_TracksAddedKeys()
     {
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
         Assert.False(tracker.Contains(100));
         tracker.Touch(100);
         Assert.True(tracker.Contains(100));
@@ -52,7 +87,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Evict_UnderCapacity_ReturnsEmpty()
     {
-        var tracker = new ChunkTracker(1); // capacity=18
+        var tracker = CreateTracker(9); // capacity=18
         for (int i = 0; i < 10; i++)
             tracker.Touch(i);
 
@@ -64,7 +99,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Evict_OverCapacity_RemovesLeastRecentlyUsed()
     {
-        var tracker = new ChunkTracker(1); // capacity=18
+        var tracker = CreateTracker(9); // capacity=18
 
         // Add 20 keys (0..19) — exceeds capacity by 2
         for (int i = 0; i < 20; i++)
@@ -86,7 +121,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Touch_PromotesExistingKey_EvictsCorrectly()
     {
-        var tracker = new ChunkTracker(1); // capacity=18
+        var tracker = CreateTracker(9); // capacity=18
 
         // Add keys 0..17 (exactly at capacity)
         for (int i = 0; i < 18; i++)
@@ -115,7 +150,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Clear_RemovesAll()
     {
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
         for (int i = 0; i < 10; i++)
             tracker.Touch(i);
 
@@ -129,24 +164,24 @@ public class ChunkTrackerTests
     [Fact]
     public void UpdateCapacity_ChangesMaxCapacity()
     {
-        var tracker = new ChunkTracker(1); // capacity=18
+        var tracker = CreateTracker(9); // capacity=18
         Assert.Equal(18, tracker.MaxCapacity);
 
-        tracker.UpdateCapacity(2); // capacity=50
+        tracker.UpdateCapacity(25); // capacity=50
         Assert.Equal(50, tracker.MaxCapacity);
     }
 
     [Fact]
     public void UpdateCapacity_ShrinkTriggersEviction()
     {
-        var tracker = new ChunkTracker(2); // capacity=50
+        var tracker = CreateTracker(25); // capacity=50
 
         // Add 30 entries
         for (int i = 0; i < 30; i++)
             tracker.Touch(i);
 
         // Shrink to capacity=18
-        tracker.UpdateCapacity(1);
+        tracker.UpdateCapacity(9);
         var evicted = tracker.Evict();
         Assert.Equal(12, evicted.Length); // 30 - 18 = 12
         Assert.Equal(18, tracker.Count);
@@ -164,7 +199,7 @@ public class ChunkTrackerTests
     [Fact]
     public void Evict_RepeatedCalls_SecondReturnsEmpty()
     {
-        var tracker = new ChunkTracker(1); // capacity=18
+        var tracker = CreateTracker(9); // capacity=18
 
         for (int i = 0; i < 20; i++)
             tracker.Touch(i);
@@ -180,7 +215,7 @@ public class ChunkTrackerTests
     public void PackedCoordKeys_WorkCorrectly()
     {
         // Verify that ChunkTracker works with actual packed coords used by the game
-        var tracker = new ChunkTracker(1);
+        var tracker = new ChunkTracker();
 
         long key1 = Position.PackCoord(0, 0);
         long key2 = Position.PackCoord(1, -1);

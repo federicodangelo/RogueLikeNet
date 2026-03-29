@@ -110,7 +110,6 @@ public class Program
         _embeddedServer.DebugNoCollision = debug.CollisionsOff;
         _embeddedServer.DebugInvulnerable = debug.Invulnerable;
         _embeddedServer.DebugMaxSpeed = debug.MaxSpeed;
-        _embeddedServer.DebugChunkRange = debug.ChunkRange;
         _embeddedServer.DebugVisibilityOff = debug.VisibilityOff;
         _game.GameState.DebugSeeAll = debug.VisibilityOff;
     }

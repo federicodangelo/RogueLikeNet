@@ -61,10 +61,10 @@ public static class GameStateSerializer
     /// the client can discard them.
     /// </summary>
     public static ChunkDeltaResult SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, ChunkTracker tracker, int chunkRange)
+        GameEngine engine, int worldX, int worldY, ChunkTracker tracker, int visibleChunks)
     {
-        tracker.UpdateCapacity(chunkRange);
-
+        tracker.UpdateCapacity(visibleChunks);
+        var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
         var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
         var newChunks = new List<ChunkDataMsg>();
 

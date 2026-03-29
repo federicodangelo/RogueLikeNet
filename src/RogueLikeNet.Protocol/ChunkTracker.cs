@@ -3,34 +3,42 @@ namespace RogueLikeNet.Protocol;
 /// <summary>
 /// LRU-based chunk tracker that limits the number of tracked (sent) chunks.
 /// When capacity is exceeded the least recently used chunks are evicted.
-/// The max capacity is derived from the chunk range:
-///   side = chunkRange * 2 + 1, capacity = side * side * 2
-/// This gives enough room for the visible area plus some recently visited area.
+/// Capacity = max(9, visibleChunks * 2), giving room for the visible area
+/// plus recently visited chunks.
 /// </summary>
 public sealed class ChunkTracker
 {
+    public const int MaxVisibleChunks = 200;
+    public const int MinCapacity = 9;
+
     private readonly LinkedList<long> _lruOrder = new();
     private readonly Dictionary<long, LinkedListNode<long>> _map = new();
-    private int _maxCapacity;
+    private int _maxCapacity = MinCapacity * 2;
 
     public int Count => _map.Count;
     public int MaxCapacity => _maxCapacity;
 
-    public ChunkTracker(int chunkRange = 1)
+    /// <summary>Computes the LRU capacity from a visible chunk count.</summary>
+    public static int ComputeCapacity(int visibleChunks)
     {
-        _maxCapacity = ComputeCapacity(chunkRange);
+        return Math.Max(MinCapacity, Math.Min(visibleChunks, MaxVisibleChunks) * 2);
     }
 
-    public static int ComputeCapacity(int chunkRange)
+    /// <summary>
+    /// Derives the minimum chunk range (distance in chunks around the player)
+    /// needed to cover the given number of visible chunks.
+    /// </summary>
+    public static int ComputeChunkRange(int visibleChunks)
     {
-        int side = chunkRange * 2 + 1;
-        return side * side * 2;
+        visibleChunks = Math.Clamp(visibleChunks, 1, MaxVisibleChunks);
+        int side = (int)MathF.Ceiling(MathF.Sqrt(visibleChunks));
+        return Math.Max(1, (side + 1) / 2);
     }
 
-    /// <summary>Updates the max capacity based on a new chunk range.</summary>
-    public void UpdateCapacity(int chunkRange)
+    /// <summary>Updates the max capacity based on a visible chunk count.</summary>
+    public void UpdateCapacity(int visibleChunks)
     {
-        _maxCapacity = ComputeCapacity(chunkRange);
+        _maxCapacity = ComputeCapacity(visibleChunks);
     }
 
     /// <summary>Returns true if the chunk key is already tracked.</summary>

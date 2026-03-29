@@ -21,6 +21,9 @@ public class PlayerConnection
     /// <summary>LRU tracker for chunks whose full static data has been sent.</summary>
     public ChunkTracker SentChunkTracker { get; } = new();
 
+    /// <summary>Number of chunks visible in the client's viewport (sent by client).</summary>
+    public int VisibleChunks { get; set; } = 9;
+
     /// <summary>Last serialized HUD bytes for delta compression.</summary>
     public byte[]? LastSentHudBytes { get; set; }
 

@@ -236,8 +236,8 @@ public class GameServerTests
         var envelope = NetSerializer.UnwrapMessage(receivedData);
         var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
 
-        // Should have 3x3 = 9 chunks around spawn
-        Assert.Equal(9, snapshot.Chunks.Length);
+        // Default VisibleChunks=9 → chunkRange=2 → 5x5 = 25 chunks around spawn
+        Assert.Equal(25, snapshot.Chunks.Length);
         // Each chunk should have tile data
         foreach (var chunk in snapshot.Chunks)
         {
@@ -878,5 +878,45 @@ public class GameServerTests
         loop.Dispose();
         // Second dispose should not throw
         loop.Dispose();
+    }
+
+    [Fact]
+    public void UpdateVisibleChunks_ClampsToMaximum()
+    {
+        using var loop = new TestGameServer(42, _gen);
+        var conn = loop.AddConnection(_ => Task.CompletedTask);
+        Assert.Equal(9, conn.VisibleChunks); // default
+
+        loop.UpdateVisibleChunks(conn.ConnectionId, 50);
+        Assert.Equal(50, conn.VisibleChunks);
+
+        loop.UpdateVisibleChunks(conn.ConnectionId, 200);
+        Assert.Equal(ChunkTracker.MaxVisibleChunks, conn.VisibleChunks); // clamped
+
+        loop.UpdateVisibleChunks(conn.ConnectionId, -5);
+        Assert.Equal(1, conn.VisibleChunks); // clamped to min
+    }
+
+    [Fact]
+    public void UpdateVisibleChunks_AffectsChunkCount()
+    {
+        // With visibleChunks=4, chunkRange=1 → 3x3=9 chunks
+        using var loop = new TestGameServer(42, _gen);
+        byte[]? receivedData = null;
+        var conn = loop.AddConnection(data =>
+        {
+            receivedData = data;
+            return Task.CompletedTask;
+        });
+
+        loop.UpdateVisibleChunks(conn.ConnectionId, 4);
+        loop.SpawnPlayerForConnection(conn.ConnectionId);
+
+        Assert.NotNull(receivedData);
+        var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(
+            NetSerializer.UnwrapMessage(receivedData).Payload);
+
+        // visibleChunks=4 → chunkRange=1 → 3x3=9 chunks
+        Assert.Equal(9, snapshot.Chunks.Length);
     }
 }
