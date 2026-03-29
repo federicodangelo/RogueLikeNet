@@ -52,47 +52,9 @@ public class InventorySystem
             ref var inv = ref world.Get<Inventory>(player);
             if (inv.Items == null) continue;
 
-            // Copy item data to inventory, then destroy the floor entity
             var itemData = world.Get<ItemData>(item);
-            var def = ItemDefinitions.Get(itemData.ItemTypeId);
-
-            // Try auto-stack if stackable
-            if (def.Stackable)
-            {
-                bool stacked = false;
-                for (int i = 0; i < inv.Items.Count; i++)
-                {
-                    if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
-                        inv.Items[i].Rarity == itemData.Rarity &&
-                        inv.Items[i].StackCount < def.MaxStackSize)
-                    {
-                        var existing = inv.Items[i];
-                        int canAdd = def.MaxStackSize - existing.StackCount;
-                        int toAdd = Math.Min(canAdd, itemData.StackCount);
-                        existing.StackCount += toAdd;
-                        inv.Items[i] = existing;
-                        itemData.StackCount -= toAdd;
-                        if (itemData.StackCount <= 0) { stacked = true; break; }
-                    }
-                }
-                if (stacked) { world.Destroy(item); continue; }
-                // Remaining stack goes into new slot
-                if (itemData.StackCount > 0 && !inv.IsFull)
-                {
-                    int newIndex = inv.Items.Count;
-                    inv.Items.Add(itemData);
-                    AutoAssignQuickSlot(world, player, newIndex);
-                    world.Destroy(item);
-                }
-            }
-            else
-            {
-                if (inv.IsFull) continue;
-                int newIndex = inv.Items.Count;
-                inv.Items.Add(itemData);
-                AutoAssignQuickSlot(world, player, newIndex);
+            if (AddItemToInventory(world, player, itemData))
                 world.Destroy(item);
-            }
         }
     }
 
@@ -443,6 +405,56 @@ public class InventorySystem
                     EquipItem(world, player, invIndex);
                     break;
             }
+        }
+    }
+
+    /// <summary>
+    /// Adds an item to the player's inventory, handling auto-stacking and quick-slot assignment.
+    /// Returns true if the item was fully added (caller can destroy the floor entity).
+    /// </summary>
+    public static bool AddItemToInventory(Arch.Core.World world, Entity player, ItemData itemData)
+    {
+        if (!world.IsAlive(player)) return false;
+        ref var inv = ref world.Get<Inventory>(player);
+        if (inv.Items == null) return false;
+
+        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+
+        if (def.Stackable)
+        {
+            // Try auto-stack into existing slots
+            for (int i = 0; i < inv.Items.Count; i++)
+            {
+                if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
+                    inv.Items[i].Rarity == itemData.Rarity &&
+                    inv.Items[i].StackCount < def.MaxStackSize)
+                {
+                    var existing = inv.Items[i];
+                    int canAdd = def.MaxStackSize - existing.StackCount;
+                    int toAdd = Math.Min(canAdd, itemData.StackCount);
+                    existing.StackCount += toAdd;
+                    inv.Items[i] = existing;
+                    itemData.StackCount -= toAdd;
+                    if (itemData.StackCount <= 0) return true;
+                }
+            }
+            // Remaining stack goes into new slot
+            if (itemData.StackCount > 0 && !inv.IsFull)
+            {
+                int newIndex = inv.Items.Count;
+                inv.Items.Add(itemData);
+                AutoAssignQuickSlot(world, player, newIndex);
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            if (inv.IsFull) return false;
+            int newIndex = inv.Items.Count;
+            inv.Items.Add(itemData);
+            AutoAssignQuickSlot(world, player, newIndex);
+            return true;
         }
     }
 

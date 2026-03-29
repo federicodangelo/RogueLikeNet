@@ -1,6 +1,7 @@
 using Arch.Core;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -166,6 +167,21 @@ public class AISystem
             if (Math.Abs(nx - npc.TownCenterX) > npc.WanderRadius ||
                 Math.Abs(ny - npc.TownCenterY) > npc.WanderRadius)
                 return;
+
+            // Check for closed doors — NPCs can open them
+            var targetTile = map.GetTile(nx, ny);
+            if (targetTile.Type == TileType.DoorClosed)
+            {
+                map.SetTile(nx, ny, new TileInfo
+                {
+                    Type = TileType.Door,
+                    GlyphId = TileDefinitions.GlyphDoor,
+                    FgColor = targetTile.FgColor,
+                    BgColor = targetTile.BgColor,
+                });
+                delay.Current = delay.Interval;
+                return; // Spend this turn opening the door, move through next turn
+            }
 
             // Check walkability and no collision
             if (!map.IsWalkable(nx, ny)) return;

@@ -1,12 +1,13 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
 
 /// <summary>
 /// Generates a town in the center of an overworld chunk.
-/// Places houses with walls, doors, windows, furniture, and floor tiles.
+/// Places houses using actual buildable items so everything can be picked up.
 /// Biome determines construction material. Spawns peaceful town NPCs.
 /// </summary>
 internal static class TownGenerator
@@ -139,6 +140,12 @@ internal static class TownGenerator
     private static void BuildHouse(Chunk chunk, Room house, SeededRandom rng, TownMaterial mat,
         int worldOffsetX, int worldOffsetY, GenerationResult result)
     {
+        // Resolve tile visuals from buildable item definitions
+        var (wallType, wallGlyph, wallFg) = BuildingSystem.GetBuildableTile(mat.WallItemId);
+        var (doorType, doorGlyph, doorFg) = BuildingSystem.GetBuildableTile(mat.DoorItemId);
+        var (windowType, windowGlyph, windowFg) = BuildingSystem.GetBuildableTile(mat.WindowItemId);
+        var (floorType, floorGlyph, floorFg) = BuildingSystem.GetBuildableTile(mat.FloorTileItemId);
+
         // Floor inside (inset by 1 for walls)
         for (int x = house.X + 1; x < house.X + house.Width - 1; x++)
         {
@@ -146,9 +153,9 @@ internal static class TownGenerator
             {
                 if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloorTile;
-                tile.FgColor = mat.FloorColor;
+                tile.Type = floorType;
+                tile.GlyphId = floorGlyph;
+                tile.FgColor = floorFg;
                 tile.BgColor = TileDefinitions.ColorBlack;
             }
         }
@@ -156,13 +163,13 @@ internal static class TownGenerator
         // Walls
         for (int x = house.X; x < house.X + house.Width; x++)
         {
-            SetWall(chunk, x, house.Y, mat);
-            SetWall(chunk, x, house.Y + house.Height - 1, mat);
+            SetBuildableTile(chunk, x, house.Y, wallType, wallGlyph, wallFg);
+            SetBuildableTile(chunk, x, house.Y + house.Height - 1, wallType, wallGlyph, wallFg);
         }
         for (int y = house.Y; y < house.Y + house.Height; y++)
         {
-            SetWall(chunk, house.X, y, mat);
-            SetWall(chunk, house.X + house.Width - 1, y, mat);
+            SetBuildableTile(chunk, house.X, y, wallType, wallGlyph, wallFg);
+            SetBuildableTile(chunk, house.X + house.Width - 1, y, wallType, wallGlyph, wallFg);
         }
 
         // Place a door on a wall
@@ -170,19 +177,19 @@ internal static class TownGenerator
         int doorX, doorY;
         switch (doorSide)
         {
-            case 0: // North wall
+            case 0:
                 doorX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
                 doorY = house.Y;
                 break;
-            case 1: // South wall
+            case 1:
                 doorX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
                 doorY = house.Y + house.Height - 1;
                 break;
-            case 2: // West wall
+            case 2:
                 doorX = house.X;
                 doorY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
                 break;
-            default: // East wall
+            default:
                 doorX = house.X + house.Width - 1;
                 doorY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
                 break;
@@ -190,9 +197,9 @@ internal static class TownGenerator
         if (doorX >= 0 && doorX < Chunk.Size && doorY >= 0 && doorY < Chunk.Size)
         {
             ref var doorTile = ref chunk.Tiles[doorX, doorY];
-            doorTile.Type = TileType.DoorClosed;
-            doorTile.GlyphId = TileDefinitions.GlyphDoorClosed;
-            doorTile.FgColor = mat.WallColor;
+            doorTile.Type = doorType;
+            doorTile.GlyphId = doorGlyph;
+            doorTile.FgColor = doorFg;
         }
 
         // Place a window on the opposite wall from the door
@@ -221,9 +228,9 @@ internal static class TownGenerator
             (windowX != doorX || windowY != doorY))
         {
             ref var windowTile = ref chunk.Tiles[windowX, windowY];
-            windowTile.Type = TileType.Window;
-            windowTile.GlyphId = TileDefinitions.GlyphWindow;
-            windowTile.FgColor = TileDefinitions.ColorWindowFg;
+            windowTile.Type = windowType;
+            windowTile.GlyphId = windowGlyph;
+            windowTile.FgColor = windowFg;
         }
 
         // Place furniture inside the house
@@ -239,27 +246,22 @@ internal static class TownGenerator
         int interiorH = house.Height - 2;
 
         // Try placing a table near center
-        TryPlaceDecoration(chunk, interiorX + interiorW / 2, interiorY + interiorH / 2,
-            TileDefinitions.GlyphTable, TileDefinitions.ColorTableFg);
+        PlaceBuildable(chunk, interiorX + interiorW / 2, interiorY + interiorH / 2, ItemDefinitions.WoodenTable);
 
         // Try placing chairs around the table
         if (interiorW >= 3 && interiorH >= 3)
         {
-            TryPlaceDecoration(chunk, interiorX + interiorW / 2 - 1, interiorY + interiorH / 2,
-                TileDefinitions.GlyphChair, TileDefinitions.ColorChairFg);
-            TryPlaceDecoration(chunk, interiorX + interiorW / 2 + 1, interiorY + interiorH / 2,
-                TileDefinitions.GlyphChair, TileDefinitions.ColorChairFg);
+            PlaceBuildable(chunk, interiorX + interiorW / 2 - 1, interiorY + interiorH / 2, ItemDefinitions.WoodenChair);
+            PlaceBuildable(chunk, interiorX + interiorW / 2 + 1, interiorY + interiorH / 2, ItemDefinitions.WoodenChair);
         }
 
         // Bed in a corner
-        TryPlaceDecoration(chunk, interiorX, interiorY,
-            TileDefinitions.GlyphBed, TileDefinitions.ColorBedFg);
+        PlaceBuildable(chunk, interiorX, interiorY, ItemDefinitions.WoodenBed);
 
         // Bookshelf along a wall
         if (interiorW >= 3)
         {
-            TryPlaceDecoration(chunk, interiorX + interiorW - 1, interiorY,
-                TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg);
+            PlaceBuildable(chunk, interiorX + interiorW - 1, interiorY, ItemDefinitions.WoodenBookshelf);
         }
 
         // Torch inside the house
@@ -275,41 +277,49 @@ internal static class TownGenerator
         }
     }
 
-    private static void TryPlaceDecoration(Chunk chunk, int x, int y, int glyphId, int fgColor)
+    /// <summary>
+    /// Places a buildable item onto a floor tile using the BuildingSystem's tile mapping.
+    /// </summary>
+    private static void PlaceBuildable(Chunk chunk, int x, int y, int itemTypeId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
         if (tile.Type != TileType.Floor) return;
-        tile.Type = TileType.Decoration;
+        var (tileType, glyphId, fgColor) = BuildingSystem.GetBuildableTile(itemTypeId);
+        tile.Type = tileType;
         tile.GlyphId = glyphId;
         tile.FgColor = fgColor;
     }
 
-    private static void SetWall(Chunk chunk, int x, int y, TownMaterial mat)
+    private static void SetBuildableTile(Chunk chunk, int x, int y, TileType type, int glyphId, int fgColor)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Wall;
-        tile.GlyphId = TileDefinitions.GlyphWall;
-        tile.FgColor = mat.WallColor;
+        tile.Type = type;
+        tile.GlyphId = glyphId;
+        tile.FgColor = fgColor;
         tile.BgColor = TileDefinitions.ColorBlack;
     }
 
     /// <summary>
-    /// Construction material palette per biome.
+    /// Construction material per biome, using actual buildable item type IDs.
+    /// This ensures all town tiles can be picked up by the player.
     /// </summary>
     private static TownMaterial GetMaterial(BiomeType biome) => biome switch
     {
-        BiomeType.Forest => new(TileDefinitions.ColorWoodFg, TileDefinitions.ColorWoodFg),
-        BiomeType.Ice => new(TileDefinitions.ColorIronFg, TileDefinitions.ColorIceFg),
-        BiomeType.Lava or BiomeType.Infernal => new(TileDefinitions.ColorIronFg, TileDefinitions.ColorIronFg),
-        BiomeType.Arcane => new(TileDefinitions.ColorCopperFg, TileDefinitions.ColorCopperFg),
-        BiomeType.Crypt => new(TileDefinitions.ColorStoneTileFg, TileDefinitions.ColorStoneTileFg),
-        BiomeType.Sewer => new(TileDefinitions.ColorCopperFg, TileDefinitions.ColorStoneTileFg),
-        BiomeType.Fungal => new(TileDefinitions.ColorWoodFg, TileDefinitions.ColorMushroomFg),
-        BiomeType.Ruined => new(TileDefinitions.ColorStoneTileFg, TileDefinitions.ColorRubbleFg),
-        _ => new(TileDefinitions.ColorStoneTileFg, TileDefinitions.ColorStoneTileFg), // Stone, etc.
+        BiomeType.Forest or BiomeType.Fungal => new(
+            ItemDefinitions.WoodenWall, ItemDefinitions.WoodenDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.WoodenFloorTile),
+        BiomeType.Ice => new(
+            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.IronFloorTile),
+        BiomeType.Lava or BiomeType.Infernal => new(
+            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.IronFloorTile),
+        BiomeType.Arcane or BiomeType.Sewer => new(
+            ItemDefinitions.CopperWall, ItemDefinitions.CopperDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.CopperFloorTile),
+        BiomeType.Crypt or BiomeType.Ruined => new(
+            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.StoneFloorTile),
+        _ => new(
+            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.StoneFloorTile),
     };
 
-    private readonly record struct TownMaterial(int WallColor, int FloorColor);
+    private readonly record struct TownMaterial(int WallItemId, int DoorItemId, int WindowItemId, int FloorTileItemId);
 }

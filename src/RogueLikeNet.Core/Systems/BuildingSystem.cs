@@ -8,6 +8,7 @@ namespace RogueLikeNet.Core.Systems;
 /// <summary>
 /// Processes building placement: validates that the target tile is adjacent floor,
 /// removes the buildable item from inventory, and modifies the world tile.
+/// Uses InventorySystem for pickup to ensure quick-slot updates.
 /// </summary>
 public class BuildingSystem
 {
@@ -110,7 +111,7 @@ public class BuildingSystem
         }
     }
 
-    private static (TileType Type, int GlyphId, int FgColor) GetBuildableTile(int itemTypeId) => itemTypeId switch
+    public static (TileType Type, int GlyphId, int FgColor) GetBuildableTile(int itemTypeId) => itemTypeId switch
     {
         ItemDefinitions.WoodenDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorWoodFg),
         ItemDefinitions.WoodenWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg),
@@ -160,6 +161,16 @@ public class BuildingSystem
             int? itemTypeId = GetItemFromTile(tile);
             if (itemTypeId == null) continue;
 
+            var itemData = new ItemData
+            {
+                ItemTypeId = itemTypeId.Value,
+                Rarity = ItemDefinitions.RarityCommon,
+                StackCount = 1,
+            };
+
+            if (!InventorySystem.AddItemToInventory(world, player, itemData))
+                continue;
+
             // Revert tile to floor
             map.SetTile(targetX, targetY, new TileInfo
             {
@@ -168,34 +179,6 @@ public class BuildingSystem
                 FgColor = TileDefinitions.ColorFloorFg,
                 BgColor = TileDefinitions.ColorBlack,
             });
-
-            // Add item to inventory (auto-stack)
-            var itemData = new ItemData
-            {
-                ItemTypeId = itemTypeId.Value,
-                Rarity = ItemDefinitions.RarityCommon,
-                StackCount = 1,
-            };
-            var def = ItemDefinitions.Get(itemTypeId.Value);
-            bool stacked = false;
-            if (def.Stackable)
-            {
-                for (int i = 0; i < inv.Items.Count; i++)
-                {
-                    if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
-                        inv.Items[i].Rarity == itemData.Rarity &&
-                        inv.Items[i].StackCount < def.MaxStackSize)
-                    {
-                        var existing = inv.Items[i];
-                        existing.StackCount++;
-                        inv.Items[i] = existing;
-                        stacked = true;
-                        break;
-                    }
-                }
-            }
-            if (!stacked && !inv.IsFull)
-                inv.Items.Add(itemData);
         }
     }
 

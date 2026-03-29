@@ -20,6 +20,7 @@ public static class GeneratorRegistry
         new("Enemy Showcase", seed => new EnemyShowcaseGenerator(seed)),
         new("Biome Showcase", seed => new BiomeShowcaseGenerator(seed)),
         new("Arena", seed => new ArenaGenerator(seed)),
+        new("Towns Showcase", seed => new TownsShowcaseGenerator(seed)),
     ];
 
     public static int Count => All.Length;
