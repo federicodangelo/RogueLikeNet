@@ -63,6 +63,9 @@ public static class TileDefinitions
     public const int GlyphLog = 61;        // = (log)
     public const int GlyphOreNugget = 7;   // • (nugget)
 
+    // Generic glyph for dropped placeable items on the ground
+    public const int GlyphDroppedPlaceable = 254; // ■
+
     // Colors (packed 0xRRGGBB)
     public const int ColorWhite = 0xFFFFFF;
     public const int ColorGray = 0x808080;

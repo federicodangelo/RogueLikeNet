@@ -202,7 +202,7 @@ public class GameEngineTests
         // Set all tiles to Wall to trigger fallback
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                chunk.Tiles[x, y].Type = TileType.Wall;
+                chunk.Tiles[x, y].Type = TileType.Blocked;
 
         var (rx, ry) = engine.FindSpawnPosition();
         Assert.Equal(Chunk.Size / 2, rx);

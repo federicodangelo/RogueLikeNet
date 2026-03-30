@@ -93,9 +93,13 @@ public class InventorySystem
 
             // Create a new entity on the ground
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
+            int dropGlyph = def.Category == ItemDefinitions.CategoryPlaceable
+                ? TileDefinitions.GlyphDroppedPlaceable
+                : def.GlyphId;
+            int dropColor = def.Color;
             world.Create(
                 new Position(dropX, dropY),
-                new TileAppearance(def.GlyphId, def.Color),
+                new TileAppearance(dropGlyph, dropColor),
                 itemData);
         }
     }
@@ -472,7 +476,7 @@ public class InventorySystem
         if (def.Category != ItemDefinitions.CategoryWeapon &&
             def.Category != ItemDefinitions.CategoryArmor &&
             def.Category != ItemDefinitions.CategoryPotion &&
-            def.Category != ItemDefinitions.CategoryBuildable)
+            def.Category != ItemDefinitions.CategoryPlaceable)
             return;
         ref var qs = ref world.Get<QuickSlots>(player);
         int emptySlot = qs.FirstEmptySlot();

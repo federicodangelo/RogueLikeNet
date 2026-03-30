@@ -170,15 +170,9 @@ public class AISystem
 
             // Check for closed doors — NPCs can open them
             var targetTile = map.GetTile(nx, ny);
-            if (targetTile.Type == TileType.DoorClosed)
+            if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
             {
-                map.SetTile(nx, ny, new TileInfo
-                {
-                    Type = TileType.Door,
-                    GlyphId = TileDefinitions.GlyphDoor,
-                    FgColor = targetTile.FgColor,
-                    BgColor = targetTile.BgColor,
-                });
+                map.OpenDoor(nx, ny);
                 delay.Current = delay.Interval;
                 return; // Spend this turn opening the door, move through next turn
             }

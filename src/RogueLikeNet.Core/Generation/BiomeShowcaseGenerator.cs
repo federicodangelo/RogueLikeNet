@@ -109,7 +109,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                     int dx = rx + 1 + d * 3;
                     if (dx >= rx + roomW - 1) break;
                     ref var tile = ref chunk.Tiles[dx, decoY];
-                    tile.Type = TileType.Decoration;
+                    tile.Type = TileType.Floor;
                     tile.GlyphId = decorations[d].GlyphId;
                     tile.FgColor = BiomeDefinitions.ApplyBiomeTint(decorations[d].FgColor, biome);
                 }
@@ -179,7 +179,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Wall;
+        tile.Type = TileType.Blocked;
         tile.GlyphId = TileDefinitions.GlyphWall;
         tile.FgColor = TileDefinitions.ColorWallFg;
         tile.BgColor = TileDefinitions.ColorBlack;
@@ -189,7 +189,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        if (tile.Type == TileType.Wall)
+        if (tile.Type == TileType.Blocked)
         {
             tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
             tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);

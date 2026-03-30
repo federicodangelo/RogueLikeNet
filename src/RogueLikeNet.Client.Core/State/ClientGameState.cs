@@ -91,6 +91,8 @@ public class ClientGameState
                     tile.GlyphId = tileUpdate.GlyphId;
                     tile.FgColor = tileUpdate.FgColor;
                     tile.BgColor = tileUpdate.BgColor;
+                    tile.PlaceableItemId = tileUpdate.PlaceableItemId;
+                    tile.PlaceableItemExtra = tileUpdate.PlaceableItemExtra;
                     chunk.LightLevels[lx, ly] = tileUpdate.LightLevel;
                 }
             }
@@ -191,6 +193,8 @@ public class ClientGameState
                 tile.GlyphId = msg.TileGlyphs[idx];
                 tile.FgColor = msg.TileFgColors[idx];
                 tile.BgColor = msg.TileBgColors[idx];
+                tile.PlaceableItemId = msg.TilePlaceableItemIds[idx];
+                tile.PlaceableItemExtra = msg.TilePlaceableItemExtras[idx];
             }
         long key = Position.PackCoord(msg.ChunkX, msg.ChunkY);
         _chunks[key] = chunk;

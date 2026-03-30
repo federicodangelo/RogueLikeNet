@@ -85,7 +85,7 @@ public class OverworldGenerator : IDungeonGenerator
                 }
                 else
                 {
-                    tile.Type = TileType.Wall;
+                    tile.Type = TileType.Blocked;
                     tile.GlyphId = TileDefinitions.GlyphWall;
                     tile.FgColor = TileDefinitions.ColorWallFg;
                     tile.BgColor = TileDefinitions.ColorBlack;
@@ -133,7 +133,7 @@ public class OverworldGenerator : IDungeonGenerator
                     {
                         if (rng.Next(100) < deco.Chance)
                         {
-                            tile.Type = TileType.Decoration;
+                            tile.Type = TileType.Floor;
                             tile.GlyphId = deco.GlyphId;
                             tile.FgColor = BiomeDefinitions.ApplyBiomeTint(deco.FgColor, biome);
                             break;

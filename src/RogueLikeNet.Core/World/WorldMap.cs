@@ -1,13 +1,21 @@
+using Arch.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Definitions;
+using static RogueLikeNet.Core.Definitions.PlaceableDefinitions;
 
 namespace RogueLikeNet.Core.World;
 
 /// <summary>
 /// Manages all chunks in the game world. Generates new chunks on demand.
+/// Owns door auto-close timers.
 /// </summary>
 public class WorldMap
 {
+    // Grace period (in ticks) before an opened door can auto-close.
+    private const int DoorGraceTicks = 20;
+
     private readonly Dictionary<long, Chunk> _chunks = new();
+    private readonly Dictionary<long, int> _openDoorTimers = new();
     private readonly long _seed;
 
     public long Seed => _seed;
@@ -65,6 +73,14 @@ public class WorldMap
         chunk.MarkTileDirty(worldX, worldY);
     }
 
+    public void SetPlaceable(int worldX, int worldY, int placeableId, int extraData = 0)
+    {
+        var tile = GetTile(worldX, worldY);
+        tile.PlaceableItemId = placeableId;
+        tile.PlaceableItemExtra = extraData;
+        SetTile(worldX, worldY, tile);
+    }
+
     /// <summary>Collects all dirty tile updates from loaded chunks and clears the dirty state.</summary>
     public List<(int WorldX, int WorldY, TileInfo Tile)> FlushDirtyTiles()
     {
@@ -84,4 +100,63 @@ public class WorldMap
     }
 
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
+
+    /// <summary>
+    /// Opens a closed door at the given position. Starts the auto-close grace timer.
+    /// </summary>
+    public void OpenDoor(int worldX, int worldY)
+    {
+        var tile = GetTile(worldX, worldY);
+        if (!IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra)) return;
+        tile.PlaceableItemExtra = 1; // open
+        SetTile(worldX, worldY, tile);
+        _openDoorTimers[Position.PackCoord(worldX, worldY)] = DoorGraceTicks;
+    }
+
+    /// <summary>
+    /// Per-tick update: auto-closes doors that are no longer occupied.
+    /// </summary>
+    public void Update(Arch.Core.World ecsWorld)
+    {
+        ProcessDoorTimers(ecsWorld);
+    }
+
+    private void ProcessDoorTimers(Arch.Core.World ecsWorld)
+    {
+        if (_openDoorTimers.Count == 0) return;
+
+        var occupied = new HashSet<long>();
+        var posQuery = new QueryDescription().WithAll<Position, Health>();
+        ecsWorld.Query(in posQuery, (ref Position p, ref Health h) =>
+        {
+            if (h.IsAlive)
+                occupied.Add(Position.PackCoord(p.X, p.Y));
+        });
+
+        var toRemove = new List<long>();
+        var updates = new List<(long Key, int Ticks)>();
+        foreach (var (key, ticksLeft) in _openDoorTimers)
+        {
+            var (x, y) = Position.UnpackCoord(key);
+            var tile = GetTile(x, y);
+            if (!IsDoor(tile.PlaceableItemId) || tile.PlaceableItemExtra != 1) { toRemove.Add(key); continue; }
+
+            int next = ticksLeft - 1;
+            if (occupied.Contains(key) || next > 0)
+            {
+                updates.Add((key, Math.Max(0, next)));
+                continue;
+            }
+
+            // Grace expired and unoccupied — close the door
+            tile.PlaceableItemExtra = 0; // closed
+            SetTile(x, y, tile);
+            toRemove.Add(key);
+        }
+
+        foreach (var key in toRemove)
+            _openDoorTimers.Remove(key);
+        foreach (var (key, ticks) in updates)
+            _openDoorTimers[key] = ticks;
+    }
 }

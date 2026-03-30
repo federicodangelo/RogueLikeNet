@@ -58,8 +58,9 @@ public class BuildingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(targetX, targetY);
-        Assert.Equal(TileType.DoorClosed, tile.Type);
-        Assert.Equal(TileDefinitions.GlyphDoorClosed, tile.GlyphId);
+        Assert.Equal(TileType.Floor, tile.Type); // base tile unchanged
+        Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
+        Assert.Equal(0, tile.PlaceableItemExtra); // closed
     }
 
     [Fact]
@@ -87,7 +88,8 @@ public class BuildingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(targetX, targetY);
-        Assert.Equal(TileType.Wall, tile.Type);
+        Assert.Equal(TileType.Floor, tile.Type);
+        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
     }
 
     [Fact]
@@ -116,7 +118,7 @@ public class BuildingSystemTests
 
         // Verify wall was placed and item removed
         var tile = engine.WorldMap.GetTile(targetX, targetY);
-        Assert.Equal(TileType.Wall, tile.Type);
+        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         Assert.Empty(inv.Items!);
 
@@ -127,9 +129,10 @@ public class BuildingSystemTests
         input2.TargetY = 0;
         engine.Tick();
 
-        // Tile should be floor again
+        // Tile should be floor again (placeable removed)
         tile = engine.WorldMap.GetTile(targetX, targetY);
         Assert.Equal(TileType.Floor, tile.Type);
+        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
 
         // Item should be back in inventory
         ref var inv2 = ref engine.EcsWorld.Get<Inventory>(player);
@@ -162,7 +165,8 @@ public class BuildingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(targetX, targetY);
-        Assert.Equal(TileType.DoorClosed, tile.Type);
+        Assert.Equal(ItemDefinitions.CopperDoor, tile.PlaceableItemId);
+        Assert.Equal(0, tile.PlaceableItemExtra);
 
         // Pick it up
         ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -186,10 +190,10 @@ public class BuildingSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
         int targetX = sx + 1, targetY = sy;
 
-        // Place a natural wall (not player-placed — uses default wall color)
+        // Place a natural wall (not player-placed — Blocked terrain type)
         engine.WorldMap.SetTile(targetX, targetY, new TileInfo
         {
-            Type = TileType.Wall,
+            Type = TileType.Blocked,
             GlyphId = TileDefinitions.GlyphWall,
             FgColor = TileDefinitions.ColorWallFg,
             BgColor = TileDefinitions.ColorBlack,
@@ -203,45 +207,27 @@ public class BuildingSystemTests
 
         // Should still be a wall
         var tile = engine.WorldMap.GetTile(targetX, targetY);
-        Assert.Equal(TileType.Wall, tile.Type);
-    }
-
-    [Theory]
-    [InlineData(ItemDefinitions.WoodenDoor, TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorWoodFg)]
-    [InlineData(ItemDefinitions.WoodenDoor, TileType.DoorClosed, TileDefinitions.GlyphDoorVertical, TileDefinitions.ColorWoodFg)]
-    [InlineData(ItemDefinitions.WoodenDoor, TileType.DoorClosed, TileDefinitions.GlyphDoorHorizontal, TileDefinitions.ColorWoodFg)]
-    [InlineData(ItemDefinitions.WoodenWall, TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg)]
-    [InlineData(ItemDefinitions.WoodenWindow, TileType.Window, TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg)]
-    [InlineData(ItemDefinitions.IronWall, TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg)]
-    public void GetItemFromTile_MatchesBuildables(int expectedItemId, TileType type, int glyphId, int fgColor)
-    {
-        var tile = new TileInfo { Type = type, GlyphId = glyphId, FgColor = fgColor };
-        int? result = BuildingSystem.GetItemFromTile(tile);
-        Assert.NotNull(result);
-        Assert.Equal(expectedItemId, result!.Value);
+        Assert.Equal(TileType.Blocked, tile.Type);
     }
 
     [Fact]
-    public void GetItemFromTile_OpenDoor_MatchesBuildable()
+    public void PlaceableItemId_SetOnPlacedTile()
     {
-        // Open doors with any door glyph should match
-        var tile = new TileInfo { Type = TileType.Door, GlyphId = TileDefinitions.GlyphDoorVertical, FgColor = TileDefinitions.ColorWoodFg };
-        int? result = BuildingSystem.GetItemFromTile(tile);
-        Assert.NotNull(result);
-        Assert.Equal(ItemDefinitions.WoodenDoor, result!.Value);
+        var tile = new TileInfo { Type = TileType.Floor, PlaceableItemId = ItemDefinitions.WoodenWall };
+        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
     }
 
     [Fact]
-    public void GetItemFromTile_NaturalWall_ReturnsNull()
+    public void PlaceableItemId_NoneForNaturalTile()
     {
-        var tile = new TileInfo { Type = TileType.Wall, GlyphId = TileDefinitions.GlyphWall, FgColor = TileDefinitions.ColorWallFg };
-        Assert.Null(BuildingSystem.GetItemFromTile(tile));
+        var tile = new TileInfo { Type = TileType.Blocked, GlyphId = TileDefinitions.GlyphWall, FgColor = TileDefinitions.ColorWallFg };
+        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
     }
 
     [Fact]
-    public void GetItemFromTile_Floor_ReturnsNull()
+    public void PlaceableItemId_NoneForFloor()
     {
         var tile = new TileInfo { Type = TileType.Floor, GlyphId = TileDefinitions.GlyphFloor, FgColor = TileDefinitions.ColorFloorFg };
-        Assert.Null(BuildingSystem.GetItemFromTile(tile));
+        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
     }
 }

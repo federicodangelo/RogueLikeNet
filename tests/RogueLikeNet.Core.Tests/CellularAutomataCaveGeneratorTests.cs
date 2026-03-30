@@ -30,7 +30,7 @@ public class CellularAutomataCaveGeneratorTests
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Blocked) wallCount++;
 
         Assert.True(wallCount > 0, "Cave should have walls");
     }
@@ -66,8 +66,11 @@ public class CellularAutomataCaveGeneratorTests
             var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (result.Chunk.Tiles[x, y].Type == TileType.Decoration)
+                {
+                    ref var t = ref result.Chunk.Tiles[x, y];
+                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
                         totalDecorations++;
+                }
         }
 
         Assert.True(totalDecorations > 0, "Cave generator should place decorations");

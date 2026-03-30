@@ -322,6 +322,8 @@ public class GameServer : IDisposable
                 GlyphId = tile.GlyphId,
                 FgColor = tile.FgColor,
                 BgColor = tile.BgColor,
+                PlaceableItemId = tile.PlaceableItemId,
+                PlaceableItemExtra = tile.PlaceableItemExtra,
             };
         }
     }

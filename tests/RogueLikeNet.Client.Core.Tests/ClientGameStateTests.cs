@@ -31,6 +31,8 @@ public class ClientGameStateTests
             TileGlyphs = glyphs,
             TileFgColors = fg,
             TileBgColors = bg,
+            TilePlaceableItemExtras = new int[size],
+            TilePlaceableItemIds = new int[size],
         };
     }
 
@@ -159,6 +161,8 @@ public class ClientGameStateTests
                     TileGlyphs = new int[64 * 64],
                     TileFgColors = new int[64 * 64],
                     TileBgColors = new int[64 * 64],
+                    TilePlaceableItemExtras = new int[64 * 64],
+                    TilePlaceableItemIds = new int[64 * 64],
                 }
             ],
             EntityUpdates = [],
@@ -315,11 +319,11 @@ public class ClientGameStateTests
             Chunks = [],
             CombatEvents = [],
             EntityUpdates = [],
-            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileType = (byte)TileType.Wall, GlyphId = '#', FgColor = 0xAAAAAA, BgColor = 0x111111, LightLevel = 3 }],
+            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileType = (byte)TileType.Blocked, GlyphId = '#', FgColor = 0xAAAAAA, BgColor = 0x111111, LightLevel = 3 }],
         });
 
         var (tile, lightlevel) = state.GetTileAndLightLevel(32, 32);
-        Assert.Equal(TileType.Wall, tile.Type);
+        Assert.Equal(TileType.Blocked, tile.Type);
         Assert.Equal('#', tile.GlyphId);
         // LightLevel is now computed client-side (player at 32,32 illuminates this tile)
         Assert.True(lightlevel > 0);

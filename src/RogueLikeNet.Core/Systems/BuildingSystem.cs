@@ -46,7 +46,7 @@ public class BuildingSystem
 
             var itemData = inv.Items[slot];
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
-            if (def.Category != ItemDefinitions.CategoryBuildable) continue;
+            if (def.Category != ItemDefinitions.CategoryPlaceable) continue;
 
             // Validate adjacency (target must be within 1 cardinal tile of player)
             int dx = targetX - pos.X;
@@ -58,20 +58,11 @@ public class BuildingSystem
             }
             if (!adjacent) continue;
 
-            // Target tile must be a floor tile (or decoration/floor for floor tile replacements)
+            // Target tile must be a walkable floor tile with no existing placeable
             var tile = map.GetTile(targetX, targetY);
-            var (tileType, glyphId, fgColor) = GetBuildableTile(itemData.ItemTypeId);
-            bool isFloorOrDecor = tileType is TileType.Floor or TileType.Decoration;
-            if (isFloorOrDecor)
-            {
-                // Floor tiles and furniture can be placed on floor or decoration tiles
-                if (tile.Type is not (TileType.Floor or TileType.Decoration)) continue;
-            }
-            else
-            {
-                // Walls, doors, windows require a plain floor tile
-                if (tile.Type != TileType.Floor) continue;
-            }
+            if (tile.Type != TileType.Floor) continue;
+            // We can't place items on top of other placeables
+            if (tile.PlaceableItemId != 0) continue;
 
             // Check no entity occupies the target position
             bool occupied = false;
@@ -83,14 +74,8 @@ public class BuildingSystem
             });
             if (occupied) continue;
 
-            // Modify the world tile
-            map.SetTile(targetX, targetY, new TileInfo
-            {
-                Type = tileType,
-                GlyphId = glyphId,
-                FgColor = fgColor,
-                BgColor = TileDefinitions.ColorBlack,
-            });
+            // Only set the placeable fields — base tile stays unchanged
+            map.SetPlaceable(targetX, targetY, itemData.ItemTypeId, 0);
 
             // Remove item from inventory (decrease stack or remove)
             var item = inv.Items[slot];
@@ -110,31 +95,6 @@ public class BuildingSystem
             }
         }
     }
-
-    public static (TileType Type, int GlyphId, int FgColor) GetBuildableTile(int itemTypeId) => itemTypeId switch
-    {
-        ItemDefinitions.WoodenDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorWoodFg),
-        ItemDefinitions.WoodenWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg),
-        ItemDefinitions.WoodenWindow => (TileType.Window, TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg),
-        ItemDefinitions.CopperDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorCopperFg),
-        ItemDefinitions.CopperWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg),
-        ItemDefinitions.IronDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorIronFg),
-        ItemDefinitions.IronWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg),
-        ItemDefinitions.GoldDoor => (TileType.DoorClosed, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorGoldFg),
-        ItemDefinitions.GoldWall => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg),
-        // Furniture — decoration tiles (walkable, not transparent for bookshelves? No, keep all decoration walkable)
-        ItemDefinitions.WoodenTable => (TileType.Decoration, TileDefinitions.GlyphTable, TileDefinitions.ColorTableFg),
-        ItemDefinitions.WoodenChair => (TileType.Decoration, TileDefinitions.GlyphChair, TileDefinitions.ColorChairFg),
-        ItemDefinitions.WoodenBed => (TileType.Decoration, TileDefinitions.GlyphBed, TileDefinitions.ColorBedFg),
-        ItemDefinitions.WoodenBookshelf => (TileType.Decoration, TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg),
-        // Floor tiles — floor type with distinct glyph/color
-        ItemDefinitions.WoodenFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg),
-        ItemDefinitions.StoneFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg),
-        ItemDefinitions.CopperFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg),
-        ItemDefinitions.IronFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg),
-        ItemDefinitions.GoldFloorTile => (TileType.Floor, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg),
-        _ => (TileType.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWallFg),
-    };
 
     private void ProcessPickUpPlaced(Arch.Core.World world, WorldMap map)
     {
@@ -158,12 +118,11 @@ public class BuildingSystem
             if (inv.Items == null || inv.IsFull) continue;
 
             var tile = map.GetTile(targetX, targetY);
-            int? itemTypeId = GetItemFromTile(tile);
-            if (itemTypeId == null) continue;
+            if (tile.PlaceableItemId == ItemDefinitions.None) continue;
 
             var itemData = new ItemData
             {
-                ItemTypeId = itemTypeId.Value,
+                ItemTypeId = tile.PlaceableItemId,
                 Rarity = ItemDefinitions.RarityCommon,
                 StackCount = 1,
             };
@@ -171,48 +130,8 @@ public class BuildingSystem
             if (!InventorySystem.AddItemToInventory(world, player, itemData))
                 continue;
 
-            // Revert tile to floor
-            map.SetTile(targetX, targetY, new TileInfo
-            {
-                Type = TileType.Floor,
-                GlyphId = TileDefinitions.GlyphFloor,
-                FgColor = TileDefinitions.ColorFloorFg,
-                BgColor = TileDefinitions.ColorBlack,
-            });
+            // Only clear the placeable fields — base tile stays unchanged
+            map.SetPlaceable(targetX, targetY, 0, 0);
         }
     }
-
-    /// <summary>
-    /// Returns the buildable item type for a placed tile, or null if the tile is not a player-placed buildable.
-    /// Matches by tile type, glyph, and foreground color.
-    /// </summary>
-    public static int? GetItemFromTile(TileInfo tile)
-    {
-        foreach (var buildable in ItemDefinitions.All)
-        {
-            if (buildable.Category != ItemDefinitions.CategoryBuildable) continue;
-            var (tileType, _, fgColor) = GetBuildableTile(buildable.TypeId);
-            // For doors, match both open (Door) and closed (DoorClosed) states
-            bool typeMatch = tile.Type == tileType
-                || (tileType == TileType.DoorClosed && tile.Type == TileType.Door);
-            // For doors, accept any door glyph (vertical, horizontal, or legacy)
-            bool glyphMatch;
-            if (tileType == TileType.DoorClosed)
-                glyphMatch = IsDoorGlyph(tile.GlyphId);
-            else
-            {
-                var (_, expectedGlyph, _) = GetBuildableTile(buildable.TypeId);
-                glyphMatch = tile.GlyphId == expectedGlyph;
-            }
-            if (typeMatch && glyphMatch && tile.FgColor == fgColor)
-                return buildable.TypeId;
-        }
-        return null;
-    }
-
-    private static bool IsDoorGlyph(int glyphId) =>
-        glyphId == TileDefinitions.GlyphDoorVertical
-        || glyphId == TileDefinitions.GlyphDoorHorizontal
-        || glyphId == TileDefinitions.GlyphDoor
-        || glyphId == TileDefinitions.GlyphDoorClosed;
 }

@@ -284,6 +284,7 @@ public class GameEngine : IDisposable
         _craftingSystem.Update(_ecsWorld);
         _buildingSystem.Update(_ecsWorld, _worldMap);
         _skillSystem.Update(_ecsWorld);
+        _worldMap.Update(_ecsWorld);
         _fovSystem.Update(_ecsWorld, _worldMap);
         _lightingSystem.Update(_ecsWorld, _worldMap);
 

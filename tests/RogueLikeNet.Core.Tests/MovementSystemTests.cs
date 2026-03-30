@@ -117,7 +117,7 @@ public class MovementSystemTests
         var chunk = engine.EnsureChunkLoaded(0, 0);
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (chunk.Tiles[x, y].Type == TileType.Wall)
+                if (chunk.Tiles[x, y].Type == TileType.Blocked)
                 {
                     wallX = x; wallY = y;
                     goto found;
@@ -249,7 +249,7 @@ public class MovementSystemTests
             for (int y = 1; y < Chunk.Size - 1; y++)
             {
                 if (chunk.Tiles[x, y].Type == TileType.Floor &&
-                    chunk.Tiles[x + 1, y].Type == TileType.Wall)
+                    chunk.Tiles[x + 1, y].Type == TileType.Blocked)
                 {
                     var entity = engine.EcsWorld.Create(
                         new Position(x, y),

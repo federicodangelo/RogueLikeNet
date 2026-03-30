@@ -25,6 +25,8 @@ public static class GameStateSerializer
             TileGlyphs = new int[total],
             TileFgColors = new int[total],
             TileBgColors = new int[total],
+            TilePlaceableItemIds = new int[total],
+            TilePlaceableItemExtras = new int[total],
         };
 
         for (int x = 0; x < Chunk.Size; x++)
@@ -36,6 +38,8 @@ public static class GameStateSerializer
                 msg.TileGlyphs[idx] = tile.GlyphId;
                 msg.TileFgColors[idx] = tile.FgColor;
                 msg.TileBgColors[idx] = tile.BgColor;
+                msg.TilePlaceableItemIds[idx] = tile.PlaceableItemId;
+                msg.TilePlaceableItemExtras[idx] = tile.PlaceableItemExtra;
             }
 
         return msg;

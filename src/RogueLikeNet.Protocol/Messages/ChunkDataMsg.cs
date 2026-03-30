@@ -12,4 +12,6 @@ public class ChunkDataMsg
     [Key(3)] public int[] TileGlyphs { get; set; } = [];
     [Key(4)] public int[] TileFgColors { get; set; } = [];
     [Key(5)] public int[] TileBgColors { get; set; } = [];
+    [Key(6)] public int[] TilePlaceableItemIds { get; set; } = [];
+    [Key(7)] public int[] TilePlaceableItemExtras { get; set; } = [];
 }

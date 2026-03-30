@@ -113,12 +113,19 @@ public sealed class GameWorldRenderer
                     var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.FgColor), brightness);
                     var glyphId = tile.GlyphId;
 
-                    // Client-side door glyph override: pick | or - based on surrounding walls
-                    if (tile.Type is TileType.Door or TileType.DoorClosed)
+                    // Override glyph/color from placed item when present
+                    if (tile.PlaceableItemId != 0)
                     {
-                        var worldX2 = cameraCenterX - visibleCols / 2 + col;
-                        var worldY2 = cameraCenterY - visibleRows / 2 + row;
-                        glyphId = GetDoorGlyph(state, worldX2, worldY2);
+                        glyphId = PlaceableDefinitions.GetGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
+                        fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(PlaceableDefinitions.GetFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
+                    }
+
+                    // Client-side door glyph override: pick | or - based on surrounding walls
+                    if (PlaceableDefinitions.IsDoor(tile.PlaceableItemId))
+                    {
+                        var worldDoorX = cameraCenterX - visibleCols / 2 + col;
+                        var worldDoorY = cameraCenterY - visibleRows / 2 + row;
+                        glyphId = GetDoorGlyph(state, worldDoorX, worldDoorY);
                     }
 
                     var ch = AsciiDraw.GlyphIdToChar(glyphId);
@@ -238,7 +245,7 @@ public sealed class GameWorldRenderer
                 bool visible = state.IsVisible(wx, wy);
 
                 Color4 dotColor;
-                if (tile.Type == TileType.Wall)
+                if (tile.Type == TileType.Blocked)
                     dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
                 else if (tile.Type == TileType.Lava)
                     dotColor = visible ? new Color4(255, 80, 20, 255) : new Color4(80, 30, 10, 255);
@@ -246,12 +253,13 @@ public sealed class GameWorldRenderer
                     dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
                 else if (tile.GlyphId == TileDefinitions.GlyphTorch)
                     dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
-                else if (tile.GlyphId is TileDefinitions.GlyphDoor or TileDefinitions.GlyphDoorClosed
-                         or TileDefinitions.GlyphDoorVertical or TileDefinitions.GlyphDoorHorizontal)
+                else if (PlaceableDefinitions.IsDoor(tile.PlaceableItemId))
                     dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
+                else if (PlaceableDefinitions.IsWall(tile.PlaceableItemId))
+                    dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
                 else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
                     dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
-                else if (tile.Type == TileType.Decoration)
+                else if (tile.PlaceableItemId != 0 && PlaceableDefinitions.IsWalkable(tile.PlaceableItemId, tile.PlaceableItemExtra))
                     dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);
                 else if (tile.Type == TileType.Floor)
                     dotColor = visible ? new Color4(60, 60, 70, 255) : new Color4(25, 25, 30, 255);
@@ -294,5 +302,5 @@ public sealed class GameWorldRenderer
     }
 
     private static bool IsWallLike(TileInfo tile) =>
-        tile.Type is TileType.Wall or TileType.Window;
+        tile.Type == TileType.Blocked || PlaceableDefinitions.IsWall(tile.PlaceableItemId);
 }

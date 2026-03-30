@@ -17,31 +17,43 @@ public class DoorMechanicsTests
         return engine;
     }
 
+    private static TileInfo MakeClosedDoor() => new()
+    {
+        Type = TileType.Floor,
+        GlyphId = TileDefinitions.GlyphFloor,
+        FgColor = TileDefinitions.ColorFloorFg,
+        BgColor = TileDefinitions.ColorBlack,
+        PlaceableItemId = ItemDefinitions.WoodenDoor,
+        PlaceableItemExtra = 0,
+    };
+
     [Fact]
     public void DoorClosed_IsNotWalkable()
     {
-        var tile = new TileInfo { Type = TileType.DoorClosed };
+        var tile = MakeClosedDoor();
         Assert.False(tile.IsWalkable);
     }
 
     [Fact]
     public void DoorClosed_IsNotTransparent()
     {
-        var tile = new TileInfo { Type = TileType.DoorClosed };
+        var tile = MakeClosedDoor();
         Assert.False(tile.IsTransparent);
     }
 
     [Fact]
     public void DoorOpen_IsWalkable()
     {
-        var tile = new TileInfo { Type = TileType.Door };
+        var tile = MakeClosedDoor();
+        tile.PlaceableItemExtra = 1; // open
         Assert.True(tile.IsWalkable);
     }
 
     [Fact]
     public void DoorOpen_IsTransparent()
     {
-        var tile = new TileInfo { Type = TileType.Door };
+        var tile = MakeClosedDoor();
+        tile.PlaceableItemExtra = 1; // open
         Assert.True(tile.IsTransparent);
     }
 
@@ -54,14 +66,8 @@ public class DoorMechanicsTests
 
         int doorX = sx + 1, doorY = sy;
 
-        // Place a closed door
-        engine.WorldMap.SetTile(doorX, doorY, new TileInfo
-        {
-            Type = TileType.DoorClosed,
-            GlyphId = TileDefinitions.GlyphDoorClosed,
-            FgColor = TileDefinitions.ColorWoodFg,
-            BgColor = TileDefinitions.ColorBlack,
-        });
+        // Place a closed door (placeable on a floor tile)
+        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
 
         // Move toward the door
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -70,11 +76,10 @@ public class DoorMechanicsTests
         input.TargetY = 0;
         engine.Tick();
 
-        // Door should now be open
+        // Door should now be open (PlaceableItemExtra = 1)
         var tile = engine.WorldMap.GetTile(doorX, doorY);
-        Assert.Equal(TileType.Door, tile.Type);
-        Assert.Equal(TileDefinitions.GlyphDoor, tile.GlyphId);
-        Assert.Equal(TileDefinitions.ColorWoodFg, tile.FgColor);
+        Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
+        Assert.Equal(1, tile.PlaceableItemExtra);
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
@@ -101,13 +106,7 @@ public class DoorMechanicsTests
         });
 
         // Place a closed door
-        engine.WorldMap.SetTile(doorX, doorY, new TileInfo
-        {
-            Type = TileType.DoorClosed,
-            GlyphId = TileDefinitions.GlyphDoorClosed,
-            FgColor = TileDefinitions.ColorWoodFg,
-            BgColor = TileDefinitions.ColorBlack,
-        });
+        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
 
         // Tick 1: Bump to open
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -115,7 +114,7 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(TileType.Door, engine.WorldMap.GetTile(doorX, doorY).Type);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra); // open
 
         // Tick 2: Walk onto door
         ref var delay = ref engine.EcsWorld.Get<MoveDelay>(player);
@@ -140,15 +139,15 @@ public class DoorMechanicsTests
         Assert.Equal(doorX + 1, pos2.X);
 
         // Door should still be open during grace period
-        Assert.Equal(TileType.Door, engine.WorldMap.GetTile(doorX, doorY).Type);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
 
         // Tick enough times for grace period to expire (6 ticks grace from open)
         for (int i = 0; i < 30; i++)
             engine.Tick();
 
-        // Door should have auto-closed
+        // Door should have auto-closed (PlaceableItemExtra = 0)
         var doorTile = engine.WorldMap.GetTile(doorX, doorY);
-        Assert.Equal(TileType.DoorClosed, doorTile.Type);
+        Assert.Equal(0, doorTile.PlaceableItemExtra);
     }
 
     [Fact]
@@ -160,13 +159,7 @@ public class DoorMechanicsTests
 
         int doorX = sx + 1, doorY = sy;
 
-        engine.WorldMap.SetTile(doorX, doorY, new TileInfo
-        {
-            Type = TileType.DoorClosed,
-            GlyphId = TileDefinitions.GlyphDoorClosed,
-            FgColor = TileDefinitions.ColorWoodFg,
-            BgColor = TileDefinitions.ColorBlack,
-        });
+        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
 
         // Bump to open
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -174,17 +167,21 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(TileType.Door, engine.WorldMap.GetTile(doorX, doorY).Type);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
 
         // One more tick — door should stay open (grace period active)
         engine.Tick();
-        Assert.Equal(TileType.Door, engine.WorldMap.GetTile(doorX, doorY).Type);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
     }
 
     [Fact]
     public void Window_IsNotWalkable_IsTransparent()
     {
-        var tile = new TileInfo { Type = TileType.Window };
+        var tile = new TileInfo
+        {
+            Type = TileType.Floor,
+            PlaceableItemId = ItemDefinitions.WoodenWindow,
+        };
         Assert.False(tile.IsWalkable);
         Assert.True(tile.IsTransparent);
     }

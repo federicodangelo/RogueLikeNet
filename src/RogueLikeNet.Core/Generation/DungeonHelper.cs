@@ -16,7 +16,7 @@ internal static class DungeonHelper
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Wall;
+                tile.Type = TileType.Blocked;
                 tile.GlyphId = TileDefinitions.GlyphWall;
                 tile.FgColor = TileDefinitions.ColorWallFg;
                 tile.BgColor = TileDefinitions.ColorBlack;
@@ -27,7 +27,7 @@ internal static class DungeonHelper
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        if (tile.Type == TileType.Wall)
+        if (tile.Type == TileType.Blocked)
         {
             tile.Type = TileType.Floor;
             tile.GlyphId = TileDefinitions.GlyphFloor;
@@ -129,7 +129,7 @@ internal static class DungeonHelper
                 {
                     if (rng.Next(100) < deco.Chance)
                     {
-                        tile.Type = TileType.Decoration;
+                        tile.Type = TileType.Floor;
                         tile.GlyphId = deco.GlyphId;
                         tile.FgColor = deco.FgColor;
                         break;

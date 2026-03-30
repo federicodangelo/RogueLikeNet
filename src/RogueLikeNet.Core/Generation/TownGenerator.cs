@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
-using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -140,12 +139,6 @@ internal static class TownGenerator
     private static void BuildHouse(Chunk chunk, Room house, SeededRandom rng, TownMaterial mat,
         int worldOffsetX, int worldOffsetY, GenerationResult result)
     {
-        // Resolve tile visuals from buildable item definitions
-        var (wallType, wallGlyph, wallFg) = BuildingSystem.GetBuildableTile(mat.WallItemId);
-        var (doorType, doorGlyph, doorFg) = BuildingSystem.GetBuildableTile(mat.DoorItemId);
-        var (windowType, windowGlyph, windowFg) = BuildingSystem.GetBuildableTile(mat.WindowItemId);
-        var (floorType, floorGlyph, floorFg) = BuildingSystem.GetBuildableTile(mat.FloorTileItemId);
-
         // Floor inside (inset by 1 for walls)
         for (int x = house.X + 1; x < house.X + house.Width - 1; x++)
         {
@@ -153,23 +146,25 @@ internal static class TownGenerator
             {
                 if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = floorType;
-                tile.GlyphId = floorGlyph;
-                tile.FgColor = floorFg;
+                tile.Type = TileType.Floor;
+                tile.GlyphId = TileDefinitions.GlyphFloor;
+                tile.FgColor = TileDefinitions.ColorFloorFg;
                 tile.BgColor = TileDefinitions.ColorBlack;
+                tile.PlaceableItemId = mat.FloorTileItemId;
+                tile.PlaceableItemExtra = 0;
             }
         }
 
-        // Walls
+        // Walls — base tile is floor, placeable is the wall item
         for (int x = house.X; x < house.X + house.Width; x++)
         {
-            SetBuildableTile(chunk, x, house.Y, wallType, wallGlyph, wallFg);
-            SetBuildableTile(chunk, x, house.Y + house.Height - 1, wallType, wallGlyph, wallFg);
+            SetPlaceable(chunk, x, house.Y, mat.WallItemId);
+            SetPlaceable(chunk, x, house.Y + house.Height - 1, mat.WallItemId);
         }
         for (int y = house.Y; y < house.Y + house.Height; y++)
         {
-            SetBuildableTile(chunk, house.X, y, wallType, wallGlyph, wallFg);
-            SetBuildableTile(chunk, house.X + house.Width - 1, y, wallType, wallGlyph, wallFg);
+            SetPlaceable(chunk, house.X, y, mat.WallItemId);
+            SetPlaceable(chunk, house.X + house.Width - 1, y, mat.WallItemId);
         }
 
         // Place a door on a wall
@@ -197,9 +192,8 @@ internal static class TownGenerator
         if (doorX >= 0 && doorX < Chunk.Size && doorY >= 0 && doorY < Chunk.Size)
         {
             ref var doorTile = ref chunk.Tiles[doorX, doorY];
-            doorTile.Type = doorType;
-            doorTile.GlyphId = doorGlyph;
-            doorTile.FgColor = doorFg;
+            doorTile.PlaceableItemId = mat.DoorItemId;
+            doorTile.PlaceableItemExtra = 0; // closed
         }
 
         // Place a window on the opposite wall from the door
@@ -228,9 +222,8 @@ internal static class TownGenerator
             (windowX != doorX || windowY != doorY))
         {
             ref var windowTile = ref chunk.Tiles[windowX, windowY];
-            windowTile.Type = windowType;
-            windowTile.GlyphId = windowGlyph;
-            windowTile.FgColor = windowFg;
+            windowTile.PlaceableItemId = mat.WindowItemId;
+            windowTile.PlaceableItemExtra = 0;
         }
 
         // Place furniture inside the house
@@ -278,27 +271,31 @@ internal static class TownGenerator
     }
 
     /// <summary>
-    /// Places a buildable item onto a floor tile using the BuildingSystem's tile mapping.
+    /// Places a buildable item onto a floor tile — only sets the placeable fields.
     /// </summary>
     private static void PlaceBuildable(Chunk chunk, int x, int y, int itemTypeId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
         if (tile.Type != TileType.Floor) return;
-        var (tileType, glyphId, fgColor) = BuildingSystem.GetBuildableTile(itemTypeId);
-        tile.Type = tileType;
-        tile.GlyphId = glyphId;
-        tile.FgColor = fgColor;
+        tile.PlaceableItemId = itemTypeId;
+        tile.PlaceableItemExtra = 0;
     }
 
-    private static void SetBuildableTile(Chunk chunk, int x, int y, TileType type, int glyphId, int fgColor)
+    /// <summary>
+    /// Sets a tile as floor with the given placeable item.
+    /// Used for structural elements (walls, doors, windows) where the base terrain must be floor.
+    /// </summary>
+    private static void SetPlaceable(Chunk chunk, int x, int y, int placeableItemId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = type;
-        tile.GlyphId = glyphId;
-        tile.FgColor = fgColor;
+        tile.Type = TileType.Floor;
+        tile.GlyphId = TileDefinitions.GlyphFloor;
+        tile.FgColor = TileDefinitions.ColorFloorFg;
         tile.BgColor = TileDefinitions.ColorBlack;
+        tile.PlaceableItemId = placeableItemId;
+        tile.PlaceableItemExtra = 0;
     }
 
     /// <summary>

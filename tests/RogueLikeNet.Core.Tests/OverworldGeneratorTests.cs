@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -29,7 +30,7 @@ public class OverworldGeneratorTests
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Blocked) wallCount++;
 
         Assert.True(wallCount > 0, "Overworld should have walls");
     }
@@ -129,8 +130,11 @@ public class OverworldGeneratorTests
             var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (result.Chunk.Tiles[x, y].Type == TileType.Decoration)
+                {
+                    ref var t = ref result.Chunk.Tiles[x, y];
+                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
                         totalDecorations++;
+                }
         }
 
         Assert.True(totalDecorations > 0, "Overworld should place decorations");

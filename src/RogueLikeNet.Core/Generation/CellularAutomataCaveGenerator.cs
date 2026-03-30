@@ -92,7 +92,7 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
                 {
                     map[x, y] = false;
                     ref var tile = ref chunk.Tiles[x, y];
-                    tile.Type = TileType.Wall;
+                    tile.Type = TileType.Blocked;
                     tile.GlyphId = TileDefinitions.GlyphWall;
                     tile.FgColor = TileDefinitions.ColorWallFg;
                     tile.BgColor = TileDefinitions.ColorBlack;

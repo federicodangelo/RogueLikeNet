@@ -124,7 +124,7 @@ public static class AsciiDraw
         ItemDefinitions.CategoryPotion => "[Pot]",
         ItemDefinitions.CategoryGold => "[Gld]",
         ItemDefinitions.CategoryResource => "[Res]",
-        ItemDefinitions.CategoryBuildable => "[Bld]",
+        ItemDefinitions.CategoryPlaceable => "[Plc]",
         _ => "     ",
     };
 

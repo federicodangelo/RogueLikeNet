@@ -29,7 +29,7 @@ public class DirectionalTunnelGeneratorTests
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Blocked) wallCount++;
 
         Assert.True(wallCount > 0, "Tunnel should have walls");
     }

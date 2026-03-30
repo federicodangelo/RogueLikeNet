@@ -12,4 +12,6 @@ public class TileUpdateMsg
     [Key(4)] public int FgColor { get; set; }
     [Key(5)] public int BgColor { get; set; }
     [Key(6)] public int LightLevel { get; set; }
+    [Key(7)] public int PlaceableItemId { get; set; }
+    [Key(8)] public int PlaceableItemExtra { get; set; }
 }

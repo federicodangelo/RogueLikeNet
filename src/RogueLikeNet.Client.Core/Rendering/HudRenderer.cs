@@ -239,11 +239,8 @@ public sealed class HudRenderer
         foreach (var (dx, dy) in offsets)
         {
             var tile = state.GetTile(px + dx, py + dy);
-            if (tile.Type is TileType.Door or TileType.DoorClosed or TileType.Wall or TileType.Window)
-            {
-                if (RogueLikeNet.Core.Systems.BuildingSystem.GetItemFromTile(tile) != null)
-                    return true;
-            }
+            if (tile.PlaceableItemId != RogueLikeNet.Core.Definitions.ItemDefinitions.None)
+                return true;
         }
         return false;
     }

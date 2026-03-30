@@ -42,7 +42,7 @@ public class BspDungeonGeneratorTests
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (result.Chunk.Tiles[x, y].Type == TileType.Wall) wallCount++;
+                if (result.Chunk.Tiles[x, y].Type == TileType.Blocked) wallCount++;
 
         Assert.True(wallCount > 0, "Dungeon should have walls");
     }
@@ -90,8 +90,11 @@ public class BspDungeonGeneratorTests
             var result = gen.Generate(cx, 0);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    if (result.Chunk.Tiles[x, y].Type == TileType.Decoration)
+                {
+                    ref var t = ref result.Chunk.Tiles[x, y];
+                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
                         totalDecorations++;
+                }
         }
 
         Assert.True(totalDecorations > 0, "Generator should place decorations in at least some chunks");
@@ -129,7 +132,7 @@ public class BspDungeonGeneratorTests
                 for (int y = 0; y < Chunk.Size; y++)
                 {
                     ref var tile = ref result.Chunk.Tiles[x, y];
-                    if (tile.Type == TileType.Decoration)
+                    if (tile.Type == TileType.Floor && tile.GlyphId != TileDefinitions.GlyphFloor)
                         Assert.True(tile.IsWalkable, $"Decoration at ({x},{y}) should be walkable");
                 }
         }

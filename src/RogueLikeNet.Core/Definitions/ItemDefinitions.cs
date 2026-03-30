@@ -5,6 +5,7 @@ namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
 /// Item type definitions and loot generation. All values are integers.
+/// TypeId 0 is reserved for "None" (no item).
 /// </summary>
 public static class ItemDefinitions
 {
@@ -14,7 +15,7 @@ public static class ItemDefinitions
     public const int CategoryPotion = 2;
     public const int CategoryGold = 3;
     public const int CategoryResource = 4;
-    public const int CategoryBuildable = 5;
+    public const int CategoryPlaceable = 5;
 
     // Item rarities
     public const int RarityCommon = 0;
@@ -23,46 +24,49 @@ public static class ItemDefinitions
     public const int RarityEpic = 3;
     public const int RarityLegendary = 4;
 
-    // Specific item types
-    public const int ShortSword = 0;
-    public const int LongSword = 1;
-    public const int BattleAxe = 2;
-    public const int Dagger = 3;
-    public const int LeatherArmor = 10;
-    public const int ChainMail = 11;
-    public const int PlateArmor = 12;
-    public const int Shield = 13;
-    public const int HealthPotion = 20;
-    public const int StrengthPotion = 21;
-    public const int Gold = 30;
+    /// <summary>Sentinel value: no item.</summary>
+    public const int None = 0;
+
+    // Specific item types (IDs start at 1; 0 is reserved for None)
+    public const int ShortSword = 1;
+    public const int LongSword = 2;
+    public const int BattleAxe = 3;
+    public const int Dagger = 4;
+    public const int LeatherArmor = 11;
+    public const int ChainMail = 12;
+    public const int PlateArmor = 13;
+    public const int Shield = 14;
+    public const int HealthPotion = 21;
+    public const int StrengthPotion = 22;
+    public const int Gold = 31;
 
     // Resource items
-    public const int Wood = 40;
-    public const int CopperOre = 41;
-    public const int IronOre = 42;
-    public const int GoldOre = 43;
+    public const int Wood = 41;
+    public const int CopperOre = 42;
+    public const int IronOre = 43;
+    public const int GoldOre = 44;
 
-    // Buildable items
-    public const int WoodenDoor = 50;
-    public const int WoodenWall = 51;
-    public const int WoodenWindow = 52;
-    public const int CopperDoor = 53;
-    public const int CopperWall = 54;
-    public const int IronDoor = 55;
-    public const int IronWall = 56;
-    public const int GoldDoor = 57;
-    public const int GoldWall = 58;
+    // Placeable items
+    public const int WoodenDoor = 51;
+    public const int WoodenWall = 52;
+    public const int WoodenWindow = 53;
+    public const int CopperDoor = 54;
+    public const int CopperWall = 55;
+    public const int IronDoor = 56;
+    public const int IronWall = 57;
+    public const int GoldDoor = 58;
+    public const int GoldWall = 59;
 
-    // Furniture / decoration buildable items
-    public const int WoodenTable = 59;
-    public const int WoodenChair = 60;
-    public const int WoodenBed = 61;
-    public const int WoodenBookshelf = 62;
-    public const int WoodenFloorTile = 63;
-    public const int StoneFloorTile = 64;
-    public const int CopperFloorTile = 65;
-    public const int IronFloorTile = 66;
-    public const int GoldFloorTile = 67;
+    // Furniture / decoration placeable items
+    public const int WoodenTable = 60;
+    public const int WoodenChair = 61;
+    public const int WoodenBed = 62;
+    public const int WoodenBookshelf = 63;
+    public const int WoodenFloorTile = 64;
+    public const int StoneFloorTile = 65;
+    public const int CopperFloorTile = 66;
+    public const int IronFloorTile = 67;
+    public const int GoldFloorTile = 68;
 
     public static readonly ItemDefinition[] All =
     [
@@ -86,27 +90,27 @@ public static class ItemDefinitions
         new(CopperOre, CategoryResource, "Copper Ore", TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
         new(IronOre,   CategoryResource, "Iron Ore",   TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
         new(GoldOre,   CategoryResource, "Gold Ore",   TileDefinitions.GlyphOreNugget,  TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
-        // Buildable items (stackable)
-        new(WoodenDoor,   CategoryBuildable, "Wooden Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
-        new(WoodenWall,   CategoryBuildable, "Wooden Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
-        new(WoodenWindow, CategoryBuildable, "Wooden Window", TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg, 0, 0, 0, true, 99),
-        new(CopperDoor,   CategoryBuildable, "Copper Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
-        new(CopperWall,   CategoryBuildable, "Copper Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
-        new(IronDoor,     CategoryBuildable, "Iron Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
-        new(IronWall,     CategoryBuildable, "Iron Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
-        new(GoldDoor,     CategoryBuildable, "Gold Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
-        new(GoldWall,     CategoryBuildable, "Gold Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
-        // Furniture (buildable)
-        new(WoodenTable,     CategoryBuildable, "Wooden Table",     TileDefinitions.GlyphTable,     TileDefinitions.ColorTableFg,     0, 0, 0, true, 99),
-        new(WoodenChair,     CategoryBuildable, "Wooden Chair",     TileDefinitions.GlyphChair,     TileDefinitions.ColorChairFg,     0, 0, 0, true, 99),
-        new(WoodenBed,       CategoryBuildable, "Wooden Bed",       TileDefinitions.GlyphBed,       TileDefinitions.ColorBedFg,       0, 0, 0, true, 99),
-        new(WoodenBookshelf, CategoryBuildable, "Wooden Bookshelf", TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg, 0, 0, 0, true, 99),
-        // Floor tiles (buildable)
-        new(WoodenFloorTile, CategoryBuildable, "Wooden Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg,      0, 0, 0, true, 99),
-        new(StoneFloorTile,  CategoryBuildable, "Stone Floor",   TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg, 0, 0, 0, true, 99),
-        new(CopperFloorTile, CategoryBuildable, "Copper Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg,    0, 0, 0, true, 99),
-        new(IronFloorTile,   CategoryBuildable, "Iron Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg,      0, 0, 0, true, 99),
-        new(GoldFloorTile,   CategoryBuildable, "Gold Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      0, 0, 0, true, 99),
+        // Placeable items (stackable)
+        new(WoodenDoor,   CategoryPlaceable, "Wooden Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(WoodenWall,   CategoryPlaceable, "Wooden Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   0, 0, 0, true, 99),
+        new(WoodenWindow, CategoryPlaceable, "Wooden Window", TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg, 0, 0, 0, true, 99),
+        new(CopperDoor,   CategoryPlaceable, "Copper Door",   TileDefinitions.GlyphDoor, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(CopperWall,   CategoryPlaceable, "Copper Wall",   TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg, 0, 0, 0, true, 99),
+        new(IronDoor,     CategoryPlaceable, "Iron Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(IronWall,     CategoryPlaceable, "Iron Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   0, 0, 0, true, 99),
+        new(GoldDoor,     CategoryPlaceable, "Gold Door",     TileDefinitions.GlyphDoor, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        new(GoldWall,     CategoryPlaceable, "Gold Wall",     TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   0, 0, 0, true, 99),
+        // Furniture (placeable)
+        new(WoodenTable,     CategoryPlaceable, "Wooden Table",     TileDefinitions.GlyphTable,     TileDefinitions.ColorTableFg,     0, 0, 0, true, 99),
+        new(WoodenChair,     CategoryPlaceable, "Wooden Chair",     TileDefinitions.GlyphChair,     TileDefinitions.ColorChairFg,     0, 0, 0, true, 99),
+        new(WoodenBed,       CategoryPlaceable, "Wooden Bed",       TileDefinitions.GlyphBed,       TileDefinitions.ColorBedFg,       0, 0, 0, true, 99),
+        new(WoodenBookshelf, CategoryPlaceable, "Wooden Bookshelf", TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg, 0, 0, 0, true, 99),
+        // Floor tiles (placeable)
+        new(WoodenFloorTile, CategoryPlaceable, "Wooden Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg,      0, 0, 0, true, 99),
+        new(StoneFloorTile,  CategoryPlaceable, "Stone Floor",   TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg, 0, 0, 0, true, 99),
+        new(CopperFloorTile, CategoryPlaceable, "Copper Floor",  TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg,    0, 0, 0, true, 99),
+        new(IronFloorTile,   CategoryPlaceable, "Iron Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg,      0, 0, 0, true, 99),
+        new(GoldFloorTile,   CategoryPlaceable, "Gold Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      0, 0, 0, true, 99),
     ];
 
     /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>
@@ -149,7 +153,7 @@ public static class ItemDefinitions
     public static int CapRarity(int itemCategory, int rarity)
     {
         // Gold and resources are always Common rarity
-        if (itemCategory is CategoryGold or CategoryResource or CategoryBuildable)
+        if (itemCategory is CategoryGold or CategoryResource or CategoryPlaceable)
             return RarityCommon;
         return rarity;
     }
@@ -170,7 +174,7 @@ public static class ItemDefinitions
                     ? def.Category switch
                     {
                         CategoryGold => 10 + rnd.Next(50),
-                        CategoryResource or CategoryBuildable => 1,
+                        CategoryResource or CategoryPlaceable => 1,
                         _ => 1,
                     }
                     : 1,

@@ -2,24 +2,16 @@ using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
-using Chunk = RogueLikeNet.Core.World.Chunk;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Processes player and AI movement intents. Validates against world collision.
 /// Moving into a tile occupied by an actor (entity with Health) converts to an attack.
-/// Handles door open/close: bumping a closed door opens it; doors auto-close after walk-through.
+/// Bumping a closed door delegates to <see cref="WorldMap.OpenDoor"/>.
 /// </summary>
 public class MovementSystem
 {
-    // Grace period (in ticks) before an opened door can auto-close.
-    // Must exceed the max MoveDelay interval so the player can walk through.
-    private const int DoorGraceTicks = 20; // 1 second
-
-    // Tracks open door positions → remaining grace ticks before auto-close is allowed.
-    private readonly Dictionary<long, int> _openDoorTimers = new();
-
     public void Update(Arch.Core.World world, WorldMap map, bool debugNoCollision = false, bool debugMaxSpeed = false)
     {
         // Collect all actor positions (entities with Position + Health, alive)
@@ -46,9 +38,9 @@ public class MovementSystem
             if (!debugNoCollision)
             {
                 var targetTile = map.GetTile(newX, newY);
-                if (targetTile.Type == TileType.DoorClosed)
+                if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && PlaceableDefinitions.IsDoorClosed(targetTile.PlaceableItemId, targetTile.PlaceableItemExtra))
                 {
-                    OpenDoor(map, newX, newY, targetTile);
+                    map.OpenDoor(newX, newY);
                     input.ActionType = ActionTypes.None;
                     delay.Current = delay.Interval;
                     return;
@@ -94,67 +86,5 @@ public class MovementSystem
             vel.DX = 0;
             vel.DY = 0;
         });
-
-        // Auto-close open doors that are no longer occupied
-        AutoCloseDoors(world, map);
-    }
-
-    private void OpenDoor(WorldMap map, int x, int y, TileInfo tile)
-    {
-        map.SetTile(x, y, new TileInfo
-        {
-            Type = TileType.Door,
-            GlyphId = TileDefinitions.GlyphDoor,
-            FgColor = tile.FgColor,
-            BgColor = tile.BgColor,
-        });
-        _openDoorTimers[Position.PackCoord(x, y)] = DoorGraceTicks;
-    }
-
-    private void AutoCloseDoors(Arch.Core.World world, WorldMap map)
-    {
-        if (_openDoorTimers.Count == 0) return;
-
-        // Collect current actor positions
-        var occupied = new HashSet<long>();
-        var posQuery = new QueryDescription().WithAll<Position, Health>();
-        world.Query(in posQuery, (ref Position p, ref Health h) =>
-        {
-            if (h.IsAlive)
-                occupied.Add(Position.PackCoord(p.X, p.Y));
-        });
-
-        var toRemove = new List<long>();
-        var updates = new List<(long Key, int Ticks)>();
-        foreach (var (key, ticksLeft) in _openDoorTimers)
-        {
-            // Verify tile is still an open door
-            var (x, y) = Position.UnpackCoord(key);
-            var tile = map.GetTile(x, y);
-            if (tile.Type != TileType.Door) { toRemove.Add(key); continue; }
-
-            // Don't close while occupied or grace period active
-            int next = ticksLeft - 1;
-            if (occupied.Contains(key) || next > 0)
-            {
-                updates.Add((key, Math.Max(0, next)));
-                continue;
-            }
-
-            // Grace expired and unoccupied — close the door
-            map.SetTile(x, y, new TileInfo
-            {
-                Type = TileType.DoorClosed,
-                GlyphId = TileDefinitions.GlyphDoorClosed,
-                FgColor = tile.FgColor,
-                BgColor = tile.BgColor,
-            });
-            toRemove.Add(key);
-        }
-
-        foreach (var key in toRemove)
-            _openDoorTimers.Remove(key);
-        foreach (var (key, ticks) in updates)
-            _openDoorTimers[key] = ticks;
     }
 }
