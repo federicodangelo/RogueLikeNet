@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Generation;
+
 namespace RogueLikeNet.Core.Definitions;
 
 public enum BiomeType
@@ -40,8 +42,11 @@ public static class BiomeDefinitions
     private static readonly string[] Names =
         ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
 
-    /// <summary>Decoration entry: glyph, fg color, chance (percent per floor tile).</summary>
+    /// <summary>Decoration entry: glyph, fg color, chance (per-mille per floor tile).</summary>
     public readonly record struct DecorationDef(int GlyphId, int FgColor, int Chance1000);
+
+    /// <summary>Enemy spawn entry: NPC type ID and relative weight for biome spawning.</summary>
+    public readonly record struct EnemySpawnDef(int NpcTypeId, int Weight);
 
     /// <summary>Liquid feature: tile type, glyph, fg/bg colors, room fill chance (%).</summary>
     public readonly record struct LiquidDef(World.TileType Type, int GlyphId, int FgColor, int BgColor, int Chance100RoomBecomesLiquid);
@@ -96,6 +101,40 @@ public static class BiomeDefinitions
          new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 4)],
     ];
 
+    // Per-biome enemy spawn tables (NpcTypeId, relative weight)
+    private static readonly EnemySpawnDef[][] EnemySpawns =
+    [
+        // Stone — goblins and skeletons lurk in the caves
+        [new(NpcDefinitions.Goblin, 50), new(NpcDefinitions.Skeleton, 50)],
+
+        // Lava — orcs and dragons thrive in the heat
+        [new(NpcDefinitions.Orc, 70), new(NpcDefinitions.Dragon, 30)],
+
+        // Ice — skeletons and hardy orcs
+        [new(NpcDefinitions.Skeleton, 70), new(NpcDefinitions.Orc, 30)],
+
+        // Forest — goblins are most common
+        [new(NpcDefinitions.Goblin, 75), new(NpcDefinitions.Orc, 25)],
+
+        // Arcane — balanced mix with more dragons
+        [new(NpcDefinitions.Skeleton, 30), new(NpcDefinitions.Orc, 25), new(NpcDefinitions.Goblin, 25), new(NpcDefinitions.Dragon, 20)],
+
+        // Crypt — undead-heavy
+        [new(NpcDefinitions.Skeleton, 70), new(NpcDefinitions.Goblin, 15), new(NpcDefinitions.Orc, 15)],
+
+        // Sewer — goblins and orcs
+        [new(NpcDefinitions.Goblin, 65), new(NpcDefinitions.Orc, 35)],
+
+        // Fungal — goblins and skeletons
+        [new(NpcDefinitions.Goblin, 65), new(NpcDefinitions.Skeleton, 35)],
+
+        // Ruined — orcs and skeletons dominate
+        [new(NpcDefinitions.Orc, 50), new(NpcDefinitions.Skeleton, 50)],
+
+        // Infernal — dragons and orcs rule
+        [new(NpcDefinitions.Dragon, 50), new(NpcDefinitions.Orc, 50)],
+    ];
+
     // Per-biome liquid features (null = no liquid in this biome)
     private static readonly LiquidDef?[] Liquids =
     [
@@ -129,6 +168,40 @@ public static class BiomeDefinitions
 
     /// <summary>Returns the liquid definition for a biome, or null if it has no liquid.</summary>
     public static LiquidDef? GetLiquid(BiomeType biome) => Liquids[(int)biome];
+
+    /// <summary>Returns the enemy spawn table for a biome.</summary>
+    public static ReadOnlySpan<EnemySpawnDef> GetEnemySpawns(BiomeType biome) => EnemySpawns[(int)biome];
+
+    /// <summary>
+    /// Picks a random enemy type for the given biome, weighted by spawn table entries.
+    /// Higher difficulty unlocks harder monsters (same gating as NpcDefinitions.Pick).
+    /// </summary>
+    public static NpcDefinition PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
+    {
+        var spawns = EnemySpawns[(int)biome];
+        int maxTypeId = Math.Min(difficulty + 1, NpcDefinitions.All.Length - 1);
+
+        int totalWeight = 0;
+        foreach (var s in spawns)
+            if (s.NpcTypeId <= maxTypeId)
+                totalWeight += s.Weight;
+
+        if (totalWeight <= 0)
+            return NpcDefinitions.All[0];
+
+        int roll = rng.Next(totalWeight);
+        foreach (var s in spawns)
+        {
+            if (s.NpcTypeId <= maxTypeId)
+            {
+                roll -= s.Weight;
+                if (roll < 0)
+                    return NpcDefinitions.Get(s.NpcTypeId);
+            }
+        }
+
+        return NpcDefinitions.All[0];
+    }
 
     /// <summary>
     /// Maps continuous temperature/moisture noise values (each in [-1,1]) to a biome type.

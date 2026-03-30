@@ -169,7 +169,7 @@ public class OverworldGenerator : IDungeonGenerator
                         // Add monster, items or torches
                         if (rng.Next(1000) < MonsterChance1000)
                         {
-                            var def = NpcDefinitions.Pick(rng, difficulty);
+                            var def = BiomeDefinitions.PickEnemy(biome, rng, difficulty);
                             var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
                             result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), monsterData));
                         }
