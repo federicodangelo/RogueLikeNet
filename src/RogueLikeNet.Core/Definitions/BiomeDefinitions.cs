@@ -41,59 +41,59 @@ public static class BiomeDefinitions
         ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
 
     /// <summary>Decoration entry: glyph, fg color, chance (percent per floor tile).</summary>
-    public readonly record struct DecorationDef(int GlyphId, int FgColor, int Chance);
+    public readonly record struct DecorationDef(int GlyphId, int FgColor, int Chance1000);
 
     /// <summary>Liquid feature: tile type, glyph, fg/bg colors, room fill chance (%).</summary>
-    public readonly record struct LiquidDef(World.TileType Type, int GlyphId, int FgColor, int BgColor, int RoomChance);
+    public readonly record struct LiquidDef(World.TileType Type, int GlyphId, int FgColor, int BgColor, int Chance100RoomBecomesLiquid);
 
     // Per-biome decoration tables
     private static readonly DecorationDef[][] Decorations =
     [
         // Stone — sparse rubble and pillars
-        [new(TileDefinitions.GlyphRubble, TileDefinitions.ColorRubbleFg, 2),
-         new(TileDefinitions.GlyphPillar, TileDefinitions.ColorStatueFg, 1)],
+        [new(TileDefinitions.GlyphRubble, TileDefinitions.ColorRubbleFg, 4),
+         new(TileDefinitions.GlyphPillar, TileDefinitions.ColorStatueFg, 2)],
 
         // Lava — embers and cracks
-        [new(TileDefinitions.GlyphEmber, TileDefinitions.ColorEmberFg, 4),
-         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorCrackFg, 3)],
+        [new(TileDefinitions.GlyphEmber, TileDefinitions.ColorEmberFg, 8),
+         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorCrackFg, 6)],
 
         // Ice — icicles and frost cracks
-        [new(TileDefinitions.GlyphIcicle, TileDefinitions.ColorIceFg, 4),
-         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorIceFg, 2)],
+        [new(TileDefinitions.GlyphIcicle, TileDefinitions.ColorIceFg, 8),
+         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorIceFg, 4)],
 
         // Forest — grass, moss, and vines
-        [new(TileDefinitions.GlyphGrass, TileDefinitions.ColorGrassFg, 6),
-         new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 4),
-         new(TileDefinitions.GlyphVines, TileDefinitions.ColorVinesFg, 2)],
+        [new(TileDefinitions.GlyphGrass, TileDefinitions.ColorGrassFg, 12),
+         new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 8),
+         new(TileDefinitions.GlyphVines, TileDefinitions.ColorVinesFg, 4)],
 
         // Arcane — runes and crystals
-        [new(TileDefinitions.GlyphRune, TileDefinitions.ColorRuneFg, 3),
-         new(TileDefinitions.GlyphCrystal, TileDefinitions.ColorCrystalFg, 3)],
+        [new(TileDefinitions.GlyphRune, TileDefinitions.ColorRuneFg, 6),
+         new(TileDefinitions.GlyphCrystal, TileDefinitions.ColorCrystalFg, 6)],
 
         // Crypt — bones, coffins, and webs
-        [new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 5),
-         new(TileDefinitions.GlyphCoffin, TileDefinitions.ColorBonesFg, 2),
-         new(TileDefinitions.GlyphWeb, TileDefinitions.ColorWebFg, 3)],
+        [new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 10),
+         new(TileDefinitions.GlyphCoffin, TileDefinitions.ColorBonesFg, 4),
+         new(TileDefinitions.GlyphWeb, TileDefinitions.ColorWebFg, 6)],
 
         // Sewer — moss and barrels
-        [new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 4),
-         new(TileDefinitions.GlyphBarrel, TileDefinitions.ColorBarrelFg, 2),
-         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorRubbleFg, 2)],
+        [new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 8),
+         new(TileDefinitions.GlyphBarrel, TileDefinitions.ColorBarrelFg, 4),
+         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorRubbleFg, 4)],
 
         // Fungal — mushrooms and moss
-        [new(TileDefinitions.GlyphMushroom, TileDefinitions.ColorMushroomFg, 6),
-         new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 3),
-         new(TileDefinitions.GlyphGrass, TileDefinitions.ColorVinesFg, 2)],
+        [new(TileDefinitions.GlyphMushroom, TileDefinitions.ColorMushroomFg, 12),
+         new(TileDefinitions.GlyphMoss, TileDefinitions.ColorMossFg, 6),
+         new(TileDefinitions.GlyphGrass, TileDefinitions.ColorVinesFg, 4)],
 
         // Ruined — rubble, pillars, and statues
-        [new(TileDefinitions.GlyphRubble, TileDefinitions.ColorRubbleFg, 5),
-         new(TileDefinitions.GlyphPillar, TileDefinitions.ColorStatueFg, 2),
-         new(TileDefinitions.GlyphStatue, TileDefinitions.ColorStatueFg, 1)],
+        [new(TileDefinitions.GlyphRubble, TileDefinitions.ColorRubbleFg, 10),
+         new(TileDefinitions.GlyphPillar, TileDefinitions.ColorStatueFg, 4),
+         new(TileDefinitions.GlyphStatue, TileDefinitions.ColorStatueFg, 2)],
 
         // Infernal — embers, cracks, and bones
-        [new(TileDefinitions.GlyphEmber, TileDefinitions.ColorEmberFg, 5),
-         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorCrackFg, 3),
-         new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 2)],
+        [new(TileDefinitions.GlyphEmber, TileDefinitions.ColorEmberFg, 10),
+         new(TileDefinitions.GlyphCrack, TileDefinitions.ColorCrackFg, 6),
+         new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 4)],
     ];
 
     // Per-biome liquid features (null = no liquid in this biome)

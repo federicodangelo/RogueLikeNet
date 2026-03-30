@@ -87,7 +87,7 @@ internal static class DungeonHelper
 
         for (int i = 1; i < rooms.Count - 1; i++)
         {
-            if (rng.Next(100) >= liq.RoomChance) continue;
+            if (rng.Next(100) >= liq.Chance100RoomBecomesLiquid) continue;
             var room = rooms[i];
             if (room.Width < 6 || room.Height < 6) continue;
             bool circular = rng.NextBool();
@@ -133,7 +133,7 @@ internal static class DungeonHelper
 
                 foreach (var deco in decorations)
                 {
-                    if (rng.Next(100) < deco.Chance)
+                    if (rng.Next(1000) < deco.Chance1000)
                     {
                         tile.Type = TileType.Floor;
                         tile.GlyphId = deco.GlyphId;
@@ -174,15 +174,9 @@ internal static class DungeonHelper
             if (FindRandomRoomWalkableCoordinate(out var x, out var y))
             {
                 var def = NpcDefinitions.Pick(rng, difficulty);
+                var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
                 int hpScale = 1 + difficulty / 2;
-                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData
-                {
-                    MonsterTypeId = def.TypeId,
-                    Health = def.Health * hpScale,
-                    Attack = def.Attack + difficulty,
-                    Defense = def.Defense + difficulty / 2,
-                    Speed = def.Speed,
-                }));
+                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), monsterData));
             }
         }
 

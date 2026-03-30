@@ -34,9 +34,9 @@ public class OverworldGenerator : IDungeonGenerator
     private const double ResourceTreeThreshold = 0.2;
 
     // Spawn density: chance per floor tile (out of 1000)
-    private const int MonsterChance = 4;
-    private const int ItemChance = 1;
-    private const int TorchChance = 0; // Disabled for now, it doesn't make sense for overworld
+    private const int MonsterChance1000 = 4;
+    private const int ItemChance1000 = 1;
+    private const int TorchChance1000 = 0; // Disabled for now, it doesn't make sense for overworld
 
     private readonly long _seed;
 
@@ -157,7 +157,7 @@ public class OverworldGenerator : IDungeonGenerator
                         var decorations = BiomeDefinitions.GetDecorations(biome);
                         foreach (var deco in decorations)
                         {
-                            if (rng.Next(100) < deco.Chance)
+                            if (rng.Next(1000) < deco.Chance1000)
                             {
                                 tile.Type = TileType.Floor;
                                 tile.GlyphId = deco.GlyphId;
@@ -167,26 +167,19 @@ public class OverworldGenerator : IDungeonGenerator
                         }
 
                         // Add monster, items or torches
-                        if (rng.Next(1000) < MonsterChance)
+                        if (rng.Next(1000) < MonsterChance1000)
                         {
                             var def = NpcDefinitions.Pick(rng, difficulty);
-                            int hpScale = 1 + difficulty / 2;
-                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData
-                            {
-                                MonsterTypeId = def.TypeId,
-                                Health = def.Health * hpScale,
-                                Attack = def.Attack + difficulty,
-                                Defense = def.Defense + difficulty / 2,
-                                Speed = def.Speed,
-                            }));
+                            var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), monsterData));
                         }
-                        else if (rng.Next(1000) < ItemChance)
+                        else if (rng.Next(1000) < ItemChance1000)
                         {
                             var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
                             var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
                             result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), itemData));
                         }
-                        else if (rng.Next(1000) < TorchChance)
+                        else if (rng.Next(1000) < TorchChance1000)
                         {
                             result.Elements.Add(new DungeonElement(
                                 new Position(worldOffsetX + lx, worldOffsetY + ly),

@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
@@ -33,6 +34,23 @@ public static class NpcDefinitions
         int maxIndex = Math.Min(difficulty + 1, All.Length - 1);
         int idx = rng.Next(maxIndex + 1);
         return All[idx];
+    }
+
+    public static MonsterData GenerateMonsterData(NpcDefinition def, int difficulty)
+    {
+        int bonusHealth = def.Health * (difficulty / 2);
+        int bonusAttack = difficulty;
+        int bonusDefense = difficulty / 2;
+        int bonusSpeed = 0;
+
+        return new MonsterData
+        {
+            MonsterTypeId = def.TypeId,
+            Health = def.Health + bonusHealth,
+            Attack = def.Attack + bonusAttack,
+            Defense = def.Defense + bonusDefense,
+            Speed = def.Speed + bonusSpeed,
+        };
     }
 }
 

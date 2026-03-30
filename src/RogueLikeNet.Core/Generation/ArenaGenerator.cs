@@ -96,15 +96,8 @@ public class ArenaGenerator : IDungeonGenerator
             if (distToCenter < 8) continue;
 
             var def = NpcDefinitions.Pick(rng, difficulty);
-            int hpScale = 1 + difficulty / 2;
-            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), new MonsterData
-            {
-                MonsterTypeId = def.TypeId,
-                Health = def.Health * hpScale,
-                Attack = def.Attack + difficulty,
-                Defense = def.Defense + difficulty / 2,
-                Speed = def.Speed,
-            }));
+            var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), monsterData));
         }
 
         // Scatter some loot around

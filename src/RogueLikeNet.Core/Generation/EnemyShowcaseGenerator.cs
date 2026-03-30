@@ -86,15 +86,8 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
                 // Enemy in center
                 int cx = rx + roomSize / 2;
                 int cy = ry + roomSize / 2;
-                int hpScale = 1 + difficulty / 2;
-                result.Monsters.Add((new Position(worldOffsetX + cx, worldOffsetY + cy), new MonsterData
-                {
-                    MonsterTypeId = def.TypeId,
-                    Health = def.Health * hpScale,
-                    Attack = def.Attack + difficulty,
-                    Defense = def.Defense + difficulty / 2,
-                    Speed = def.Speed,
-                }));
+                var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+                result.Monsters.Add((new Position(worldOffsetX + cx, worldOffsetY + cy), monsterData));
             }
         }
 
