@@ -1,14 +1,5 @@
 namespace RogueLikeNet.Core.Definitions;
 
-public enum PlaceableCategory
-{
-    None,
-    Door,
-    Wall,
-    Decoration,
-    FloorTile,
-}
-
 /// <summary>
 /// Describes the in-world behavior of a placed item: walkability, transparency,
 /// appearance, and optional state (e.g. open/closed doors).
@@ -16,7 +7,7 @@ public enum PlaceableCategory
 /// </summary>
 public readonly record struct PlaceableDefinition(
     int ItemTypeId,
-    PlaceableCategory Category,
+    int Category,
     int PlacedGlyphId,
     int PlacedFgColor,
     bool Walkable,
@@ -33,6 +24,12 @@ public readonly record struct PlaceableDefinition(
 /// </summary>
 public static class PlaceableDefinitions
 {
+    public const int CategoryNone = 0;
+    public const int CategoryDoor = 1;
+    public const int CategoryWall = 2;
+    public const int CategoryDecoration = 3;
+    public const int CategoryFloorTile = 4;
+
     private static readonly PlaceableDefinition[] _byId;
 
     static PlaceableDefinitions()
@@ -49,28 +46,28 @@ public static class PlaceableDefinitions
     public static readonly PlaceableDefinition[] All =
     [
         // Doors — closed by default (extra=0): not walkable, not transparent. Open (extra=1): walkable, transparent.
-        new(ItemDefinitions.WoodenDoor,  PlaceableCategory.Door, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorWoodFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
-        new(ItemDefinitions.CopperDoor,  PlaceableCategory.Door, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorCopperFg, false, false, true, TileDefinitions.GlyphDoor, true, true),
-        new(ItemDefinitions.IronDoor,    PlaceableCategory.Door, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorIronFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
-        new(ItemDefinitions.GoldDoor,    PlaceableCategory.Door, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorGoldFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
+        new(ItemDefinitions.WoodenDoor,  CategoryDoor, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorWoodFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
+        new(ItemDefinitions.CopperDoor,  CategoryDoor, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorCopperFg, false, false, true, TileDefinitions.GlyphDoor, true, true),
+        new(ItemDefinitions.IronDoor,    CategoryDoor, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorIronFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
+        new(ItemDefinitions.GoldDoor,    CategoryDoor, TileDefinitions.GlyphDoorClosed, TileDefinitions.ColorGoldFg,   false, false, true, TileDefinitions.GlyphDoor, true, true),
         // Walls — not walkable, not transparent
-        new(ItemDefinitions.WoodenWall,  PlaceableCategory.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   false, false, false, 0, false, false),
-        new(ItemDefinitions.CopperWall,  PlaceableCategory.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg, false, false, false, 0, false, false),
-        new(ItemDefinitions.IronWall,    PlaceableCategory.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   false, false, false, 0, false, false),
-        new(ItemDefinitions.GoldWall,    PlaceableCategory.Wall, TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   false, false, false, 0, false, false),
+        new(ItemDefinitions.WoodenWall,  CategoryWall, TileDefinitions.GlyphWall, TileDefinitions.ColorWoodFg,   false, false, false, 0, false, false),
+        new(ItemDefinitions.CopperWall,  CategoryWall, TileDefinitions.GlyphWall, TileDefinitions.ColorCopperFg, false, false, false, 0, false, false),
+        new(ItemDefinitions.IronWall,    CategoryWall, TileDefinitions.GlyphWall, TileDefinitions.ColorIronFg,   false, false, false, 0, false, false),
+        new(ItemDefinitions.GoldWall,    CategoryWall, TileDefinitions.GlyphWall, TileDefinitions.ColorGoldFg,   false, false, false, 0, false, false),
         // Windows — not walkable, but transparent
-        new(ItemDefinitions.WoodenWindow, PlaceableCategory.Wall, TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg, false, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenWindow, CategoryWall, TileDefinitions.GlyphWindow, TileDefinitions.ColorWindowFg, false, true, false, 0, false, false),
         // Furniture — walkable, transparent
-        new(ItemDefinitions.WoodenTable,     PlaceableCategory.Decoration, TileDefinitions.GlyphTable,     TileDefinitions.ColorTableFg,     true, true, false, 0, false, false),
-        new(ItemDefinitions.WoodenChair,     PlaceableCategory.Decoration, TileDefinitions.GlyphChair,     TileDefinitions.ColorChairFg,     true, true, false, 0, false, false),
-        new(ItemDefinitions.WoodenBed,       PlaceableCategory.Decoration, TileDefinitions.GlyphBed,       TileDefinitions.ColorBedFg,       true, true, false, 0, false, false),
-        new(ItemDefinitions.WoodenBookshelf, PlaceableCategory.Decoration, TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg, true, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenTable,     CategoryDecoration, TileDefinitions.GlyphTable,     TileDefinitions.ColorTableFg,     true, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenChair,     CategoryDecoration, TileDefinitions.GlyphChair,     TileDefinitions.ColorChairFg,     true, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenBed,       CategoryDecoration, TileDefinitions.GlyphBed,       TileDefinitions.ColorBedFg,       true, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenBookshelf, CategoryDecoration, TileDefinitions.GlyphBookshelf, TileDefinitions.ColorBookshelfFg, true, true, false, 0, false, false),
         // Floor tiles — walkable, transparent
-        new(ItemDefinitions.WoodenFloorTile, PlaceableCategory.FloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg,      true, true, false, 0, false, false),
-        new(ItemDefinitions.StoneFloorTile,  PlaceableCategory.FloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg, true, true, false, 0, false, false),
-        new(ItemDefinitions.CopperFloorTile, PlaceableCategory.FloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg,    true, true, false, 0, false, false),
-        new(ItemDefinitions.IronFloorTile,   PlaceableCategory.FloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg,      true, true, false, 0, false, false),
-        new(ItemDefinitions.GoldFloorTile,   PlaceableCategory.FloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      true, true, false, 0, false, false),
+        new(ItemDefinitions.WoodenFloorTile, CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorWoodFg,      true, true, false, 0, false, false),
+        new(ItemDefinitions.StoneFloorTile,  CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorStoneTileFg, true, true, false, 0, false, false),
+        new(ItemDefinitions.CopperFloorTile, CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorCopperFg,    true, true, false, 0, false, false),
+        new(ItemDefinitions.IronFloorTile,   CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorIronFg,      true, true, false, 0, false, false),
+        new(ItemDefinitions.GoldFloorTile,   CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      true, true, false, 0, false, false),
     ];
 
     public static PlaceableDefinition Get(int itemTypeId) =>
@@ -103,13 +100,13 @@ public static class PlaceableDefinitions
         return def.PlacedFgColor; // color doesn't change with state
     }
 
-    public static PlaceableCategory GetCategory(int itemTypeId) => Get(itemTypeId).Category;
+    public static int GetCategory(int itemTypeId) => Get(itemTypeId).Category;
 
-    public static bool IsDoor(int itemTypeId) => GetCategory(itemTypeId) == PlaceableCategory.Door;
+    public static bool IsDoor(int itemTypeId) => GetCategory(itemTypeId) == CategoryDoor;
 
     public static bool IsDoorOpen(int itemTypeId, int extra) => IsDoor(itemTypeId) && extra != 0;
 
     public static bool IsDoorClosed(int itemTypeId, int extra) => IsDoor(itemTypeId) && extra == 0;
 
-    public static bool IsWall(int itemTypeId) => GetCategory(itemTypeId) == PlaceableCategory.Wall;
+    public static bool IsWall(int itemTypeId) => GetCategory(itemTypeId) == CategoryWall;
 }
