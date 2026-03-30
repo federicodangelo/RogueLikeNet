@@ -109,15 +109,15 @@ public sealed class GameWorldRenderer
                         brightness = Math.Clamp(brightness + brightnessOffset, 0f, 1f);
                     }
 
-                    var bgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.BgColor), brightness);
-                    var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(tile.FgColor), brightness);
+                    var bgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.BgColor), brightness);
+                    var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.FgColor), brightness);
                     var glyphId = tile.GlyphId;
 
                     // Override glyph/color from placed item when present
                     if (tile.PlaceableItemId != 0)
                     {
                         glyphId = PlaceableDefinitions.GetGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
-                        fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(PlaceableDefinitions.GetFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
+                        fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(PlaceableDefinitions.GetFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
                     }
 
                     // Client-side door glyph override: pick | or - based on surrounding walls
@@ -202,7 +202,7 @@ public sealed class GameWorldRenderer
 
         var px = sx * tileW + shakeX;
         var py = sy * tileH + shakeY;
-        var fgColor = AsciiDraw.ApplyBrightness(AsciiDraw.IntToColor4(entity.FgColor), brightness);
+        var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(entity.FgColor), brightness);
         var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
         r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
 

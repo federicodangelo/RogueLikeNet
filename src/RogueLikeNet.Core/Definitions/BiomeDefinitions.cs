@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Utilities;
 
 namespace RogueLikeNet.Core.Definitions;
 
@@ -38,6 +39,21 @@ public static class BiomeDefinitions
         (105, 95, 85),   // Ruined — warm gray
         (115, 80, 70),   // Infernal — deep red
     ];
+
+    private static readonly int[] FloorColorByBiome =
+    [
+        TileDefinitions.ColorStoneFloor, // Stone
+        TileDefinitions.ColorLavaFloor,  // Lava
+        TileDefinitions.ColorIceFloor,   // Ice
+        TileDefinitions.ColorDirtFloor,  // Forest
+        TileDefinitions.ColorArcaneFloor, // Arcane
+        TileDefinitions.ColorDirtFloor,  // Crypt
+        TileDefinitions.ColorDirtFloor,  // Sewer
+        TileDefinitions.ColorDirtFloor,  // Fungal
+        TileDefinitions.ColorRubbleFloor, // Ruined
+        TileDefinitions.ColorLavaFloor,  // Infernal
+    ];
+
 
     private static readonly string[] Names =
         ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
@@ -257,16 +273,17 @@ public static class BiomeDefinitions
         };
     }
 
+    public static int GetFloorColor(BiomeType biome) => FloorColorByBiome[(int)biome];
+
     /// <summary>
     /// Applies the biome tint to a packed 0xRRGGBB color, returning a new packed color.
     /// </summary>
     public static int ApplyBiomeTint(int packedRgb, BiomeType biome)
     {
         if (packedRgb == 0) return 0;
+        var color = ColorUtils.IntToColor4(packedRgb);
         var (rr, gg, bb) = Palettes[(int)biome];
-        int r = Math.Clamp(((packedRgb >> 16) & 0xFF) * rr / 100, 0, 255);
-        int g = Math.Clamp(((packedRgb >> 8) & 0xFF) * gg / 100, 0, 255);
-        int b = Math.Clamp((packedRgb & 0xFF) * bb / 100, 0, 255);
-        return (r << 16) | (g << 8) | b;
+        var scaledColor = ColorUtils.ScaleColor(color, rr, gg, bb);
+        return ColorUtils.Color4ToInt(scaledColor);
     }
 }

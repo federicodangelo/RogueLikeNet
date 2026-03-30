@@ -126,4 +126,12 @@ public static class TileDefinitions
     public const int ColorLavaBg = 0x331100;
     public const int ColorWaterBg = 0x001133;
     public const int ColorIceBg = 0x0A1122;
+
+    // Tile floor colors
+    public const int ColorStoneFloor = 0x888888;
+    public const int ColorLavaFloor = 0xFF4400;
+    public const int ColorIceFloor = 0xAADDFF;
+    public const int ColorDirtFloor = 0x665533;
+    public const int ColorArcaneFloor = 0x664488;
+    public const int ColorRubbleFloor = 0x888877;
 }

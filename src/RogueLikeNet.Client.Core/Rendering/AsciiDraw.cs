@@ -90,31 +90,12 @@ public static class AsciiDraw
         DrawString(r, valX, y, valStr, valColor);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Color4 IntToColor4(int packedRgb)
-    {
-        var cr = (byte)Math.Min(255, packedRgb >> 16 & 0xFF);
-        var cg = (byte)Math.Min(255, packedRgb >> 8 & 0xFF);
-        var cb = (byte)Math.Min(255, packedRgb & 0xFF);
-
-        return new Color4(cr, cg, cb, 255);
-    }
-
     public static float LightLevelToBrightness(int lightLevel)
     {
         if (lightLevel <= 0) return 0;
         var raw = Math.Clamp(lightLevel / 10f, 0f, 1f);
         var brightness = 0.12f + 0.88f * MathF.Pow(raw, 0.65f);
         return brightness;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Color4 ApplyBrightness(Color4 color, float brightness)
-    {
-        var cr = (byte)Math.Min(255, color.R * brightness);
-        var cg = (byte)Math.Min(255, color.G * brightness);
-        var cb = (byte)Math.Min(255, color.B * brightness);
-        return new Color4(cr, cg, cb, 255);
     }
 
     public static string CategoryTag(int category) => category switch

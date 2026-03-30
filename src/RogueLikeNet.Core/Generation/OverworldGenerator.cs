@@ -139,7 +139,7 @@ public class OverworldGenerator : IDungeonGenerator
                 if (tile.Type == TileType.Blocked || tile.Type == TileType.Floor)
                 {
                     // Apply biome tint to walls and floors
-                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
+                    tile.FgColor = tile.Type == TileType.Floor ? BiomeDefinitions.GetFloorColor(biome) : BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
                     tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
                 }
 
