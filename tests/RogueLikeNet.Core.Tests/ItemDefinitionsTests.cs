@@ -19,7 +19,7 @@ public class ItemDefinitionsTests
     {
         var rng = new SeededRandom(42);
         int totalRarity = 0;
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 110; i++)
         {
             var (_, rarity) = ItemDefinitions.GenerateLoot(rng, 10);
             totalRarity += rarity;

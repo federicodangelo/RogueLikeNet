@@ -25,7 +25,7 @@ public static class ResourceNodeDefinitions
     ];
 
     public static ResourceNodeDefinition Get(int nodeTypeId) =>
-        Array.Find(All, d => d.NodeTypeId == nodeTypeId);
+        nodeTypeId >= 0 && nodeTypeId < All.Length ? All[nodeTypeId] : default;
 
     /// <summary>
     /// Returns an array of (NodeDefinition, Weight) pairs for the given biome.
@@ -45,6 +45,28 @@ public static class ResourceNodeDefinitions
         _ => [(All[CopperRock], 30), (All[IronRock], 20), (All[Tree], 20), (All[GoldRock], 10)],
     };
 
+    private static int[] BiomeTreeChances;
+
+    static ResourceNodeDefinitions()
+    {
+        BiomeTreeChances = new int[Enum.GetValues<BiomeType>().Length];
+        for (int i = 0; i < BiomeTreeChances.Length; i++)
+        {
+            var biome = (BiomeType)i;
+            int chance = 0;
+            foreach (var (def, w) in GetForBiome(biome))
+                if (def.NodeTypeId == Tree)
+                    chance = w;
+
+            BiomeTreeChances[i] = chance;
+        }
+    }
+
+    public static int BiomeTreeChance(BiomeType biome)
+    {
+        return BiomeTreeChances[(int)biome];
+    }
+
     /// <summary>
     /// Picks a random resource node definition weighted by biome distribution.
     /// </summary>
@@ -63,4 +85,27 @@ public static class ResourceNodeDefinitions
         }
         return options[^1].Def;
     }
+
+    public static ResourceNodeDefinition PickRock(SeededRandom rng, BiomeType biome)
+    {
+        var options = GetForBiome(biome);
+        int totalWeight = 0;
+        foreach (var (def, w) in options)
+            if (def.NodeTypeId != Tree)
+                totalWeight += w;
+
+        if (totalWeight == 0)
+            return All[CopperRock];
+
+        int roll = rng.Next(totalWeight);
+        int cumulative = 0;
+        foreach (var (def, w) in options)
+        {
+            if (def.NodeTypeId == Tree) continue;
+            cumulative += w;
+            if (roll < cumulative) return def;
+        }
+        return All[CopperRock];
+    }
+
 }

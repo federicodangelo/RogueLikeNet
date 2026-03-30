@@ -82,7 +82,7 @@ public class CellularAutomataCaveGeneratorTests
         // Generate with many different chunk coordinates to exercise ExtractRooms.
         // The fallback path kicks in when the cellular automata leaves < 2 qualifying rooms,
         // ensuring the generator always places up-stairs and down-stairs elements.
-        var gen = new CellularAutomataCaveGenerator(12345);
+        var gen = new CellularAutomataCaveGenerator(123456);
         for (int cx = -5; cx <= 5; cx++)
             for (int cy = -5; cy <= 5; cy++)
             {

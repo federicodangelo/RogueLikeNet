@@ -28,10 +28,14 @@ public class OverworldGenerator : IDungeonGenerator
     // (FloorThreshold, LiquidHeightThreshold) defines the "low-lying" zone that floods.
     private const double LiquidHeightThreshold = 0.05;
 
+    // Resource node noise layer: clusters resource nodes in natural-looking patches
+    private const double ResourceScale = 0.08;
+    private const double ResourceRockThreshold = 0.3;
+    private const double ResourceTreeThreshold = 0.2;
+
     // Spawn density: chance per floor tile (out of 1000)
     private const int MonsterChance = 4;
     private const int ItemChance = 1;
-    private const int ResourceNodeChance = 3;
     private const int TorchChance = 0; // Disabled for now, it doesn't make sense for overworld
 
     private readonly long _seed;
@@ -53,6 +57,7 @@ public class OverworldGenerator : IDungeonGenerator
         var detailNoise = new PerlinNoise(_seed ^ 0x5DEECE66DL);
         var tempNoise = new PerlinNoise(_seed ^ 0x27BB2EE687B0B0FDL);
         var moistNoise = new PerlinNoise(_seed ^ 0x12345678ABCDEF0L);
+        var resourceNoise = new PerlinNoise(_seed ^ 0x3A4F5B6C7D8E9F0AL);
 
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
@@ -111,6 +116,20 @@ public class OverworldGenerator : IDungeonGenerator
                 tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
                 tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
 
+                // Resource node placement using Perlin noise for natural clustering
+                double resourceValue = resourceNoise.FBM(wx * ResourceScale, wy * ResourceScale, 3);
+
+                // Rocks spawn where resource noise overlaps with walls
+                if (tile.Type == TileType.Blocked && resourceValue > ResourceRockThreshold)
+                {
+                    tile.Type = TileType.Floor;
+                    tile.GlyphId = TileDefinitions.GlyphFloor;
+                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(TileDefinitions.ColorFloorFg, biome);
+                    tile.BgColor = BiomeDefinitions.ApplyBiomeTint(TileDefinitions.ColorBlack, biome);
+                    result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), ResourceNodeDefinitions.PickRock(rng, biome)));
+                    continue;
+                }
+
                 if (tile.Type != TileType.Floor) continue;
 
                 // Liquid placement: low-lying floor tiles form natural pools in biomes that allow liquids
@@ -123,6 +142,14 @@ public class OverworldGenerator : IDungeonGenerator
                     tile.FgColor = l.FgColor;
                     tile.BgColor = l.BgColor;
                     continue; // Don't place decorations or spawns on liquid
+                }
+
+                // Trees spawn where resource noise overlaps with floors (20% chance to thin out)
+                if (resourceValue > ResourceTreeThreshold && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
+                {
+                    result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly),
+                        ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
+                    continue;
                 }
 
                 // Decorations — use RNG seeded per-tile for determinism
@@ -160,18 +187,8 @@ public class OverworldGenerator : IDungeonGenerator
                     else if (rng.Next(1000) < ItemChance)
                     {
                         var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-                        int rarityMult = 100 + loot.Rarity * 50;
-                        result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new ItemData
-                        {
-                            ItemTypeId = loot.Definition.TypeId,
-                            Rarity = loot.Rarity,
-                            BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
-                            BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
-                            BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
-                            StackCount = loot.Definition.Stackable
-                                ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
-                                : 1,
-                        }));
+                        var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
+                        result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), itemData));
                     }
                     else if (rng.Next(1000) < TorchChance)
                     {
@@ -180,11 +197,7 @@ public class OverworldGenerator : IDungeonGenerator
                             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                             new LightSource(6, TileDefinitions.ColorTorchFg)));
                     }
-                    else if (rng.Next(1000) < ResourceNodeChance)
-                    {
-                        var nodeDef = ResourceNodeDefinitions.Pick(rng, biome);
-                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), nodeDef));
-                    }
+
                 }
             }
         }
@@ -224,4 +237,5 @@ public class OverworldGenerator : IDungeonGenerator
 
         return result;
     }
+
 }

@@ -64,7 +64,13 @@ internal static class DungeonHelper
 
     public static void PlaceStairs(Chunk chunk, List<Room> rooms)
     {
-        if (rooms.Count < 2) return;
+        if (rooms.Count < 2)
+        {
+            return;
+        }
+
+
+        ;
         var first = rooms[0];
         var last = rooms[^1];
         PlaceFeature(chunk, first.CenterX, first.CenterY, TileType.StairsUp,
