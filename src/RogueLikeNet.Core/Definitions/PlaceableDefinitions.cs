@@ -35,9 +35,7 @@ public static class PlaceableDefinitions
     static PlaceableDefinitions()
     {
         // Pre-build a flat array indexed by ItemTypeId for O(1) lookup.
-        int maxId = 0;
-        foreach (var d in All)
-            if (d.ItemTypeId > maxId) maxId = d.ItemTypeId;
+        int maxId = All.Max(t => t.ItemTypeId);
         _byId = new PlaceableDefinition[maxId + 1];
         foreach (var d in All)
             _byId[d.ItemTypeId] = d;

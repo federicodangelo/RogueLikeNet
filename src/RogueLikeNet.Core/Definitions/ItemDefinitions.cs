@@ -115,20 +115,31 @@ public static class ItemDefinitions
 
     /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>
     public static ItemDefinition Get(int typeId) =>
-        Array.Find(All, d => d.TypeId == typeId);
+        typeId > 0 && typeId < _byId.Length ? _byId[typeId] : default;
+
+    private static readonly ItemDefinition[] _byId;
+
+    static ItemDefinitions()
+    {
+        // Pre-build a flat array indexed by TypeId for O(1) lookup.
+        int maxId = All.Max(t => t.TypeId);
+        _byId = new ItemDefinition[maxId + 1];
+        foreach (var d in All)
+            _byId[d.TypeId] = d;
+    }
 
     /// <summary>
     /// Generates a random item with optional rarity bonus.
     /// </summary>
     public static Loot GenerateLoot(SeededRandom rng, int difficulty)
     {
-        // Pick category weighted: 30% weapon, 25% armor, 25% potion, 20% gold
+        // Pick category weighted: 80% gold, 10% potion, 5% weapon, 5% armor
         int roll = rng.Next(100);
         int category;
-        if (roll < 30) category = CategoryWeapon;
-        else if (roll < 55) category = CategoryArmor;
-        else if (roll < 80) category = CategoryPotion;
-        else category = CategoryGold;
+        if (roll < 80) category = CategoryGold;
+        else if (roll < 90) category = CategoryPotion;
+        else if (roll < 95) category = CategoryArmor;
+        else category = CategoryWeapon;
 
         // Filter by category
         var candidates = All.Where(t => t.Category == category).ToArray();
