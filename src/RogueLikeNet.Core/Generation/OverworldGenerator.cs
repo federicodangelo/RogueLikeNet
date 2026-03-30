@@ -13,7 +13,7 @@ namespace RogueLikeNet.Core.Generation;
 public class OverworldGenerator : IDungeonGenerator
 {
     // Noise scale: lower = larger features
-    private const double TerrainScale = 0.035;
+    private const double TerrainScale = 0.025;
     private const double BiomeScale = 0.012;
 
     // Terrain threshold: noise > this = floor (lower = more open)
@@ -63,26 +63,50 @@ public class OverworldGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
         int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
 
-        // Height map: stores the combined terrain noise value per tile for use in Pass 2
-        var heightMap = new double[Chunk.Size, Chunk.Size];
+        BiomeType GetBiomeAt(int wx, int wy)
+        {
+            double temp = tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+            double moist = moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+            return BiomeDefinitions.GetBiomeFromClimate(temp, moist);
+        }
 
-        // Pass 1: Carve terrain (floor vs wall) using continuous noise
+        // Pass 1: Carve terrain (floor vs wall vs liquid) using continuous noise
         for (int lx = 0; lx < Chunk.Size; lx++)
+        {
             for (int ly = 0; ly < Chunk.Size; ly++)
             {
-                double wx = worldOffsetX + lx;
-                double wy = worldOffsetY + ly;
+                int wx = worldOffsetX + lx;
+                int wy = worldOffsetY + ly;
 
                 // Main terrain: FBM for natural-looking caves
                 double terrain = terrainNoise.FBM(wx * TerrainScale, wy * TerrainScale, 4);
                 // Detail layer adds small variation
                 double detail = detailNoise.FBM(wx * DetailScale, wy * DetailScale, 2);
-                double combined = terrain + detail * DetailWeight;
-                heightMap[lx, ly] = combined;
+                // Combine layers with weighting
+                double height = terrain + detail * DetailWeight;
+
+                var biome = GetBiomeAt(wx, wy);
+
+                double resourceValue = resourceNoise.FBM(wx * ResourceScale, wy * ResourceScale, 3);
+
+                var canBeResourceNode = resourceValue > ResourceRockThreshold;
+                var addedResourceNode = false;
+
+                var liquidDef = BiomeDefinitions.GetLiquid(biome);
 
                 ref var tile = ref chunk.Tiles[lx, ly];
-                if (combined > FloorThreshold)
+                if (height < LiquidHeightThreshold && liquidDef != null)
                 {
+                    // Liquid
+                    var l = liquidDef.Value;
+                    tile.Type = l.Type;
+                    tile.GlyphId = l.GlyphId;
+                    tile.FgColor = l.FgColor;
+                    tile.BgColor = l.BgColor;
+                }
+                else if (height > FloorThreshold)
+                {
+                    // Floor
                     tile.Type = TileType.Floor;
                     tile.GlyphId = TileDefinitions.GlyphFloor;
                     tile.FgColor = TileDefinitions.ColorFloorFg;
@@ -90,114 +114,87 @@ public class OverworldGenerator : IDungeonGenerator
                 }
                 else
                 {
-                    tile.Type = TileType.Blocked;
-                    tile.GlyphId = TileDefinitions.GlyphWall;
-                    tile.FgColor = TileDefinitions.ColorWallFg;
-                    tile.BgColor = TileDefinitions.ColorBlack;
-                }
-            }
+                    // Walls
 
-        // Pass 2: Determine per-tile biome and apply tint + decorations + liquids
-        for (int lx = 0; lx < Chunk.Size; lx++)
-        {
-            for (int ly = 0; ly < Chunk.Size; ly++)
-            {
-                double wx = worldOffsetX + lx;
-                double wy = worldOffsetY + ly;
-
-                // Temperature/moisture for biome selection
-                double temp = tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-                double moist = moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-                var biome = BiomeDefinitions.GetBiomeFromClimate(temp, moist);
-
-                ref var tile = ref chunk.Tiles[lx, ly];
-
-                // Apply biome tint to all tiles (walls and floors)
-                tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-                tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
-
-                // Resource node placement using Perlin noise for natural clustering
-                double resourceValue = resourceNoise.FBM(wx * ResourceScale, wy * ResourceScale, 3);
-
-                // Rocks spawn where resource noise overlaps with walls
-                if (tile.Type == TileType.Blocked && resourceValue > ResourceRockThreshold)
-                {
-                    tile.Type = TileType.Floor;
-                    tile.GlyphId = TileDefinitions.GlyphFloor;
-                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(TileDefinitions.ColorFloorFg, biome);
-                    tile.BgColor = BiomeDefinitions.ApplyBiomeTint(TileDefinitions.ColorBlack, biome);
-                    result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), ResourceNodeDefinitions.PickRock(rng, biome)));
-                    continue;
-                }
-
-                if (tile.Type != TileType.Floor) continue;
-
-                // Liquid placement: low-lying floor tiles form natural pools in biomes that allow liquids
-                var liquidDef = BiomeDefinitions.GetLiquid(biome);
-                if (liquidDef != null && heightMap[lx, ly] < LiquidHeightThreshold)
-                {
-                    var l = liquidDef.Value;
-                    tile.Type = l.Type;
-                    tile.GlyphId = l.GlyphId;
-                    tile.FgColor = l.FgColor;
-                    tile.BgColor = l.BgColor;
-                    continue; // Don't place decorations or spawns on liquid
-                }
-
-                // Trees spawn where resource noise overlaps with floors (20% chance to thin out)
-                if (resourceValue > ResourceTreeThreshold && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
-                {
-                    result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly),
-                        ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
-                    continue;
-                }
-
-                // Decorations — use RNG seeded per-tile for determinism
-                var decorations = BiomeDefinitions.GetDecorations(biome);
-                if (decorations.Length > 0)
-                {
-                    foreach (var deco in decorations)
+                    // Rocks spawn where resource noise overlaps with walls
+                    if (canBeResourceNode)
                     {
-                        if (rng.Next(100) < deco.Chance)
+                        // Resource node, put floor and a resource node on top
+                        tile.Type = TileType.Floor;
+                        tile.GlyphId = TileDefinitions.GlyphFloor;
+                        tile.FgColor = TileDefinitions.ColorFloorFg;
+                        tile.BgColor = TileDefinitions.ColorBlack;
+                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), ResourceNodeDefinitions.PickRock(rng, biome)));
+                        addedResourceNode = true;
+                    }
+                    else
+                    {
+                        tile.Type = TileType.Blocked;
+                        tile.GlyphId = TileDefinitions.GlyphWall;
+                        tile.FgColor = TileDefinitions.ColorWallFg;
+                        tile.BgColor = TileDefinitions.ColorBlack;
+                    }
+                }
+
+                if (tile.Type == TileType.Blocked || tile.Type == TileType.Floor)
+                {
+                    // Apply biome tint to walls and floors
+                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
+                    tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+                }
+
+                if (tile.Type == TileType.Floor && !addedResourceNode) // Only add features on floor tiles that don't have a resource node
+                {
+                    // Trees spawn where resource noise overlaps with floors
+                    if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
+                    {
+                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly),
+                            ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
+                    }
+                    else
+                    {
+                        // Add decorative features
+                        var decorations = BiomeDefinitions.GetDecorations(biome);
+                        foreach (var deco in decorations)
                         {
-                            tile.Type = TileType.Floor;
-                            tile.GlyphId = deco.GlyphId;
-                            tile.FgColor = BiomeDefinitions.ApplyBiomeTint(deco.FgColor, biome);
-                            break;
+                            if (rng.Next(100) < deco.Chance)
+                            {
+                                tile.Type = TileType.Floor;
+                                tile.GlyphId = deco.GlyphId;
+                                tile.FgColor = BiomeDefinitions.ApplyBiomeTint(deco.FgColor, biome);
+                                break;
+                            }
                         }
-                    }
-                }
 
-                // Spawn points on plain floor tiles (not liquid, not decoration)
-                if (tile.Type == TileType.Floor)
-                {
-                    if (rng.Next(1000) < MonsterChance)
-                    {
-                        var def = NpcDefinitions.Pick(rng, difficulty);
-                        int hpScale = 1 + difficulty / 2;
-                        result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData
+                        // Add monster, items or torches
+                        if (rng.Next(1000) < MonsterChance)
                         {
-                            MonsterTypeId = def.TypeId,
-                            Health = def.Health * hpScale,
-                            Attack = def.Attack + difficulty,
-                            Defense = def.Defense + difficulty / 2,
-                            Speed = def.Speed,
-                        }));
-                    }
-                    else if (rng.Next(1000) < ItemChance)
-                    {
-                        var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-                        var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
-                        result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), itemData));
-                    }
-                    else if (rng.Next(1000) < TorchChance)
-                    {
-                        result.Elements.Add(new DungeonElement(
-                            new Position(worldOffsetX + lx, worldOffsetY + ly),
-                            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                            new LightSource(6, TileDefinitions.ColorTorchFg)));
-                    }
+                            var def = NpcDefinitions.Pick(rng, difficulty);
+                            int hpScale = 1 + difficulty / 2;
+                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new MonsterData
+                            {
+                                MonsterTypeId = def.TypeId,
+                                Health = def.Health * hpScale,
+                                Attack = def.Attack + difficulty,
+                                Defense = def.Defense + difficulty / 2,
+                                Speed = def.Speed,
+                            }));
+                        }
+                        else if (rng.Next(1000) < ItemChance)
+                        {
+                            var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
+                            var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
+                            result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), itemData));
+                        }
+                        else if (rng.Next(1000) < TorchChance)
+                        {
+                            result.Elements.Add(new DungeonElement(
+                                new Position(worldOffsetX + lx, worldOffsetY + ly),
+                                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
+                                new LightSource(6, TileDefinitions.ColorTorchFg)));
+                        }
 
+                    }
                 }
             }
         }
@@ -206,11 +203,9 @@ public class OverworldGenerator : IDungeonGenerator
         if (TownGenerator.ShouldHaveTown(chunkX, chunkY, _seed))
         {
             // Determine biome at chunk center for construction material
-            double centerWx = worldOffsetX + Chunk.Size / 2;
-            double centerWy = worldOffsetY + Chunk.Size / 2;
-            double centerTemp = tempNoise.FBM(centerWx * BiomeScale, centerWy * BiomeScale, 3);
-            double centerMoist = moistNoise.FBM(centerWx * BiomeScale, centerWy * BiomeScale, 3);
-            var townBiome = BiomeDefinitions.GetBiomeFromClimate(centerTemp, centerMoist);
+            int centerWx = worldOffsetX + Chunk.Size / 2;
+            int centerWy = worldOffsetY + Chunk.Size / 2;
+            var townBiome = GetBiomeAt(centerWx, centerWy);
             TownGenerator.Generate(chunk, result, rng, townBiome, worldOffsetX, worldOffsetY);
         }
 

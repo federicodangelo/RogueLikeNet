@@ -59,10 +59,13 @@ internal static class TownGenerator
             {
                 if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                if (tile.Type != TileType.Floor)
+                {
+                    tile.Type = TileType.Floor;
+                    tile.GlyphId = TileDefinitions.GlyphFloor;
+                    tile.FgColor = TileDefinitions.ColorFloorFg;
+                    tile.BgColor = TileDefinitions.ColorBlack;
+                }
             }
         }
 
