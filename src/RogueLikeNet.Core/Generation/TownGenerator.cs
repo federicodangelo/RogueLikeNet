@@ -12,11 +12,17 @@ namespace RogueLikeNet.Core.Generation;
 internal static class TownGenerator
 {
     /// <summary>Town area size (centered in chunk).</summary>
-    private const int TownSize = 30;
+    private const int MinTownSize = 20;
+    private const int MaxTownSize = 50;
+
     private const int HouseMinSize = 5;
     private const int HouseMaxSize = 8;
-    private const int MaxHouses = 6;
-    private const int NpcCount = 4;
+    private const int MaxHouses = 12;
+
+    private const int GapBetweenHouses = 3; // Minimum gap between houses to prevent overlap
+
+    private const int MinNpcCount = 4;
+    private const int MaxNpcCount = 8;
 
     /// <summary>
     /// Determines if a chunk should contain a town based on coordinates and seed.
@@ -40,8 +46,9 @@ internal static class TownGenerator
         int worldOffsetX, int worldOffsetY)
     {
         var mat = GetMaterial(biome);
-        int townStart = (Chunk.Size - TownSize) / 2;
-        int townEnd = townStart + TownSize;
+        int townSize = MinTownSize + rng.Next(MaxTownSize - MinTownSize + 1);
+        int townStart = (Chunk.Size - townSize) / 2;
+        int townEnd = townStart + townSize;
         int townCenterX = worldOffsetX + Chunk.Size / 2;
         int townCenterY = worldOffsetY + Chunk.Size / 2;
 
@@ -85,16 +92,16 @@ internal static class TownGenerator
         {
             int w = HouseMinSize + rng.Next(HouseMaxSize - HouseMinSize + 1);
             int h = HouseMinSize + rng.Next(HouseMaxSize - HouseMinSize + 1);
-            int hx = townStart + 2 + rng.Next(Math.Max(1, TownSize - w - 4));
-            int hy = townStart + 2 + rng.Next(Math.Max(1, TownSize - h - 4));
+            int hx = townStart + 2 + rng.Next(Math.Max(1, townSize - w - 4));
+            int hy = townStart + 2 + rng.Next(Math.Max(1, townSize - h - 4));
 
-            // Ensure the house fits within the chunk and doesn't overlap others (with 1-tile gap)
+            // Ensure the house fits within the chunk and doesn't overlap others
             if (hx + w >= townEnd - 1 || hy + h >= townEnd - 1) continue;
             bool overlaps = false;
             foreach (var existing in houses)
             {
-                if (hx - 1 < existing.X + existing.Width && hx + w + 1 > existing.X &&
-                    hy - 1 < existing.Y + existing.Height && hy + h + 1 > existing.Y)
+                if (hx - GapBetweenHouses < existing.X + existing.Width && hx + w + GapBetweenHouses > existing.X &&
+                    hy - GapBetweenHouses < existing.Y + existing.Height && hy + h + GapBetweenHouses > existing.Y)
                 {
                     overlaps = true;
                     break;
@@ -117,19 +124,20 @@ internal static class TownGenerator
             new LightSource(8, TileDefinitions.ColorTorchFg)));
 
         // Spawn town NPCs in the town area
-        for (int i = 0; i < NpcCount; i++)
+        int npcCount = MinNpcCount + rng.Next(MaxNpcCount - MinNpcCount + 1);
+        for (int i = 0; i < npcCount; i++)
         {
             for (int attempt = 0; attempt < 20; attempt++)
             {
-                int nx = townStart + 2 + rng.Next(TownSize - 4);
-                int ny = townStart + 2 + rng.Next(TownSize - 4);
+                int nx = townStart + 2 + rng.Next(townSize - 4);
+                int ny = townStart + 2 + rng.Next(townSize - 4);
                 if (nx < 0 || nx >= Chunk.Size || ny < 0 || ny >= Chunk.Size) continue;
                 if (chunk.Tiles[nx, ny].Type != TileType.Floor) continue;
 
                 result.TownNpcs.Add((
                     new Position(worldOffsetX + nx, worldOffsetY + ny),
                     TownNpcDefinitions.PickName(rng),
-                    townCenterX, townCenterY, TownSize / 2
+                    townCenterX, townCenterY, townSize / 2
                 ));
                 break;
             }
