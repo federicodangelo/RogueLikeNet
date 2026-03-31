@@ -9,6 +9,8 @@ namespace RogueLikeNet.Server.Persistence;
 // Source-generated JSON context for AOT-compatible serialization of entity data.
 [JsonSerializable(typeof(List<Dictionary<string, object>>))]
 [JsonSerializable(typeof(List<Dictionary<string, JsonElement>>))]
+[JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(string))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
 internal partial class EntityJsonContext : JsonSerializerContext;
 
