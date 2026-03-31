@@ -78,19 +78,31 @@ public class AISystem
             }
 
             // Find nearest player (same Z or ±1 Z)
+            // Track both nearest overall and nearest within the same Z for better chasing behavior
             int nearestDist = int.MaxValue;
             int nearestPx = 0, nearestPy = 0, nearestPz = 0;
+            int nearestDistAboveOrBelow = int.MaxValue;
+            int nearestAboveOrBelowPx = 0, nearestAboveOrBelowPy = 0, nearestAboveOrBelowPz = 0;
+
             foreach (var (px, py, pz) in playerPositions)
             {
                 int zDiff = Math.Abs(pz - pos.Z);
                 if (zDiff > 1) continue; // Only detect players within ±1 Z
                 int dist = Math.Abs(pos.X - px) + Math.Abs(pos.Y - py) + zDiff;
-                if (dist < nearestDist)
+                if (zDiff == 0 && dist < nearestDist)
                 {
                     nearestDist = dist;
                     nearestPx = px;
                     nearestPy = py;
                     nearestPz = pz;
+                }
+
+                if (dist < nearestDistAboveOrBelow)
+                {
+                    nearestDistAboveOrBelow = dist;
+                    nearestAboveOrBelowPx = px;
+                    nearestAboveOrBelowPy = py;
+                    nearestAboveOrBelowPz = pz;
                 }
             }
 
@@ -102,7 +114,7 @@ public class AISystem
                     break;
 
                 case AIStates.Chase:
-                    if (nearestDist > ChaseRange)
+                    if (nearestDistAboveOrBelow > ChaseRange)
                     {
                         ai.StateId = AIStates.Idle;
                         break;
@@ -116,7 +128,7 @@ public class AISystem
                     // Move towards player using 3D A*
                     int chaseZ = pos.Z; // capture for lambda
                     var path = AStarPathfinder.FindPath(
-                        pos.X, pos.Y, pos.Z, nearestPx, nearestPy, nearestPz,
+                        pos.X, pos.Y, pos.Z, nearestAboveOrBelowPx, nearestAboveOrBelowPy, nearestAboveOrBelowPz,
                         (x, y, z) =>
                         {
                             var tile = map.GetTile(x, y, z);

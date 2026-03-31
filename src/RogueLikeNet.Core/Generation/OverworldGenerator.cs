@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
@@ -38,21 +39,67 @@ public class OverworldGenerator : IDungeonGenerator
     private const int ItemChance1000 = 1;
     private const int TorchChance1000 = 0; // Disabled for now, it doesn't make sense for overworld
 
+    // Cave entrance noise: determines which chunks have a cave below
+    private const double CaveScale = 0.3;
+    private const double CaveThreshold = 0.05; // noise > this → cave present
+
+    // BSP parameters for underground caves (matching BspDungeonGenerator)
+    private const int BspMinRoomSize = 5;
+    private const int BspMaxRoomSize = 15;
+    private const int BspMinLeafSize = 8;
+    private const int BspPadding = 1;
+
+    private const int CaveZ = Position.DefaultZ - 1;
+
     private readonly long _seed;
+
+    private readonly PerlinNoise _terrainNoise;
+    private readonly PerlinNoise _detailNoise;
+    private readonly PerlinNoise _tempNoise;
+    private readonly PerlinNoise _moistNoise;
+    private readonly PerlinNoise _resourceNoise;
+    private readonly PerlinNoise _caveNoise;
 
     public OverworldGenerator(long seed)
     {
         _seed = seed;
+
+        _terrainNoise = new PerlinNoise(_seed);
+        _detailNoise = new PerlinNoise(_seed ^ 0x5DEECE66DL);
+        _tempNoise = new PerlinNoise(_seed ^ 0x27BB2EE687B0B0FDL);
+        _moistNoise = new PerlinNoise(_seed ^ 0x12345678ABCDEF0L);
+        _resourceNoise = new PerlinNoise(_seed ^ 0x3A4F5B6C7D8E9F0AL);
+        _caveNoise = new PerlinNoise(_seed ^ 0x7A3B9E1D4C5F6A8BL);
     }
 
     public bool Exists(int chunkX, int chunkY, int chunkZ)
     {
-        // Only the spawn chunk has content; all other chunks are empty floors.
-        return chunkZ == Position.DefaultZ;
+        if (chunkZ == Position.DefaultZ)
+            return true;
+
+        if (chunkZ == CaveZ)
+            return TryGetCaveEntrance(chunkX, chunkY, out _, out _);
+
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private double GetHeight(int wx, int wy)
+    {
+        // Main terrain: FBM for natural-looking caves
+        double terrain = _terrainNoise.FBM(wx * TerrainScale, wy * TerrainScale, 4);
+        // Detail layer adds small variation
+        double detail = _detailNoise.FBM(wx * DetailScale, wy * DetailScale, 2);
+        // Combine layers with weighting
+        double height = terrain + detail * DetailWeight;
+        return height;
     }
 
     public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
+        if (chunkZ == CaveZ)
+            return GenerateCave(chunkX, chunkY, chunkZ);
+
         var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
 
@@ -63,11 +110,6 @@ public class OverworldGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
 
         // Three independent noise layers with different seeds
-        var terrainNoise = new PerlinNoise(_seed);
-        var detailNoise = new PerlinNoise(_seed ^ 0x5DEECE66DL);
-        var tempNoise = new PerlinNoise(_seed ^ 0x27BB2EE687B0B0FDL);
-        var moistNoise = new PerlinNoise(_seed ^ 0x12345678ABCDEF0L);
-        var resourceNoise = new PerlinNoise(_seed ^ 0x3A4F5B6C7D8E9F0AL);
 
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
@@ -75,8 +117,8 @@ public class OverworldGenerator : IDungeonGenerator
 
         BiomeType GetBiomeAt(int wx, int wy)
         {
-            double temp = tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-            double moist = moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+            double temp = _tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+            double moist = _moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
             return BiomeDefinitions.GetBiomeFromClimate(temp, moist);
         }
 
@@ -88,16 +130,11 @@ public class OverworldGenerator : IDungeonGenerator
                 int wx = worldOffsetX + lx;
                 int wy = worldOffsetY + ly;
 
-                // Main terrain: FBM for natural-looking caves
-                double terrain = terrainNoise.FBM(wx * TerrainScale, wy * TerrainScale, 4);
-                // Detail layer adds small variation
-                double detail = detailNoise.FBM(wx * DetailScale, wy * DetailScale, 2);
-                // Combine layers with weighting
-                double height = terrain + detail * DetailWeight;
+                double height = GetHeight(wx, wy);
 
                 var biome = GetBiomeAt(wx, wy);
 
-                double resourceValue = resourceNoise.FBM(wx * ResourceScale, wy * ResourceScale, 3);
+                double resourceValue = _resourceNoise.FBM(wx * ResourceScale, wy * ResourceScale, 3);
 
                 var canBeResourceNode = resourceValue > ResourceRockThreshold;
                 var addedResourceNode = false;
@@ -233,7 +270,190 @@ public class OverworldGenerator : IDungeonGenerator
             }
         }
 
+        // Place cave entrance (StairsDown) on the surface if this chunk has a cave below
+        if (TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
+        {
+            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy);
+            DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, TileType.StairsDown,
+                TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
+        }
+
         return result;
     }
 
+    /// <summary>
+    /// Determines whether a chunk has a cave entrance and returns its local tile coordinates.
+    /// Uses cave noise at the chunk center to decide presence, then picks a deterministic
+    /// local position from the seed and validates it lands on a floor tile.
+    /// </summary>
+    private bool TryGetCaveEntrance(int chunkX, int chunkY, out int localX, out int localY)
+    {
+        localX = 0;
+        localY = 0;
+
+        int centerWx = chunkX * Chunk.Size + Chunk.Size / 2;
+        int centerWy = chunkY * Chunk.Size + Chunk.Size / 2;
+        double caveValue = _caveNoise.FBM(centerWx * CaveScale, centerWy * CaveScale, 2);
+
+        if (caveValue <= CaveThreshold)
+            return false;
+
+        // Deterministic entrance position from seed + chunk coords
+        long entranceSeed = _seed ^ ((long)chunkX * 0x6C078965 + (long)chunkY * 0x5D588B65 + 0x1234ABCD);
+        var entranceRng = new SeededRandom(entranceSeed);
+        // Keep away from chunk edges (margin of 3 tiles)
+        const int margin = 3;
+        localX = margin + entranceRng.Next(Chunk.Size - margin * 2);
+        localY = margin + entranceRng.Next(Chunk.Size - margin * 2);
+
+        // Validate the position is a floor tile using the same terrain logic as Generate()
+        int wx = chunkX * Chunk.Size + localX;
+        int wy = chunkY * Chunk.Size + localY;
+
+        double height = GetHeight(wx, wy);
+
+        // Must be on a floor tile (not wall, not liquid)
+        bool entranceIsFloor = height > FloorThreshold;
+
+        return entranceIsFloor;
+    }
+
+    /// <summary>
+    /// Generates a BSP cave dungeon at DefaultZ - 1 with only an up-stair at the entrance position.
+    /// </summary>
+    private GenerationResult GenerateCave(int chunkX, int chunkY, int chunkZ)
+    {
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var result = new GenerationResult(chunk);
+
+        if (!TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
+            return result;
+
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678) + chunkZ * 0x3C6EF35FL);
+        var rng = new SeededRandom(chunkSeed);
+        int size = Chunk.Size;
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
+
+        DungeonHelper.FillWalls(chunk);
+
+        // Build BSP tree
+        var root = new BspNode(BspPadding, BspPadding, size - BspPadding * 2, size - BspPadding * 2);
+        SplitBspNode(root, rng);
+
+        // Create rooms in leaf nodes
+        var rooms = new List<Room>();
+        CreateBspRooms(root, rng, rooms);
+
+        // Carve rooms into chunk
+        foreach (var room in rooms)
+            DungeonHelper.CarveRoom(chunk, room);
+
+        // Connect rooms via BSP siblings
+        ConnectBspRooms(root, chunk, rng);
+
+        // Place entrance stair (up only — can't go deeper)
+        DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy);
+        DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, TileType.StairsUp,
+            TileDefinitions.GlyphStairsUp, TileDefinitions.ColorWhite);
+
+        // Connect the entrance stair to the nearest room
+        if (rooms.Count > 0)
+        {
+            var nearest = rooms.OrderBy(r =>
+                Math.Abs(r.CenterX - entranceLx) + Math.Abs(r.CenterY - entranceLy)).First();
+            DungeonHelper.CarveCorridor(chunk, entranceLx, entranceLy,
+                nearest.CenterX, nearest.CenterY, rng);
+        }
+
+        DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
+        DungeonHelper.PlaceDecorations(chunk, biome, rng);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY)) + 1; // +1 for being underground
+        int worldOffsetX = chunkX * Chunk.Size;
+        int worldOffsetY = chunkY * Chunk.Size;
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
+        DungeonHelper.ApplyBiomeTint(chunk, biome);
+
+        return result;
+    }
+
+    #region BSP helpers (mirrored from BspDungeonGenerator)
+
+    private static void SplitBspNode(BspNode node, SeededRandom rng)
+    {
+        if (node.Width < BspMinLeafSize * 2 && node.Height < BspMinLeafSize * 2)
+            return;
+
+        bool splitHorizontal;
+        if (node.Width < BspMinLeafSize * 2) splitHorizontal = true;
+        else if (node.Height < BspMinLeafSize * 2) splitHorizontal = false;
+        else splitHorizontal = rng.Next(2) == 0;
+
+        if (splitHorizontal)
+        {
+            if (node.Height < BspMinLeafSize * 2) return;
+            int split = BspMinLeafSize + rng.Next(node.Height - BspMinLeafSize * 2 + 1);
+            node.Left = new BspNode(node.X, node.Y, node.Width, split);
+            node.Right = new BspNode(node.X, node.Y + split, node.Width, node.Height - split);
+        }
+        else
+        {
+            if (node.Width < BspMinLeafSize * 2) return;
+            int split = BspMinLeafSize + rng.Next(node.Width - BspMinLeafSize * 2 + 1);
+            node.Left = new BspNode(node.X, node.Y, split, node.Height);
+            node.Right = new BspNode(node.X + split, node.Y, node.Width - split, node.Height);
+        }
+
+        SplitBspNode(node.Left, rng);
+        SplitBspNode(node.Right, rng);
+    }
+
+    private static void CreateBspRooms(BspNode node, SeededRandom rng, List<Room> rooms)
+    {
+        if (node.Left != null && node.Right != null)
+        {
+            CreateBspRooms(node.Left, rng, rooms);
+            CreateBspRooms(node.Right, rng, rooms);
+            return;
+        }
+
+        int roomW = BspMinRoomSize + rng.Next(Math.Min(BspMaxRoomSize, node.Width - 2) - BspMinRoomSize + 1);
+        int roomH = BspMinRoomSize + rng.Next(Math.Min(BspMaxRoomSize, node.Height - 2) - BspMinRoomSize + 1);
+        int roomX = node.X + 1 + rng.Next(node.Width - roomW - 2 + 1);
+        int roomY = node.Y + 1 + rng.Next(node.Height - roomH - 2 + 1);
+
+        var room = new Room(roomX, roomY, roomW, roomH);
+        node.Room = room;
+        rooms.Add(room);
+    }
+
+    private static void ConnectBspRooms(BspNode node, Chunk chunk, SeededRandom rng)
+    {
+        if (node.Left == null || node.Right == null) return;
+
+        ConnectBspRooms(node.Left, chunk, rng);
+        ConnectBspRooms(node.Right, chunk, rng);
+
+        var leftRoom = GetBspRoom(node.Left, rng);
+        var rightRoom = GetBspRoom(node.Right, rng);
+        if (leftRoom == null || rightRoom == null) return;
+
+        DungeonHelper.CarveCorridor(chunk, leftRoom.CenterX, leftRoom.CenterY,
+            rightRoom.CenterX, rightRoom.CenterY, rng);
+    }
+
+    private static Room? GetBspRoom(BspNode node, SeededRandom rng)
+    {
+        if (node.Room != null) return node.Room;
+        if (node.Left == null && node.Right == null) return null;
+
+        var leftRoom = node.Left != null ? GetBspRoom(node.Left, rng) : null;
+        var rightRoom = node.Right != null ? GetBspRoom(node.Right, rng) : null;
+
+        if (leftRoom == null) return rightRoom;
+        if (rightRoom == null) return leftRoom;
+        return rng.Next(2) == 0 ? leftRoom : rightRoom;
+    }
+
+    #endregion
 }

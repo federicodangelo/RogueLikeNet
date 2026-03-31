@@ -230,6 +230,11 @@ public sealed class HudRenderer
             if (row >= maxRow) return;
             Ds(r, col, row, "[P] Pick up tile", RenderingTheme.Stats);
         }
+        else if (AboveStairsTile(state))
+        {
+            if (row >= maxRow) return;
+            Ds(r, col, row, "[>] Use stairs", RenderingTheme.Stats);
+        }
     }
 
     private static bool HasAdjacentPickableTile(ClientGameState state)
@@ -243,5 +248,11 @@ public sealed class HudRenderer
                 return true;
         }
         return false;
+    }
+
+    private static bool AboveStairsTile(ClientGameState state)
+    {
+        var tile = state.GetTile(state.PlayerX, state.PlayerY);
+        return tile.Type == TileType.StairsUp || tile.Type == TileType.StairsDown;
     }
 }

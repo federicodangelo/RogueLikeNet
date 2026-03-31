@@ -202,7 +202,7 @@ public class AISystemTests
     }
 
     [Fact]
-    public void Idle_PlayerOnAdjacentZ_TransitionsToChase()
+    public void Idle_PlayerOnAdjacentZ_DoesntTransitionsToChase()
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
@@ -227,7 +227,7 @@ public class AISystemTests
         engine.Tick();
 
         ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Chase, aiAfter.StateId);
+        Assert.Equal(AIStates.Idle, aiAfter.StateId);
     }
 
     [Fact]
