@@ -20,6 +20,7 @@ public static class MessageTypes
     public const byte LoginSend = 2;
     public const byte ChatSend = 3;
     public const byte ViewportInfo = 4;
+    public const byte SaveGameCommand = 5;
 
     // Server → Client
     // 100 reserved (was WorldSnapshot, now unified into WorldDelta)
@@ -28,4 +29,5 @@ public static class MessageTypes
     public const byte PlayerSpawned = 104;
     public const byte EntityDied = 105;
     public const byte CombatEvent = 106;
+    public const byte SaveGameResponse = 107;
 }

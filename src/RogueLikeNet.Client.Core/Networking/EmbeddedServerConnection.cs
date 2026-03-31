@@ -21,6 +21,7 @@ public class EmbeddedServerConnection : IGameServerConnection
 
     public event Action<WorldDeltaMsg>? OnWorldDelta;
     public event Action<ChatMsg>? OnChatReceived;
+    public event Action<SaveGameResponseMsg>? OnSaveGameResponse;
     public event Action? OnDisconnected;
 
     public EmbeddedServerConnection(GameServer gameServer)
@@ -66,6 +67,15 @@ public class EmbeddedServerConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
+    public Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default)
+    {
+        if (!_connected) return Task.CompletedTask;
+        // For embedded mode, process synchronously and invoke callback directly
+        var response = _gameServer.ProcessSaveCommand(cmd);
+        OnSaveGameResponse?.Invoke(response);
+        return Task.CompletedTask;
+    }
+
     private Task ProcessServerData(byte[] data)
     {
         Interlocked.Add(ref _bytesReceived, data.Length);
@@ -82,6 +92,11 @@ public class EmbeddedServerConnection : IGameServerConnection
                 case MessageTypes.ChatReceive:
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
                     OnChatReceived?.Invoke(chat);
+                    break;
+
+                case MessageTypes.SaveGameResponse:
+                    var saveResp = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
+                    OnSaveGameResponse?.Invoke(saveResp);
                     break;
             }
         }

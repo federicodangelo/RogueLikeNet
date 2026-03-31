@@ -18,6 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Engine.Sdl\Engine.Sdl.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Client.Core\RogueLikeNet.Client.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Server.Core\RogueLikeNet.Server.Core.csproj" />

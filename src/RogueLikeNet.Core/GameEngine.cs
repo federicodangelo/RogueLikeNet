@@ -518,6 +518,32 @@ public class GameEngine : IDisposable
         return (Chunk.Size / 2, Chunk.Size / 2, Position.DefaultZ);
     }
 
+    /// <summary>
+    /// Destroys all non-player entities within the given chunk bounds.
+    /// Used before unloading a chunk to clean up ECS entities.
+    /// </summary>
+    public void DestroyEntitiesInChunk(int chunkX, int chunkY, int chunkZ)
+    {
+        int minX = chunkX * Chunk.Size;
+        int maxX = minX + Chunk.Size - 1;
+        int minY = chunkY * Chunk.Size;
+        int maxY = minY + Chunk.Size - 1;
+
+        var toDestroy = new List<Entity>();
+        var query = new QueryDescription().WithAll<Position>().WithNone<PlayerTag>();
+        _ecsWorld.Query(in query, (Entity entity, ref Position pos) =>
+        {
+            if (pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z == chunkZ)
+                toDestroy.Add(entity);
+        });
+
+        foreach (var entity in toDestroy)
+        {
+            if (_ecsWorld.IsAlive(entity))
+                _ecsWorld.Destroy(entity);
+        }
+    }
+
     public void Dispose()
     {
         Arch.Core.World.Destroy(_ecsWorld);

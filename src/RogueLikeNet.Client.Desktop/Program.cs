@@ -5,6 +5,7 @@ using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
+using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Client.Desktop;
 
@@ -14,6 +15,7 @@ public class Program
     private static IGameServerConnection? _connection;
     private static GameServer? _embeddedServer;
     private static bool _running = true;
+    private static string? _pendingSlotName;
 
     [STAThread]
     public static void Main(string[] args)
@@ -24,11 +26,14 @@ public class Program
 
         _game.Initialize(platform);
 
+        _game.PlayOfflineRequested += debugMode => OnPlayOffline(debugMode);
         _game.StartOfflineRequested += (seed, classId, playerName, genIndex, debugMode) => OnStartOffline(seed, classId, playerName, genIndex, debugMode);
         _game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         _game.ReturnToMenuRequested += OnReturnToMenu;
         _game.DebugSyncRequested += OnDebugSync;
         _game.QuitRequested += () => _running = false;
+        _game.NewOfflineGameRequested += slotName => OnNewOfflineGame(slotName);
+        _game.LoadSlotRequested += slotId => OnLoadSlot(slotId);
 
         while (_running && !platform.InputManager.QuitRequested)
         {
@@ -39,12 +44,12 @@ public class Program
         _game.Dispose();
     }
 
-    private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
+    private static async void OnPlayOffline(bool debugMode)
     {
-        _game.TransitionToConnecting();
-
-        var generator = GeneratorRegistry.Create(generatorIndex, seed);
-        _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out);
+        // Create embedded server + connection so the save slot screen can list/manage slots
+        var saveProvider = new SqliteSaveGameProvider("game.db");
+        var generator = GeneratorRegistry.Create(GeneratorRegistry.DefaultIndex, 0);
+        _embeddedServer = new GameServer(0, generator, logWriter: Console.Out, saveProvider: saveProvider);
 
         if (debugMode)
             ApplyDebugSettings();
@@ -55,15 +60,77 @@ public class Program
         _connection = embeddedConnection;
         _game.SetConnection(_connection);
         await _connection.ConnectAsync("embedded://localhost");
-        await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
+
+        _game.TransitionToSaveSlotSelect();
+    }
+
+    private static void OnNewOfflineGame(string slotName)
+    {
+        // Store pending slot name, transition to class select for class/name picking
+        _pendingSlotName = slotName;
+        _game.TransitionToClassSelect();
+    }
+
+    private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
+    {
+        _game.TransitionToConnecting();
+
+        var generatorId = GeneratorRegistry.GetId(generatorIndex);
+
+        // If we have a pending slot name from SaveSlotScreen, create a new slot
+        if (_pendingSlotName != null)
+        {
+            var slotName = _pendingSlotName;
+            _pendingSlotName = null;
+            _embeddedServer!.StartNewGame(slotName, seed, generatorId);
+        }
+        else
+        {
+            // Fallback: direct offline start without save slot screen
+            var saveProvider = new SqliteSaveGameProvider("game.db");
+            var generator = GeneratorRegistry.Create(generatorIndex, seed);
+            _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out, saveProvider: saveProvider);
+            _embeddedServer.StartNewGame(playerName + "'s World", seed, generatorId);
+
+            if (debugMode)
+                ApplyDebugSettings();
+
+            _embeddedServer.Start();
+
+            var embeddedConnection = new EmbeddedServerConnection(_embeddedServer);
+            _connection = embeddedConnection;
+            _game.SetConnection(_connection);
+            await _connection.ConnectAsync("embedded://localhost");
+        }
+
+        await _connection!.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
 
         while (!_game.IsFirstDeltaProcessed)
         {
             await Task.Delay(50);
         }
 
-        // Sync client-side debug visibility
         if (debugMode)
+            _game.GameState.DebugSeeAll = _game.Debug.VisibilityOff;
+
+        _game.TransitionToPlaying();
+    }
+
+    private static async void OnLoadSlot(string slotId)
+    {
+        _game.TransitionToConnecting();
+
+        _embeddedServer!.LoadSaveSlot(slotId);
+
+        // Login with a default character — the loaded slot already has player data
+        await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = "Player" });
+
+        while (!_game.IsFirstDeltaProcessed)
+        {
+            await Task.Delay(50);
+        }
+
+        if (_game.Debug.Enabled)
             _game.GameState.DebugSeeAll = _game.Debug.VisibilityOff;
 
         _game.TransitionToPlaying();
@@ -93,6 +160,7 @@ public class Program
     private static void OnReturnToMenu()
     {
         _game.TransitionToMainMenu();
+        _pendingSlotName = null;
         CleanupConnection();
     }
 

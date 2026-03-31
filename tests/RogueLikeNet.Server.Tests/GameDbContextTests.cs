@@ -1,9 +1,12 @@
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Server.Tests;
 
+/// <summary>
+/// Tests for the record/POCO types and that SqliteSaveGameProvider creates a valid schema.
+/// Raw SQLite queries verify the schema was created correctly.
+/// </summary>
 public class GameDbContextTests : IDisposable
 {
     private readonly string _dbPath;
@@ -20,204 +23,106 @@ public class GameDbContextTests : IDisposable
     }
 
     [Fact]
-    public void EnsureCreated_Succeeds()
+    public void ProviderCreation_CreatesDatabase()
     {
-        using var db = new GameDbContext(_dbPath);
-        db.Database.EnsureCreated();
+        _ = new SqliteSaveGameProvider(_dbPath);
+        Assert.True(File.Exists(_dbPath));
     }
 
     [Fact]
-    public void DefaultPath_IsGameDb()
+    public void Schema_HasAllTables()
     {
-        using var db = new GameDbContext();
-        // Just verify construction with default parameter works
-        Assert.NotNull(db);
+        _ = new SqliteSaveGameProvider(_dbPath);
+        using var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        var tables = QueryScalar(conn, "SELECT group_concat(name) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+        Assert.Contains("SaveSlots", tables);
+        Assert.Contains("WorldMetas", tables);
+        Assert.Contains("Chunks", tables);
+        Assert.Contains("Players", tables);
     }
 
     [Fact]
-    public void CanAddAndQueryPlayers()
+    public void Schema_ChunkCoordinates_UniquePerSlot()
     {
-        using (var db = new GameDbContext(_dbPath))
-        {
-            db.Database.EnsureCreated();
-            db.Players.Add(new PlayerAccount
-            {
-                Username = "testuser",
-                PasswordHash = "hash",
-                CreatedTick = 1,
-                LastLoginTick = 2
-            });
-            db.SaveChanges();
-        }
-        using (var db = new GameDbContext(_dbPath))
-        {
-            var player = db.Players.First();
-            Assert.Equal("testuser", player.Username);
-            Assert.Equal("hash", player.PasswordHash);
-            Assert.Equal(1, player.CreatedTick);
-            Assert.Equal(2, player.LastLoginTick);
-        }
+        _ = new SqliteSaveGameProvider(_dbPath);
+        using var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        Execute(conn, "INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData) VALUES ('s1', 1, 1, 0, X'01')");
+        Assert.Throws<SqliteException>(() =>
+            Execute(conn, "INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData) VALUES ('s1', 1, 1, 0, X'02')"));
     }
 
     [Fact]
-    public void CanAddAndQueryCharacters()
+    public void Schema_PlayerName_UniquePerSlot()
     {
-        using (var db = new GameDbContext(_dbPath))
-        {
-            db.Database.EnsureCreated();
-            db.Characters.Add(new CharacterRecord
-            {
-                PlayerId = 1,
-                Name = "Hero",
-                ClassId = 2,
-                Level = 5,
-                Experience = 500,
-                HealthCurrent = 80,
-                HealthMax = 100,
-                Attack = 15,
-                Defense = 10,
-                Speed = 8,
-                PositionX = 32,
-                PositionY = 16,
-                InventoryData = [1, 2, 3]
-            });
-            db.SaveChanges();
-        }
-        using (var db = new GameDbContext(_dbPath))
-        {
-            var chr = db.Characters.First();
-            Assert.Equal("Hero", chr.Name);
-            Assert.Equal(2, chr.ClassId);
-            Assert.Equal(5, chr.Level);
-            Assert.Equal(500, chr.Experience);
-            Assert.Equal(80, chr.HealthCurrent);
-            Assert.Equal(100, chr.HealthMax);
-            Assert.Equal(15, chr.Attack);
-            Assert.Equal(10, chr.Defense);
-            Assert.Equal(8, chr.Speed);
-            Assert.Equal(32, chr.PositionX);
-            Assert.Equal(16, chr.PositionY);
-            Assert.Equal([1, 2, 3], chr.InventoryData);
-        }
+        _ = new SqliteSaveGameProvider(_dbPath);
+        using var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        Execute(conn, "INSERT INTO Players (SlotId, PlayerName) VALUES ('s1', 'dup')");
+        Assert.Throws<SqliteException>(() =>
+            Execute(conn, "INSERT INTO Players (SlotId, PlayerName) VALUES ('s1', 'dup')"));
     }
 
     [Fact]
-    public void CanAddAndQueryWorldChunks()
+    public void SaveSlotRecord_DefaultValues()
     {
-        using (var db = new GameDbContext(_dbPath))
-        {
-            db.Database.EnsureCreated();
-            db.WorldChunks.Add(new WorldChunkRecord
-            {
-                ChunkX = 3,
-                ChunkY = 7,
-                ChunkZ = 127,
-                TileData = [10, 20, 30]
-            });
-            db.SaveChanges();
-        }
-        using (var db = new GameDbContext(_dbPath))
-        {
-            var chunk = db.WorldChunks.First();
-            Assert.Equal(3, chunk.ChunkX);
-            Assert.Equal(7, chunk.ChunkY);
-            Assert.Equal([10, 20, 30], chunk.TileData);
-        }
+        var slot = new SaveSlotRecord();
+        Assert.Equal("", slot.SlotId);
+        Assert.Equal("", slot.Name);
+        Assert.Equal(0, slot.Seed);
+        Assert.Equal("", slot.GeneratorId);
     }
 
     [Fact]
-    public void CanAddAndQueryWorldMeta()
+    public void ChunkRecord_DefaultValues()
     {
-        using (var db = new GameDbContext(_dbPath))
-        {
-            db.Database.EnsureCreated();
-            db.WorldMeta.Add(new WorldMetadata
-            {
-                Id = 1,
-                Seed = 42,
-                CurrentTick = 100
-            });
-            db.SaveChanges();
-        }
-        using (var db = new GameDbContext(_dbPath))
-        {
-            var meta = db.WorldMeta.First();
-            Assert.Equal(42, meta.Seed);
-            Assert.Equal(100, meta.CurrentTick);
-        }
-    }
-
-    [Fact]
-    public void PlayerUsername_UniqueConstraint()
-    {
-        using var db = new GameDbContext(_dbPath);
-        db.Database.EnsureCreated();
-        db.Players.Add(new PlayerAccount { Username = "dup", PasswordHash = "a" });
-        db.SaveChanges();
-        db.Players.Add(new PlayerAccount { Username = "dup", PasswordHash = "b" });
-        Assert.Throws<DbUpdateException>(() => db.SaveChanges());
-    }
-
-    [Fact]
-    public void ChunkCoordinates_UniqueConstraint()
-    {
-        using var db = new GameDbContext(_dbPath);
-        db.Database.EnsureCreated();
-        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, ChunkZ = 0, TileData = [1] });
-        db.SaveChanges();
-        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, ChunkZ = 0, TileData = [2] });
-        Assert.Throws<DbUpdateException>(() => db.SaveChanges());
-    }
-
-    [Fact]
-    public void PlayerAccount_DefaultValues()
-    {
-        var player = new PlayerAccount();
-        Assert.Equal(0, player.Id);
-        Assert.Equal("", player.Username);
-        Assert.Equal("", player.PasswordHash);
-        Assert.Equal(0, player.CreatedTick);
-        Assert.Equal(0, player.LastLoginTick);
-    }
-
-    [Fact]
-    public void CharacterRecord_DefaultValues()
-    {
-        var chr = new CharacterRecord();
-        Assert.Equal(0, chr.Id);
-        Assert.Equal(0, chr.PlayerId);
-        Assert.Equal("", chr.Name);
-        Assert.Equal(0, chr.ClassId);
-        Assert.Equal(0, chr.Level);
-        Assert.Equal(0, chr.Experience);
-        Assert.Equal(0, chr.HealthCurrent);
-        Assert.Equal(0, chr.HealthMax);
-        Assert.Equal(0, chr.Attack);
-        Assert.Equal(0, chr.Defense);
-        Assert.Equal(0, chr.Speed);
-        Assert.Equal(0, chr.PositionX);
-        Assert.Equal(0, chr.PositionY);
-        Assert.Equal(0, chr.PositionZ);
-        Assert.Empty(chr.InventoryData);
-    }
-
-    [Fact]
-    public void WorldChunkRecord_DefaultValues()
-    {
-        var chunk = new WorldChunkRecord();
+        var chunk = new ChunkRecord();
         Assert.Equal(0, chunk.Id);
+        Assert.Equal("", chunk.SlotId);
         Assert.Equal(0, chunk.ChunkX);
         Assert.Equal(0, chunk.ChunkY);
         Assert.Equal(0, chunk.ChunkZ);
         Assert.Empty(chunk.TileData);
+        Assert.Equal("[]", chunk.EntityData);
     }
 
     [Fact]
-    public void WorldMetadata_DefaultValues()
+    public void PlayerRecord_DefaultValues()
     {
-        var meta = new WorldMetadata();
-        Assert.Equal(0, meta.Id);
+        var p = new PlayerRecord();
+        Assert.Equal(0, p.Id);
+        Assert.Equal("", p.SlotId);
+        Assert.Equal("", p.PlayerName);
+        Assert.Equal(0, p.ClassId);
+        Assert.Equal(0, p.Level);
+        Assert.Equal("[]", p.InventoryJson);
+        Assert.Equal("{}", p.EquipmentJson);
+        Assert.Equal("{}", p.SkillsJson);
+        Assert.Equal("{}", p.QuickSlotsJson);
+    }
+
+    [Fact]
+    public void WorldMetaRecord_DefaultValues()
+    {
+        var meta = new WorldMetaRecord();
+        Assert.Equal("", meta.SlotId);
         Assert.Equal(0, meta.Seed);
+        Assert.Equal("", meta.GeneratorId);
         Assert.Equal(0, meta.CurrentTick);
+    }
+
+    private static void Execute(SqliteConnection conn, string sql)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.ExecuteNonQuery();
+    }
+
+    private static string QueryScalar(SqliteConnection conn, string sql)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        return cmd.ExecuteScalar()?.ToString() ?? "";
     }
 }

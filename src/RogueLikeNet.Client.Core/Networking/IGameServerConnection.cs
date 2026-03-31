@@ -18,8 +18,10 @@ public interface IGameServerConnection : IAsyncDisposable
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);
     Task SendChatAsync(string text, CancellationToken ct = default);
     Task SendViewportInfoAsync(ViewportInfoMsg info, CancellationToken ct = default);
+    Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default);
 
     event Action<WorldDeltaMsg>? OnWorldDelta;
     event Action<ChatMsg>? OnChatReceived;
+    event Action<SaveGameResponseMsg>? OnSaveGameResponse;
     event Action? OnDisconnected;
 }

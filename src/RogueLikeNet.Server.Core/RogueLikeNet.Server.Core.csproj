@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\RogueLikeNet.Core\RogueLikeNet.Core.csproj" />
     <ProjectReference Include="..\RogueLikeNet.Protocol\RogueLikeNet.Protocol.csproj" />
   </ItemGroup>

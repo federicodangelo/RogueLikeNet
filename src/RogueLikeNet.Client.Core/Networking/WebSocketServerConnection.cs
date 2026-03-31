@@ -21,6 +21,7 @@ public class WebSocketServerConnection : IGameServerConnection
 
     public event Action<WorldDeltaMsg>? OnWorldDelta;
     public event Action<ChatMsg>? OnChatReceived;
+    public event Action<SaveGameResponseMsg>? OnSaveGameResponse;
     public event Action? OnDisconnected;
 
     public async Task ConnectAsync(string uri, CancellationToken ct = default)
@@ -89,6 +90,20 @@ public class WebSocketServerConnection : IGameServerConnection
             ct);
     }
 
+    public async Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default)
+    {
+        if (_socket?.State != WebSocketState.Open) return;
+
+        var payload = NetSerializer.Serialize(cmd);
+        var data = NetSerializer.WrapMessage(MessageTypes.SaveGameCommand, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
+        await _socket.SendAsync(
+            new ArraySegment<byte>(data),
+            WebSocketMessageType.Binary,
+            endOfMessage: true,
+            ct);
+    }
+
     private async Task ReadLoop(CancellationToken ct)
     {
         var buffer = new byte[65536];
@@ -140,6 +155,11 @@ public class WebSocketServerConnection : IGameServerConnection
                 case MessageTypes.ChatReceive:
                     var chat = NetSerializer.Deserialize<ChatMsg>(envelope.Payload);
                     OnChatReceived?.Invoke(chat);
+                    break;
+
+                case MessageTypes.SaveGameResponse:
+                    var saveResp = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
+                    OnSaveGameResponse?.Invoke(saveResp);
                     break;
 
                 default:

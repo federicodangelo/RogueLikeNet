@@ -19,9 +19,19 @@ public class Chunk
 
     public IReadOnlyList<(int WorldX, int WorldY, int WorldZ)> DirtyTiles => _dirtyTiles;
 
-    public void MarkTileDirty(int worldX, int worldY, int worldZ) => _dirtyTiles.Add((worldX, worldY, worldZ));
+    /// <summary>True if any tile has been modified since the last save.</summary>
+    public bool IsModifiedSinceLastSave { get; private set; }
+
+    public void MarkTileDirty(int worldX, int worldY, int worldZ)
+    {
+        _dirtyTiles.Add((worldX, worldY, worldZ));
+        IsModifiedSinceLastSave = true;
+    }
 
     public void ClearDirtyTiles() => _dirtyTiles.Clear();
+
+    /// <summary>Clears the save-dirty flag after persisting.</summary>
+    public void ClearSaveFlag() => IsModifiedSinceLastSave = false;
 
     public Chunk(int chunkX, int chunkY, int chunkZ)
     {

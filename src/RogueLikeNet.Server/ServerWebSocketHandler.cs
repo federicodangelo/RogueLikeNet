@@ -115,6 +115,11 @@ public static class ServerWebSocketHandler
                     gameServer.UpdateVisibleChunks(conn.ConnectionId, viewport.VisibleChunks);
                     break;
 
+                case MessageTypes.SaveGameCommand:
+                    var saveCmd = NetSerializer.Deserialize<SaveGameCommandMsg>(envelope.Payload);
+                    gameServer.HandleSaveGameCommand(conn.ConnectionId, saveCmd);
+                    break;
+
                 default:
                     logWriter.WriteLine($"Unknown message type from {conn.ConnectionId}: {envelope.MessageType}");
                     return false;

@@ -18,6 +18,7 @@ public sealed class ClassSelectScreen : IScreen
     private bool _nameEditing;
     private string _nameEditText = "";
     private bool _isOnline;
+    private ScreenState _returnState = ScreenState.MainMenu;
 
     public ScreenState ScreenState => ScreenState.ClassSelect;
 
@@ -34,6 +35,8 @@ public sealed class ClassSelectScreen : IScreen
         _isOnline = _mainMenuScreen.IsOnlineSelected;
     }
 
+    public void SetReturnState(ScreenState state) => _returnState = state;
+
     public void HandleInput(IInputManager input)
     {
         if (_nameEditing)
@@ -46,7 +49,8 @@ public sealed class ClassSelectScreen : IScreen
 
         if (input.IsActionPressed(InputAction.MenuBack))
         {
-            _ctx.RequestTransition(Rendering.ScreenState.MainMenu);
+            _ctx.RequestTransition(_returnState);
+            _returnState = ScreenState.MainMenu;
             return;
         }
 

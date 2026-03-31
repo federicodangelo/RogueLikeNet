@@ -20,6 +20,8 @@ public sealed class ScreenManager
     private readonly MainMenuScreen? _mainMenu;
     private readonly InventoryScreen? _inventory;
     private readonly CraftingScreen? _crafting;
+    private readonly SaveSlotScreen? _saveSlot;
+    private readonly ServerAdminScreen? _serverAdmin;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -31,7 +33,9 @@ public sealed class ScreenManager
         InventoryScreen inventory,
         CraftingScreen crafting,
         PausedScreen paused,
-        HelpScreen help)
+        HelpScreen help,
+        SaveSlotScreen saveSlot,
+        ServerAdminScreen serverAdmin)
     {
         _mainMenu = mainMenu;
         _classSelect = classSelect;
@@ -40,9 +44,12 @@ public sealed class ScreenManager
         _help = help;
         _inventory = inventory;
         _crafting = crafting;
+        _saveSlot = saveSlot;
+        _serverAdmin = serverAdmin;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
+        _screens[ScreenState.SaveSlotSelect] = saveSlot;
         _screens[ScreenState.Connecting] = connecting;
         _screens[ScreenState.Playing] = playing;
         _screens[ScreenState.Inventory] = inventory;
@@ -50,6 +57,7 @@ public sealed class ScreenManager
         _screens[ScreenState.Paused] = paused;
         _screens[ScreenState.MainMenuHelp] = help;
         _screens[ScreenState.PausedHelp] = help;
+        _screens[ScreenState.ServerAdmin] = serverAdmin;
 
         _current = mainMenu;
         CurrentState = ScreenState.MainMenu;
@@ -57,11 +65,20 @@ public sealed class ScreenManager
 
     public void TransitionTo(ScreenState state)
     {
-        // Run enter hooks for specific screens
+        if (_screens.TryGetValue(state, out var screen))
+        {
+            _current = screen;
+            CurrentState = state;
+        }
+
+        // Run enter hooks after state is set so synchronous callbacks see the correct CurrentState
         switch (state)
         {
             case ScreenState.ClassSelect:
                 _classSelect?.OnEnter();
+                break;
+            case ScreenState.SaveSlotSelect:
+                _saveSlot?.OnEnter();
                 break;
             case ScreenState.Paused:
                 _paused?.OnEnter();
@@ -81,12 +98,9 @@ public sealed class ScreenManager
             case ScreenState.Crafting:
                 _crafting?.OnEnter();
                 break;
-        }
-
-        if (_screens.TryGetValue(state, out var screen))
-        {
-            _current = screen;
-            CurrentState = state;
+            case ScreenState.ServerAdmin:
+                _serverAdmin?.OnEnter();
+                break;
         }
     }
 

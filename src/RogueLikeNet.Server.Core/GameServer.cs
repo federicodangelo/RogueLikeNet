@@ -3,25 +3,33 @@ using System.Diagnostics;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
+using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Server;
 
 /// <summary>
 /// The authoritative game server. Runs at 20 ticks/sec.
 /// Processes client inputs, runs game systems, broadcasts deltas.
+/// Supports persistence: auto-save modified chunks, player state, and chunk unloading.
 /// </summary>
 public class GameServer : IDisposable
 {
     public const int TickRateMs = 1000 / TicksPerSecond;
     public const int TicksPerSecond = 20;
 
-    private const int MaxChunksPerTick = 4; // Limit how many new chunks to send per tick to avoid bandwidth spikes
+    private const int MaxChunksPerTick = 4;
+    private const int MinTicksBetweenChunkResend = 10;
 
-    private const int MinTicksBetweenChunkResend = 10; // Min delay between sending static chunk data to the same client
+    /// <summary>Auto-save every 5 seconds (100 ticks at 20 tps).</summary>
+    private const int AutoSaveIntervalTicks = 5 * TicksPerSecond;
 
-    protected readonly GameEngine _engine;
+    /// <summary>Unload chunks not viewed by any player for 30 seconds (600 ticks).</summary>
+    private const int ChunkUnloadIdleTicks = 30 * TicksPerSecond;
+
+    protected GameEngine _engine;
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
     private readonly ConcurrentQueue<Func<Task>> _commandQueue = new();
     private readonly CancellationTokenSource _cts = new();
@@ -30,8 +38,16 @@ public class GameServer : IDisposable
     private readonly TextWriter _logWriter;
     private TileUpdateMsg[] _pendingTileUpdates = [];
 
+    // Persistence
+    private readonly ISaveGameProvider? _saveProvider;
+    private string? _currentSlotId;
+    private long _lastSaveTick;
+    private readonly Dictionary<long, long> _chunkLastViewedTick = new();
+
     public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
+    public string? CurrentSlotId => _currentSlotId;
+    public bool HasSaveProvider => _saveProvider != null;
 
     /// <summary>Debug: when true, player movement ignores tile collision.</summary>
     public bool DebugNoCollision
@@ -54,16 +70,17 @@ public class GameServer : IDisposable
         set => _engine.DebugMaxSpeed = value;
     }
 
-    /// <summary>Debug: when true, all tiles are treated as visible (no FOV). Only applies to player visibility, not explored state.</summary>
+    /// <summary>Debug: when true, all tiles are treated as visible (no FOV).</summary>
     public bool DebugVisibilityOff { get; set; } = false;
 
     /// <summary>Debug: when true, newly spawned players receive 9999 of each resource.</summary>
     public bool DebugGiveResources { get; set; } = false;
 
 
-    public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null)
+    public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null, ISaveGameProvider? saveProvider = null)
     {
         _logWriter = logWriter ?? TextWriter.Null;
+        _saveProvider = saveProvider;
 
         _engine = new GameEngine(worldSeed, generator);
         // Pre-generate spawn chunk
@@ -77,6 +94,188 @@ public class GameServer : IDisposable
 
         _serverTask = Task.Run(() => RunServer(_cts.Token));
     }
+
+    // ──────────────────────────────────────────────
+    // Save slot management commands
+    // ──────────────────────────────────────────────
+
+    /// <summary>Lists all available save slots from the provider.</summary>
+    public List<SaveSlotInfo> ListSaveSlots()
+    {
+        if (_saveProvider == null) return [];
+        return _saveProvider.ListSaveSlots();
+    }
+
+    /// <summary>
+    /// Creates a new game in a new save slot and replaces the current engine.
+    /// Must be called before any players connect, or after all disconnect.
+    /// </summary>
+    public void StartNewGame(string slotName, long seed, string generatorId)
+    {
+        if (_saveProvider == null) return;
+
+        var slot = _saveProvider.CreateSaveSlot(slotName, seed, generatorId);
+        _currentSlotId = slot.SlotId;
+
+        var baseGenerator = GeneratorRegistry.Create(generatorId, seed);
+        var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
+
+        _engine.Dispose();
+        _engine = new GameEngine(seed, persistentGen);
+        persistentGen.SetEngine(_engine);
+        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+
+        _chunkLastViewedTick.Clear();
+        _lastSaveTick = 0;
+
+        _saveProvider.SaveWorldMeta(_currentSlotId, new WorldSaveData
+        {
+            Seed = seed,
+            GeneratorId = generatorId,
+            CurrentTick = 0,
+        });
+
+        _logWriter.WriteLine($"[Server] New game started: slot={slot.SlotId} name={slotName} seed={seed} gen={generatorId}");
+    }
+
+    /// <summary>
+    /// Loads a saved game from an existing slot, replacing the current engine.
+    /// </summary>
+    public void LoadSaveSlot(string slotId)
+    {
+        if (_saveProvider == null) return;
+
+        var slot = _saveProvider.GetSaveSlot(slotId);
+        if (slot == null)
+        {
+            _logWriter.WriteLine($"[Server] Save slot not found: {slotId}");
+            return;
+        }
+
+        var meta = _saveProvider.LoadWorldMeta(slotId);
+        if (meta == null)
+        {
+            _logWriter.WriteLine($"[Server] World metadata not found for slot: {slotId}");
+            return;
+        }
+
+        _currentSlotId = slotId;
+
+        var baseGenerator = GeneratorRegistry.Create(meta.GeneratorId, meta.Seed);
+        var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
+
+        _engine.Dispose();
+        _engine = new GameEngine(meta.Seed, persistentGen);
+        persistentGen.SetEngine(_engine);
+        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+
+        _chunkLastViewedTick.Clear();
+        _lastSaveTick = 0;
+
+        _logWriter.WriteLine($"[Server] Loaded save: slot={slotId} name={slot.Name} seed={meta.Seed} gen={meta.GeneratorId} tick={meta.CurrentTick}");
+    }
+
+    /// <summary>Deletes a save slot.</summary>
+    public void DeleteSaveSlot(string slotId)
+    {
+        if (_saveProvider == null) return;
+        _saveProvider.DeleteSaveSlot(slotId);
+        _logWriter.WriteLine($"[Server] Deleted save slot: {slotId}");
+    }
+
+    /// <summary>Manually triggers a save of the current game state.</summary>
+    public void SaveCurrentGame()
+    {
+        if (_saveProvider == null || _currentSlotId == null) return;
+        PerformAutoSave();
+    }
+
+    /// <summary>
+    /// Processes a save game command from a client and sends the response.
+    /// Enqueued on the server thread for thread-safety.
+    /// </summary>
+    public void HandleSaveGameCommand(long connectionId, SaveGameCommandMsg cmd)
+    {
+        EnqueueCommand(async () =>
+        {
+            var response = ProcessSaveCommand(cmd);
+            if (_connections.TryGetValue(connectionId, out var conn))
+            {
+                var payload = NetSerializer.Serialize(response);
+                var data = NetSerializer.WrapMessage(MessageTypes.SaveGameResponse, payload);
+                await conn.SendAsync(data);
+            }
+        });
+    }
+
+    /// <summary>Processes a save command synchronously and returns the response.</summary>
+    public SaveGameResponseMsg ProcessSaveCommand(SaveGameCommandMsg cmd)
+    {
+        if (_saveProvider == null)
+            return new SaveGameResponseMsg { Action = cmd.Action, Success = false, Message = "No save provider configured" };
+
+        try
+        {
+            string message;
+            switch (cmd.Action)
+            {
+                case SaveGameAction.List:
+                    message = "";
+                    break;
+
+                case SaveGameAction.New:
+                    StartNewGame(cmd.SlotName, cmd.Seed, cmd.GeneratorId);
+                    message = $"New game started: {cmd.SlotName}";
+                    break;
+
+                case SaveGameAction.Load:
+                    LoadSaveSlot(cmd.SlotId);
+                    message = $"Loaded save: {cmd.SlotId}";
+                    break;
+
+                case SaveGameAction.Delete:
+                    DeleteSaveSlot(cmd.SlotId);
+                    message = $"Deleted save: {cmd.SlotId}";
+                    break;
+
+                case SaveGameAction.Save:
+                    SaveCurrentGame();
+                    message = "Game saved";
+                    break;
+
+                default:
+                    return new SaveGameResponseMsg { Action = cmd.Action, Success = false, Message = $"Unknown action: {cmd.Action}" };
+            }
+
+            // Always return the refreshed slot list so clients stay in sync
+            var slots = _saveProvider.ListSaveSlots();
+            return new SaveGameResponseMsg
+            {
+                Action = cmd.Action,
+                Success = true,
+                Message = message,
+                Slots = slots.Select(s => new SaveSlotInfoMsg
+                {
+                    SlotId = s.SlotId,
+                    Name = s.Name,
+                    Seed = s.Seed,
+                    GeneratorId = s.GeneratorId,
+                    CreatedAtUnixMs = new DateTimeOffset(s.CreatedAt).ToUnixTimeMilliseconds(),
+                    LastSavedAtUnixMs = new DateTimeOffset(s.LastSavedAt).ToUnixTimeMilliseconds(),
+                }).ToArray(),
+                CurrentSlotId = _currentSlotId ?? "",
+            };
+        }
+        catch (Exception ex)
+        {
+            _logWriter.WriteLine($"[Server] Save command error: {ex.Message}");
+            return new SaveGameResponseMsg { Action = cmd.Action, Success = false, Message = ex.Message };
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Connection management
+    // ──────────────────────────────────────────────
 
     public PlayerConnection AddConnection(Func<byte[], Task> sendFunc)
     {
@@ -93,6 +292,17 @@ public class GameServer : IDisposable
         {
             EnqueueCommand(() =>
             {
+                // Save player before destroying
+                if (_saveProvider != null && _currentSlotId != null && conn.PlayerEntity.HasValue)
+                {
+                    var entity = conn.PlayerEntity.Value;
+                    if (_engine.EcsWorld.IsAlive(entity))
+                    {
+                        var playerData = PlayerSerializer.SerializePlayer(_engine.EcsWorld, entity, conn.PlayerName);
+                        _saveProvider.SavePlayers(_currentSlotId, [playerData]);
+                    }
+                }
+
                 if (conn.PlayerEntity.HasValue)
                 {
                     var entity = conn.PlayerEntity.Value;
@@ -166,22 +376,53 @@ public class GameServer : IDisposable
 
         conn.PlayerName = playerName;
 
+        // Check for saved player data
+        Arch.Core.Entity entity;
+        if (_saveProvider != null && _currentSlotId != null)
+        {
+            var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
+            if (savedPlayer != null)
+            {
+                // Ensure the chunk at the saved position is loaded
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ);
+                _engine.EnsureChunkLoaded(cx, cy, cz);
+
+                entity = PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
+                conn.PlayerEntity = entity;
+
+                if (DebugGiveResources)
+                    _engine.GiveDebugResources(entity);
+
+                _engine.Tick();
+                ResetConnectionTracking(conn);
+                await SendSnapshot(conn);
+                return;
+            }
+        }
+
+        // No saved player — spawn fresh
         var (spawnX, spawnY, spawnZ) = _engine.FindSpawnPosition();
-        var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
+        entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
         conn.PlayerEntity = entity;
 
         if (DebugGiveResources)
             _engine.GiveDebugResources(entity);
 
-        // Run a tick so lighting is computed before the initial snapshot
         _engine.Tick();
+        ResetConnectionTracking(conn);
+        await SendSnapshot(conn);
+    }
 
-        // Reset per-connection tracking so BuildDelta treats this as a full snapshot
+    private void ResetConnectionTracking(PlayerConnection conn)
+    {
         conn.LastSentEntities.Clear();
         conn.SentChunkTracker.Clear();
         conn.LastSentPlayerState = null;
         conn.LastAckedTick = 0;
+    }
 
+    private async Task SendSnapshot(PlayerConnection conn)
+    {
         var snapshot = BuildDelta(conn, isSnapshot: true);
         var payload = NetSerializer.Serialize(snapshot);
         var data = NetSerializer.WrapMessage(MessageTypes.WorldDelta, payload);
@@ -206,6 +447,10 @@ public class GameServer : IDisposable
             await command();
     }
 
+    // ──────────────────────────────────────────────
+    // Server loop
+    // ──────────────────────────────────────────────
+
     private async Task RunServer(CancellationToken ct)
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickRateMs));
@@ -225,6 +470,18 @@ public class GameServer : IDisposable
                 FlushDirtyTiles();
                 await BroadcastDeltas();
                 _pendingTileUpdates = [];
+
+                // Persistence: auto-save and chunk unload
+                if (_saveProvider != null && _currentSlotId != null)
+                {
+                    var currentTick = _engine.CurrentTick;
+                    if (currentTick - _lastSaveTick >= AutoSaveIntervalTicks)
+                    {
+                        PerformAutoSave();
+                        PerformChunkUnload();
+                        _lastSaveTick = currentTick;
+                    }
+                }
 
                 if (statsStopwatch.ElapsedMilliseconds >= 5000)
                 {
@@ -255,9 +512,156 @@ public class GameServer : IDisposable
         }
         finally
         {
+            // Save on shutdown
+            if (_saveProvider != null && _currentSlotId != null)
+            {
+                _logWriter.WriteLine("[Server] Saving game on shutdown...");
+                PerformAutoSave();
+            }
             _logWriter.WriteLine("[Server] Shutting down server loop...");
         }
     }
+
+    // ──────────────────────────────────────────────
+    // Persistence: auto-save and chunk unload
+    // ──────────────────────────────────────────────
+
+    private void PerformAutoSave()
+    {
+        if (_saveProvider == null || _currentSlotId == null) return;
+
+        try
+        {
+            // Save modified chunks
+            var modifiedChunks = _engine.WorldMap.GetModifiedChunks();
+            if (modifiedChunks.Count > 0)
+            {
+                var chunkEntries = new List<ChunkSaveEntry>(modifiedChunks.Count);
+                foreach (var chunk in modifiedChunks)
+                {
+                    chunkEntries.Add(new ChunkSaveEntry
+                    {
+                        ChunkX = chunk.ChunkX,
+                        ChunkY = chunk.ChunkY,
+                        ChunkZ = chunk.ChunkZ,
+                        TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
+                        EntityData = EntitySerializer.SerializeEntities(_engine.EcsWorld, chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ),
+                    });
+                    chunk.ClearSaveFlag();
+                }
+                _saveProvider.SaveChunks(_currentSlotId, chunkEntries);
+            }
+
+            // Save all connected players
+            var playerEntries = new List<PlayerSaveData>();
+            foreach (var conn in _connections.Values)
+            {
+                if (conn.PlayerEntity.HasValue && _engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+                {
+                    playerEntries.Add(PlayerSerializer.SerializePlayer(_engine.EcsWorld, conn.PlayerEntity.Value, conn.PlayerName));
+                }
+            }
+            if (playerEntries.Count > 0)
+                _saveProvider.SavePlayers(_currentSlotId, playerEntries);
+
+            // Save world metadata
+            _saveProvider.SaveWorldMeta(_currentSlotId, new WorldSaveData
+            {
+                Seed = _engine.WorldMap.Seed,
+                GeneratorId = GetCurrentGeneratorId(),
+                CurrentTick = _engine.CurrentTick,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logWriter.WriteLine($"[Server] Auto-save error: {ex.Message}");
+        }
+    }
+
+    private string GetCurrentGeneratorId()
+    {
+        if (_saveProvider != null && _currentSlotId != null)
+        {
+            var slot = _saveProvider.GetSaveSlot(_currentSlotId);
+            if (slot != null) return slot.GeneratorId;
+        }
+        return GeneratorRegistry.DefaultId;
+    }
+
+    private void PerformChunkUnload()
+    {
+        if (_saveProvider == null || _currentSlotId == null) return;
+
+        var currentTick = _engine.CurrentTick;
+
+        // Update viewed chunks from connected players
+        UpdateChunkViewTracking(currentTick);
+
+        // Find chunks to unload
+        var toUnload = new List<(int cx, int cy, int cz, long key)>();
+        foreach (var (key, lastViewed) in _chunkLastViewedTick)
+        {
+            if (currentTick - lastViewed >= ChunkUnloadIdleTicks)
+            {
+                var (cx, cy, cz) = Position.UnpackCoord(key);
+                toUnload.Add((cx, cy, cz, key));
+            }
+        }
+
+        foreach (var (cx, cy, cz, key) in toUnload)
+        {
+            var chunk = _engine.WorldMap.TryGetChunk(cx, cy, cz);
+            if (chunk == null)
+            {
+                _chunkLastViewedTick.Remove(key);
+                continue;
+            }
+
+            // Save before unloading
+            var entry = new ChunkSaveEntry
+            {
+                ChunkX = cx,
+                ChunkY = cy,
+                ChunkZ = cz,
+                TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
+                EntityData = EntitySerializer.SerializeEntities(_engine.EcsWorld, cx, cy, cz),
+            };
+            _saveProvider.SaveChunks(_currentSlotId, [entry]);
+
+            // Destroy entities in chunk, then unload
+            _engine.DestroyEntitiesInChunk(cx, cy, cz);
+            _engine.WorldMap.UnloadChunk(cx, cy, cz);
+            _chunkLastViewedTick.Remove(key);
+
+            _logWriter.WriteLine($"[Server] Unloaded chunk ({cx},{cy},{cz})");
+        }
+    }
+
+    private void UpdateChunkViewTracking(long currentTick)
+    {
+        foreach (var conn in _connections.Values)
+        {
+            if (!conn.PlayerEntity.HasValue || !_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+                continue;
+
+            ref var pos = ref _engine.EcsWorld.Get<Position>(conn.PlayerEntity.Value);
+            var (pcx, pcy, pcz) = Chunk.WorldToChunkCoord(pos.X, pos.Y, pos.Z);
+            int radius = conn.VisibleChunks;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    var key = Position.PackCoord(pcx + dx, pcy + dy, pcz);
+                    _chunkLastViewedTick[key] = currentTick;
+                }
+            }
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Tick processing
+    // ──────────────────────────────────────────────
 
     private void ProcessInputs()
     {
@@ -374,6 +778,7 @@ public class GameServer : IDisposable
     {
         if (!IsRunning)
         {
+            _engine.Dispose();
             return;
         }
 

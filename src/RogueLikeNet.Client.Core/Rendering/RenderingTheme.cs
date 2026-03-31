@@ -58,6 +58,12 @@ public static class RenderingTheme
     // HUD panel background
     public static readonly Color4 HudBg = new(15, 15, 20, 255);
 
+    // Save slot screen
+    public static readonly Color4 SlotActive = new(100, 200, 255, 255);
+    public static readonly Color4 SlotDate = new(140, 140, 140, 255);
+    public static readonly Color4 SlotEmpty = new(80, 80, 80, 255);
+    public static readonly Color4 Danger = new(255, 80, 80, 255);
+
     // Rarity colors
     public static readonly Color4 RarityCommon = new(180, 180, 180, 255);
     public static readonly Color4 RarityUncommon = new(30, 255, 30, 255);

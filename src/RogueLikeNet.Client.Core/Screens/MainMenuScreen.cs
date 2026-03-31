@@ -69,10 +69,8 @@ public sealed class MainMenuScreen : IScreen
             switch (_menuIndex)
             {
                 case MenuRenderer.MainMenuPlayOfflineIndex:
-                    _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);
-                    if (_ctx is { } ctx)
-                        ctx.Connection = null; // will be set to offline
                     SetClassSelectOnline(false);
+                    _ctx.OnPlayOffline();
                     break;
                 case MenuRenderer.MainMenuPlayOnlineIndex:
                     _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);

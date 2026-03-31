@@ -116,6 +116,35 @@ public class WorldMap
 
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
 
+    /// <summary>Exposes loaded chunks with their packed coordinate keys.</summary>
+    public IReadOnlyDictionary<long, Chunk> LoadedChunksDict => _chunks;
+
+    /// <summary>Removes a chunk from the loaded set. Does not save — caller should save before calling.</summary>
+    public void UnloadChunk(int chunkX, int chunkY, int chunkZ)
+    {
+        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        _chunks.Remove(key);
+    }
+
+    /// <summary>Returns all loaded chunks that have been modified since last save.</summary>
+    public List<Chunk> GetModifiedChunks()
+    {
+        var result = new List<Chunk>();
+        foreach (var chunk in _chunks.Values)
+        {
+            if (chunk.IsModifiedSinceLastSave)
+                result.Add(chunk);
+        }
+        return result;
+    }
+
+    /// <summary>Adds a pre-built chunk to the loaded set (used when restoring from persistence).</summary>
+    public void AddChunk(Chunk chunk)
+    {
+        long key = Position.PackCoord(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
+        _chunks[key] = chunk;
+    }
+
     /// <summary>
     /// Opens a closed door at the given position. Starts the auto-close grace timer.
     /// </summary>
