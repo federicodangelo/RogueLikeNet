@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Server;
 using RogueLikeNet.Server.Persistence;
 
@@ -18,7 +19,7 @@ if (slots.Count > 0)
 }
 else
 {
-    gameServer.StartNewGame("Default World", worldSeed, "overworld");
+    gameServer.StartNewGame("Default World", worldSeed, GeneratorRegistry.DefaultId);
 }
 
 gameServer.Start();

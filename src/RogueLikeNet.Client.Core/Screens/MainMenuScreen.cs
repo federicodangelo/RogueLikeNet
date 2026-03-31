@@ -36,7 +36,7 @@ public sealed class MainMenuScreen : IScreen
             return;
         }
 
-        int itemCount = 8;
+        int itemCount = 9;
         if (input.IsActionPressed(InputAction.MenuUp))
             _menuIndex = (_menuIndex + itemCount - 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuDown))
@@ -75,6 +75,9 @@ public sealed class MainMenuScreen : IScreen
                 case MenuRenderer.MainMenuPlayOnlineIndex:
                     _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);
                     SetClassSelectOnline(true);
+                    break;
+                case MenuRenderer.MainMenuAdminOnlineIndex:
+                    _ctx.OnAdminOnline();
                     break;
                 case MenuRenderer.MainMenuSeedIndex:
                     _seedEditing = true;

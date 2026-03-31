@@ -6,12 +6,11 @@ namespace RogueLikeNet.Client.Core.Screens;
 
 /// <summary>
 /// Server admin screen — manage save slots on a connected server (list, create, load, delete, save current).
-/// Accessible from the pause menu when connected online.
+/// Accessible from the main menu via "Admin Online".
 /// </summary>
 public sealed class ServerAdminScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly PlayingScreen _playingScreen;
     private readonly MenuRenderer _menuRenderer;
 
     private SaveSlotInfoMsg[] _slots = [];
@@ -26,10 +25,9 @@ public sealed class ServerAdminScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.ServerAdmin;
 
-    public ServerAdminScreen(ScreenContext ctx, PlayingScreen playingScreen, MenuRenderer menuRenderer)
+    public ServerAdminScreen(ScreenContext ctx, MenuRenderer menuRenderer)
     {
         _ctx = ctx;
-        _playingScreen = playingScreen;
         _menuRenderer = menuRenderer;
     }
 
@@ -74,13 +72,12 @@ public sealed class ServerAdminScreen : IScreen
     }
 
     /// <summary>
-    /// Total menu items: slots + New Game + Save Current + Back.
+    /// Total menu items: slots + New Game + Back.
     /// </summary>
-    private int TotalItemCount => _slots.Length + 3;
+    private int TotalItemCount => _slots.Length + 2;
 
     private int NewGameIndex => _slots.Length;
-    private int SaveCurrentIndex => _slots.Length + 1;
-    private int BackIndex => _slots.Length + 2;
+    private int BackIndex => _slots.Length + 1;
 
     public void HandleInput(IInputManager input)
     {
@@ -100,7 +97,7 @@ public sealed class ServerAdminScreen : IScreen
 
         if (input.IsActionPressed(InputAction.MenuBack))
         {
-            _ctx.RequestTransition(Rendering.ScreenState.Paused);
+            _ctx.OnReturnToMenu();
             return;
         }
 
@@ -116,20 +113,12 @@ public sealed class ServerAdminScreen : IScreen
 
             if (_selectedIndex == BackIndex)
             {
-                _ctx.RequestTransition(Rendering.ScreenState.Paused);
+                _ctx.OnReturnToMenu();
             }
             else if (_selectedIndex == NewGameIndex)
             {
                 _creatingNew = true;
                 _newSlotName = "";
-            }
-            else if (_selectedIndex == SaveCurrentIndex)
-            {
-                _waitingForResponse = true;
-                _ = _ctx.Connection?.SendSaveGameCommandAsync(new SaveGameCommandMsg
-                {
-                    Action = SaveGameAction.Save,
-                });
             }
             else
             {
@@ -156,7 +145,7 @@ public sealed class ServerAdminScreen : IScreen
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
-        _playingScreen.Render(renderer, totalCols, totalRows);
+        renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         _menuRenderer.RenderServerAdmin(renderer, totalCols, totalRows,
             _slots, _currentSlotId, _selectedIndex, _statusMessage, _isError,
             _confirmingDelete, _creatingNew, _newSlotName, _waitingForResponse);

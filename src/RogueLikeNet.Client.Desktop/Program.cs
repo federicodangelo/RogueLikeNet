@@ -34,6 +34,7 @@ public class Program
         _game.QuitRequested += () => _running = false;
         _game.NewOfflineGameRequested += slotName => OnNewOfflineGame(slotName);
         _game.LoadSlotRequested += slotId => OnLoadSlot(slotId);
+        _game.AdminOnlineRequested += OnAdminOnline;
 
         while (_running && !platform.InputManager.QuitRequested)
         {
@@ -148,6 +149,26 @@ public class Program
             await _connection.ConnectAsync("ws://localhost:5090/ws");
             await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
             _game.TransitionToPlaying();
+        }
+        catch (Exception ex)
+        {
+            _game.ClearConnection();
+            _connection = null;
+            _game.ShowConnectionError(ex.Message);
+        }
+    }
+
+    private static async void OnAdminOnline()
+    {
+        _game.TransitionToConnecting();
+
+        try
+        {
+            var wsConnection = new WebSocketServerConnection();
+            _connection = wsConnection;
+            _game.SetConnection(_connection);
+            await _connection.ConnectAsync("ws://localhost:5090/ws");
+            _game.TransitionToServerAdmin();
         }
         catch (Exception ex)
         {

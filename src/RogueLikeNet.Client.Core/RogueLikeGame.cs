@@ -57,6 +57,9 @@ public sealed class RogueLikeGame : GameBase
     /// <summary>Fired when debug settings change at runtime and need syncing to the embedded server.</summary>
     public event Action? DebugSyncRequested;
 
+    /// <summary>Fired when the player selects "Admin Online" from the main menu.</summary>
+    public event Action? AdminOnlineRequested;
+
     /// <summary>Fired when the player chooses "New Game" from the save slot screen (slotName).</summary>
     public event Action<string>? NewOfflineGameRequested;
 
@@ -81,6 +84,7 @@ public sealed class RogueLikeGame : GameBase
             OnReturnToMenu = () => ReturnToMenuRequested?.Invoke(),
             OnQuit = () => QuitRequested?.Invoke(),
             OnPlayOffline = () => PlayOfflineRequested?.Invoke(_debug.Enabled),
+            OnAdminOnline = () => AdminOnlineRequested?.Invoke(),
             DebugSyncRequested = () => DebugSyncRequested?.Invoke(),
         };
 
@@ -101,7 +105,7 @@ public sealed class RogueLikeGame : GameBase
         var paused = new PausedScreen(_ctx, playing, menuRenderer);
         var help = new HelpScreen(_ctx, menuRenderer, playing);
         var saveSlot = new SaveSlotScreen(_ctx, menuRenderer);
-        var serverAdmin = new ServerAdminScreen(_ctx, playing, menuRenderer);
+        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);
@@ -189,6 +193,11 @@ public sealed class RogueLikeGame : GameBase
         _gameState.Clear();
         _chat.Clear();
         _networkDrainer.Reset();
+    }
+
+    public void TransitionToServerAdmin()
+    {
+        _screenManager.TransitionTo(ScreenState.ServerAdmin);
     }
 
     public void RunFrame()

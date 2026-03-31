@@ -12,22 +12,22 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Admin Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
     public const int MainMenuPlayOfflineIndex = 0;
     public const int MainMenuPlayOnlineIndex = 1;
-    public const int MainMenuSeedIndex = 2;
-    public const int MainMenuGeneratorIndex = 3;
-    public const int MainMenuRandomizeSeedIndex = 4;
-    public const int MainMenuDebugModeIndex = 5;
-    public const int MainMenuHelpIndex = 6;
-    public const int MainMenuQuitIndex = 7;
+    public const int MainMenuAdminOnlineIndex = 2;
+    public const int MainMenuSeedIndex = 3;
+    public const int MainMenuGeneratorIndex = 4;
+    public const int MainMenuRandomizeSeedIndex = 5;
+    public const int MainMenuDebugModeIndex = 6;
+    public const int MainMenuHelpIndex = 7;
+    public const int MainMenuQuitIndex = 8;
 
 
-    private static readonly string[] PauseMenuItems = ["Resume", "Help", "Server Admin", "Return to Main Menu"];
+    private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
     public const int PauseMenuResumeIndex = 0;
     public const int PauseMenuHelpIndex = 1;
-    public const int PauseMenuServerAdminIndex = 2;
-    public const int PauseMenuMainMenuIndex = 3;
+    public const int PauseMenuMainMenuIndex = 2;
 
 
     private static readonly string[] HelpLines =
@@ -80,17 +80,17 @@ public sealed class MenuRenderer
             string prefix = sel ? " \u25ba " : "   ";
 
             string label;
-            if (i == 2)
+            if (i == MainMenuSeedIndex)
             {
                 string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
                 label = prefix + "Seed: " + seedDisplay;
             }
-            else if (i == 3)
+            else if (i == MainMenuGeneratorIndex)
             {
                 string genName = GeneratorRegistry.GetName(generatorIndex);
                 label = prefix + "Generator: \u25c4 " + genName + " \u25ba";
             }
-            else if (i == 5)
+            else if (i == MainMenuDebugModeIndex)
             {
                 label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
             }
@@ -381,8 +381,6 @@ public sealed class MenuRenderer
         SaveSlotInfoMsg[] slots, string currentSlotId, int selectedIndex, string? statusMessage, bool isError,
         bool confirmingDelete, bool creatingNew, string newSlotName, bool waiting)
     {
-        AsciiDraw.FillOverlay(r, totalCols, totalRows);
-
         int boxW = 54;
         int slotLines = slots.Length * 3;
         int boxH = Math.Max(16, slotLines + 14);
@@ -444,7 +442,7 @@ public sealed class MenuRenderer
 
         // Action items
         int actionStart = row;
-        string[] actions = ["+ New Game", "Save Current Game", "Back"];
+        string[] actions = ["+ New Game", "Back"];
         for (int i = 0; i < actions.Length; i++)
         {
             int idx = slots.Length + i;

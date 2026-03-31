@@ -30,6 +30,7 @@ public sealed class ScreenContext
     public required Action OnReturnToMenu { get; init; }
     public required Action OnQuit { get; init; }
     public required Action OnPlayOffline { get; init; }
+    public required Action OnAdminOnline { get; init; }
 
     /// <summary>Invoked when debug settings change at runtime and need syncing to the server.</summary>
     public required Action DebugSyncRequested { get; init; }
