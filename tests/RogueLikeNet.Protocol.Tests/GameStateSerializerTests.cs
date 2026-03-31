@@ -34,10 +34,10 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_OnlyReturnsChangedEntities()
     {
         var world = World.Create();
-        var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF), new Health(10));
+        var entity = world.Create(new Position(5, 5, Position.DefaultZ), new TileAppearance(64, 0xFFFFFF), new Health(10));
 
         var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5, Position.DefaultZ));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -61,11 +61,11 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_PositionOnlyUpdate()
     {
         var world = World.Create();
-        var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
+        var entity = world.Create(new Position(5, 5, Position.DefaultZ), new TileAppearance(64, 0xFFFFFF));
 
         var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
-        fov.VisibleTiles!.Add(Position.PackCoord(6, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5, Position.DefaultZ));
+        fov.VisibleTiles!.Add(Position.PackCoord(6, 5, Position.DefaultZ));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -73,7 +73,7 @@ public class GameStateSerializerTests
         GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
 
         // Move entity — only position changed
-        world.Set(entity, new Position(6, 5));
+        world.Set(entity, new Position(6, 5, Position.DefaultZ));
 
         var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
         Assert.Empty(full);
@@ -88,10 +88,10 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_RemovedEntitiesLeavingFOV()
     {
         var world = World.Create();
-        var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF));
+        var entity = world.Create(new Position(5, 5, Position.DefaultZ), new TileAppearance(64, 0xFFFFFF));
 
         var fovAll = new FOVData(10);
-        fovAll.VisibleTiles!.Add(Position.PackCoord(5, 5));
+        fovAll.VisibleTiles!.Add(Position.PackCoord(5, 5, Position.DefaultZ));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -137,9 +137,9 @@ public class GameStateSerializerTests
     {
         // Replicate the exact server→client flow: build a snapshot delta, serialize, wrap, unwrap, deserialize
         var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator(42));
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         engine.Tick();
 
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
@@ -152,7 +152,7 @@ public class GameStateSerializerTests
             FromTick = 0,
             ToTick = engine.CurrentTick,
             IsSnapshot = true,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y),
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos.X, pos.Y, pos.Z),
             EntityUpdates = fullUpdates,
             EntityPositionHealthUpdates = posUpdates,
             EntityRemovals = removals,
@@ -182,11 +182,11 @@ public class GameStateSerializerTests
     {
         var world = World.Create();
         // Entity with Health — position + health changes should use the compressed path
-        var entity = world.Create(new Position(5, 5), new TileAppearance(64, 0xFFFFFF), new Health(20));
+        var entity = world.Create(new Position(5, 5, Position.DefaultZ), new TileAppearance(64, 0xFFFFFF), new Health(20));
 
         var fov = new FOVData(10);
-        fov.VisibleTiles!.Add(Position.PackCoord(5, 5));
-        fov.VisibleTiles!.Add(Position.PackCoord(7, 5));
+        fov.VisibleTiles!.Add(Position.PackCoord(5, 5, Position.DefaultZ));
+        fov.VisibleTiles!.Add(Position.PackCoord(7, 5, Position.DefaultZ));
 
         var previousState = new Dictionary<long, EntityUpdateMsg>();
 
@@ -194,7 +194,7 @@ public class GameStateSerializerTests
         GameStateSerializer.SerializeEntityDelta(world, fov, previousState);
 
         // Change only position and health — glyph and color stay the same
-        world.Set(entity, new Position(7, 5));
+        world.Set(entity, new Position(7, 5, Position.DefaultZ));
         ref var health = ref world.Get<Health>(entity);
         health.Current = 15;
 
@@ -214,9 +214,9 @@ public class GameStateSerializerTests
     private static (RogueLikeNet.Core.GameEngine engine, Arch.Core.Entity player) CreateEngineWithPlayer()
     {
         var engine = new RogueLikeNet.Core.GameEngine(42, new RogueLikeNet.Core.Generation.BspDungeonGenerator(42));
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         return (engine, player);
     }
 

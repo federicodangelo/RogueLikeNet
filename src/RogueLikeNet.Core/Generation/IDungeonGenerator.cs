@@ -6,7 +6,7 @@ namespace RogueLikeNet.Core.Generation;
 
 public interface IDungeonGenerator
 {
-    GenerationResult Generate(int chunkX, int chunkY);
+    GenerationResult Generate(int chunkX, int chunkY, int chunkZ);
 }
 
 /// <summary>
@@ -26,9 +26,9 @@ public class GenerationResult
     /// <summary>
     /// Suggested world-space spawn position for the player.
     /// Null means the engine should use its default floor-scan fallback.
-    /// Only meaningful for chunk (0,0) — other chunks are ignored.
+    /// Only meaningful for chunk (0,0,OverworldZ) — other chunks are ignored.
     /// </summary>
-    public (int X, int Y)? SpawnPosition { get; set; }
+    public (int X, int Y, int Z)? SpawnPosition { get; set; }
 
     public GenerationResult(Chunk chunk)
     {

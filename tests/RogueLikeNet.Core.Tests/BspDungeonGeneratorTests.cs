@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -11,7 +12,7 @@ public class BspDungeonGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new BspDungeonGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -25,8 +26,8 @@ public class BspDungeonGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new BspDungeonGenerator(42);
-        var result1 = gen.Generate(0, 0);
-        var result2 = gen.Generate(0, 0);
+        var result1 = gen.Generate(0, 0, Position.DefaultZ);
+        var result2 = gen.Generate(0, 0, Position.DefaultZ);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -37,7 +38,7 @@ public class BspDungeonGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new BspDungeonGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -58,7 +59,7 @@ public class BspDungeonGeneratorTests
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome != BiomeType.Stone)
             {
-                var result = gen.Generate(cx, 0);
+                var result = gen.Generate(cx, 0, Position.DefaultZ);
                 tintedChunk = result.Chunk;
                 break;
             }
@@ -87,7 +88,7 @@ public class BspDungeonGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
@@ -111,7 +112,7 @@ public class BspDungeonGeneratorTests
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (BiomeDefinitions.GetLiquid(biome) == null) continue;
 
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             for (int x = 0; x < Chunk.Size && !foundLiquid; x++)
                 for (int y = 0; y < Chunk.Size && !foundLiquid; y++)
                     if (result.Chunk.Tiles[x, y].Type is TileType.Water or TileType.Lava)
@@ -127,7 +128,7 @@ public class BspDungeonGeneratorTests
         var gen = new BspDungeonGenerator(42);
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {

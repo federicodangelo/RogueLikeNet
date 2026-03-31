@@ -24,7 +24,7 @@ public class BuildingSystem
 
     private void ProcessPlacement(Arch.Core.World world, WorldMap map)
     {
-        var actions = new List<(Entity Player, int Slot, int TargetX, int TargetY)>();
+        var actions = new List<(Entity Player, int Slot, int TargetX, int TargetY, int TargetZ)>();
 
         var query = new QueryDescription().WithAll<PlayerInput, Inventory, Position>();
         world.Query(in query, (Entity player, ref PlayerInput input, ref Position pos) =>
@@ -33,11 +33,11 @@ public class BuildingSystem
 
             int targetX = pos.X + input.TargetX;
             int targetY = pos.Y + input.TargetY;
-            actions.Add((player, input.ItemSlot, targetX, targetY));
+            actions.Add((player, input.ItemSlot, targetX, targetY, pos.Z));
             input.ActionType = ActionTypes.None;
         });
 
-        foreach (var (player, slot, targetX, targetY) in actions)
+        foreach (var (player, slot, targetX, targetY, targetZ) in actions)
         {
             if (!world.IsAlive(player)) continue;
             ref var inv = ref world.Get<Inventory>(player);
@@ -59,7 +59,7 @@ public class BuildingSystem
             if (!adjacent) continue;
 
             // Target tile must be a walkable floor tile with no existing placeable
-            var tile = map.GetTile(targetX, targetY);
+            var tile = map.GetTile(targetX, targetY, targetZ);
             if (tile.Type != TileType.Floor) continue;
             // We can't place items on top of other placeables
             if (tile.PlaceableItemId != 0) continue;
@@ -75,7 +75,7 @@ public class BuildingSystem
             if (occupied) continue;
 
             // Only set the placeable fields — base tile stays unchanged
-            map.SetPlaceable(targetX, targetY, itemData.ItemTypeId, 0);
+            map.SetPlaceable(targetX, targetY, targetZ, itemData.ItemTypeId, 0);
 
             // Remove item from inventory (decrease stack or remove)
             var item = inv.Items[slot];
@@ -98,7 +98,7 @@ public class BuildingSystem
 
     private void ProcessPickUpPlaced(Arch.Core.World world, WorldMap map)
     {
-        var actions = new List<(Entity Player, int TargetX, int TargetY)>();
+        var actions = new List<(Entity Player, int TargetX, int TargetY, int TargetZ)>();
 
         var query = new QueryDescription().WithAll<PlayerInput, Inventory, Position>();
         world.Query(in query, (Entity player, ref PlayerInput input, ref Position pos) =>
@@ -107,17 +107,17 @@ public class BuildingSystem
 
             int targetX = pos.X + input.TargetX;
             int targetY = pos.Y + input.TargetY;
-            actions.Add((player, targetX, targetY));
+            actions.Add((player, targetX, targetY, pos.Z));
             input.ActionType = ActionTypes.None;
         });
 
-        foreach (var (player, targetX, targetY) in actions)
+        foreach (var (player, targetX, targetY, targetZ) in actions)
         {
             if (!world.IsAlive(player)) continue;
             ref var inv = ref world.Get<Inventory>(player);
             if (inv.Items == null || inv.IsFull) continue;
 
-            var tile = map.GetTile(targetX, targetY);
+            var tile = map.GetTile(targetX, targetY, targetZ);
             if (tile.PlaceableItemId == ItemDefinitions.None) continue;
 
             var itemData = new ItemData
@@ -131,7 +131,7 @@ public class BuildingSystem
                 continue;
 
             // Only clear the placeable fields — base tile stays unchanged
-            map.SetPlaceable(targetX, targetY, 0, 0);
+            map.SetPlaceable(targetX, targetY, targetZ, 0, 0);
         }
     }
 }

@@ -38,7 +38,7 @@ public class GameDbContext : DbContext
         modelBuilder.Entity<WorldChunkRecord>(e =>
         {
             e.HasKey(c => c.Id);
-            e.HasIndex(c => new { c.ChunkX, c.ChunkY }).IsUnique();
+            e.HasIndex(c => new { c.ChunkX, c.ChunkY, c.ChunkZ }).IsUnique();
         });
 
         modelBuilder.Entity<WorldMetadata>(e =>
@@ -72,6 +72,7 @@ public class CharacterRecord
     public int Speed { get; set; }
     public int PositionX { get; set; }
     public int PositionY { get; set; }
+    public int PositionZ { get; set; }
     /// <summary>Serialized inventory data (MessagePack binary)</summary>
     public byte[] InventoryData { get; set; } = [];
 }
@@ -81,6 +82,7 @@ public class WorldChunkRecord
     public long Id { get; set; }
     public int ChunkX { get; set; }
     public int ChunkY { get; set; }
+    public int ChunkZ { get; set; }
     /// <summary>Serialized chunk tile data (MessagePack binary)</summary>
     public byte[] TileData { get; set; } = [];
 }

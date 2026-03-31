@@ -18,10 +18,13 @@ public class ArenaGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
 
         // Fill with floor
         for (int x = 0; x < Chunk.Size; x++)
@@ -42,7 +45,7 @@ public class ArenaGenerator : IDungeonGenerator
         var rng = new SeededRandom(_seed);
 
         // Spawn point: center of the arena
-        result.SpawnPosition = (worldOffsetX + Chunk.Size / 2, worldOffsetY + Chunk.Size / 2);
+        result.SpawnPosition = (worldOffsetX + Chunk.Size / 2, worldOffsetY + Chunk.Size / 2, chunkZ);
 
         // Build walls around the entire chunk perimeter
         for (int x = 0; x < Chunk.Size; x++)
@@ -75,7 +78,7 @@ public class ArenaGenerator : IDungeonGenerator
         foreach (var pos in torchPositions)
         {
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + pos[0], worldOffsetY + pos[1]),
+                new Position(worldOffsetX + pos[0], worldOffsetY + pos[1], chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(10, TileDefinitions.ColorTorchFg)));
         }
@@ -97,7 +100,7 @@ public class ArenaGenerator : IDungeonGenerator
 
             var def = NpcDefinitions.Pick(rng, difficulty);
             var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
-            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), monsterData));
+            result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y, chunkZ), monsterData));
         }
 
         // Scatter some loot around
@@ -110,7 +113,7 @@ public class ArenaGenerator : IDungeonGenerator
 
             var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
             var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
-            result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y), itemData));
+            result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y, chunkZ), itemData));
         }
 
         return result;

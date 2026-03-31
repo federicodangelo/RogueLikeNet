@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Algorithms;
+using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.Tests;
 
@@ -7,7 +8,7 @@ public class AStarTests
     [Fact]
     public void FindPath_SameStartAndGoal()
     {
-        var path = AStarPathfinder.FindPath(5, 5, 5, 5, (_, _) => true);
+        var path = AStarPathfinder.FindPath(5, 5, 5, 5, Position.DefaultZ, (_, _) => true);
         Assert.NotNull(path);
         Assert.Single(path);
     }
@@ -15,7 +16,7 @@ public class AStarTests
     [Fact]
     public void FindPath_StraightLine()
     {
-        var path = AStarPathfinder.FindPath(0, 0, 5, 0, (_, _) => true);
+        var path = AStarPathfinder.FindPath(0, 0, 5, 0, Position.DefaultZ, (_, _) => true);
         Assert.NotNull(path);
         Assert.Equal(6, path.Count);
         Assert.Equal((0, 0), path[0]);
@@ -26,7 +27,7 @@ public class AStarTests
     public void FindPath_NoPath()
     {
         // Block all movement except start
-        var path = AStarPathfinder.FindPath(0, 0, 5, 0, (x, y) => x == 0 && y == 0);
+        var path = AStarPathfinder.FindPath(0, 0, 5, 0, Position.DefaultZ, (x, y) => x == 0 && y == 0);
         Assert.Null(path);
     }
 
@@ -35,7 +36,7 @@ public class AStarTests
     {
         // Wall at x=2 for all y except y=3
         bool isWalkable(int x, int y) => x >= 0 && y >= 0 && x < 10 && y < 10 && !(x == 2 && y != 3);
-        var path = AStarPathfinder.FindPath(0, 0, 4, 0, isWalkable);
+        var path = AStarPathfinder.FindPath(0, 0, 4, 0, Position.DefaultZ, isWalkable);
         Assert.NotNull(path);
         Assert.Equal((0, 0), path[0]);
         Assert.Equal((4, 0), path[^1]);
@@ -47,7 +48,7 @@ public class AStarTests
     public void FindPath_MaxStepsExceeded_ReturnsNull()
     {
         // Large open area but very few steps allowed
-        var path = AStarPathfinder.FindPath(0, 0, 50, 50, (_, _) => true, maxSteps: 5);
+        var path = AStarPathfinder.FindPath(0, 0, 50, 50, Position.DefaultZ, (_, _) => true, maxSteps: 5);
         Assert.Null(path);
     }
 }

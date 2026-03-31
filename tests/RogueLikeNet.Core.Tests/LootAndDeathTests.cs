@@ -13,10 +13,10 @@ public class LootAndDeathTests
     public void MonsterDeath_DropsLoot()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
         ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
         mHealth.Current = 0;
 
@@ -33,9 +33,9 @@ public class LootAndDeathTests
     public void PlayerDeath_Respawns()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         ref var health = ref engine.EcsWorld.Get<Health>(player);
         health.Current = 0;
@@ -51,9 +51,9 @@ public class LootAndDeathTests
     public void PlayerDeath_LosesExperience()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Give some experience
         ref var classData = ref engine.EcsWorld.Get<ClassData>(player);
@@ -73,13 +73,13 @@ public class LootAndDeathTests
     public void MonsterDeath_MultipleMonstersDropLoot()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Kill multiple monsters to increase chance of loot drop
         for (int i = 0; i < 10; i++)
         {
-            var monster = engine.SpawnMonster(sx + i + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+            var monster = engine.SpawnMonster(sx + i + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
             ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
             mHealth.Current = 0;
         }

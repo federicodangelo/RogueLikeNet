@@ -390,7 +390,7 @@ public class GameServerTests
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
         int monsterX = playerPos.X + 1;
         int monsterY = playerPos.Y;
-        loop.Engine.SpawnMonster(monsterX, monsterY, new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
+        loop.Engine.SpawnMonster(monsterX, monsterY, Position.DefaultZ, new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
 
         // Send an attack input targeting the monster
         var attack = new ClientInputMsg
@@ -492,11 +492,11 @@ public class GameServerTests
         });
 
         // Determine where the player will spawn so we can place the test entity nearby
-        var (spawnX, spawnY) = loop.Engine.FindSpawnPosition();
+        var (spawnX, spawnY, _) = loop.Engine.FindSpawnPosition();
 
         // Create an entity with Position + TileAppearance but NO Health — near the spawn
         loop.Engine.EcsWorld.Create(
-            new Position(spawnX, spawnY),
+            new Position(spawnX, spawnY, Position.DefaultZ),
             new TileAppearance(42, 0x00FF00)
         );
 
@@ -533,7 +533,7 @@ public class GameServerTests
 
         // Create an entity with Position + TileAppearance but NO Health — at player pos
         loop.Engine.EcsWorld.Create(
-            new Position(playerPos.X, playerPos.Y),
+            new Position(playerPos.X, playerPos.Y, Position.DefaultZ),
             new TileAppearance(88, 0xFF0000)
         );
 
@@ -608,7 +608,7 @@ public class GameServerTests
         // Place an item at the player's position
         ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
         var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion); // Health Potion
-        loop.Engine.SpawnItemOnGround(template, 0, playerPos.X, playerPos.Y);
+        loop.Engine.SpawnItemOnGround(template, 0, playerPos.X, playerPos.Y, Position.DefaultZ);
 
         messages.Clear();
         loop.Start();
@@ -641,7 +641,7 @@ public class GameServerTests
     public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
     {
         using var loop = new TestGameServer(42, _gen);
-        var chunk = loop.Engine.EnsureChunkLoaded(0, 0);
+        var chunk = loop.Engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
 
         var msg = GameStateSerializer.SerializeChunk(chunk);
 

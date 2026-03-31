@@ -89,7 +89,7 @@ public class InventorySystem
             }
 
             // Find a position without an existing ground item (spiral outward)
-            var (dropX, dropY) = GameEngine.FindDropPosition(world, pos.X, pos.Y);
+            var (dropX, dropY) = GameEngine.FindDropPosition(world, pos.X, pos.Y, pos.Z);
 
             // Create a new entity on the ground
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
@@ -98,7 +98,7 @@ public class InventorySystem
                 : def.GlyphId;
             int dropColor = def.Color;
             world.Create(
-                new Position(dropX, dropY),
+                new Position(dropX, dropY, pos.Z),
                 new TileAppearance(dropGlyph, dropColor),
                 itemData);
         }

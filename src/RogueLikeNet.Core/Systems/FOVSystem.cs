@@ -22,14 +22,14 @@ public class FOVSystem
 
             // Capture ref params into locals for use in lambda
             var visibleTiles = fov.VisibleTiles;
-            int px = pos.X, py = pos.Y, radius = fov.Radius;
+            int px = pos.X, py = pos.Y, pz = pos.Z, radius = fov.Radius;
 
             ShadowCastFov.Compute(
                 px, py, radius,
-                isOpaque: (x, y) => !map.IsTransparent(x, y),
+                isOpaque: (x, y) => !map.IsTransparent(x, y, pz),
                 markVisible: (x, y) =>
                 {
-                    visibleTiles.Add(Position.PackCoord(x, y));
+                    visibleTiles.Add(Position.PackCoord(x, y, pz));
                 });
         });
     }

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -15,7 +16,7 @@ public class BiomeDungeonGeneratorTests
         // Generate chunks for all 10 biome types
         for (int cx = 0; cx < 50; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
 
             int floorCount = 0;
             for (int x = 0; x < Chunk.Size; x++)
@@ -36,7 +37,7 @@ public class BiomeDungeonGeneratorTests
         {
             if (BiomeDefinitions.GetBiomeForChunk(cx, 0, 42) == BiomeType.Stone)
             {
-                stoneChunk = gen.Generate(cx, 0).Chunk;
+                stoneChunk = gen.Generate(cx, 0, Position.DefaultZ).Chunk;
                 break;
             }
         }
@@ -65,7 +66,7 @@ public class BiomeDungeonGeneratorTests
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome is BiomeType.Lava or BiomeType.Forest or BiomeType.Fungal or BiomeType.Infernal)
             {
-                caveChunk = gen.Generate(cx, 0).Chunk;
+                caveChunk = gen.Generate(cx, 0, Position.DefaultZ).Chunk;
                 break;
             }
         }
@@ -91,7 +92,7 @@ public class BiomeDungeonGeneratorTests
             var biome = BiomeDefinitions.GetBiomeForChunk(cx, 0, 42);
             if (biome is BiomeType.Ice or BiomeType.Sewer)
             {
-                tunnelChunk = gen.Generate(cx, 0).Chunk;
+                tunnelChunk = gen.Generate(cx, 0, Position.DefaultZ).Chunk;
                 break;
             }
         }
@@ -113,8 +114,8 @@ public class BiomeDungeonGeneratorTests
 
         for (int cx = 0; cx < 20; cx++)
         {
-            var r1 = gen.Generate(cx, 0);
-            var r2 = gen.Generate(cx, 0);
+            var r1 = gen.Generate(cx, 0, Position.DefaultZ);
+            var r2 = gen.Generate(cx, 0, Position.DefaultZ);
 
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)

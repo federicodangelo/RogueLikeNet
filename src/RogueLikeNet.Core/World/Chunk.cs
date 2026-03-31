@@ -9,23 +9,25 @@ public class Chunk
 
     public int ChunkX { get; }
     public int ChunkY { get; }
+    public int ChunkZ { get; }
     public TileInfo[,] Tiles { get; }
 
     public int[,] LightLevels { get; }
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
-    private readonly List<(int WorldX, int WorldY)> _dirtyTiles = new();
+    private readonly List<(int WorldX, int WorldY, int WorldZ)> _dirtyTiles = new();
 
-    public IReadOnlyList<(int WorldX, int WorldY)> DirtyTiles => _dirtyTiles;
+    public IReadOnlyList<(int WorldX, int WorldY, int WorldZ)> DirtyTiles => _dirtyTiles;
 
-    public void MarkTileDirty(int worldX, int worldY) => _dirtyTiles.Add((worldX, worldY));
+    public void MarkTileDirty(int worldX, int worldY, int worldZ) => _dirtyTiles.Add((worldX, worldY, worldZ));
 
     public void ClearDirtyTiles() => _dirtyTiles.Clear();
 
-    public Chunk(int chunkX, int chunkY)
+    public Chunk(int chunkX, int chunkY, int chunkZ)
     {
         ChunkX = chunkX;
         ChunkY = chunkY;
+        ChunkZ = chunkZ;
         Tiles = new TileInfo[Size, Size];
         LightLevels = new int[Size, Size];
     }
@@ -48,13 +50,17 @@ public class Chunk
         return InBounds(localX, localY);
     }
 
+    /// <summary>
+    /// Converts world coordinates to chunk coordinates.
+    /// Z maps directly (each Z level = one chunk layer, no subdivision).
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static (int ChunkX, int ChunkY) WorldToChunkCoord(int worldX, int worldY)
+    public static (int ChunkX, int ChunkY, int ChunkZ) WorldToChunkCoord(int worldX, int worldY, int worldZ)
     {
         // Use integer division that floors towards negative infinity
         int cx = worldX >= 0 ? worldX / Size : (worldX - Size + 1) / Size;
         int cy = worldY >= 0 ? worldY / Size : (worldY - Size + 1) / Size;
-        return (cx, cy);
+        return (cx, cy, worldZ);
     }
 
     public void ResetLight()

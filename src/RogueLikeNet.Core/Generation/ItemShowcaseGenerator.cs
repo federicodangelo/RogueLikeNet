@@ -18,10 +18,13 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
 
         // Fill with floor
         for (int x = 0; x < Chunk.Size; x++)
@@ -47,9 +50,9 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
 
         // Spawn point: just inside the room entrance at the top
-        result.SpawnPosition = (worldOffsetX + Chunk.Size / 2, worldOffsetY + 3);
+        result.SpawnPosition = (worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ);
         result.Elements.Add(new DungeonElement(
-            new Position(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3),
+            new Position(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(20, TileDefinitions.ColorTorchFg)));
 
@@ -78,7 +81,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                 _ => TileDefinitions.ColorWhite,
             };
             result.Elements.Add(new DungeonElement(
-                new Position(wx, wy),
+                new Position(wx, wy, chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, color),
                 new LightSource(4, color)));
         }
@@ -97,7 +100,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                     continue;
 
                 int rarityMult = 100 + rarity * 50;
-                result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), new ItemData
+                result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
                 {
                     ItemTypeId = def.TypeId,
                     Rarity = ItemDefinitions.CapRarity(def.Category, rarity),

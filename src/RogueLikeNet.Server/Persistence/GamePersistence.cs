@@ -62,16 +62,17 @@ public class GamePersistence
         return db.Characters.FirstOrDefault(c => c.PlayerId == playerId);
     }
 
-    public void SaveChunk(int chunkX, int chunkY, byte[] tileData)
+    public void SaveChunk(int chunkX, int chunkY, int chunkZ, byte[] tileData)
     {
         using var db = new GameDbContext(_dbPath);
-        var existing = db.WorldChunks.FirstOrDefault(c => c.ChunkX == chunkX && c.ChunkY == chunkY);
+        var existing = db.WorldChunks.FirstOrDefault(c => c.ChunkX == chunkX && c.ChunkY == chunkY && c.ChunkZ == chunkZ);
         if (existing == null)
         {
             db.WorldChunks.Add(new WorldChunkRecord
             {
                 ChunkX = chunkX,
                 ChunkY = chunkY,
+                ChunkZ = chunkZ,
                 TileData = tileData
             });
         }
@@ -82,9 +83,9 @@ public class GamePersistence
         db.SaveChanges();
     }
 
-    public byte[]? LoadChunk(int chunkX, int chunkY)
+    public byte[]? LoadChunk(int chunkX, int chunkY, int chunkZ)
     {
         using var db = new GameDbContext(_dbPath);
-        return db.WorldChunks.FirstOrDefault(c => c.ChunkX == chunkX && c.ChunkY == chunkY)?.TileData;
+        return db.WorldChunks.FirstOrDefault(c => c.ChunkX == chunkX && c.ChunkY == chunkY && c.ChunkZ == chunkZ)?.TileData;
     }
 }

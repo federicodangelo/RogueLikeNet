@@ -67,7 +67,7 @@ public class GameServer : IDisposable
 
         _engine = new GameEngine(worldSeed, generator);
         // Pre-generate spawn chunk
-        _engine.EnsureChunkLoaded(0, 0);
+        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
     }
 
     public void Start()
@@ -166,8 +166,8 @@ public class GameServer : IDisposable
 
         conn.PlayerName = playerName;
 
-        var (spawnX, spawnY) = _engine.FindSpawnPosition();
-        var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, classId);
+        var (spawnX, spawnY, spawnZ) = _engine.FindSpawnPosition();
+        var entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
         conn.PlayerEntity = entity;
 
         if (DebugGiveResources)
@@ -313,11 +313,12 @@ public class GameServer : IDisposable
         _pendingTileUpdates = new TileUpdateMsg[dirty.Count];
         for (int i = 0; i < dirty.Count; i++)
         {
-            var (wx, wy, tile) = dirty[i];
+            var (wx, wy, wz, tile) = dirty[i];
             _pendingTileUpdates[i] = new TileUpdateMsg
             {
                 X = wx,
                 Y = wy,
+                Z = wz,
                 TileType = (byte)tile.Type,
                 GlyphId = tile.GlyphId,
                 FgColor = tile.FgColor,
@@ -339,7 +340,7 @@ public class GameServer : IDisposable
 
         var chunkDelta =
             shouldSendChunks ?
-                GameStateSerializer.SerializeChunksDelta(_engine, playerPos.X, playerPos.Y, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                GameStateSerializer.SerializeChunksDelta(_engine, playerPos.X, playerPos.Y, playerPos.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
                 new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
 
         if (chunkDelta.NewChunks.Length > 0)

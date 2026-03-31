@@ -43,7 +43,7 @@ internal static class TownGenerator
     /// Flattens the center area, builds houses, and adds NPC spawn data.
     /// </summary>
     public static void Generate(Chunk chunk, GenerationResult result, SeededRandom rng, BiomeType biome,
-        int worldOffsetX, int worldOffsetY)
+        int worldOffsetX, int worldOffsetY, int worldZ)
     {
         var mat = GetMaterial(biome);
         int townSize = MinTownSize + rng.Next(MaxTownSize - MinTownSize + 1);
@@ -117,12 +117,12 @@ internal static class TownGenerator
         // Build each house
         foreach (var house in houses)
         {
-            BuildHouse(chunk, house, rng, mat, worldOffsetX, worldOffsetY, result);
+            BuildHouse(chunk, house, rng, mat, worldOffsetX, worldOffsetY, worldZ, result);
         }
 
         // Place a torch in the town center
         result.Elements.Add(new DungeonElement(
-            new Position(townCenterX, townCenterY),
+            new Position(townCenterX, townCenterY, worldZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(8, TileDefinitions.ColorTorchFg)));
 
@@ -138,7 +138,7 @@ internal static class TownGenerator
                 if (chunk.Tiles[nx, ny].Type != TileType.Floor) continue;
 
                 result.TownNpcs.Add((
-                    new Position(worldOffsetX + nx, worldOffsetY + ny),
+                    new Position(worldOffsetX + nx, worldOffsetY + ny, worldZ),
                     TownNpcDefinitions.PickName(rng),
                     townCenterX, townCenterY, townSize / 2
                 ));
@@ -148,7 +148,7 @@ internal static class TownGenerator
     }
 
     private static void BuildHouse(Chunk chunk, Room house, SeededRandom rng, TownMaterial mat,
-        int worldOffsetX, int worldOffsetY, GenerationResult result)
+        int worldOffsetX, int worldOffsetY, int worldZ, GenerationResult result)
     {
         // Floor inside (inset by 1 for walls)
         for (int x = house.X + 1; x < house.X + house.Width - 1; x++)
@@ -238,11 +238,11 @@ internal static class TownGenerator
         }
 
         // Place furniture inside the house
-        PlaceFurniture(chunk, house, rng, result, worldOffsetX, worldOffsetY);
+        PlaceFurniture(chunk, house, rng, result, worldOffsetX, worldOffsetY, worldZ);
     }
 
     private static void PlaceFurniture(Chunk chunk, Room house, SeededRandom rng,
-        GenerationResult result, int worldOffsetX, int worldOffsetY)
+        GenerationResult result, int worldOffsetX, int worldOffsetY, int worldZ)
     {
         int interiorX = house.X + 1;
         int interiorY = house.Y + 1;
@@ -275,7 +275,7 @@ internal static class TownGenerator
             chunk.Tiles[torchX, torchY].Type == TileType.Floor)
         {
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + torchX, worldOffsetY + torchY),
+                new Position(worldOffsetX + torchX, worldOffsetY + torchY, worldZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(5, TileDefinitions.ColorTorchFg)));
         }

@@ -11,5 +11,6 @@ public class EntityPositionHealthMsg
     [Key(0)] public long Id { get; set; }
     [Key(1)] public int X { get; set; }
     [Key(2)] public int Y { get; set; }
-    [Key(3)] public int Health { get; set; }
+    [Key(3)] public int Z { get; set; }
+    [Key(4)] public int Health { get; set; }
 }

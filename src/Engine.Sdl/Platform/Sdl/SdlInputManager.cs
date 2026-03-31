@@ -85,6 +85,7 @@ public class SdlInputManager : BaseInputManager
         [InputAction.CycleSection] = [InputBinding.Key(SDL.Scancode.Tab)],
         [InputAction.OpenCrafting] = [InputBinding.Key(SDL.Scancode.C)],
         [InputAction.Place] = [InputBinding.Key(SDL.Scancode.P)],
+        [InputAction.UseStairs] = [InputBinding.Key(SDL.Scancode.Period), InputBinding.Key(SDL.Scancode.Comma)],
     };
 
     private bool _quitRequested;

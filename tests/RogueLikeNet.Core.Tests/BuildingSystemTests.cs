@@ -14,14 +14,14 @@ public class BuildingSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
     private Entity SpawnPlayerWithItem(GameEngine engine, int itemTypeId, int count = 1)
     {
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         inv.Items!.Add(new ItemData
         {
@@ -41,7 +41,7 @@ public class BuildingSystemTests
         int targetX = pos.X + 1, targetY = pos.Y;
 
         // Ensure target is floor
-        engine.WorldMap.SetTile(targetX, targetY, new TileInfo
+        engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -57,7 +57,7 @@ public class BuildingSystemTests
 
         engine.Tick();
 
-        var tile = engine.WorldMap.GetTile(targetX, targetY);
+        var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type); // base tile unchanged
         Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
         Assert.Equal(0, tile.PlaceableItemExtra); // closed
@@ -71,7 +71,7 @@ public class BuildingSystemTests
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
         int targetX = pos.X + 1, targetY = pos.Y;
 
-        engine.WorldMap.SetTile(targetX, targetY, new TileInfo
+        engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -87,7 +87,7 @@ public class BuildingSystemTests
 
         engine.Tick();
 
-        var tile = engine.WorldMap.GetTile(targetX, targetY);
+        var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type);
         Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
     }
@@ -101,7 +101,7 @@ public class BuildingSystemTests
         int targetX = pos.X + 1, targetY = pos.Y;
 
         // Place a wall
-        engine.WorldMap.SetTile(targetX, targetY, new TileInfo
+        engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -117,7 +117,7 @@ public class BuildingSystemTests
         engine.Tick();
 
         // Verify wall was placed and item removed
-        var tile = engine.WorldMap.GetTile(targetX, targetY);
+        var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         Assert.Empty(inv.Items!);
@@ -130,7 +130,7 @@ public class BuildingSystemTests
         engine.Tick();
 
         // Tile should be floor again (placeable removed)
-        tile = engine.WorldMap.GetTile(targetX, targetY);
+        tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type);
         Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
 
@@ -148,7 +148,7 @@ public class BuildingSystemTests
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
         int targetX = pos.X + 1, targetY = pos.Y;
 
-        engine.WorldMap.SetTile(targetX, targetY, new TileInfo
+        engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -164,7 +164,7 @@ public class BuildingSystemTests
         input.TargetY = 0;
         engine.Tick();
 
-        var tile = engine.WorldMap.GetTile(targetX, targetY);
+        var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.CopperDoor, tile.PlaceableItemId);
         Assert.Equal(0, tile.PlaceableItemExtra);
 
@@ -175,7 +175,7 @@ public class BuildingSystemTests
         input2.TargetY = 0;
         engine.Tick();
 
-        tile = engine.WorldMap.GetTile(targetX, targetY);
+        tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type);
         ref var inv = ref engine.EcsWorld.Get<Inventory>(player);
         Assert.Single(inv.Items!);
@@ -186,12 +186,12 @@ public class BuildingSystemTests
     public void PickUpPlaced_NonBuildableTile_DoesNothing()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         int targetX = sx + 1, targetY = sy;
 
         // Place a natural wall (not player-placed — Blocked terrain type)
-        engine.WorldMap.SetTile(targetX, targetY, new TileInfo
+        engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Blocked,
             GlyphId = TileDefinitions.GlyphWall,
@@ -206,7 +206,7 @@ public class BuildingSystemTests
         engine.Tick();
 
         // Should still be a wall
-        var tile = engine.WorldMap.GetTile(targetX, targetY);
+        var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Blocked, tile.Type);
     }
 

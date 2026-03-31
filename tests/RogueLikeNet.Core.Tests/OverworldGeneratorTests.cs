@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -11,7 +12,7 @@ public class OverworldGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -25,7 +26,7 @@ public class OverworldGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -39,8 +40,8 @@ public class OverworldGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new OverworldGenerator(42);
-        var result1 = gen.Generate(3, -2);
-        var result2 = gen.Generate(3, -2);
+        var result1 = gen.Generate(3, -2, Position.DefaultZ);
+        var result2 = gen.Generate(3, -2, Position.DefaultZ);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -58,7 +59,7 @@ public class OverworldGeneratorTests
         int totalMonsters = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             totalMonsters += result.Monsters.Count;
         }
 
@@ -71,8 +72,8 @@ public class OverworldGeneratorTests
         var gen = new OverworldGenerator(42);
 
         // Generate two horizontally adjacent chunks
-        var left = gen.Generate(0, 0).Chunk;
-        var right = gen.Generate(1, 0).Chunk;
+        var left = gen.Generate(0, 0, Position.DefaultZ).Chunk;
+        var right = gen.Generate(1, 0, Position.DefaultZ).Chunk;
 
         // Check border tiles: the rightmost column of 'left' vs leftmost column of 'right'
         // should not be a solid wall barrier. Count matching floor/wall patterns.
@@ -94,8 +95,8 @@ public class OverworldGeneratorTests
     {
         var gen = new OverworldGenerator(42);
 
-        var top = gen.Generate(0, 0).Chunk;
-        var bottom = gen.Generate(0, 1).Chunk;
+        var top = gen.Generate(0, 0, Position.DefaultZ).Chunk;
+        var bottom = gen.Generate(0, 1, Position.DefaultZ).Chunk;
 
         int topEdgeFloors = 0;
         int bottomEdgeFloors = 0;
@@ -113,7 +114,7 @@ public class OverworldGeneratorTests
     public void Generate_NoVoidTiles()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -127,7 +128,7 @@ public class OverworldGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
@@ -145,8 +146,8 @@ public class OverworldGeneratorTests
     {
         var gen1 = new OverworldGenerator(42);
         var gen2 = new OverworldGenerator(99999);
-        var result1 = gen1.Generate(0, 0);
-        var result2 = gen2.Generate(0, 0);
+        var result1 = gen1.Generate(0, 0, Position.DefaultZ);
+        var result2 = gen2.Generate(0, 0, Position.DefaultZ);
 
         int differences = 0;
         for (int x = 0; x < Chunk.Size; x++)

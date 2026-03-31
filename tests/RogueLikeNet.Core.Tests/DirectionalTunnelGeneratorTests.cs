@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
@@ -10,7 +11,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -24,7 +25,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -38,8 +39,8 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result1 = gen.Generate(0, 0);
-        var result2 = gen.Generate(0, 0);
+        var result1 = gen.Generate(0, 0, Position.DefaultZ);
+        var result2 = gen.Generate(0, 0, Position.DefaultZ);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -50,7 +51,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_ProducesMonsters()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         Assert.True(result.Monsters.Count > 0, "Tunnel should produce monsters");
     }

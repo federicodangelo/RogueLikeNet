@@ -14,7 +14,7 @@ public class AISystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
@@ -22,11 +22,11 @@ public class AISystemTests
     public void Attack_TargetMovesAway_TransitionsToChase()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster adjacent to the player
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -54,11 +54,11 @@ public class AISystemTests
     public void Chase_MonsterMoves_ResetsMoveDelay()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster a few tiles away (within detection range)
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -93,10 +93,10 @@ public class AISystemTests
     public void Chase_ExceedsChaseRange_TransitionsToIdle()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 13, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 13, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -120,10 +120,10 @@ public class AISystemTests
     public void Chase_AdjacentToPlayer_TransitionsToAttack()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -145,10 +145,10 @@ public class AISystemTests
     public void Idle_PlayerInDetectionRange_TransitionsToChase()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 5, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 5, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -171,10 +171,10 @@ public class AISystemTests
     public void Chase_WithCooldown_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -11,7 +12,7 @@ public class CellularAutomataCaveGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new CellularAutomataCaveGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -25,7 +26,7 @@ public class CellularAutomataCaveGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new CellularAutomataCaveGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -39,8 +40,8 @@ public class CellularAutomataCaveGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new CellularAutomataCaveGenerator(42);
-        var result1 = gen.Generate(0, 0);
-        var result2 = gen.Generate(0, 0);
+        var result1 = gen.Generate(0, 0, Position.DefaultZ);
+        var result2 = gen.Generate(0, 0, Position.DefaultZ);
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -51,7 +52,7 @@ public class CellularAutomataCaveGeneratorTests
     public void Generate_ProducesMonsters()
     {
         var gen = new CellularAutomataCaveGenerator(42);
-        var result = gen.Generate(0, 0);
+        var result = gen.Generate(0, 0, Position.DefaultZ);
 
         Assert.True(result.Monsters.Count > 0, "Cave should produce monsters");
     }
@@ -63,7 +64,7 @@ public class CellularAutomataCaveGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
-            var result = gen.Generate(cx, 0);
+            var result = gen.Generate(cx, 0, Position.DefaultZ);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
@@ -86,7 +87,7 @@ public class CellularAutomataCaveGeneratorTests
         for (int cx = -5; cx <= 5; cx++)
             for (int cy = -5; cy <= 5; cy++)
             {
-                var result = gen.Generate(cx, cy);
+                var result = gen.Generate(cx, cy, Position.DefaultZ);
                 // The generator places stair-up (element 0) and stair-down (element 1) in separate rooms.
                 // If the fallback ran, rooms were synthesized to ensure >= 2.
                 Assert.True(result.Elements.Count >= 2,

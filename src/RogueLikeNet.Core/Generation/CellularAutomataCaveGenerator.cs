@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -22,12 +23,16 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
+
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
-        var result = new GenerationResult(chunk);
         int size = Chunk.Size;
         var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
 
@@ -115,15 +120,15 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
-        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY);
-        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY);
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
 
         // Step 11: Biome tint
         DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         // Spawn point: center of the first extracted room
         if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
-            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY);
+            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
 
         return result;
     }

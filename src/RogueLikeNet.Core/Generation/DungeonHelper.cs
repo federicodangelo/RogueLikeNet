@@ -145,7 +145,7 @@ internal static class DungeonHelper
         }
     }
 
-    public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY)
+    public static void PopulateRoom(Room room, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY, int worldZ)
     {
         int monsterCount = 1 + rng.Next(3);
 
@@ -176,7 +176,7 @@ internal static class DungeonHelper
                 var def = NpcDefinitions.Pick(rng, difficulty);
                 var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
                 int hpScale = 1 + difficulty / 2;
-                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y), monsterData));
+                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), monsterData));
             }
         }
 
@@ -186,7 +186,7 @@ internal static class DungeonHelper
             {
                 var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
                 int rarityMult = 100 + loot.Rarity * 50;
-                result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y), new ItemData
+                result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), new ItemData
                 {
                     ItemTypeId = loot.Definition.TypeId,
                     Rarity = loot.Rarity,
@@ -205,20 +205,20 @@ internal static class DungeonHelper
             if (IsChunkCoordinateWalkable(room.CenterX, room.CenterY))
             {
                 result.Elements.Add(new DungeonElement(
-                    new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY),
+                    new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY, worldZ),
                     new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                     new LightSource(6, TileDefinitions.ColorTorchFg)));
             }
         }
     }
 
-    public static void PopulateRooms(List<Room> rooms, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY)
+    public static void PopulateRooms(List<Room> rooms, SeededRandom rng, GenerationResult result, int difficulty, int worldOffsetX, int worldOffsetY, int worldZ)
     {
         for (int i = 1; i < rooms.Count; i++)
-            PopulateRoom(rooms[i], rng, result, difficulty, worldOffsetX, worldOffsetY);
+            PopulateRoom(rooms[i], rng, result, difficulty, worldOffsetX, worldOffsetY, worldZ);
     }
 
-    public static void PlaceResourceNodes(List<Room> rooms, SeededRandom rng, GenerationResult result, BiomeType biome, int worldOffsetX, int worldOffsetY)
+    public static void PlaceResourceNodes(List<Room> rooms, SeededRandom rng, GenerationResult result, BiomeType biome, int worldOffsetX, int worldOffsetY, int worldZ)
     {
         for (int i = 1; i < rooms.Count; i++)
         {
@@ -234,7 +234,7 @@ internal static class DungeonHelper
                     if (result.Chunk.Tiles[x, y].Type != TileType.Floor) continue;
 
                     var def = ResourceNodeDefinitions.Pick(rng, biome);
-                    result.ResourceNodes.Add((new Position(worldOffsetX + x, worldOffsetY + y), def));
+                    result.ResourceNodes.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), def));
                     break;
                 }
             }

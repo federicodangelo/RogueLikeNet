@@ -28,11 +28,11 @@ public class AISystem
     public void Update(Arch.Core.World world, WorldMap map)
     {
         // First, collect player positions
-        var playerPositions = new List<(int X, int Y)>();
+        var playerPositions = new List<(int X, int Y, int Z)>();
         var playerQuery = new QueryDescription().WithAll<Position, PlayerTag>();
         world.Query(in playerQuery, (ref Position pos, ref PlayerTag _) =>
         {
-            playerPositions.Add((pos.X, pos.Y));
+            playerPositions.Add((pos.X, pos.Y, pos.Z));
         });
 
         if (playerPositions.Count == 0) return;
@@ -43,7 +43,7 @@ public class AISystem
         world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
         {
             if (h.IsAlive)
-                actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y));
+                actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y, aPos.Z));
         });
 
         // Tick down move delays
@@ -80,8 +80,9 @@ public class AISystem
             // Find nearest player
             int nearestDist = int.MaxValue;
             int nearestPx = 0, nearestPy = 0;
-            foreach (var (px, py) in playerPositions)
+            foreach (var (px, py, pz) in playerPositions)
             {
+                if (pz != pos.Z) continue; // Only detect players on same Z level
                 int dist = Math.Abs(pos.X - px) + Math.Abs(pos.Y - py);
                 if (dist < nearestDist)
                 {
@@ -111,18 +112,19 @@ public class AISystem
                     }
                     if (!canMove) break; // Wait for move delay
                     // Move towards player using A*
+                    int chaseZ = pos.Z; // capture for lambda
                     var path = AStarPathfinder.FindPath(
-                        pos.X, pos.Y, nearestPx, nearestPy,
-                        (x, y) => map.IsWalkable(x, y),
+                        pos.X, pos.Y, nearestPx, nearestPy, chaseZ,
+                        (x, y) => map.IsWalkable(x, y, chaseZ),
                         maxSteps: 200);
                     if (path != null && path.Count >= 2)
                     {
                         var next = path[1];
-                        long nextKey = Position.PackCoord(next.X, next.Y);
-                        if (map.IsWalkable(next.X, next.Y) && !actorPositions.Contains(nextKey))
+                        long nextKey = Position.PackCoord(next.X, next.Y, pos.Z);
+                        if (map.IsWalkable(next.X, next.Y, pos.Z) && !actorPositions.Contains(nextKey))
                         {
                             // Remove old position, move, add new position
-                            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y));
+                            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y, pos.Z));
                             pos.X = next.X;
                             pos.Y = next.Y;
                             actorPositions.Add(nextKey);
@@ -169,20 +171,20 @@ public class AISystem
                 return;
 
             // Check for closed doors — NPCs can open them
-            var targetTile = map.GetTile(nx, ny);
+            var targetTile = map.GetTile(nx, ny, pos.Z);
             if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
             {
-                map.OpenDoor(nx, ny);
+                map.OpenDoor(nx, ny, pos.Z);
                 delay.Current = delay.Interval;
                 return; // Spend this turn opening the door, move through next turn
             }
 
             // Check walkability and no collision
-            if (!map.IsWalkable(nx, ny)) return;
-            long nextKey = Position.PackCoord(nx, ny);
+            if (!map.IsWalkable(nx, ny, pos.Z)) return;
+            long nextKey = Position.PackCoord(nx, ny, pos.Z);
             if (actorPositions.Contains(nextKey)) return;
 
-            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y));
+            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y, pos.Z));
             pos.X = nx;
             pos.Y = ny;
             actorPositions.Add(nextKey);

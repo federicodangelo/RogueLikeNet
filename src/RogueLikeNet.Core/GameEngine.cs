@@ -29,7 +29,7 @@ public class GameEngine : IDisposable
     private readonly BuildingSystem _buildingSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
-    private (int X, int Y)? _generatorSpawnHint;
+    private (int X, int Y, int Z)? _generatorSpawnHint;
 
     public Arch.Core.World EcsWorld => _ecsWorld;
     public WorldMap WorldMap => _worldMap;
@@ -67,9 +67,9 @@ public class GameEngine : IDisposable
     /// Ensures the chunk at the given chunk coords is loaded/generated.
     /// Spawns entities from generation results if newly created.
     /// </summary>
-    public Chunk EnsureChunkLoaded(int chunkX, int chunkY)
+    public Chunk EnsureChunkLoaded(int chunkX, int chunkY, int chunkZ)
     {
-        var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkX, chunkY, _generator);
+        var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkX, chunkY, chunkZ, _generator);
 
         if (genResult != null)
             ProcessGenerationResult(genResult);
@@ -86,12 +86,12 @@ public class GameEngine : IDisposable
 
         foreach (var (pos, monster) in result.Monsters)
         {
-            SpawnMonster(pos.X, pos.Y, monster);
+            SpawnMonster(pos.X, pos.Y, pos.Z, monster);
         }
 
         foreach (var (pos, item) in result.Items)
         {
-            SpawnItemOnGround(item, pos.X, pos.Y);
+            SpawnItemOnGround(item, pos.X, pos.Y, pos.Z);
         }
 
         foreach (var element in result.Elements)
@@ -101,12 +101,12 @@ public class GameEngine : IDisposable
 
         foreach (var (pos, nodeDef) in result.ResourceNodes)
         {
-            SpawnResourceNode(pos.X, pos.Y, nodeDef);
+            SpawnResourceNode(pos.X, pos.Y, pos.Z, nodeDef);
         }
 
         foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
         {
-            SpawnTownNpc(pos.X, pos.Y, name, tcx, tcy, radius);
+            SpawnTownNpc(pos.X, pos.Y, pos.Z, name, tcx, tcy, radius);
         }
     }
 
@@ -114,7 +114,7 @@ public class GameEngine : IDisposable
     /// Spawns a player entity at the given world position.
     /// Class choice affects starting stats.
     /// </summary>
-    public Entity SpawnPlayer(long connectionId, int x, int y, int classId)
+    public Entity SpawnPlayer(long connectionId, int x, int y, int z, int classId)
     {
         var def = ClassDefinitions.Get(classId);
         var classStats = def.StartingStats; ;
@@ -125,7 +125,7 @@ public class GameEngine : IDisposable
         var attackDelay = Math.Max(0, 10 - (6 + classStats.Speed));
 
         return _ecsWorld.Create(
-            new Position(x, y),
+            new Position(x, y, z),
             new Health(stats.Health),
             new CombatStats(stats.Attack, stats.Defense, stats.Speed),
             new FOVData(ClassDefinitions.FOVRadius),
@@ -166,7 +166,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a monster at the given position using fully-populated MonsterData.
     /// </summary>
-    public Entity SpawnMonster(int x, int y, MonsterData data)
+    public Entity SpawnMonster(int x, int y, int z, MonsterData data)
     {
         var def = NpcDefinitions.Get(data.MonsterTypeId);
 
@@ -175,7 +175,7 @@ public class GameEngine : IDisposable
         int moveInterval = Math.Max(0, 10 - data.Speed);
 
         return _ecsWorld.Create(
-            new Position(x, y),
+            new Position(x, y, z),
             new Health(data.Health),
             new CombatStats(data.Attack, data.Defense, data.Speed),
             new TileAppearance(def.GlyphId, def.Color),
@@ -189,20 +189,20 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public Entity SpawnItemOnGround(ItemDefinition def, int rarity, int x, int y)
+    public Entity SpawnItemOnGround(ItemDefinition def, int rarity, int x, int y, int z)
     {
         var itemData = ItemDefinitions.GenerateItemData(def, rarity, _worldRng);
-        return SpawnItemOnGround(itemData, x, y);
+        return SpawnItemOnGround(itemData, x, y, z);
     }
 
     /// <summary>
     /// Creates an item entity on the ground from pre-built ItemData.
     /// </summary>
-    public Entity SpawnItemOnGround(ItemData itemData, int x, int y)
+    public Entity SpawnItemOnGround(ItemData itemData, int x, int y, int z)
     {
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
         return _ecsWorld.Create(
-            new Position(x, y),
+            new Position(x, y, z),
             new TileAppearance(def.GlyphId, def.Color),
             itemData
         );
@@ -230,10 +230,10 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
-    public Entity SpawnResourceNode(int x, int y, ResourceNodeDefinition def)
+    public Entity SpawnResourceNode(int x, int y, int z, ResourceNodeDefinition def)
     {
         return _ecsWorld.Create(
-            new Position(x, y),
+            new Position(x, y, z),
             new Health(def.Health),
             new CombatStats(0, def.Defense, 0),
             new TileAppearance(def.GlyphId, def.Color),
@@ -250,10 +250,10 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a peaceful town NPC that wanders within a radius.
     /// </summary>
-    public Entity SpawnTownNpc(int x, int y, string name, int townCenterX, int townCenterY, int wanderRadius)
+    public Entity SpawnTownNpc(int x, int y, int z, string name, int townCenterX, int townCenterY, int wanderRadius)
     {
         return _ecsWorld.Create(
-            new Position(x, y),
+            new Position(x, y, z),
             new Health(9999), // Effectively unkillable
             new CombatStats(0, 999, 3),
             new TileAppearance(TileDefinitions.GlyphTownNpc, TileDefinitions.ColorTownNpcFg),
@@ -301,44 +301,44 @@ public class GameEngine : IDisposable
     /// </summary>
     private void ProcessLootDrops()
     {
-        var deadMonsters = new List<(int X, int Y, int MonsterTypeId)>();
+        var deadMonsters = new List<(int X, int Y, int Z, int MonsterTypeId)>();
         var deathQuery = new QueryDescription().WithAll<DeadTag, MonsterData, Position>();
         _ecsWorld.Query(in deathQuery, (ref Position pos, ref MonsterData tag) =>
         {
-            deadMonsters.Add((pos.X, pos.Y, tag.MonsterTypeId));
+            deadMonsters.Add((pos.X, pos.Y, pos.Z, tag.MonsterTypeId));
         });
 
-        foreach (var (x, y, typeId) in deadMonsters)
+        foreach (var (x, y, z, typeId) in deadMonsters)
         {
             // 60% chance to drop loot
             if (_worldRng.Next(100) < 60)
             {
                 int difficulty = typeId; // rough mapping: harder monster = higher difficulty
                 var (template, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y);
-                SpawnItemOnGround(template, rarity, dropX, dropY);
+                var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y, z);
+                SpawnItemOnGround(template, rarity, dropX, dropY, z);
             }
         }
 
         // Resource node drops
-        var deadNodes = new List<(int X, int Y, ResourceNodeData Data)>();
+        var deadNodes = new List<(int X, int Y, int Z, ResourceNodeData Data)>();
         var nodeDeathQuery = new QueryDescription().WithAll<DeadTag, ResourceNodeData, Position>();
         _ecsWorld.Query(in nodeDeathQuery, (ref Position pos, ref ResourceNodeData node) =>
         {
-            deadNodes.Add((pos.X, pos.Y, node));
+            deadNodes.Add((pos.X, pos.Y, pos.Z, node));
         });
 
-        foreach (var (x, y, node) in deadNodes)
+        foreach (var (x, y, z, node) in deadNodes)
         {
             int dropCount = node.MinDrop + _worldRng.Next(Math.Max(1, node.MaxDrop - node.MinDrop + 1));
             var resourceDef = ItemDefinitions.Get(node.ResourceItemTypeId);
-            var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y);
+            var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y, z);
             SpawnItemOnGround(new ItemData
             {
                 ItemTypeId = node.ResourceItemTypeId,
                 Rarity = ItemDefinitions.RarityCommon,
                 StackCount = dropCount,
-            }, dropX, dropY);
+            }, dropX, dropY, z);
         }
     }
 
@@ -346,18 +346,18 @@ public class GameEngine : IDisposable
     /// Finds an unoccupied position to drop an item, spiraling outward from origin.
     /// Avoids overlapping with other ground items.
     /// </summary>
-    public static (int X, int Y) FindDropPosition(Arch.Core.World world, int originX, int originY)
+    public static (int X, int Y) FindDropPosition(Arch.Core.World world, int originX, int originY, int originZ)
     {
         // Collect positions of all ground items
         var occupied = new HashSet<long>();
         var groundQuery = new QueryDescription().WithAll<Position, ItemData>();
         world.Query(in groundQuery, (ref Position gPos) =>
         {
-            occupied.Add(Position.PackCoord(gPos.X, gPos.Y));
+            occupied.Add(Position.PackCoord(gPos.X, gPos.Y, gPos.Z));
         });
 
         // Try origin first, then spiral outward up to radius 5
-        if (!occupied.Contains(Position.PackCoord(originX, originY)))
+        if (!occupied.Contains(Position.PackCoord(originX, originY, originZ)))
             return (originX, originY);
 
         for (int r = 1; r <= 5; r++)
@@ -368,7 +368,7 @@ public class GameEngine : IDisposable
                     if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue; // only check ring
                     int x = originX + dx;
                     int y = originY + dy;
-                    if (!occupied.Contains(Position.PackCoord(x, y)))
+                    if (!occupied.Contains(Position.PackCoord(x, y, originZ)))
                         return (x, y);
                 }
         }
@@ -394,10 +394,11 @@ public class GameEngine : IDisposable
             ref var pos = ref _ecsWorld.Get<Position>(entity);
 
             // Respawn: restore half health, move to spawn
-            var (sx, sy) = FindSpawnPosition();
+            var (sx, sy, sz) = FindSpawnPosition();
             health.Current = health.Max / 2;
             pos.X = sx;
             pos.Y = sy;
+            pos.Z = sz;
 
             // Remove DeadTag so player stays alive
             _ecsWorld.Remove<DeadTag>(entity);
@@ -435,21 +436,21 @@ public class GameEngine : IDisposable
     /// Uses the generator's suggested spawn point when available, otherwise
     /// falls back to a floor-scan of chunk (0,0).
     /// </summary>
-    public (int X, int Y) FindSpawnPosition()
+    public (int X, int Y, int Z) FindSpawnPosition()
     {
-        var chunk = EnsureChunkLoaded(0, 0);
+        var chunk = EnsureChunkLoaded(0, 0, Position.DefaultZ);
 
         // Use the generator's hint if it points at a walkable floor tile
         if (_generatorSpawnHint.HasValue)
         {
-            var (hx, hy) = _generatorSpawnHint.Value;
+            var (hx, hy) = (_generatorSpawnHint.Value.X, _generatorSpawnHint.Value.Y);
             // Convert world coords to local chunk coords
             int lx = hx - 0 * Chunk.Size;
             int ly = hy - 0 * Chunk.Size;
             if (lx >= 0 && lx < Chunk.Size && ly >= 0 && ly < Chunk.Size
                 && chunk.Tiles[lx, ly].IsWalkable)
             {
-                return (hx, hy);
+                return (hx, hy, Position.DefaultZ);
             }
         }
 
@@ -466,14 +467,14 @@ public class GameEngine : IDisposable
         var posQuery = new QueryDescription().WithAll<Position>();
         _ecsWorld.Query(in posQuery, (ref Position p) =>
         {
-            occupied.Add(Position.PackCoord(p.X, p.Y));
+            occupied.Add(Position.PackCoord(p.X, p.Y, p.Z));
         });
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
                 if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
-                if (occupied.Contains(Position.PackCoord(x, y))) continue;
+                if (occupied.Contains(Position.PackCoord(x, y, Position.DefaultZ))) continue;
 
                 // Require 2-tile clear floor radius (all tiles within Chebyshev 2 must be floor)
                 bool clearArea = true;
@@ -498,16 +499,16 @@ public class GameEngine : IDisposable
                 }
                 if (enemyNearby) continue;
 
-                return (x, y);
+                return (x, y, Position.DefaultZ);
             }
         // Fallback: just find any free floor tile
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
-                if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(Position.PackCoord(x, y)))
-                    return (x, y);
+                if (chunk.Tiles[x, y].Type == TileType.Floor && !occupied.Contains(Position.PackCoord(x, y, Position.DefaultZ)))
+                    return (x, y, Position.DefaultZ);
             }
-        return (Chunk.Size / 2, Chunk.Size / 2);
+        return (Chunk.Size / 2, Chunk.Size / 2, Position.DefaultZ);
     }
 
     public void Dispose()

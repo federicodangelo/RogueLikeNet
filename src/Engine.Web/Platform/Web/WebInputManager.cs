@@ -100,6 +100,7 @@ public class WebInputManager : BaseInputManager
         [InputAction.CycleSection] = [InputBinding.Key("Tab")],
         [InputAction.OpenCrafting] = [InputBinding.Key("KeyC")],
         [InputAction.Place] = [InputBinding.Key("KeyP")],
+        [InputAction.UseStairs] = [InputBinding.Key("Period"), InputBinding.Key("Comma")],
     };
 
     private readonly record struct InputBinding(string? KeyCode, int? MouseBtn, int? GamepadBtn)

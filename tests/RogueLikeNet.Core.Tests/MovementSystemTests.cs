@@ -15,7 +15,7 @@ public class MovementSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
@@ -23,12 +23,12 @@ public class MovementSystemTests
     public void Move_SuccessfulMove_UpdatesPosition()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Find a walkable adjacent tile
         int dx = 1, dy = 0;
-        if (!engine.WorldMap.IsWalkable(sx + dx, sy + dy))
+        if (!engine.WorldMap.IsWalkable(sx + dx, sy + dy, Position.DefaultZ))
         {
             dx = 0; dy = 1;
         }
@@ -49,8 +49,8 @@ public class MovementSystemTests
     public void Move_NonMoveAction_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.None;
@@ -68,8 +68,8 @@ public class MovementSystemTests
     public void Move_WaitAction_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Wait;
@@ -87,10 +87,10 @@ public class MovementSystemTests
     public void Move_WithCooldown_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn a monster with high move delay (slow)
-        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 2 });
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 2 });
 
         // Give the monster movement input
         engine.EcsWorld.Add(monster, new PlayerInput { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
@@ -109,12 +109,12 @@ public class MovementSystemTests
     public void Move_IntoWall_ClearsAction()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Find a non-walkable tile
         int wallX = -1, wallY = -1;
-        var chunk = engine.EnsureChunkLoaded(0, 0);
+        var chunk = engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
                 if (chunk.Tiles[x, y].Type == TileType.Blocked)
@@ -152,9 +152,9 @@ public class MovementSystemTests
     public void Move_IntoActor_ConvertsToAttack()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Move;
@@ -174,8 +174,8 @@ public class MovementSystemTests
     public void Move_ResetsDelay_AfterSuccessfulMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Move;
@@ -183,7 +183,7 @@ public class MovementSystemTests
         input.TargetY = 0;
 
         // Ensure destination is walkable
-        if (engine.WorldMap.IsWalkable(sx + 1, sy))
+        if (engine.WorldMap.IsWalkable(sx + 1, sy, Position.DefaultZ))
         {
             engine.Tick();
 
@@ -197,10 +197,10 @@ public class MovementSystemTests
     public void GridVelocity_ZeroVelocity_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         var entity = engine.EcsWorld.Create(
-            new Position(sx, sy),
+            new Position(sx, sy, Position.DefaultZ),
             new GridVelocity { DX = 0, DY = 0 }
         );
 
@@ -215,15 +215,15 @@ public class MovementSystemTests
     public void GridVelocity_MovesToWalkableTile()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         var entity = engine.EcsWorld.Create(
-            new Position(sx, sy),
+            new Position(sx, sy, Position.DefaultZ),
             new GridVelocity { DX = 1, DY = 0 }
         );
 
         // Ensure target is walkable
-        if (engine.WorldMap.IsWalkable(sx + 1, sy))
+        if (engine.WorldMap.IsWalkable(sx + 1, sy, Position.DefaultZ))
         {
             engine.Tick();
 
@@ -242,7 +242,7 @@ public class MovementSystemTests
     public void GridVelocity_BlockedByWall_ResetsVelocity()
     {
         using var engine = CreateEngine();
-        var chunk = engine.EnsureChunkLoaded(0, 0);
+        var chunk = engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
 
         // Find a tile adjacent to a wall
         for (int x = 1; x < Chunk.Size - 1; x++)
@@ -252,7 +252,7 @@ public class MovementSystemTests
                     chunk.Tiles[x + 1, y].Type == TileType.Blocked)
                 {
                     var entity = engine.EcsWorld.Create(
-                        new Position(x, y),
+                        new Position(x, y, Position.DefaultZ),
                         new GridVelocity { DX = 1, DY = 0 }
                     );
 
@@ -272,13 +272,13 @@ public class MovementSystemTests
     public void GridVelocity_BlockedByActor_DoesNotMove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
+        var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Place a living actor at the target
-        engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         var entity = engine.EcsWorld.Create(
-            new Position(sx, sy),
+            new Position(sx, sy, Position.DefaultZ),
             new GridVelocity { DX = 1, DY = 0 }
         );
 
@@ -292,8 +292,8 @@ public class MovementSystemTests
     public void Player_WithCooldown_PreservesActionForNextTick()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Set up a move action with a high cooldown
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);

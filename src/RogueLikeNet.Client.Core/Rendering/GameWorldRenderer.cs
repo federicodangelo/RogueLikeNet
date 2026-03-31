@@ -172,6 +172,7 @@ public sealed class GameWorldRenderer
 
             foreach (var entity in state.Entities.Values)
             {
+                if (entity.Z != state.PlayerZ) continue;
                 if (entity.GlyphId == TileDefinitions.GlyphPlayer)
                 {
                     playerEntity = entity;
@@ -271,6 +272,7 @@ public sealed class GameWorldRenderer
 
         foreach (var entity in state.Entities.Values)
         {
+            if (entity.Z != state.PlayerZ) continue;
             int dx = entity.X - (cx - half);
             int dy = entity.Y - (cy - half);
             if (dx < 0 || dx >= mapSize || dy < 0 || dy >= mapSize) continue;

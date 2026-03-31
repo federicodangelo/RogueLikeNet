@@ -16,6 +16,7 @@ public static class AStarPathfinder
     public static List<(int X, int Y)>? FindPath(
         int startX, int startY,
         int goalX, int goalY,
+        int z,
         Func<int, int, bool> isWalkable,
         int maxSteps = 1000)
     {
@@ -26,8 +27,8 @@ public static class AStarPathfinder
         var cameFrom = new Dictionary<long, long>();
         var gScore = new Dictionary<long, int>();
 
-        long startKey = Position.PackCoord(startX, startY);
-        long goalKey = Position.PackCoord(goalX, goalY);
+        long startKey = Position.PackCoord(startX, startY, z);
+        long goalKey = Position.PackCoord(goalX, goalY, z);
 
         gScore[startKey] = 0;
         openSet.Enqueue((startX, startY), ManhattanDistance(startX, startY, goalX, goalY));
@@ -41,7 +42,7 @@ public static class AStarPathfinder
         while (openSet.Count > 0 && steps++ < maxSteps)
         {
             var (cx, cy) = openSet.Dequeue();
-            long currentKey = Position.PackCoord(cx, cy);
+            long currentKey = Position.PackCoord(cx, cy, z);
 
             if (currentKey == goalKey)
                 return ReconstructPath(cameFrom, goalKey, startKey);
@@ -55,7 +56,7 @@ public static class AStarPathfinder
 
                 if (!isWalkable(nx, ny)) continue;
 
-                long neighborKey = Position.PackCoord(nx, ny);
+                long neighborKey = Position.PackCoord(nx, ny, z);
                 int tentativeG = currentG + 1; // uniform cost
 
                 if (!gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
@@ -76,11 +77,11 @@ public static class AStarPathfinder
         var path = new List<(int X, int Y)>();
         while (current != start)
         {
-            var (x, y) = Position.UnpackCoord(current);
+            var (x, y, _) = Position.UnpackCoord(current);
             path.Add((x, y));
             current = cameFrom[current];
         }
-        var (sx, sy) = Position.UnpackCoord(start);
+        var (sx, sy, _) = Position.UnpackCoord(start);
         path.Add((sx, sy));
         path.Reverse();
         return path;

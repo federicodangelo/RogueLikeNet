@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -9,10 +10,13 @@ namespace RogueLikeNet.Core.Generation;
 /// </summary>
 public class EmptyGenerator : IDungeonGenerator
 {
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -26,7 +30,7 @@ public class EmptyGenerator : IDungeonGenerator
 
         // Spawn point: center of the chunk
         if (chunkX == 0 && chunkY == 0)
-            result.SpawnPosition = (Chunk.Size / 2, Chunk.Size / 2);
+            result.SpawnPosition = (Chunk.Size / 2, Chunk.Size / 2, chunkZ);
 
         return result;
     }

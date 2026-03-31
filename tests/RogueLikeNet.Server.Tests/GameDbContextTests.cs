@@ -111,6 +111,7 @@ public class GameDbContextTests : IDisposable
             {
                 ChunkX = 3,
                 ChunkY = 7,
+                ChunkZ = 127,
                 TileData = [10, 20, 30]
             });
             db.SaveChanges();
@@ -162,9 +163,9 @@ public class GameDbContextTests : IDisposable
     {
         using var db = new GameDbContext(_dbPath);
         db.Database.EnsureCreated();
-        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, TileData = [1] });
+        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, ChunkZ = 0, TileData = [1] });
         db.SaveChanges();
-        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, TileData = [2] });
+        db.WorldChunks.Add(new WorldChunkRecord { ChunkX = 1, ChunkY = 1, ChunkZ = 0, TileData = [2] });
         Assert.Throws<DbUpdateException>(() => db.SaveChanges());
     }
 
@@ -196,6 +197,7 @@ public class GameDbContextTests : IDisposable
         Assert.Equal(0, chr.Speed);
         Assert.Equal(0, chr.PositionX);
         Assert.Equal(0, chr.PositionY);
+        Assert.Equal(0, chr.PositionZ);
         Assert.Empty(chr.InventoryData);
     }
 
@@ -206,6 +208,7 @@ public class GameDbContextTests : IDisposable
         Assert.Equal(0, chunk.Id);
         Assert.Equal(0, chunk.ChunkX);
         Assert.Equal(0, chunk.ChunkY);
+        Assert.Equal(0, chunk.ChunkZ);
         Assert.Empty(chunk.TileData);
     }
 

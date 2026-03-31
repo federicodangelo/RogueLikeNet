@@ -12,7 +12,7 @@ public class CombatSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
@@ -28,9 +28,9 @@ public class CombatSystemTests
     public void Attack_ProducesEvent()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -45,9 +45,9 @@ public class CombatSystemTests
     public void Attack_DealsDamage()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -63,10 +63,10 @@ public class CombatSystemTests
     public void Attack_KillTarget_EventShowsDeath()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         // Low health monster
-        engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 0, Defense = 0, Speed = 8 });
+        engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 0, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -82,8 +82,8 @@ public class CombatSystemTests
     public void Attack_MissesEmpty_NoEvent()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -98,9 +98,9 @@ public class CombatSystemTests
     public void AutoTarget_FindsEnemyToRight()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -117,9 +117,9 @@ public class CombatSystemTests
     public void AutoTarget_FindsEnemyToLeft()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx - 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx - 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -136,9 +136,9 @@ public class CombatSystemTests
     public void AutoTarget_FindsEnemyAbove()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx, sy - 1, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx, sy - 1, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -155,9 +155,9 @@ public class CombatSystemTests
     public void AutoTarget_FindsEnemyBelow()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx, sy + 1, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx, sy + 1, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -174,9 +174,9 @@ public class CombatSystemTests
     public void AutoTarget_FindsEnemyOnSameTile()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -193,10 +193,10 @@ public class CombatSystemTests
     public void AutoTarget_NoAdjacentEnemy_NoEvent()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         // Monster 3 tiles away - not adjacent
-        engine.SpawnMonster(sx + 3, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -211,10 +211,10 @@ public class CombatSystemTests
     public void AutoTarget_PicksClosest_SameTileOverAdjacent()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var sameTile = engine.SpawnMonster(sx, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
-        engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var sameTile = engine.SpawnMonster(sx, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.Attack;
@@ -235,9 +235,9 @@ public class CombatSystemTests
     public void MonsterAttack_AdjacentToPlayer_DealsDamage()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
         ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
@@ -256,9 +256,9 @@ public class CombatSystemTests
     public void MonsterAttack_ProducesCombatEvent()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
         ai.StateId = AIStates.Attack;
@@ -277,10 +277,10 @@ public class CombatSystemTests
     public void MonsterAttack_RespectsDefense()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         // Monster attack = 8, player defense = 5+bonus → damage = max(1, 8 - playerDef)
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 8, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 8, Defense = 0, Speed = 8 });
 
         ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
         ai.StateId = AIStates.Attack;
@@ -300,10 +300,10 @@ public class CombatSystemTests
     public void MonsterAttack_NotAdjacent_NoDamage()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         // Monster 3 tiles away
-        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
         ai.StateId = AIStates.Attack;
@@ -321,9 +321,9 @@ public class CombatSystemTests
     public void MonsterAttack_NotInAttackState_NoDamage()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         // Monster stays in Idle state (default)
         ref var pHealthBefore = ref engine.EcsWorld.Get<Health>(player);
@@ -339,10 +339,10 @@ public class CombatSystemTests
     public void MonsterAttack_KillsPlayer_EventShowsDeath()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         // Very high attack monster
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 500, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 500, Defense = 0, Speed = 8 });
 
         // Reduce player health to 1
         ref var pHealth = ref engine.EcsWorld.Get<Health>(player);
@@ -363,9 +363,9 @@ public class CombatSystemTests
     public void MonsterAttack_DeadMonster_DoesNotAttack()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         // Kill the monster and add DeadTag
         ref var mHealth = ref engine.EcsWorld.Get<Health>(monster);
@@ -388,9 +388,9 @@ public class CombatSystemTests
     public void MonsterAttack_DeadPlayer_NotTargeted()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
 
         // Kill the player (health=0) but keep them alive in ECS (no DeadTag yet)
         ref var pHealth = ref engine.EcsWorld.Get<Health>(player);

@@ -26,11 +26,11 @@ public class BiomeDungeonGenerator : IDungeonGenerator
         _tunnel = new DirectionalTunnelGenerator(seed);
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
         var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
         var generator = PickGenerator(biome);
-        return generator.Generate(chunkX, chunkY);
+        return generator.Generate(chunkX, chunkY, chunkZ);
     }
 
     private IDungeonGenerator PickGenerator(BiomeType biome) => biome switch

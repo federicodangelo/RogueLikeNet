@@ -22,22 +22,22 @@ public class LightingSystem
         var query = new QueryDescription().WithAll<Position, LightSource>();
         world.Query(in query, (ref Position pos, ref LightSource light) =>
         {
-            FloodLight(map, pos.X, pos.Y, light.Radius);
+            FloodLight(map, pos.X, pos.Y, pos.Z, light.Radius);
         });
 
         // Players also emit ambient light matching their FOV
         var playerQuery = new QueryDescription().WithAll<Position, FOVData, PlayerTag>();
         world.Query(in playerQuery, (ref Position pos, ref FOVData fov, ref PlayerTag _) =>
         {
-            FloodLight(map, pos.X, pos.Y, fov.Radius);
+            FloodLight(map, pos.X, pos.Y, pos.Z, fov.Radius);
         });
     }
 
-    private static void FloodLight(WorldMap map, int originX, int originY, int radius)
+    private static void FloodLight(WorldMap map, int originX, int originY, int originZ, int radius)
     {
         // Use shadow casting so light doesn't bleed through walls
         ShadowCastFov.Compute(originX, originY, radius,
-            isOpaque: (x, y) => !map.IsTransparent(x, y),
+            isOpaque: (x, y) => !map.IsTransparent(x, y, originZ),
             markVisible: (x, y) =>
             {
                 int dx = x - originX;
@@ -46,8 +46,8 @@ public class LightingSystem
                 int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
                 if (lightAmount <= 0) return;
 
-                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
-                var chunk = map.TryGetChunk(cx, cy);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, originZ);
+                var chunk = map.TryGetChunk(cx, cy, cz);
                 if (chunk == null) return;
 
                 int lx = x - cx * Chunk.Size;

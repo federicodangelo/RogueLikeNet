@@ -21,6 +21,7 @@ public static class GameStateSerializer
         {
             ChunkX = chunk.ChunkX,
             ChunkY = chunk.ChunkY,
+            ChunkZ = chunk.ChunkZ,
             TileTypes = new byte[total],
             TileGlyphs = new int[total],
             TileFgColors = new int[total],
@@ -45,14 +46,14 @@ public static class GameStateSerializer
         return msg;
     }
 
-    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, int worldX, int worldY)
+    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, int worldX, int worldY, int worldZ)
     {
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
         var chunks = new List<ChunkDataMsg>();
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = engine.EnsureChunkLoaded(cx + dx, cy + dy);
+                var chunk = engine.EnsureChunkLoaded(cx + dx, cy + dy, cz);
                 chunks.Add(SerializeChunk(chunk));
             }
         return chunks.ToArray();
@@ -66,22 +67,22 @@ public static class GameStateSerializer
     /// the client can discard them.
     /// </summary>
     public static ChunkDeltaResult SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, ChunkTracker tracker,
+        GameEngine engine, int worldX, int worldY, int worldZ, ChunkTracker tracker,
         int visibleChunks, int maxChunksToSerialize = int.MaxValue)
     {
         tracker.UpdateCapacity(visibleChunks);
         var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
         var newChunks = new List<ChunkDataMsg>();
 
         foreach (var point in PointsAtDistance.GetPoints(chunkRange))
         {
             int ccx = cx + point.X, ccy = cy + point.Y;
-            long key = Position.PackCoord(ccx, ccy);
+            long key = Position.PackCoord(ccx, ccy, cz);
 
             if (tracker.Touch(key))
             {
-                var chunk = engine.EnsureChunkLoaded(ccx, ccy);
+                var chunk = engine.EnsureChunkLoaded(ccx, ccy, cz);
                 newChunks.Add(SerializeChunk(chunk));
                 maxChunksToSerialize--;
                 if (maxChunksToSerialize <= 0)
@@ -111,7 +112,7 @@ public static class GameStateSerializer
 
         world.Query(in query, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
         {
-            if (!debugVisibilityOff && !fov.IsVisible(ePos.X, ePos.Y)) return;
+            if (!debugVisibilityOff && !fov.IsVisible(ePos.X, ePos.Y, ePos.Z)) return;
 
             long id = e.Id;
             currentIds.Add(id);
@@ -145,6 +146,7 @@ public static class GameStateSerializer
                 Id = id,
                 X = ePos.X,
                 Y = ePos.Y,
+                Z = ePos.Z,
                 GlyphId = appearance.GlyphId,
                 FgColor = appearance.FgColor,
                 Health = hp,
@@ -158,7 +160,7 @@ public static class GameStateSerializer
                 if (!current.SameValues(prev))
                 {
                     if (current.HasOnlyPositionHealthChanges(prev))
-                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ePos.X, Y = ePos.Y, Health = hp });
+                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ePos.X, Y = ePos.Y, Z = ePos.Z, Health = hp });
                     else
                         fullUpdates.Add(current);
                 }

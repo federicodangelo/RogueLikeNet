@@ -13,7 +13,7 @@ public class DoorMechanicsTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
@@ -61,13 +61,13 @@ public class DoorMechanicsTests
     public void BumpingClosedDoor_OpensIt()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         int doorX = sx + 1, doorY = sy;
 
         // Place a closed door (placeable on a floor tile)
-        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
+        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Move toward the door
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -77,7 +77,7 @@ public class DoorMechanicsTests
         engine.Tick();
 
         // Door should now be open (PlaceableItemExtra = 1)
-        var tile = engine.WorldMap.GetTile(doorX, doorY);
+        var tile = engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
         Assert.Equal(1, tile.PlaceableItemExtra);
 
@@ -91,13 +91,13 @@ public class DoorMechanicsTests
     public void OpenDoor_AutoClosesAfterGracePeriod()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         int doorX = sx + 1, doorY = sy;
 
         // Make sure the tile beyond the door is floor
-        engine.WorldMap.SetTile(doorX + 1, doorY, new TileInfo
+        engine.WorldMap.SetTile(doorX + 1, doorY, Position.DefaultZ, new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -106,7 +106,7 @@ public class DoorMechanicsTests
         });
 
         // Place a closed door
-        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
+        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Tick 1: Bump to open
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -114,7 +114,7 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra); // open
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra); // open
 
         // Tick 2: Walk onto door
         ref var delay = ref engine.EcsWorld.Get<MoveDelay>(player);
@@ -139,14 +139,14 @@ public class DoorMechanicsTests
         Assert.Equal(doorX + 1, pos2.X);
 
         // Door should still be open during grace period
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
 
         // Tick enough times for grace period to expire (6 ticks grace from open)
         for (int i = 0; i < 30; i++)
             engine.Tick();
 
         // Door should have auto-closed (PlaceableItemExtra = 0)
-        var doorTile = engine.WorldMap.GetTile(doorX, doorY);
+        var doorTile = engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ);
         Assert.Equal(0, doorTile.PlaceableItemExtra);
     }
 
@@ -154,12 +154,12 @@ public class DoorMechanicsTests
     public void DoorStaysOpenDuringGracePeriod()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         int doorX = sx + 1, doorY = sy;
 
-        engine.WorldMap.SetTile(doorX, doorY, MakeClosedDoor());
+        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Bump to open
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -167,11 +167,11 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
 
         // One more tick — door should stay open (grace period active)
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY).PlaceableItemExtra);
+        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
     }
 
     [Fact]

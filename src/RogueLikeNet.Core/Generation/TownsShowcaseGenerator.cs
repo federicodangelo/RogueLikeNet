@@ -17,10 +17,13 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
 
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
@@ -44,15 +47,15 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         var biome = biomes[(int)(hash % biomes.Length)];
 
         var rng = new SeededRandom(_seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678)));
-        TownGenerator.Generate(chunk, result, rng, biome, worldOffsetX, worldOffsetY);
+        TownGenerator.Generate(chunk, result, rng, biome, worldOffsetX, worldOffsetY, chunkZ);
 
         // Spawn point for origin chunk
         if (chunkX == 0 && chunkY == 0)
         {
-            result.SpawnPosition = (worldOffsetX + 2, worldOffsetY + 2);
+            result.SpawnPosition = (worldOffsetX + 2, worldOffsetY + 2, chunkZ);
 
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + 2, worldOffsetY + 2),
+                new Position(worldOffsetX + 2, worldOffsetY + 2, chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(10, TileDefinitions.ColorTorchFg)));
         }

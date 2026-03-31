@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Server.Tests;
@@ -100,8 +101,8 @@ public class GamePersistenceTests : IDisposable
     [Fact]
     public void SaveChunk_CreatesNew()
     {
-        _persistence.SaveChunk(1, 2, [1, 2, 3]);
-        var loaded = _persistence.LoadChunk(1, 2);
+        _persistence.SaveChunk(1, 2, Position.DefaultZ, [1, 2, 3]);
+        var loaded = _persistence.LoadChunk(1, 2, Position.DefaultZ);
         Assert.NotNull(loaded);
         Assert.Equal([1, 2, 3], loaded);
     }
@@ -109,9 +110,9 @@ public class GamePersistenceTests : IDisposable
     [Fact]
     public void SaveChunk_UpdatesExisting()
     {
-        _persistence.SaveChunk(1, 2, [1, 2, 3]);
-        _persistence.SaveChunk(1, 2, [4, 5, 6]);
-        var loaded = _persistence.LoadChunk(1, 2);
+        _persistence.SaveChunk(1, 2, Position.DefaultZ, [1, 2, 3]);
+        _persistence.SaveChunk(1, 2, Position.DefaultZ, [4, 5, 6]);
+        var loaded = _persistence.LoadChunk(1, 2, Position.DefaultZ);
         Assert.NotNull(loaded);
         Assert.Equal([4, 5, 6], loaded);
     }
@@ -119,7 +120,7 @@ public class GamePersistenceTests : IDisposable
     [Fact]
     public void LoadChunk_ReturnsNull_WhenNotFound()
     {
-        var loaded = _persistence.LoadChunk(999, 999);
+        var loaded = _persistence.LoadChunk(999, 999, Position.DefaultZ);
         Assert.Null(loaded);
     }
 

@@ -45,11 +45,15 @@ public class OverworldGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
-        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
+
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
 
         // Three independent noise layers with different seeds
@@ -124,7 +128,7 @@ public class OverworldGenerator : IDungeonGenerator
                         tile.GlyphId = TileDefinitions.GlyphFloor;
                         tile.FgColor = TileDefinitions.ColorFloorFg;
                         tile.BgColor = TileDefinitions.ColorBlack;
-                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), ResourceNodeDefinitions.PickRock(rng, biome)));
+                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), ResourceNodeDefinitions.PickRock(rng, biome)));
                         addedResourceNode = true;
                     }
                     else
@@ -148,7 +152,7 @@ public class OverworldGenerator : IDungeonGenerator
                     // Trees spawn where resource noise overlaps with floors
                     if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
                     {
-                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly),
+                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
                             ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
                     }
                     else
@@ -171,18 +175,18 @@ public class OverworldGenerator : IDungeonGenerator
                         {
                             var def = BiomeDefinitions.PickEnemy(biome, rng, difficulty);
                             var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
-                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), monsterData));
+                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
                         }
                         else if (rng.Next(1000) < ItemChance1000)
                         {
                             var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
                             var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
-                            result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly), itemData));
+                            result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), itemData));
                         }
                         else if (rng.Next(1000) < TorchChance1000)
                         {
                             result.Elements.Add(new DungeonElement(
-                                new Position(worldOffsetX + lx, worldOffsetY + ly),
+                                new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
                                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                                 new LightSource(6, TileDefinitions.ColorTorchFg)));
                         }
@@ -199,7 +203,7 @@ public class OverworldGenerator : IDungeonGenerator
             int centerWx = worldOffsetX + Chunk.Size / 2;
             int centerWy = worldOffsetY + Chunk.Size / 2;
             var townBiome = GetBiomeAt(centerWx, centerWy);
-            TownGenerator.Generate(chunk, result, rng, townBiome, worldOffsetX, worldOffsetY);
+            TownGenerator.Generate(chunk, result, rng, townBiome, worldOffsetX, worldOffsetY, chunkZ);
         }
 
         if (chunkX == 0 && chunkY == 0)
@@ -208,7 +212,7 @@ public class OverworldGenerator : IDungeonGenerator
             var spawnPoint = DungeonHelper.FindSpawnPoint(chunk);
             if (spawnPoint != null)
             {
-                result.SpawnPosition = spawnPoint.Value;
+                result.SpawnPosition = (spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ);
 
                 const int ClearRadius = 7;
                 DungeonHelper.RemoveEnemiesInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
@@ -216,7 +220,7 @@ public class OverworldGenerator : IDungeonGenerator
 
                 // Add torch
                 result.Elements.Add(new DungeonElement(
-                    new Position(spawnPoint.Value.X, spawnPoint.Value.Y),
+                    new Position(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ),
                     new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                     new LightSource(6, TileDefinitions.ColorTorchFg))
                 );

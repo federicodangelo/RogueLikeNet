@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
@@ -11,7 +12,7 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (chunk, genResult) = map.GetOrCreateChunk(0, 0, gen);
+        var (chunk, genResult) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
         Assert.NotNull(chunk);
         Assert.Equal(0, chunk.ChunkX);
         Assert.Equal(0, chunk.ChunkY);
@@ -23,8 +24,8 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (c1, _) = map.GetOrCreateChunk(0, 0, gen);
-        var (c2, genResult2) = map.GetOrCreateChunk(0, 0, gen);
+        var (c1, _) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
+        var (c2, genResult2) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
         Assert.Same(c1, c2);
         Assert.Null(genResult2);
     }
@@ -33,7 +34,7 @@ public class WorldMapTests
     public void TryGetChunk_ReturnsNullForMissing()
     {
         var map = new WorldMap(42);
-        Assert.Null(map.TryGetChunk(0, 0));
+        Assert.Null(map.TryGetChunk(0, 0, Position.DefaultZ));
     }
 
     [Fact]
@@ -47,7 +48,7 @@ public class WorldMapTests
     public void GetTile_ReturnsDefaultForMissingChunk()
     {
         var map = new WorldMap(42);
-        var tile = map.GetTile(0, 0);
+        var tile = map.GetTile(0, 0, Position.DefaultZ);
         Assert.Equal(TileType.Void, tile.Type);
     }
 
@@ -56,13 +57,13 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        map.GetOrCreateChunk(0, 0, gen);
+        map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
         // After generation, at least some tiles should be non-void
         bool hasNonVoid = false;
         for (int x = 0; x < Chunk.Size && !hasNonVoid; x++)
             for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
             {
-                var tile = map.GetTile(x, y);
+                var tile = map.GetTile(x, y, Position.DefaultZ);
                 if (tile.Type != TileType.Void) hasNonVoid = true;
             }
         Assert.True(hasNonVoid);
@@ -72,6 +73,6 @@ public class WorldMapTests
     public void IsWalkable_ReturnsFalseForMissingChunk()
     {
         var map = new WorldMap(42);
-        Assert.False(map.IsWalkable(0, 0));
+        Assert.False(map.IsWalkable(0, 0, Position.DefaultZ));
     }
 }

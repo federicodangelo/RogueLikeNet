@@ -1,4 +1,5 @@
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 
@@ -9,7 +10,7 @@ public class ClientGameStateTests
     /// <summary>
     /// Creates a chunk with all Floor tiles so FOV has no obstructions.
     /// </summary>
-    private static ChunkDataMsg MakeFloorChunk(int cx, int cy)
+    private static ChunkDataMsg MakeFloorChunk(int cx, int cy, int cz = 0)
     {
         int size = Chunk.Size * Chunk.Size;
         var types = new byte[size];
@@ -27,6 +28,7 @@ public class ClientGameStateTests
         {
             ChunkX = cx,
             ChunkY = cy,
+            ChunkZ = cz,
             TileTypes = types,
             TileGlyphs = glyphs,
             TileFgColors = fg,
@@ -635,8 +637,8 @@ public class ClientGameStateTests
     {
         var state = new ClientGameState();
         // Apply snapshot with two chunks
-        var key0 = RogueLikeNet.Core.Components.Position.PackCoord(0, 0);
-        var key1 = RogueLikeNet.Core.Components.Position.PackCoord(1, 0);
+        var key0 = RogueLikeNet.Core.Components.Position.PackCoord(0, 0, 0);
+        var key1 = RogueLikeNet.Core.Components.Position.PackCoord(1, 0, 0);
 
         state.ApplyDelta(new WorldDeltaMsg
         {

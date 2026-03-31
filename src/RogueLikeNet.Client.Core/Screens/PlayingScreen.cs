@@ -196,6 +196,8 @@ public sealed class PlayingScreen : IScreen
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
             else if (input.IsActionPressed(InputAction.Place))
                 _pickingUpPlaced = true;
+            else if (input.IsActionPressed(InputAction.UseStairs))
+                msg = new ClientInputMsg { ActionType = ActionTypes.UseStairs };
         }
 
         if (msg != null)

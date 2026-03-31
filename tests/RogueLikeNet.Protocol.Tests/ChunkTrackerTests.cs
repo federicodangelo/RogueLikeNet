@@ -217,9 +217,9 @@ public class ChunkTrackerTests
         // Verify that ChunkTracker works with actual packed coords used by the game
         var tracker = new ChunkTracker();
 
-        long key1 = Position.PackCoord(0, 0);
-        long key2 = Position.PackCoord(1, -1);
-        long key3 = Position.PackCoord(-1, 0);
+        long key1 = Position.PackCoord(0, 0, Position.DefaultZ);
+        long key2 = Position.PackCoord(1, -1, Position.DefaultZ);
+        long key3 = Position.PackCoord(-1, 0, Position.DefaultZ);
 
         Assert.True(tracker.Touch(key1));
         Assert.True(tracker.Touch(key2));

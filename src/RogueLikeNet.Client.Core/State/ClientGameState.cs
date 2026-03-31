@@ -27,6 +27,7 @@ public class ClientGameState
 
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
+    public int PlayerZ { get; private set; }
     public long PlayerEntityId { get; private set; }
     public long WorldTick { get; private set; }
     public IReadOnlyDictionary<long, ClientEntity> Entities => _entities;
@@ -45,6 +46,7 @@ public class ClientGameState
         _visibleTiles.Clear();
         PlayerX = 0;
         PlayerY = 0;
+        PlayerZ = 0;
         PlayerEntityId = 0;
         WorldTick = 0;
         PlayerState = null;
@@ -78,8 +80,8 @@ public class ClientGameState
         // Update tiles
         foreach (var tileUpdate in delta.TileUpdates)
         {
-            var (cx, cy) = Chunk.WorldToChunkCoord(tileUpdate.X, tileUpdate.Y);
-            long key = Position.PackCoord(cx, cy);
+            var (cx, cy, cz) = Chunk.WorldToChunkCoord(tileUpdate.X, tileUpdate.Y, tileUpdate.Z);
+            long key = Position.PackCoord(cx, cy, cz);
             if (_chunks.TryGetValue(key, out var chunk))
             {
                 int lx = tileUpdate.X - cx * Chunk.Size;
@@ -109,6 +111,7 @@ public class ClientGameState
 
             entity.X = entityUpdate.X;
             entity.Y = entityUpdate.Y;
+            entity.Z = entityUpdate.Z;
             entity.GlyphId = entityUpdate.GlyphId;
             entity.FgColor = entityUpdate.FgColor;
             entity.Health = entityUpdate.Health;
@@ -124,6 +127,7 @@ public class ClientGameState
             {
                 entity.X = posHealthUpdate.X;
                 entity.Y = posHealthUpdate.Y;
+                entity.Z = posHealthUpdate.Z;
                 entity.Health = posHealthUpdate.Health;
             }
         }
@@ -151,6 +155,7 @@ public class ClientGameState
         {
             PlayerX = playerEntity.X;
             PlayerY = playerEntity.Y;
+            PlayerZ = playerEntity.Z;
         }
 
         ComputeVisibility();
@@ -175,7 +180,7 @@ public class ClientGameState
         var items = new List<(int, int)>();
         foreach (var entity in _entities.Values)
         {
-            if (entity.Item != null && entity.X == PlayerX && entity.Y == PlayerY)
+            if (entity.Item != null && entity.X == PlayerX && entity.Y == PlayerY && entity.Z == PlayerZ)
                 items.Add((entity.Item.ItemTypeId, entity.Item.Rarity));
         }
         return items.ToArray();
@@ -183,7 +188,7 @@ public class ClientGameState
 
     private void ApplyChunkData(ChunkDataMsg msg)
     {
-        var chunk = new Chunk(msg.ChunkX, msg.ChunkY);
+        var chunk = new Chunk(msg.ChunkX, msg.ChunkY, msg.ChunkZ);
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
@@ -196,7 +201,7 @@ public class ClientGameState
                 tile.PlaceableItemId = msg.TilePlaceableItemIds[idx];
                 tile.PlaceableItemExtra = msg.TilePlaceableItemExtras[idx];
             }
-        long key = Position.PackCoord(msg.ChunkX, msg.ChunkY);
+        long key = Position.PackCoord(msg.ChunkX, msg.ChunkY, msg.ChunkZ);
         _chunks[key] = chunk;
     }
 
@@ -212,8 +217,8 @@ public class ClientGameState
 
     public (TileInfo, int) GetTileAndLightLevel(int worldX, int worldY)
     {
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
-        long key = Position.PackCoord(cx, cy);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, PlayerZ);
+        long key = Position.PackCoord(cx, cy, cz);
         if (!_chunks.TryGetValue(key, out var chunk))
             return (default, 0);
         int lx = worldX - cx * Chunk.Size;
@@ -227,8 +232,8 @@ public class ClientGameState
     {
         if (DebugSeeAll) return true;
 
-        var (cx, cy) = Chunk.WorldToChunkCoord(worldX, worldY);
-        var chunkKey = Position.PackCoord(cx, cy);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, PlayerZ);
+        var chunkKey = Position.PackCoord(cx, cy, cz);
 
         if (_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
         {
@@ -249,7 +254,7 @@ public class ClientGameState
             return false;
         }
 
-        return _visibleTiles.Contains(Position.PackCoord(worldX, worldY));
+        return _visibleTiles.Contains(Position.PackCoord(worldX, worldY, PlayerZ));
     }
 
     private void ComputeVisibility()
@@ -262,7 +267,7 @@ public class ClientGameState
             isOpaque: (x, y) => !GetTile(x, y).IsTransparent,
             markVisible: (x, y) =>
             {
-                long key = Position.PackCoord(x, y);
+                long key = Position.PackCoord(x, y, PlayerZ);
                 _visibleTiles.Add(key);
                 _visibleTilesBounds = (
                     Math.Min(_visibleTilesBounds.x, x),
@@ -270,8 +275,8 @@ public class ClientGameState
                     Math.Max(_visibleTilesBounds.x1, x),
                     Math.Max(_visibleTilesBounds.y1, y)
                 );
-                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
-                var chunkKey = Position.PackCoord(cx, cy);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, PlayerZ);
+                var chunkKey = Position.PackCoord(cx, cy, cz);
                 if (!_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
                 {
                     exploredBits = new BitArray(Chunk.Size * Chunk.Size);
@@ -288,8 +293,8 @@ public class ClientGameState
         using var _ = TimeMeasurer.FromMethodName();
 
         // Reset light only for chunks within FOV range of the player
-        var (minCx, minCy) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius);
-        var (maxCx, maxCy) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius);
+        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius, PlayerZ);
+        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius, PlayerZ);
         foreach (var chunk in _chunks.Values)
             if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx && chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
                 chunk.ResetLight();
@@ -299,7 +304,7 @@ public class ClientGameState
 
         // Light source entities
         foreach (var entity in _entities.Values)
-            if (entity.LightRadius > 0)
+            if (entity.LightRadius > 0 && entity.Z == PlayerZ)
                 FloodLight(entity.X, entity.Y, entity.LightRadius);
     }
 
@@ -315,8 +320,8 @@ public class ClientGameState
                 int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
                 if (lightAmount <= 0) return;
 
-                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
-                long key = Position.PackCoord(cx, cy);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, PlayerZ);
+                long key = Position.PackCoord(cx, cy, cz);
                 if (!_chunks.TryGetValue(key, out var chunk)) return;
 
                 int lx = x - cx * Chunk.Size;
@@ -333,6 +338,7 @@ public class ClientEntity
     public long Id { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
+    public int Z { get; set; }
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Health { get; set; }

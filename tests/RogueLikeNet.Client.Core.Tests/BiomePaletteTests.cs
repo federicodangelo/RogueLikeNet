@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Tests;
@@ -8,7 +9,7 @@ public class BiomePaletteTests
     [Fact]
     public void GetBiomeForChunk_ReturnsDeterministicResult()
     {
-        var (cx, cy) = Chunk.WorldToChunkCoord(10, 20);
+        var (cx, cy, _) = Chunk.WorldToChunkCoord(10, 20, Position.DefaultZ);
         var biome1 = BiomeDefinitions.GetBiomeForChunk(cx, cy, 42);
         var biome2 = BiomeDefinitions.GetBiomeForChunk(cx, cy, 42);
         Assert.Equal(biome1, biome2);
@@ -18,7 +19,7 @@ public class BiomePaletteTests
     public void GetBiomeName_ReturnsValidBiomeName()
     {
         string[] validNames = ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
-        var (cx, cy) = Chunk.WorldToChunkCoord(5, 5);
+        var (cx, cy, _) = Chunk.WorldToChunkCoord(5, 5, Position.DefaultZ);
         var biome = BiomeDefinitions.GetBiomeForChunk(cx, cy, 42);
         string name = BiomeDefinitions.GetBiomeName(biome);
         Assert.Contains(name, validNames);
@@ -31,7 +32,7 @@ public class BiomePaletteTests
         for (int x = 0; x < 500; x += 64)
             for (int y = 0; y < 500; y += 64)
             {
-                var (cx, cy) = Chunk.WorldToChunkCoord(x, y);
+                var (cx, cy, _) = Chunk.WorldToChunkCoord(x, y, Position.DefaultZ);
                 biomes.Add(BiomeDefinitions.GetBiomeForChunk(cx, cy, 42));
             }
 
@@ -41,8 +42,8 @@ public class BiomePaletteTests
     [Fact]
     public void GetBiomeForChunk_SameChunk_ReturnsSameBiome()
     {
-        var (cx1, cy1) = Chunk.WorldToChunkCoord(10, 10);
-        var (cx2, cy2) = Chunk.WorldToChunkCoord(12, 15);
+        var (cx1, cy1, _) = Chunk.WorldToChunkCoord(10, 10, Position.DefaultZ);
+        var (cx2, cy2, _) = Chunk.WorldToChunkCoord(12, 15, Position.DefaultZ);
         Assert.Equal(cx1, cx2);
         Assert.Equal(cy1, cy2);
         Assert.Equal(

@@ -45,6 +45,7 @@ public enum InputAction
     OpenCrafting,
     Place,
     PickUpPlaced,
+    UseStairs,
 }
 
 public enum InputActionAxis

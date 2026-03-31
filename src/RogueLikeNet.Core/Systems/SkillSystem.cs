@@ -134,7 +134,7 @@ public class SkillSystem
     private static bool ExecuteRanged(Arch.Core.World world, ref CombatStats stats,
         Position origin, int targetX, int targetY, int maxRange, int damagePercent)
     {
-        int dist = Position.ChebyshevDistance(origin, new Position(targetX, targetY));
+        int dist = Position.ChebyshevDistance(origin, new Position(targetX, targetY, origin.Z));
         if (dist > maxRange) return false;
 
         bool hit = false;

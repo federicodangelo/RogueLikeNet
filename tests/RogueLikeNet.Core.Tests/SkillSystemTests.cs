@@ -12,7 +12,7 @@ public class SkillSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         return engine;
     }
 
@@ -20,8 +20,8 @@ public class SkillSystemTests
     public void Heal_RestoresHealth()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         // Damage the player
         ref var health = ref engine.EcsWorld.Get<Health>(player);
@@ -41,8 +41,8 @@ public class SkillSystemTests
     public void Skill_SetsCooldown()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         ref var health = ref engine.EcsWorld.Get<Health>(player);
         health.Current = 50;
@@ -60,8 +60,8 @@ public class SkillSystemTests
     public void Cooldown_TicksDown()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         ref var health = ref engine.EcsWorld.Get<Health>(player);
         health.Current = 50;
@@ -84,9 +84,9 @@ public class SkillSystemTests
     public void PowerStrike_DamagesMonster()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -107,9 +107,9 @@ public class SkillSystemTests
     public void ShieldBash_DamagesMonster()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -130,9 +130,9 @@ public class SkillSystemTests
     public void Backstab_DamagesMonster()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Rogue);
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Rogue);
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -153,8 +153,8 @@ public class SkillSystemTests
     public void Dodge_BoostsDefense()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Rogue);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Rogue);
 
         ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
         int defBefore = statsBefore.Defense;
@@ -173,10 +173,10 @@ public class SkillSystemTests
     public void Fireball_DamagesMonsterInArea()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
         // Spawn monster near the target area
-        var monster = engine.SpawnMonster(sx + 1, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -197,10 +197,10 @@ public class SkillSystemTests
     public void PowerShot_DamagesMonsterAtRange()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
         // Spawn monster at distance
-        var monster = engine.SpawnMonster(sx + 3, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -221,8 +221,8 @@ public class SkillSystemTests
     public void SkillOnCooldown_DoesNotExecute()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         ref var health = ref engine.EcsWorld.Get<Health>(player);
         health.Current = 50;
@@ -253,8 +253,8 @@ public class SkillSystemTests
     public void InvalidSkillSlot_DoesNotCrash()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Use an invalid skill slot (99)
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -267,8 +267,8 @@ public class SkillSystemTests
     public void Skill_NoTarget_MissesGracefully()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // PowerStrike with no monster at target - should not crash
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -287,8 +287,8 @@ public class SkillSystemTests
     public void Cooldown_TicksAllSlots()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Manually set cooldowns on all 4 slots
         ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
@@ -310,8 +310,8 @@ public class SkillSystemTests
     public void Skill_Slot2And3_Work()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Manually assign skills to slots 2 and 3
         ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
@@ -339,8 +339,8 @@ public class SkillSystemTests
     public void Skill_Slot3_Dodge()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Assign Dodge to slot 3
         ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
@@ -365,10 +365,10 @@ public class SkillSystemTests
     public void PowerShot_OutOfRange_DoesNotDamage()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
         // Spawn monster well beyond PowerShot range (range=5)
-        var monster = engine.SpawnMonster(sx + 10, sy, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        var monster = engine.SpawnMonster(sx + 10, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
         int hpBefore = mHealthBefore.Current;
@@ -388,8 +388,8 @@ public class SkillSystemTests
     public void Trap_IsNotImplemented_DoesNotSetCooldown()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
 
         // Assign Trap to slot 1
         ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
@@ -410,8 +410,8 @@ public class SkillSystemTests
     public void Fireball_NoEnemiesInArea_NoCooldown()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Mage);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         // No monsters nearby
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
@@ -430,8 +430,8 @@ public class SkillSystemTests
     public void PowerShot_OutOfRange_NoCooldown()
     {
         using var engine = CreateEngine();
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Ranger);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.UseSkill;

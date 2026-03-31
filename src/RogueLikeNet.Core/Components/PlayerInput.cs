@@ -30,4 +30,5 @@ public static class ActionTypes
     public const int Craft = 13;
     public const int PlaceItem = 14;
     public const int PickUpPlaced = 15;
+    public const int UseStairs = 16;
 }

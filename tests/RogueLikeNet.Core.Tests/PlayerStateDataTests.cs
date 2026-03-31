@@ -12,9 +12,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_ReturnsValidData()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -29,9 +29,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_SkillNames_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -44,12 +44,12 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_EquippedWeaponName_AfterEquip()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy);
+        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.PickUp;
@@ -70,12 +70,12 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_EquippedArmorName_AfterEquip()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy);
+        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.PickUp;
@@ -96,12 +96,12 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_InventoryStackCounts_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy);
+        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.PickUp;
@@ -117,12 +117,12 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_InventoryRarities_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(swordTemplate, 2, sx, sy);
+        engine.SpawnItemOnGround(swordTemplate, 2, sx, sy, Position.DefaultZ);
 
         ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
         input.ActionType = ActionTypes.PickUp;
@@ -138,9 +138,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_NoEquipment_EmptyNames()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0);
-        var (sx, sy) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, ClassDefinitions.Warrior);
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);

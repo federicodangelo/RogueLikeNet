@@ -18,10 +18,13 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY)
+    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
-        var chunk = new Chunk(chunkX, chunkY);
+        var chunk = new Chunk(chunkX, chunkY, chunkZ);
         var result = new GenerationResult(chunk);
+
+        if (chunkZ != Position.DefaultZ)
+            return result;
 
         // Fill with floor
         for (int x = 0; x < Chunk.Size; x++)
@@ -53,12 +56,12 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
         const int cols = 2;
 
         // Spawn in the 2-tile gap between the two columns, at the top edge
-        result.SpawnPosition = (worldOffsetX + startX + roomW + 1, worldOffsetY + 0);
+        result.SpawnPosition = (worldOffsetX + startX + roomW + 1, worldOffsetY + 0, chunkZ);
         // x = 2 + 12 + 1 = 15 (gap tile between east wall x=14 and west wall x=17), y = 0
 
         // Broad torch at spawn for initial visibility
         result.Elements.Add(new DungeonElement(
-            new Position(worldOffsetX + startX + roomW + 1, worldOffsetY + 0),
+            new Position(worldOffsetX + startX + roomW + 1, worldOffsetY + 0, chunkZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(30, TileDefinitions.ColorTorchFg)));
 
@@ -140,7 +143,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
 
             // Torch inside the room for FOV
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + rx + 1, worldOffsetY + ry + 1),
+                new Position(worldOffsetX + rx + 1, worldOffsetY + ry + 1, chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(8, TileDefinitions.ColorTorchFg)));
         }
