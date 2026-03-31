@@ -890,7 +890,7 @@ public class GameServerTests
         loop.UpdateVisibleChunks(conn.ConnectionId, 50);
         Assert.Equal(50, conn.VisibleChunks);
 
-        loop.UpdateVisibleChunks(conn.ConnectionId, 200);
+        loop.UpdateVisibleChunks(conn.ConnectionId, 1000);
         Assert.Equal(ChunkTracker.MaxVisibleChunks, conn.VisibleChunks); // clamped
 
         loop.UpdateVisibleChunks(conn.ConnectionId, -5);

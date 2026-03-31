@@ -75,18 +75,26 @@ public static class GameStateSerializer
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
         var newChunks = new List<ChunkDataMsg>();
 
-        foreach (var point in PointsAtDistance.GetPoints(chunkRange))
+        foreach (var z in PointsAtDistance.GetZLevels(1))
         {
-            int ccx = cx + point.X, ccy = cy + point.Y;
-            long key = Position.PackCoord(ccx, ccy, cz);
-
-            if (tracker.Touch(key))
+            int ccz = cz + z;
+            if (ccz < 0 || ccz > 255) continue;
+            foreach (var point in PointsAtDistance.GetPoints(chunkRange))
             {
-                var chunk = engine.EnsureChunkLoaded(ccx, ccy, cz);
-                newChunks.Add(SerializeChunk(chunk));
-                maxChunksToSerialize--;
-                if (maxChunksToSerialize <= 0)
-                    break;
+                int ccx = cx + point.X, ccy = cy + point.Y;
+                long key = Position.PackCoord(ccx, ccy, ccz);
+
+                if (tracker.Touch(key))
+                {
+                    var chunk = engine.EnsureChunkLoadedOrDoesntExist(ccx, ccy, ccz);
+                    if (chunk != null)
+                    {
+                        newChunks.Add(SerializeChunk(chunk));
+                        maxChunksToSerialize--;
+                        if (maxChunksToSerialize <= 0)
+                            break;
+                    }
+                }
             }
         }
 

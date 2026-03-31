@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -24,6 +25,12 @@ public class BiomeDungeonGenerator : IDungeonGenerator
         _bsp = new BspDungeonGenerator(seed);
         _cave = new CellularAutomataCaveGenerator(seed);
         _tunnel = new DirectionalTunnelGenerator(seed);
+    }
+
+    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    {
+        // Only the spawn chunk has content; all other chunks are empty floors.
+        return chunkZ == Position.DefaultZ;
     }
 
     public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)

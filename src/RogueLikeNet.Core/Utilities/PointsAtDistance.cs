@@ -42,4 +42,15 @@ public static class PointsAtDistance
 
         return points;
     }
+
+    public static int[] GetZLevels(int distance)
+    {
+        if (distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(distance), "Distance must be non-negative.");
+
+        return
+            Enumerable.Range(-distance, distance * 2 + 1)
+            .OrderBy(Math.Abs)
+            .ToArray();
+    }
 }

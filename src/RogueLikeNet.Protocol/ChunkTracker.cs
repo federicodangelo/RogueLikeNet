@@ -8,20 +8,21 @@ namespace RogueLikeNet.Protocol;
 /// </summary>
 public sealed class ChunkTracker
 {
-    public const int MaxVisibleChunks = 200;
+    public const int MaxVisibleChunks = 600;
     public const int MinCapacity = 9;
+    public const int MaxCapacity = MaxVisibleChunks * 2 * 3; // visible * 2 for buffer + extra for safety
 
     private readonly LinkedList<long> _lruOrder = new();
     private readonly Dictionary<long, LinkedListNode<long>> _map = new();
-    private int _maxCapacity = MinCapacity * 2;
+    private int capacity = MinCapacity * 2;
 
     public int Count => _map.Count;
-    public int MaxCapacity => _maxCapacity;
+    public int Capacity => capacity;
 
     /// <summary>Computes the LRU capacity from a visible chunk count.</summary>
     public static int ComputeCapacity(int visibleChunks)
     {
-        return Math.Max(MinCapacity, Math.Min(visibleChunks, MaxVisibleChunks) * 2);
+        return Math.Max(MinCapacity, Math.Min(visibleChunks, MaxVisibleChunks) * 2 * 3);
     }
 
     /// <summary>
@@ -38,7 +39,7 @@ public sealed class ChunkTracker
     /// <summary>Updates the max capacity based on a visible chunk count.</summary>
     public void UpdateCapacity(int visibleChunks)
     {
-        _maxCapacity = ComputeCapacity(visibleChunks);
+        capacity = ComputeCapacity(visibleChunks);
     }
 
     /// <summary>Returns true if the chunk key is already tracked.</summary>
@@ -70,10 +71,10 @@ public sealed class ChunkTracker
     /// </summary>
     public long[] Evict()
     {
-        if (_map.Count <= _maxCapacity)
+        if (_map.Count <= capacity)
             return [];
 
-        int toEvict = _map.Count - _maxCapacity;
+        int toEvict = _map.Count - capacity;
         var evicted = new long[toEvict];
 
         for (int i = 0; i < toEvict; i++)

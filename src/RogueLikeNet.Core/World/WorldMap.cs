@@ -15,6 +15,7 @@ public class WorldMap
     private const int DoorGraceTicks = 20;
 
     private readonly Dictionary<long, Chunk> _chunks = new();
+    private readonly HashSet<long> _chunksDontExist = new();
     private readonly Dictionary<long, int> _openDoorTimers = new();
     private readonly long _seed;
 
@@ -23,6 +24,20 @@ public class WorldMap
     public WorldMap(long seed)
     {
         _seed = seed;
+    }
+
+    public bool ExistsChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)
+    {
+        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        if (_chunks.ContainsKey(key))
+            return true;
+        if (_chunksDontExist.Contains(key))
+            return false;
+        var exists = generator.Exists(chunkX, chunkY, chunkZ);
+        if (!exists)
+            _chunksDontExist.Add(key);
+
+        return exists;
     }
 
     public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)

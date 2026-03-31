@@ -63,6 +63,13 @@ public class GameEngine : IDisposable
         _worldRng = new SeededRandom(worldSeed);
     }
 
+    public Chunk? EnsureChunkLoadedOrDoesntExist(int chunkX, int chunkY, int chunkZ)
+    {
+        if (!_worldMap.ExistsChunk(chunkX, chunkY, chunkZ, _generator))
+            return null;
+        return EnsureChunkLoaded(chunkX, chunkY, chunkZ);
+    }
+
     /// <summary>
     /// Ensures the chunk at the given chunk coords is loaded/generated.
     /// Spawns entities from generation results if newly created.

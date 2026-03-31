@@ -41,6 +41,11 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         return (x, y);
     }
 
+    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    {
+        return chunkZ <= Position.DefaultZ;
+    }
+
     public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
         var chunk = new Chunk(chunkX, chunkY, chunkZ);

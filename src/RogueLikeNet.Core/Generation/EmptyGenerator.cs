@@ -10,6 +10,12 @@ namespace RogueLikeNet.Core.Generation;
 /// </summary>
 public class EmptyGenerator : IDungeonGenerator
 {
+    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    {
+        // Only the spawn chunk has content; all other chunks are empty floors.
+        return chunkZ == Position.DefaultZ;
+    }
+
     public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
     {
         var chunk = new Chunk(chunkX, chunkY, chunkZ);
