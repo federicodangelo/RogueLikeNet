@@ -258,7 +258,7 @@ public sealed class GameWorldRenderer
                     dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
                 else if (PlaceableDefinitions.IsWall(tile.PlaceableItemId))
                     dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
-                else if (tile.GlyphId == TileDefinitions.GlyphStairsDown || tile.GlyphId == TileDefinitions.GlyphStairsUp)
+                else if (tile.Type == TileType.StairsDown || tile.Type == TileType.StairsUp)
                     dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
                 else if (tile.PlaceableItemId != 0 && PlaceableDefinitions.IsWalkable(tile.PlaceableItemId, tile.PlaceableItemExtra))
                     dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);

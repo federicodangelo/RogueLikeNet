@@ -62,4 +62,40 @@ public class PositionTests
         var b = new Position(10, 5, Position.DefaultZ);
         Assert.NotEqual(a.GetHashCode(), b.GetHashCode());
     }
+
+    [Fact]
+    public void ManhattanDistance_IncludesZ()
+    {
+        var a = new Position(0, 0, 100);
+        var b = new Position(3, 4, 105);
+        // |3| + |4| + |5| = 12
+        Assert.Equal(12, Position.ManhattanDistance(a, b));
+    }
+
+    [Fact]
+    public void ChebyshevDistance_IncludesZ()
+    {
+        var a = new Position(0, 0, 100);
+        var b = new Position(3, 4, 110);
+        // max(|3|, |4|, |10|) = 10
+        Assert.Equal(10, Position.ChebyshevDistance(a, b));
+    }
+
+    [Fact]
+    public void ManhattanDistance_SameZ_UnchangedFromXY()
+    {
+        var a = new Position(0, 0, Position.DefaultZ);
+        var b = new Position(3, 4, Position.DefaultZ);
+        // Z difference is 0, so still just |3| + |4| = 7
+        Assert.Equal(7, Position.ManhattanDistance(a, b));
+    }
+
+    [Fact]
+    public void ChebyshevDistance_SameZ_UnchangedFromXY()
+    {
+        var a = new Position(0, 0, Position.DefaultZ);
+        var b = new Position(3, 4, Position.DefaultZ);
+        // Z difference is 0, so still max(|3|, |4|) = 4
+        Assert.Equal(4, Position.ChebyshevDistance(a, b));
+    }
 }

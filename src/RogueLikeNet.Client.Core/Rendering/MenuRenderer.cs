@@ -12,7 +12,21 @@ namespace RogueLikeNet.Client.Core.Rendering;
 public sealed class MenuRenderer
 {
     private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
+    public const int MainMenuPlayOfflineIndex = 0;
+    public const int MainMenuPlayOnlineIndex = 1;
+    public const int MainMenuSeedIndex = 2;
+    public const int MainMenuGeneratorIndex = 3;
+    public const int MainMenuRandomizeSeedIndex = 4;
+    public const int MainMenuDebugModeIndex = 5;
+    public const int MainMenuHelpIndex = 6;
+    public const int MainMenuQuitIndex = 7;
+
+
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
+    public const int PauseMenuResumeIndex = 0;
+    public const int PauseMenuHelpIndex = 1;
+    public const int PauseMenuMainMenuIndex = 2;
+
 
     private static readonly string[] HelpLines =
     [
@@ -42,7 +56,7 @@ public sealed class MenuRenderer
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
-        int boxW = 40;
+        int boxW = 46;
         int boxH = 26;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;

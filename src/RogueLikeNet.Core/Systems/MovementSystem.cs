@@ -32,13 +32,13 @@ public class MovementSystem
 
                 var tile = map.GetTile(pos.X, pos.Y, pos.Z);
                 int dz = 0;
-                if (tile.GlyphId == TileDefinitions.GlyphStairsDown) dz = -1;
-                else if (tile.GlyphId == TileDefinitions.GlyphStairsUp) dz = 1;
+                if (tile.Type == TileType.StairsDown) dz = -1;
+                else if (tile.Type == TileType.StairsUp) dz = 1;
 
                 if (dz != 0)
                 {
                     int newZ = pos.Z + dz;
-                    if (newZ >= 0 && newZ <= 255)
+                    if (newZ >= 0 && newZ <= 255 && map.IsWalkable(pos.X, pos.Y, newZ))
                     {
                         pos.Z = newZ;
                         delay.Current = delay.Interval;

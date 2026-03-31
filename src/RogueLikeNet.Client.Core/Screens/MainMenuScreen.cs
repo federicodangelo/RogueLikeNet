@@ -43,7 +43,7 @@ public sealed class MainMenuScreen : IScreen
             _menuIndex = (_menuIndex + 1) % itemCount;
 
         // Left/right arrows cycle the generator when on the Generator row
-        if (_menuIndex == 3)
+        if (_menuIndex == MenuRenderer.MainMenuGeneratorIndex)
         {
             int genCount = GeneratorRegistry.Count;
             if (input.IsActionPressed(InputAction.MoveLeft))
@@ -51,30 +51,42 @@ public sealed class MainMenuScreen : IScreen
             else if (input.IsActionPressed(InputAction.MoveRight))
                 _generatorIndex = (_generatorIndex + 1) % genCount;
         }
+        else if (_menuIndex == MenuRenderer.MainMenuSeedIndex) // Don't allow up/down to change seed when on Seed row (to avoid accidental changes)
+        {
+            if (input.IsActionPressed(InputAction.MoveLeft) && _worldSeed > 0)
+                _worldSeed--;
+            else if (input.IsActionPressed(InputAction.MoveRight) && _worldSeed < long.MaxValue)
+                _worldSeed++;
+        }
+        else if (_menuIndex == MenuRenderer.MainMenuDebugModeIndex)
+        {
+            if (input.IsActionPressed(InputAction.MoveLeft) || input.IsActionPressed(InputAction.MoveRight))
+                _ctx.Debug.Enabled = !_ctx.Debug.Enabled;
+        }
 
         if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
             {
-                case 0:
+                case MenuRenderer.MainMenuPlayOfflineIndex:
                     _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);
                     if (_ctx is { } ctx)
                         ctx.Connection = null; // will be set to offline
                     SetClassSelectOnline(false);
                     break;
-                case 1:
+                case MenuRenderer.MainMenuPlayOnlineIndex:
                     _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);
                     SetClassSelectOnline(true);
                     break;
-                case 2:
+                case MenuRenderer.MainMenuSeedIndex:
                     _seedEditing = true;
                     _seedEditText = _worldSeed.ToString();
                     break;
-                case 3: break; // Generator — left/right only, no action on Enter
-                case 4: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
-                case 5: _ctx.Debug.Enabled = !_ctx.Debug.Enabled; break;
-                case 6: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
-                case 7: _ctx.OnQuit(); break;
+                case MenuRenderer.MainMenuGeneratorIndex: break; // Generator — left/right only, no action on Enter
+                case MenuRenderer.MainMenuRandomizeSeedIndex: _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000); break;
+                case MenuRenderer.MainMenuDebugModeIndex: _ctx.Debug.Enabled = !_ctx.Debug.Enabled; break;
+                case MenuRenderer.MainMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
+                case MenuRenderer.MainMenuQuitIndex: _ctx.OnQuit(); break;
             }
         }
     }

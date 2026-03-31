@@ -47,9 +47,9 @@ public sealed class PausedScreen : IScreen
         {
             switch (_pauseIndex)
             {
-                case 0: _ctx.RequestTransition(Rendering.ScreenState.Playing); break;
-                case 1: _ctx.RequestTransition(Rendering.ScreenState.PausedHelp); break;
-                case 2: _ctx.OnReturnToMenu(); break;
+                case MenuRenderer.PauseMenuResumeIndex: _ctx.RequestTransition(Rendering.ScreenState.Playing); break;
+                case MenuRenderer.PauseMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedHelp); break;
+                case MenuRenderer.PauseMenuMainMenuIndex: _ctx.OnReturnToMenu(); break;
             }
         }
     }

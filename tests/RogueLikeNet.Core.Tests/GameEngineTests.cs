@@ -387,9 +387,10 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-        var (x, y) = GameEngine.FindDropPosition(engine.EcsWorld, 10, 10, Position.DefaultZ);
+        var (x, y, z) = GameEngine.FindDropPosition(engine.EcsWorld, 10, 10, Position.DefaultZ);
         Assert.Equal(10, x);
         Assert.Equal(10, y);
+        Assert.Equal(Position.DefaultZ, z);
     }
 
     [Fact]
@@ -403,7 +404,7 @@ public class GameEngineTests
         var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
         engine.SpawnItemOnGround(template, 0, sx, sy, Position.DefaultZ);
 
-        var (x, y) = GameEngine.FindDropPosition(engine.EcsWorld, sx, sy, Position.DefaultZ);
+        var (x, y, _) = GameEngine.FindDropPosition(engine.EcsWorld, sx, sy, Position.DefaultZ);
         Assert.True(x != sx || y != sy, "Should find a different position when origin is occupied");
     }
 

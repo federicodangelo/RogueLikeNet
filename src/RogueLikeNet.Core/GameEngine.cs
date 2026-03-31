@@ -315,8 +315,8 @@ public class GameEngine : IDisposable
             {
                 int difficulty = typeId; // rough mapping: harder monster = higher difficulty
                 var (template, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
-                var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y, z);
-                SpawnItemOnGround(template, rarity, dropX, dropY, z);
+                var (dropX, dropY, dropZ) = FindDropPosition(_ecsWorld, x, y, z);
+                SpawnItemOnGround(template, rarity, dropX, dropY, dropZ);
             }
         }
 
@@ -332,13 +332,13 @@ public class GameEngine : IDisposable
         {
             int dropCount = node.MinDrop + _worldRng.Next(Math.Max(1, node.MaxDrop - node.MinDrop + 1));
             var resourceDef = ItemDefinitions.Get(node.ResourceItemTypeId);
-            var (dropX, dropY) = FindDropPosition(_ecsWorld, x, y, z);
+            var (dropX, dropY, dropZ) = FindDropPosition(_ecsWorld, x, y, z);
             SpawnItemOnGround(new ItemData
             {
                 ItemTypeId = node.ResourceItemTypeId,
                 Rarity = ItemDefinitions.RarityCommon,
                 StackCount = dropCount,
-            }, dropX, dropY, z);
+            }, dropX, dropY, dropZ);
         }
     }
 
@@ -346,7 +346,7 @@ public class GameEngine : IDisposable
     /// Finds an unoccupied position to drop an item, spiraling outward from origin.
     /// Avoids overlapping with other ground items.
     /// </summary>
-    public static (int X, int Y) FindDropPosition(Arch.Core.World world, int originX, int originY, int originZ)
+    public static (int X, int Y, int Z) FindDropPosition(Arch.Core.World world, int originX, int originY, int originZ)
     {
         // Collect positions of all ground items
         var occupied = new HashSet<long>();
@@ -358,7 +358,7 @@ public class GameEngine : IDisposable
 
         // Try origin first, then spiral outward up to radius 5
         if (!occupied.Contains(Position.PackCoord(originX, originY, originZ)))
-            return (originX, originY);
+            return (originX, originY, originZ);
 
         for (int r = 1; r <= 5; r++)
         {
@@ -369,11 +369,11 @@ public class GameEngine : IDisposable
                     int x = originX + dx;
                     int y = originY + dy;
                     if (!occupied.Contains(Position.PackCoord(x, y, originZ)))
-                        return (x, y);
+                        return (x, y, originZ);
                 }
         }
 
-        return (originX, originY); // fallback
+        return (originX, originY, originZ); // fallback
     }
 
     /// <summary>

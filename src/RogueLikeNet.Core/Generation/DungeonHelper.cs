@@ -105,7 +105,7 @@ internal static class DungeonHelper
                 {
                     if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                     {
-                        if (circular && Position.ManhattanDistance(x, y, poolCenterX, poolCenterY) > Math.Min(poolW, poolH) / 2)
+                        if (circular && Position.ManhattanDistance2D(x, y, poolCenterX, poolCenterY) > Math.Min(poolW, poolH) / 2)
                             continue; // Make the pool roughly circular
 
                         ref var tile = ref chunk.Tiles[x, y];
@@ -311,7 +311,7 @@ internal static class DungeonHelper
     public static void RemoveEnemiesInRadius(GenerationResult result, int x, int y, int radius)
     {
         result.Monsters.RemoveAll(m =>
-            Position.ManhattanDistance(m.Position.X, m.Position.Y, x, y) <= radius
+            Position.ManhattanDistance2D(m.Position.X, m.Position.Y, x, y) <= radius
         );
     }
 
@@ -324,7 +324,7 @@ internal static class DungeonHelper
             for (var dy = -radius; dy <= radius; dy++)
             {
                 int cx = x + dx, cy = y + dy;
-                if (Position.ManhattanDistance(x, y, cx, cy) > radius)
+                if (Position.ManhattanDistance2D(x, y, cx, cy) > radius)
                     continue;
                 if (cx < 0 || cy < 0 || cx >= Chunk.Size || cy >= Chunk.Size)
                     continue;

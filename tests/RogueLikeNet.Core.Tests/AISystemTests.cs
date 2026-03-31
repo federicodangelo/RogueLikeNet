@@ -200,4 +200,62 @@ public class AISystemTests
         Assert.Equal(origX, posAfter.X);
         Assert.Equal(origY, posAfter.Y);
     }
+
+    [Fact]
+    public void Idle_PlayerOnAdjacentZ_TransitionsToChase()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        // Load the Z-1 chunk so both levels exist
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 1);
+
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 1, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        {
+            MonsterTypeId = 1,
+            Health = 100,
+            Attack = 5,
+            Defense = 0,
+            Speed = 8
+        });
+
+        // Start in Idle — player is 3 XY + 1 Z = 4 Manhattan, within DetectionRange(8)
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Idle;
+
+        engine.Tick();
+
+        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
+        Assert.Equal(AIStates.Chase, aiAfter.StateId);
+    }
+
+    [Fact]
+    public void Idle_PlayerTwoZLevelsAway_StaysIdle()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        // Load the Z-2 chunk
+        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 2);
+
+        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 2, ClassDefinitions.Warrior);
+        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        {
+            MonsterTypeId = 1,
+            Health = 100,
+            Attack = 5,
+            Defense = 0,
+            Speed = 8
+        });
+
+        // Start in Idle — player is 2 Z levels away, zDiff > 1, should NOT detect
+        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
+        ai.StateId = AIStates.Idle;
+
+        engine.Tick();
+
+        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
+        Assert.Equal(AIStates.Idle, aiAfter.StateId);
+    }
 }

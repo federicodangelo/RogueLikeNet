@@ -77,18 +77,20 @@ public class AISystem
                     canMove = false;
             }
 
-            // Find nearest player
+            // Find nearest player (same Z or ±1 Z)
             int nearestDist = int.MaxValue;
-            int nearestPx = 0, nearestPy = 0;
+            int nearestPx = 0, nearestPy = 0, nearestPz = 0;
             foreach (var (px, py, pz) in playerPositions)
             {
-                if (pz != pos.Z) continue; // Only detect players on same Z level
-                int dist = Math.Abs(pos.X - px) + Math.Abs(pos.Y - py);
+                int zDiff = Math.Abs(pz - pos.Z);
+                if (zDiff > 1) continue; // Only detect players within ±1 Z
+                int dist = Math.Abs(pos.X - px) + Math.Abs(pos.Y - py) + zDiff;
                 if (dist < nearestDist)
                 {
                     nearestDist = dist;
                     nearestPx = px;
                     nearestPy = py;
+                    nearestPz = pz;
                 }
             }
 
@@ -111,22 +113,30 @@ public class AISystem
                         break;
                     }
                     if (!canMove) break; // Wait for move delay
-                    // Move towards player using A*
+                    // Move towards player using 3D A*
                     int chaseZ = pos.Z; // capture for lambda
                     var path = AStarPathfinder.FindPath(
-                        pos.X, pos.Y, nearestPx, nearestPy, chaseZ,
-                        (x, y) => map.IsWalkable(x, y, chaseZ),
+                        pos.X, pos.Y, pos.Z, nearestPx, nearestPy, nearestPz,
+                        (x, y, z) =>
+                        {
+                            var tile = map.GetTile(x, y, z);
+                            if (!tile.IsWalkable) return TileWalkability.None;
+                            if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
+                            if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
+                            return TileWalkability.Walkable;
+                        },
                         maxSteps: 200);
                     if (path != null && path.Count >= 2)
                     {
                         var next = path[1];
-                        long nextKey = Position.PackCoord(next.X, next.Y, pos.Z);
-                        if (map.IsWalkable(next.X, next.Y, pos.Z) && !actorPositions.Contains(nextKey))
+                        long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
+                        if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
                         {
                             // Remove old position, move, add new position
                             actorPositions.Remove(Position.PackCoord(pos.X, pos.Y, pos.Z));
                             pos.X = next.X;
                             pos.Y = next.Y;
+                            pos.Z = next.Z;
                             actorPositions.Add(nextKey);
 
                             // Reset move delay after moving
