@@ -76,7 +76,6 @@ public sealed class NullSpriteRenderer : ISpriteRenderer
     { }
 
     public void DrawGlyphGridScreen(float x, float y, int cols, int rows,
-        float tileW, float tileH, float fontScale,
-        Func<int, int, GlyphTile> getTile)
+        float tileW, float tileH, float fontScale, GlyphTile[] tiles)
     { }
 }

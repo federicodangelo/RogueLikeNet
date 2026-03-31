@@ -578,8 +578,7 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
     private static int[] _gridIndexBufGl = new int[6144];
 
     public override void DrawGlyphGridScreen(float x, float y, int cols, int rows,
-        float tileW, float tileH, float fontScale,
-        Func<int, int, GlyphTile> getTile)
+        float tileW, float tileH, float fontScale, GlyphTile[] tiles)
     {
         if (cols <= 0 || rows <= 0) return;
 
@@ -604,7 +603,7 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
         {
             for (int col = 0; col < cols; col++)
             {
-                var tile = getTile(col, row);
+                var tile = tiles[row * cols + col];
 
                 float left = x + col * tileW;
                 float top = y + row * tileH;
@@ -630,8 +629,10 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
                     _gridIndexBufBg[bgIi++] = bv; _gridIndexBufBg[bgIi++] = bv + 2; _gridIndexBufBg[bgIi++] = bv + 3;
                 }
 
-                if (tile.Glyph > ' ' && tile.FgColor.A != 0 && glyphUV.TryGetValue(tile.Glyph, out var uv))
+                if (tile.Glyph > ' ' && tile.FgColor.A != 0 && tile.Glyph < glyphUV.Length && glyphUV[tile.Glyph] != default)
                 {
+                    var uv = glyphUV[tile.Glyph];
+
                     var fc = new SDL.FColor
                     {
                         R = tile.FgColor.R / 255f,

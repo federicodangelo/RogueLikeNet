@@ -212,8 +212,7 @@ public abstract class BufferedSpriteRenderer : BaseSpriteRenderer
     private ColoredTexturedQuad[] _glyphQuadBuf = [];
 
     public override void DrawGlyphGridScreen(float x, float y, int cols, int rows,
-        float tileW, float tileH, float fontScale,
-        Func<int, int, GlyphTile> getTile)
+        float tileW, float tileH, float fontScale, GlyphTile[] tiles)
     {
         if (cols <= 0 || rows <= 0) return;
 
@@ -236,11 +235,15 @@ public abstract class BufferedSpriteRenderer : BaseSpriteRenderer
         {
             for (int row = 0; row < rows; row++)
             {
-                var tile = getTile(col, row);
+                var tile = tiles[row * cols + col];
                 _tileColorBuf[col * rows + row] = tile.BgColor;
 
                 if (tile.Glyph <= ' ' || tile.FgColor.A == 0) continue;
-                if (!glyphUV.TryGetValue(tile.Glyph, out var uv)) continue;
+                if (tile.Glyph >= glyphUV.Length)
+                    continue;
+
+                var uv = glyphUV[tile.Glyph];
+                if (uv == default) continue;
 
                 float left = x + col * tileW;
                 float top = y + row * tileH;

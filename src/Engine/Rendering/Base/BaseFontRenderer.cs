@@ -25,7 +25,7 @@ public abstract class BaseFontRenderer : IFontRenderer
         public int ScaledGlyphH;
         public int AtlasWidth;
         public int AtlasHeight;
-        public Dictionary<char, (float U0, float V0, float U1, float V1)> GlyphUV;
+        public (float U0, float V0, float U1, float V1)[] GlyphUV;
     }
 
     protected FontAtlasEntry[] _fontAtlases = [];
@@ -111,6 +111,12 @@ public abstract class BaseFontRenderer : IFontRenderer
                 col++;
             }
 
+            var maxChar = glyphUV.Keys.Max();
+
+            var glyphUVArray = new (float U0, float V0, float U1, float V1)[maxChar + 1];
+            foreach (var kvp in glyphUV)
+                glyphUVArray[kvp.Key] = kvp.Value;
+
             nint texture = _textures.CreateTextureFromPixels(pixels, atlasW, atlasH, TextureScaleMode.Nearest);
 
             _fontAtlases[si] = new FontAtlasEntry
@@ -121,7 +127,7 @@ public abstract class BaseFontRenderer : IFontRenderer
                 ScaledGlyphH = scaledGH,
                 AtlasWidth = atlasW,
                 AtlasHeight = atlasH,
-                GlyphUV = glyphUV
+                GlyphUV = glyphUVArray
             };
         }
     }
@@ -197,7 +203,11 @@ public abstract class BaseFontRenderer : IFontRenderer
             if (charRight <= startX || charLeft >= clipRight || c == ' ')
                 continue;
 
-            if (!glyphUV.TryGetValue(c, out var uv))
+            if (c >= glyphUV.Length)
+                continue;
+
+            var uv = glyphUV[c];
+            if (uv == default)
                 continue;
 
             float visLeft = Math.Max(charLeft, startX);

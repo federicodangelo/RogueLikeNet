@@ -22,7 +22,7 @@ public sealed class ChunkTracker
     /// <summary>Computes the LRU capacity from a visible chunk count.</summary>
     public static int ComputeCapacity(int visibleChunks)
     {
-        return Math.Max(MinCapacity, Math.Min(visibleChunks, MaxVisibleChunks) * 2 * 3);
+        return Math.Max(MinCapacity, Math.Min(visibleChunks, MaxVisibleChunks)) * 2 * 3;
     }
 
     /// <summary>

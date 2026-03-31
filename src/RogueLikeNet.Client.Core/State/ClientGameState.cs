@@ -257,6 +257,60 @@ public class ClientGameState
         return _visibleTiles.Contains(Position.PackCoord(worldX, worldY, PlayerZ));
     }
 
+    /// <summary>
+    /// Iterates all tiles in the given world-space rectangle, batching by chunk to avoid
+    /// per-tile dictionary lookups. The callback receives world coordinates and tile data.
+    /// </summary>
+    public delegate void TileCallback(int worldX, int worldY, ref TileInfo tile, int lightLevel, bool visible, bool explored);
+
+    public void ForEachTileInBounds(int minWorldX, int minWorldY, int maxWorldX, int maxWorldY, int worldZ, TileCallback callback)
+    {
+        var debugSeeAll = DebugSeeAll;
+
+        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(minWorldX, minWorldY, worldZ);
+        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(maxWorldX, maxWorldY, worldZ);
+
+        for (int cy = minCy; cy <= maxCy; cy++)
+        {
+            for (int cx = minCx; cx <= maxCx; cx++)
+            {
+                long chunkKey = Position.PackCoord(cx, cy, worldZ);
+                if (!_chunks.TryGetValue(chunkKey, out var chunk))
+                    continue;
+
+                _exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits);
+
+                int chunkWorldX = cx * Chunk.Size;
+                int chunkWorldY = cy * Chunk.Size;
+
+                // Clamp iteration to the overlap between the chunk and the requested bounds
+                int localMinX = Math.Max(0, minWorldX - chunkWorldX);
+                int localMinY = Math.Max(0, minWorldY - chunkWorldY);
+                int localMaxX = Math.Min(Chunk.Size - 1, maxWorldX - chunkWorldX);
+                int localMaxY = Math.Min(Chunk.Size - 1, maxWorldY - chunkWorldY);
+
+                var tiles = chunk.Tiles;
+                var lightLevels = chunk.LightLevels;
+
+                for (int ly = localMinY; ly <= localMaxY; ly++)
+                {
+                    int worldY = chunkWorldY + ly;
+                    int bitRowOffset = ly * Chunk.Size;
+
+                    for (int lx = localMinX; lx <= localMaxX; lx++)
+                    {
+                        int worldX = chunkWorldX + lx;
+
+                        bool visible = debugSeeAll || _visibleTiles.Contains(Position.PackCoord(worldX, worldY, worldZ));
+                        bool explored = debugSeeAll || (exploredBits != null && exploredBits.Get(lx + bitRowOffset));
+
+                        callback(worldX, worldY, ref tiles[lx, ly], lightLevels[lx, ly], visible, explored);
+                    }
+                }
+            }
+        }
+    }
+
     private void ComputeVisibility()
     {
         using var _ = TimeMeasurer.FromMethodName();

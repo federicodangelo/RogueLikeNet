@@ -83,6 +83,5 @@ public interface ISpriteRenderer : IDisposable
     /// Backgrounds are drawn as a single batch, then all glyphs as another batch.
     /// </summary>
     void DrawGlyphGridScreen(float x, float y, int cols, int rows,
-        float tileW, float tileH, float fontScale,
-        Func<int, int, GlyphTile> getTile);
+        float tileW, float tileH, float fontScale, GlyphTile[] tiles);
 }

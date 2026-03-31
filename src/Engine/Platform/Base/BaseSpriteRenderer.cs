@@ -190,14 +190,13 @@ public abstract class BaseSpriteRenderer : ISpriteRenderer
     /// Subclasses should override with batched rendering for better performance.
     /// </summary>
     public virtual void DrawGlyphGridScreen(float x, float y, int cols, int rows,
-        float tileW, float tileH, float fontScale,
-        Func<int, int, GlyphTile> getTile)
+        float tileW, float tileH, float fontScale, GlyphTile[] tiles)
     {
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
             {
-                var tile = getTile(col, row);
+                var tile = tiles[row * cols + col];
                 float px = x + col * tileW;
                 float py = y + row * tileH;
 
