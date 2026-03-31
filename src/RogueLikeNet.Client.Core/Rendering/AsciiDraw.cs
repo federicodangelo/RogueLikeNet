@@ -20,7 +20,7 @@ public static class AsciiDraw
 
     private static readonly char[] Cp437 = MiniBitmapFont.Cp437ToUnicode;
 
-    public static char GlyphIdToChar(int glyphId) => glyphId < 256 ? Cp437[glyphId] : '?';
+    public static char GlyphIdToChar(int glyphId) => glyphId >= 0 && glyphId < 256 ? Cp437[glyphId] : '?';
 
     public static void DrawChar(ISpriteRenderer r, int tileX, int tileY, char ch, Color4 color)
     {
