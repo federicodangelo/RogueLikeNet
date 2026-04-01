@@ -105,7 +105,7 @@ public sealed class RogueLikeGame : GameBase
         var paused = new PausedScreen(_ctx, playing, menuRenderer);
         var help = new HelpScreen(_ctx, menuRenderer, playing);
         var saveSlot = new SaveSlotScreen(_ctx, menuRenderer);
-        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer);
+        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, mainMenu);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);

@@ -1,5 +1,6 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -12,6 +13,7 @@ public sealed class ServerAdminScreen : IScreen
 {
     private readonly ScreenContext _ctx;
     private readonly MenuRenderer _menuRenderer;
+    private readonly MainMenuScreen _mainMenu;
 
     private SaveSlotInfoMsg[] _slots = [];
     private string _currentSlotId = "";
@@ -25,10 +27,11 @@ public sealed class ServerAdminScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.ServerAdmin;
 
-    public ServerAdminScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public ServerAdminScreen(ScreenContext ctx, MenuRenderer menuRenderer, MainMenuScreen mainMenu)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;
+        _mainMenu = mainMenu;
     }
 
     public void OnEnter()
@@ -201,6 +204,8 @@ public sealed class ServerAdminScreen : IScreen
                 {
                     Action = SaveGameAction.New,
                     SlotName = _newSlotName,
+                    Seed = _mainMenu.WorldSeed,
+                    GeneratorId = GeneratorRegistry.GetId(_mainMenu.GeneratorIndex),
                 });
             }
             return;
