@@ -32,7 +32,22 @@ public class EmbeddedServerConnection : IGameServerConnection
     public Task ConnectAsync(string uri, CancellationToken ct = default)
     {
         // Register with the embedded game loop using a callback that deserializes and dispatches
-        var conn = _gameServer.AddConnection(ProcessServerData, () => Task.CompletedTask);
+        var conn = _gameServer.AddConnection(
+            ProcessServerData,
+            async () => { _connected = false; }
+        );
+        _connectionId = conn.ConnectionId;
+        _connected = true;
+
+        return Task.CompletedTask;
+    }
+
+    public Task ReconnectAsync(CancellationToken ct = default)
+    {
+        var conn = _gameServer.AddConnection(
+            ProcessServerData,
+            async () => { _connected = false; }
+        );
         _connectionId = conn.ConnectionId;
         _connected = true;
 
@@ -67,12 +82,11 @@ public class EmbeddedServerConnection : IGameServerConnection
         return Task.CompletedTask;
     }
 
-    public Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default)
+    public async Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default)
     {
-        if (!_connected) return Task.CompletedTask;
+        if (!_connected) return;
         // Route through the server's command queue for thread-safety
-        _gameServer.HandleSaveGameCommand(_connectionId, cmd);
-        return Task.CompletedTask;
+        await _gameServer.HandleSaveGameCommand(_connectionId, cmd);
     }
 
     private Task ProcessServerData(byte[] data)

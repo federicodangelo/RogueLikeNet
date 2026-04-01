@@ -24,13 +24,25 @@ public class WebSocketServerConnection : IGameServerConnection
     public event Action<SaveGameResponseMsg>? OnSaveGameResponse;
     public event Action? OnDisconnected;
 
+    private string _uri = "";
+
     public async Task ConnectAsync(string uri, CancellationToken ct = default)
     {
+        _uri = uri;
         _socket = new ClientWebSocket();
         await _socket.ConnectAsync(new Uri(uri), ct);
 
         _readCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _readTask = Task.Run(() => ReadLoop(_readCts.Token));
+    }
+
+    public async Task ReconnectAsync(CancellationToken ct = default)
+    {
+        if (_socket != null)
+        {
+            await DisposeAsync();
+        }
+        await ConnectAsync(uri: _uri, ct);
     }
 
     public async Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default)

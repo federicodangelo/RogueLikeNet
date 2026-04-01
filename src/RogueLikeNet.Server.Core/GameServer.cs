@@ -253,8 +253,13 @@ public class GameServer : IDisposable
     /// Processes a save game command from a client and sends the response.
     /// Enqueued on the server thread for thread-safety.
     /// </summary>
-    public void HandleSaveGameCommand(long connectionId, SaveGameCommandMsg cmd)
+    public Task HandleSaveGameCommand(long connectionId, SaveGameCommandMsg cmd)
     {
+        if (!_connections.TryGetValue(connectionId, out var _))
+            throw new Exception($"Connection not found: {connectionId}");
+
+        TaskCompletionSource tcs = new TaskCompletionSource();
+
         EnqueueCommand(async () =>
         {
             var response = ProcessSaveCommand(cmd);
@@ -264,7 +269,24 @@ public class GameServer : IDisposable
                 var data = NetSerializer.WrapMessage(MessageTypes.SaveGameResponse, payload);
                 await conn.SendAsync(data);
             }
+            if (_restartGameTask != null)
+            {
+                // Wait for restart to complete, we have to do this in another thread because otherwise we
+                // would lock the server thread while waiting, which would prevent the restart from completing
+                _ = Task.Run(async () =>
+                {
+                    while (_restartGameTask != null)
+                        await Task.Delay(100);
+                    tcs.SetResult();
+                });
+            }
+            else
+            {
+                tcs.SetResult();
+            }
         });
+
+        return tcs.Task;
     }
 
     /// <summary>Processes a save command synchronously and returns the response.</summary>
@@ -428,6 +450,9 @@ public class GameServer : IDisposable
 
     public void SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
     {
+        if (!_connections.TryGetValue(connectionId, out var _))
+            throw new Exception($"Connection not found: {connectionId}");
+
         EnqueueCommand(() => SpawnPlayerForConnectionInternal(connectionId, classId, playerName));
     }
 
