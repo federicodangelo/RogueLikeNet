@@ -136,11 +136,19 @@ public sealed class ServerAdminScreen : IScreen
             }
         }
 
-        // Delete with X / Delete key on a slot
+        // Delete with X / Delete key on a slot (not the active slot)
         if (input.IsActionPressed(InputAction.MenuSecondaryAction) && _selectedIndex < _slots.Length && _slots.Length > 0)
         {
-            _confirmingDelete = true;
-            _statusMessage = null;
+            if (_slots[_selectedIndex].SlotId == _currentSlotId)
+            {
+                _statusMessage = "Cannot delete the active slot";
+                _isError = true;
+            }
+            else
+            {
+                _confirmingDelete = true;
+                _statusMessage = null;
+            }
         }
     }
 
