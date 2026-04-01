@@ -141,7 +141,13 @@ public sealed class ServerAdminScreen : IScreen
         }
     }
 
-    public void Update(float deltaTime) { }
+    public void Update(float deltaTime)
+    {
+        if (_ctx.Connection == null || !_ctx.Connection.IsConnected)
+        {
+            _ctx.OnReturnToMenu();
+        }
+    }
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
