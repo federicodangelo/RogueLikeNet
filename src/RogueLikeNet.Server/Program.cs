@@ -1,4 +1,3 @@
-using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Server;
 using RogueLikeNet.Server.Persistence;
 
@@ -11,16 +10,7 @@ var saveProvider = new SqliteSaveGameProvider("game.db");
 var gameServer = new GameServer(worldSeed, logWriter: Console.Out, saveProvider: saveProvider);
 
 // Auto-load last save or create a new default slot
-var slots = saveProvider.ListSaveSlots();
-if (slots.Count > 0)
-{
-    var latest = slots.OrderByDescending(s => s.LastSavedAt).First();
-    gameServer.LoadSaveSlot(latest.SlotId);
-}
-else
-{
-    gameServer.StartNewGame("Default World", worldSeed, GeneratorRegistry.DefaultId);
-}
+gameServer.InitializeFromSaveProvider();
 
 gameServer.Start();
 

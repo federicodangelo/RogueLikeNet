@@ -66,7 +66,7 @@ public partial class WebMain
     private static void OnNewOfflineGame(string slotName)
     {
         _pendingSlotName = slotName;
-        _game.TransitionToClassSelect(fromSaveSlot: true);
+        _game.TransitionToClassSelect();
     }
 
     private static async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
@@ -79,14 +79,20 @@ public partial class WebMain
         {
             var slotName = _pendingSlotName;
             _pendingSlotName = null;
-            _embeddedServer!.StartNewGame(slotName, seed, generatorId);
+            await _connection!.SendSaveGameCommandAsync(new SaveGameCommandMsg
+            {
+                Action = SaveGameAction.New,
+                SlotName = slotName,
+                Seed = seed,
+                GeneratorId = generatorId,
+            });
         }
         else
         {
             var saveProvider = new InMemorySaveGameProvider();
             var generator = GeneratorRegistry.Create(generatorIndex, seed);
             _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out, saveProvider: saveProvider);
-            _embeddedServer.StartNewGame(playerName + "'s World", seed, generatorId);
+            _embeddedServer.InitializeNewGame(playerName + "'s World", seed, generatorId);
 
             if (debugMode)
                 ApplyDebugSettings();
@@ -116,7 +122,11 @@ public partial class WebMain
     {
         _game.TransitionToConnecting();
 
-        _embeddedServer!.LoadSaveSlot(slotId);
+        await _connection!.SendSaveGameCommandAsync(new SaveGameCommandMsg
+        {
+            Action = SaveGameAction.Load,
+            SlotId = slotId,
+        });
 
         await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = "Player" });
 

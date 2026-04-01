@@ -78,12 +78,18 @@ public class Program
 
         var generatorId = GeneratorRegistry.GetId(generatorIndex);
 
-        // If we have a pending slot name from SaveSlotScreen, create a new slot
+        // If we have a pending slot name from SaveSlotScreen, create a new slot via command queue
         if (_pendingSlotName != null)
         {
             var slotName = _pendingSlotName;
             _pendingSlotName = null;
-            _embeddedServer!.StartNewGame(slotName, seed, generatorId);
+            await _connection!.SendSaveGameCommandAsync(new SaveGameCommandMsg
+            {
+                Action = SaveGameAction.New,
+                SlotName = slotName,
+                Seed = seed,
+                GeneratorId = generatorId,
+            });
         }
         else
         {
@@ -91,7 +97,7 @@ public class Program
             var saveProvider = new SqliteSaveGameProvider("game.db");
             var generator = GeneratorRegistry.Create(generatorIndex, seed);
             _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out, saveProvider: saveProvider);
-            _embeddedServer.StartNewGame(playerName + "'s World", seed, generatorId);
+            _embeddedServer.InitializeNewGame(playerName + "'s World", seed, generatorId);
 
             if (debugMode)
                 ApplyDebugSettings();
@@ -121,7 +127,12 @@ public class Program
     {
         _game.TransitionToConnecting();
 
-        _embeddedServer!.LoadSaveSlot(slotId);
+        // Load the slot via command queue (thread-safe)
+        await _connection!.SendSaveGameCommandAsync(new SaveGameCommandMsg
+        {
+            Action = SaveGameAction.Load,
+            SlotId = slotId,
+        });
 
         // Login with a default character — the loaded slot already has player data
         await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = "Player" });

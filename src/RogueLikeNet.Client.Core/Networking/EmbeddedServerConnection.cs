@@ -32,7 +32,7 @@ public class EmbeddedServerConnection : IGameServerConnection
     public Task ConnectAsync(string uri, CancellationToken ct = default)
     {
         // Register with the embedded game loop using a callback that deserializes and dispatches
-        var conn = _gameServer.AddConnection(ProcessServerData);
+        var conn = _gameServer.AddConnection(ProcessServerData, () => Task.CompletedTask);
         _connectionId = conn.ConnectionId;
         _connected = true;
 
@@ -70,9 +70,8 @@ public class EmbeddedServerConnection : IGameServerConnection
     public Task SendSaveGameCommandAsync(SaveGameCommandMsg cmd, CancellationToken ct = default)
     {
         if (!_connected) return Task.CompletedTask;
-        // For embedded mode, process synchronously and invoke callback directly
-        var response = _gameServer.ProcessSaveCommand(cmd);
-        OnSaveGameResponse?.Invoke(response);
+        // Route through the server's command queue for thread-safety
+        _gameServer.HandleSaveGameCommand(_connectionId, cmd);
         return Task.CompletedTask;
     }
 
@@ -95,8 +94,8 @@ public class EmbeddedServerConnection : IGameServerConnection
                     break;
 
                 case MessageTypes.SaveGameResponse:
-                    var saveResp = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
-                    OnSaveGameResponse?.Invoke(saveResp);
+                    var saveResponse = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
+                    OnSaveGameResponse?.Invoke(saveResponse);
                     break;
             }
         }

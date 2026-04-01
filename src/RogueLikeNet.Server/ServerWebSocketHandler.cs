@@ -14,17 +14,31 @@ public static class ServerWebSocketHandler
         logWriter ??= TextWriter.Null;
 
         // Create connection with send function
-        var conn = gameServer.AddConnection(async data =>
-        {
-            if (socket.State == WebSocketState.Open)
+        var conn = gameServer.AddConnection(
+            // send
+            async data =>
             {
-                await socket.SendAsync(
-                    new ArraySegment<byte>(data),
-                    WebSocketMessageType.Binary,
-                    endOfMessage: true,
-                    CancellationToken.None);
+                if (socket.State == WebSocketState.Open)
+                {
+                    await socket.SendAsync(
+                        new ArraySegment<byte>(data),
+                        WebSocketMessageType.Binary,
+                        endOfMessage: true,
+                        CancellationToken.None);
+                }
+            },
+            // close
+            async () =>
+            {
+                if (socket.State == WebSocketState.Open)
+                {
+                    await socket.CloseAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "Server closing connection",
+                        CancellationToken.None);
+                }
             }
-        });
+        );
 
         logWriter.WriteLine($"[Server] Player {conn.ConnectionId} connected ({gameServer.ConnectionCount} online)");
 

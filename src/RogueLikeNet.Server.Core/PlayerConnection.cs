@@ -31,16 +31,18 @@ public class PlayerConnection
     public PlayerStateMsg? LastSentPlayerState { get; set; }
 
     private readonly Func<byte[], Task> _sendFunc;
+    private readonly Func<Task> _closeFunc;
     private long _bytesSent;
     private long _bytesReceived;
 
     public long BytesSent => Interlocked.Read(ref _bytesSent);
     public long BytesReceived => Interlocked.Read(ref _bytesReceived);
 
-    public PlayerConnection(long connectionId, Func<byte[], Task> sendFunc)
+    public PlayerConnection(long connectionId, Func<byte[], Task> sendFunc, Func<Task>? closeFunc = null)
     {
         ConnectionId = connectionId;
         _sendFunc = sendFunc;
+        _closeFunc = closeFunc != null ? closeFunc : () => Task.CompletedTask;
     }
 
     public Task SendAsync(byte[] data)
@@ -50,4 +52,6 @@ public class PlayerConnection
     }
 
     public void TrackReceived(long bytes) => Interlocked.Add(ref _bytesReceived, bytes);
+
+    public Task CloseAsync() => _closeFunc();
 }

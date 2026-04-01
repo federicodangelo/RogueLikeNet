@@ -169,10 +169,8 @@ public sealed class RogueLikeGame : GameBase
         _screenManager.TransitionTo(ScreenState.SaveSlotSelect);
     }
 
-    public void TransitionToClassSelect(bool fromSaveSlot = false)
+    public void TransitionToClassSelect()
     {
-        if (fromSaveSlot)
-            _classSelectScreen.SetReturnState(ScreenState.SaveSlotSelect);
         _screenManager.TransitionTo(ScreenState.ClassSelect);
     }
 

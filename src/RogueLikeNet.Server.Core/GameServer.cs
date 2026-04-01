@@ -30,6 +30,8 @@ public class GameServer : IDisposable
     private const int ChunkUnloadIdleTicks = 30 * TicksPerSecond;
 
     protected GameEngine _engine;
+    private bool _engineStarted;
+
     private readonly ConcurrentDictionary<long, PlayerConnection> _connections = new();
     private readonly ConcurrentQueue<Func<Task>> _commandQueue = new();
     private readonly CancellationTokenSource _cts = new();
@@ -37,6 +39,7 @@ public class GameServer : IDisposable
     private long _nextConnectionId = 1;
     private readonly TextWriter _logWriter;
     private TileUpdateMsg[] _pendingTileUpdates = [];
+    private Action? _restartGameTask;
 
     // Persistence
     private readonly ISaveGameProvider? _saveProvider;
@@ -77,14 +80,16 @@ public class GameServer : IDisposable
     public bool DebugGiveResources { get; set; } = false;
 
 
+    private readonly long _worldSeed;
+
     public GameServer(long worldSeed, IDungeonGenerator? generator = null, TextWriter? logWriter = null, ISaveGameProvider? saveProvider = null)
     {
+        _worldSeed = worldSeed;
         _logWriter = logWriter ?? TextWriter.Null;
         _saveProvider = saveProvider;
 
         _engine = new GameEngine(worldSeed, generator);
-        // Pre-generate spawn chunk
-        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        StartEngine();
     }
 
     public void Start()
@@ -95,88 +100,142 @@ public class GameServer : IDisposable
         _serverTask = Task.Run(() => RunServer(_cts.Token));
     }
 
+    /// <summary>
+    /// Initializes a new game in a save slot. Must be called before Start().
+    /// </summary>
+    public void InitializeNewGame(string slotName, long seed, string generatorId)
+    {
+        if (IsRunning) throw new InvalidOperationException("Cannot initialize while server is running. Use HandleSaveGameCommand instead.");
+        StartNewGame(slotName, seed, generatorId);
+        _restartGameTask?.Invoke();
+        _restartGameTask = null;
+    }
+
+    /// <summary>
+    /// Initializes from an existing save slot. Must be called before Start().
+    /// </summary>
+    public void InitializeFromSlot(string slotId)
+    {
+        if (IsRunning) throw new InvalidOperationException("Cannot initialize while server is running. Use HandleSaveGameCommand instead.");
+        LoadSaveSlot(slotId);
+        _restartGameTask?.Invoke();
+        _restartGameTask = null;
+    }
+
+    /// <summary>
+    /// Auto-initializes from the save provider: loads the latest slot, or creates a default one.
+    /// Must be called before Start().
+    /// </summary>
+    public void InitializeFromSaveProvider()
+    {
+        if (IsRunning) throw new InvalidOperationException("Cannot initialize while server is running.");
+        if (_saveProvider == null) return;
+
+        var slots = _saveProvider.ListSaveSlots();
+        if (slots.Count > 0)
+        {
+            var latest = slots.OrderByDescending(s => s.LastSavedAt).First();
+            LoadSaveSlot(latest.SlotId);
+        }
+        else
+        {
+            StartNewGame("Default World", _worldSeed, GeneratorRegistry.DefaultId);
+        }
+    }
+
     // ──────────────────────────────────────────────
     // Save slot management commands
     // ──────────────────────────────────────────────
-
-    /// <summary>Lists all available save slots from the provider.</summary>
-    public List<SaveSlotInfo> ListSaveSlots()
-    {
-        if (_saveProvider == null) return [];
-        return _saveProvider.ListSaveSlots();
-    }
 
     /// <summary>
     /// Creates a new game in a new save slot and replaces the current engine.
     /// Must be called before any players connect, or after all disconnect.
     /// </summary>
-    public void StartNewGame(string slotName, long seed, string generatorId)
+    private void StartNewGame(string slotName, long seed, string generatorId)
     {
         if (_saveProvider == null) return;
 
-        var slot = _saveProvider.CreateSaveSlot(slotName, seed, generatorId);
-        _currentSlotId = slot.SlotId;
-
-        var baseGenerator = GeneratorRegistry.Create(generatorId, seed);
-        var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
-
-        _engine.Dispose();
-        _engine = new GameEngine(seed, persistentGen);
-        persistentGen.SetEngine(_engine);
-        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-
-        _chunkLastViewedTick.Clear();
-        _lastSaveTick = 0;
-
-        _saveProvider.SaveWorldMeta(_currentSlotId, new WorldSaveData
+        _restartGameTask = () =>
         {
-            Seed = seed,
-            GeneratorId = generatorId,
-            CurrentTick = 0,
-        });
+            StopEngineAndDispose();
 
-        _logWriter.WriteLine($"[Server] New game started: slot={slot.SlotId} name={slotName} seed={seed} gen={generatorId}");
+            var slot = _saveProvider.CreateSaveSlot(slotName, seed, generatorId);
+            _currentSlotId = slot.SlotId;
+
+            var baseGenerator = GeneratorRegistry.Create(generatorId, seed);
+            var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
+
+            _engine = new GameEngine(seed, persistentGen);
+            persistentGen.SetEngine(_engine);
+            StartEngine();
+
+            _saveProvider.SaveWorldMeta(_currentSlotId, new WorldSaveData
+            {
+                Seed = seed,
+                GeneratorId = generatorId,
+                CurrentTick = 0,
+            });
+
+            _logWriter.WriteLine($"[Server] New game started: slot={slot.SlotId} name={slotName} seed={seed} gen={generatorId}");
+        };
     }
 
     /// <summary>
     /// Loads a saved game from an existing slot, replacing the current engine.
     /// </summary>
-    public void LoadSaveSlot(string slotId)
+    private void LoadSaveSlot(string slotId)
     {
         if (_saveProvider == null) return;
 
-        var slot = _saveProvider.GetSaveSlot(slotId);
-        if (slot == null)
+        _restartGameTask = () =>
         {
-            _logWriter.WriteLine($"[Server] Save slot not found: {slotId}");
-            return;
-        }
+            StopEngineAndDispose();
 
-        var meta = _saveProvider.LoadWorldMeta(slotId);
-        if (meta == null)
-        {
-            _logWriter.WriteLine($"[Server] World metadata not found for slot: {slotId}");
-            return;
-        }
+            var slot = _saveProvider.GetSaveSlot(slotId);
+            if (slot == null)
+            {
+                _logWriter.WriteLine($"[Server] Save slot not found: {slotId}");
+                return;
+            }
 
-        _currentSlotId = slotId;
+            var meta = _saveProvider.LoadWorldMeta(slotId);
+            if (meta == null)
+            {
+                _logWriter.WriteLine($"[Server] World metadata not found for slot: {slotId}");
+                return;
+            }
 
-        var baseGenerator = GeneratorRegistry.Create(meta.GeneratorId, meta.Seed);
-        var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
+            _currentSlotId = slotId;
 
+            var baseGenerator = GeneratorRegistry.Create(meta.GeneratorId, meta.Seed);
+            var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
+
+            _engine = new GameEngine(meta.Seed, persistentGen);
+            persistentGen.SetEngine(_engine);
+            StartEngine();
+
+            _logWriter.WriteLine($"[Server] Loaded save: slot={slotId} name={slot.Name} seed={meta.Seed} gen={meta.GeneratorId} tick={meta.CurrentTick}");
+        };
+    }
+
+    private void StopEngineAndDispose()
+    {
+        if (!_engineStarted) return;
+        _logWriter.WriteLine($"[Server] Stopping game engine...");
         _engine.Dispose();
-        _engine = new GameEngine(meta.Seed, persistentGen);
-        persistentGen.SetEngine(_engine);
-        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-
         _chunkLastViewedTick.Clear();
         _lastSaveTick = 0;
+    }
 
-        _logWriter.WriteLine($"[Server] Loaded save: slot={slotId} name={slot.Name} seed={meta.Seed} gen={meta.GeneratorId} tick={meta.CurrentTick}");
+    private void StartEngine()
+    {
+        _logWriter.WriteLine($"[Server] Starting game engine...");
+        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        _engineStarted = true;
     }
 
     /// <summary>Deletes a save slot.</summary>
-    public void DeleteSaveSlot(string slotId)
+    private void DeleteSaveSlot(string slotId)
     {
         if (_saveProvider == null) return;
         _saveProvider.DeleteSaveSlot(slotId);
@@ -184,7 +243,7 @@ public class GameServer : IDisposable
     }
 
     /// <summary>Manually triggers a save of the current game state.</summary>
-    public void SaveCurrentGame()
+    private void SaveCurrentGame()
     {
         if (_saveProvider == null || _currentSlotId == null) return;
         PerformAutoSave();
@@ -209,7 +268,7 @@ public class GameServer : IDisposable
     }
 
     /// <summary>Processes a save command synchronously and returns the response.</summary>
-    public SaveGameResponseMsg ProcessSaveCommand(SaveGameCommandMsg cmd)
+    private SaveGameResponseMsg ProcessSaveCommand(SaveGameCommandMsg cmd)
     {
         if (_saveProvider == null)
             return new SaveGameResponseMsg { Action = cmd.Action, Success = false, Message = "No save provider configured" };
@@ -277,10 +336,12 @@ public class GameServer : IDisposable
     // Connection management
     // ──────────────────────────────────────────────
 
-    public PlayerConnection AddConnection(Func<byte[], Task> sendFunc)
+    public PlayerConnection AddConnection(Func<byte[], Task> sendFunc, Func<Task>? closeFunc = null)
     {
+        if (closeFunc == null)
+            closeFunc = () => Task.CompletedTask;
         long id = Interlocked.Increment(ref _nextConnectionId);
-        var conn = new PlayerConnection(id, sendFunc);
+        var conn = new PlayerConnection(id, sendFunc, closeFunc);
         if (!_connections.TryAdd(id, conn))
             throw new Exception("Failed to add connection");
         return conn;
@@ -464,6 +525,35 @@ public class GameServer : IDisposable
         {
             while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
             {
+                if (_restartGameTask != null)
+                {
+                    // Auto-save current game before switching
+                    if (_currentSlotId != null)
+                        PerformAutoSave();
+
+                    // Disconnect everyone before restarting the engine to avoid complications with entity references, chunk tracking, etc.
+                    _logWriter.WriteLine("[Server] Disconnecting players...");
+                    foreach (var conn in _connections.Values)
+                    {
+                        try
+                        {
+
+                            await conn.CloseAsync();
+                        }
+                        catch
+                        {
+                            /* connection closing */
+                        }
+                    }
+                    _connections.Clear();
+                    _logWriter.WriteLine("[Server] Restarting game engine...");
+
+                    _restartGameTask.Invoke();
+                    _restartGameTask = null;
+
+                    _logWriter.WriteLine("[Server] Game engine restarted...");
+                }
+
                 await ProcessCommandsAsync();
                 ProcessInputs();
                 _engine.Tick();
@@ -518,7 +608,8 @@ public class GameServer : IDisposable
                 _logWriter.WriteLine("[Server] Saving game on shutdown...");
                 PerformAutoSave();
             }
-            _logWriter.WriteLine("[Server] Shutting down server loop...");
+            StopEngineAndDispose();
+            _logWriter.WriteLine("[Server] Server loop stopped...");
         }
     }
 
@@ -778,7 +869,7 @@ public class GameServer : IDisposable
     {
         if (!IsRunning)
         {
-            _engine.Dispose();
+            StopEngineAndDispose();
             return;
         }
 
@@ -800,7 +891,7 @@ public class GameServer : IDisposable
             _logWriter.WriteLine("[Server] Server task did not shut down gracefully: " + e.ToString());
         }
 
-        _engine.Dispose();
+        StopEngineAndDispose();
 
         try
         {
@@ -810,5 +901,7 @@ public class GameServer : IDisposable
         {
             _logWriter.WriteLine("[Server] Cancellation token already disposed");
         }
+
+        _logWriter.WriteLine("[Server] Server disposed");
     }
 }
