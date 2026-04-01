@@ -2,6 +2,7 @@
 import { dotnet } from './_framework/dotnet.js';
 import { createCanvas2DRenderer } from './renderer-canvas2d.js';
 import { createWebGLRenderer } from './renderer-webgl.js';
+import { createIndexedDbSave } from './indexeddb-save.js';
 
 // ────────────────────────────────────────────────────────────────
 // Renderer selection: ?renderer=webgl enables WebGL, default = canvas2d
@@ -268,6 +269,9 @@ setModuleImports('game.js', {
             try { localStorage.removeItem('game_' + key); } catch { }
         },
     },
+
+    // ── IndexedDB save game persistence ────────────────────────────
+    indexedDb: createIndexedDbSave(),
 
     // ── Launch options ────────────────────────────────────────────
     // Mirrors the SDL CLI argument parser: read named URL query parameters so
