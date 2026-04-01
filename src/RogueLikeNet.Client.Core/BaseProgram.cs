@@ -201,10 +201,11 @@ public abstract class BaseProgram
 
     protected void CleanupConnection()
     {
-        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
-        _connection = null;
+        // Destroy server before connection to ensure that player data is saved before disconnecting
         _embeddedServer?.Dispose();
         _embeddedServer = null;
+        _connection?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
+        _connection = null;
     }
 
     protected sealed class NullMusicProvider : IMusicProvider

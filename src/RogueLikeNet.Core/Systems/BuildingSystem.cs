@@ -118,16 +118,34 @@ public class BuildingSystem
             if (inv.Items == null || inv.IsFull) continue;
 
             var tile = map.GetTile(targetX, targetY, targetZ);
-            if (tile.PlaceableItemId == ItemDefinitions.None) continue;
+            if (tile.PlaceableItemId == ItemDefinitions.None)
+            {
+                // No placeable here, but maybe there's an item on the floor to pick up?
+                var itemQuery = new QueryDescription().WithAll<Position, ItemData>();
+                var pickups = new List<Entity>();
+                world.Query(in itemQuery, (Entity item, ref Position iPos) =>
+                {
+                    if (iPos.X == targetX && iPos.Y == targetY && iPos.Z == targetZ)
+                        pickups.Add(item);
+                });
 
-            var itemData = new ItemData
+                foreach (var item in pickups)
+                {
+                    var floorItemData = world.Get<ItemData>(item);
+                    if (InventorySystem.AddItemToInventory(world, player, floorItemData))
+                        world.Add<DeadTag>(item);
+                }
+                continue;
+            }
+
+            var placeableItemData = new ItemData
             {
                 ItemTypeId = tile.PlaceableItemId,
                 Rarity = ItemDefinitions.RarityCommon,
                 StackCount = 1,
             };
 
-            if (!InventorySystem.AddItemToInventory(world, player, itemData))
+            if (!InventorySystem.AddItemToInventory(world, player, placeableItemData))
                 continue;
 
             // Only clear the placeable fields — base tile stays unchanged

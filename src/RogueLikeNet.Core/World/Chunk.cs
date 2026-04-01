@@ -30,6 +30,9 @@ public class Chunk
 
     public void ClearDirtyTiles() => _dirtyTiles.Clear();
 
+    /// <summary>Marks the chunk as modified (e.g. entity added/removed) without a specific tile.</summary>
+    public void MarkModified() => IsModifiedSinceLastSave = true;
+
     /// <summary>Clears the save-dirty flag after persisting.</summary>
     public void ClearSaveFlag() => IsModifiedSinceLastSave = false;
 

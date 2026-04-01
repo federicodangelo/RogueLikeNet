@@ -96,6 +96,13 @@ public class WorldMap
         SetTile(worldX, worldY, worldZ, tile);
     }
 
+    public void SetTileChunkDirty(int x, int y, int z)
+    {
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
+        TryGetChunk(cx, cy, cz)?.MarkModified();
+    }
+
+
     /// <summary>Collects all dirty tile updates from loaded chunks and clears the dirty state.</summary>
     public List<(int WorldX, int WorldY, int WorldZ, TileInfo Tile)> FlushDirtyTiles()
     {

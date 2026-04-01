@@ -432,8 +432,18 @@ public class GameEngine : IDisposable
         {
             toDestroy.Add(entity);
         });
+        var deadItemQuery = new QueryDescription().WithAll<DeadTag, ItemData>();
+        _ecsWorld.Query(in deadItemQuery, (Entity entity) =>
+        {
+            toDestroy.Add(entity);
+        });
         foreach (var entity in toDestroy)
         {
+            if (_ecsWorld.Has<Position>(entity))
+            {
+                ref var pos = ref _ecsWorld.Get<Position>(entity);
+                _worldMap.SetTileChunkDirty(pos.X, pos.Y, pos.Z);
+            }
             _ecsWorld.Destroy(entity);
         }
     }

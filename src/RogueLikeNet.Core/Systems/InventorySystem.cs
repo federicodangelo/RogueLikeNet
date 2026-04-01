@@ -35,12 +35,12 @@ public class InventorySystem
 
             if (inv.Items == null || inv.IsFull) return;
 
-            int px = pPos.X, py = pPos.Y;
+            int px = pPos.X, py = pPos.Y, pz = pPos.Z;
 
             var itemQuery = new QueryDescription().WithAll<Position, ItemData>();
             world.Query(in itemQuery, (Entity item, ref Position iPos) =>
             {
-                if (iPos.X == px && iPos.Y == py)
+                if (iPos.X == px && iPos.Y == py && iPos.Z == pz)
                     pickups.Add((player, item));
             });
         });
@@ -54,7 +54,7 @@ public class InventorySystem
 
             var itemData = world.Get<ItemData>(item);
             if (AddItemToInventory(world, player, itemData))
-                world.Destroy(item);
+                world.Add<DeadTag>(item);
         }
     }
 
