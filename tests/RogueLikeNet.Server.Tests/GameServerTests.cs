@@ -213,10 +213,11 @@ public class GameServerTests
     }
 
     [Fact]
-    public void SpawnPlayerForConnection_InvalidConnection_NoOp()
+    public void SpawnPlayerForConnection_InvalidConnection_Throws()
     {
         using var loop = new TestGameServer(42, _gen);
-        loop.SpawnPlayerForConnection(9999); // Non-existent connection
+        var exception = Assert.Throws<Exception>(() => loop.SpawnPlayerForConnection(9999)); // Non-existent connection
+        Assert.Equal($"Connection not found: {9999}", exception.Message);
     }
 
     [Fact]
