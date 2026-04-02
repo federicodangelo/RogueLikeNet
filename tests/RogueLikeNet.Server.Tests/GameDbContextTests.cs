@@ -25,14 +25,14 @@ public class GameDbContextTests : IDisposable
     [Fact]
     public void ProviderCreation_CreatesDatabase()
     {
-        _ = new SqliteSaveGameProvider(_dbPath);
+        using var saveGameProvider = new SqliteSaveGameProvider(_dbPath);
         Assert.True(File.Exists(_dbPath));
     }
 
     [Fact]
     public void Schema_HasAllTables()
     {
-        _ = new SqliteSaveGameProvider(_dbPath);
+        using var saveGameProvider = new SqliteSaveGameProvider(_dbPath);
         using var conn = new SqliteConnection($"Data Source={_dbPath}");
         conn.Open();
         var tables = QueryScalar(conn, "SELECT group_concat(name) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
@@ -45,7 +45,7 @@ public class GameDbContextTests : IDisposable
     [Fact]
     public void Schema_ChunkCoordinates_UniquePerSlot()
     {
-        _ = new SqliteSaveGameProvider(_dbPath);
+        using var saveGameProvider = new SqliteSaveGameProvider(_dbPath);
         using var conn = new SqliteConnection($"Data Source={_dbPath}");
         conn.Open();
         Execute(conn, "INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData) VALUES ('s1', 1, 1, 0, X'01')");
@@ -56,7 +56,7 @@ public class GameDbContextTests : IDisposable
     [Fact]
     public void Schema_PlayerName_UniquePerSlot()
     {
-        _ = new SqliteSaveGameProvider(_dbPath);
+        using var saveGameProvider = new SqliteSaveGameProvider(_dbPath);
         using var conn = new SqliteConnection($"Data Source={_dbPath}");
         conn.Open();
         Execute(conn, "INSERT INTO Players (SlotId, PlayerName) VALUES ('s1', 'dup')");

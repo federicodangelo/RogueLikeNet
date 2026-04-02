@@ -17,6 +17,7 @@ public class SqliteSaveGameProviderTests : IDisposable
 
     public void Dispose()
     {
+        _provider.Dispose();
         SqliteConnection.ClearAllPools();
         try { if (File.Exists(_dbPath)) File.Delete(_dbPath); } catch { }
     }

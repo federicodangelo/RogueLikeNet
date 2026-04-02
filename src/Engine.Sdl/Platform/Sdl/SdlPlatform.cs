@@ -11,7 +11,7 @@ public class SdlPlatform : BasePlatform
     private nint _window;
     private nint _renderer;
 
-    public SdlPlatform(string windowTitle, int windowWidth, int windowHeight,
+    public SdlPlatform(string windowTitle, int windowWidth, int windowHeight, string gameFolderName,
         IMusicProvider musicProvider, ISfxProvider sfxProvider,
         float masterVolume = 0.5f, float musicVolume = 0.4f, float sfxVolume = 0.7f)
         : base(windowTitle)
@@ -41,7 +41,7 @@ public class SdlPlatform : BasePlatform
         SDL.SetRenderVSync(renderer, 1);
 
         Textures = new SdlTextureManager(renderer);
-        SpriteRenderer = new SdlSpriteRenderer(window, renderer, (SdlTextureManager)Textures);
+        SpriteRenderer = new SdlSpriteRenderer(window, renderer, (SdlTextureManager)Textures, gameFolderName);
         InputManager = new SdlInputManager(() => (WindowWidth, WindowHeight));
         AudioManager = new SdlAudioManager(musicProvider, sfxProvider,
             masterVolume: masterVolume,

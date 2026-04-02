@@ -228,4 +228,6 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
             Console.Error.WriteLine($"[IndexedDB] Write error: {ex.Message}");
         }
     }
+
+    public void Dispose() { }
 }

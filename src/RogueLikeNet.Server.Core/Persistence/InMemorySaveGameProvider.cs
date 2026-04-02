@@ -111,4 +111,6 @@ public class InMemorySaveGameProvider : ISaveGameProvider
     {
         return ((long)(x & 0xFFFFFF) << 32) | ((long)(y & 0xFFFFFF) << 8) | (long)(z & 0xFF);
     }
+
+    public void Dispose() { }
 }

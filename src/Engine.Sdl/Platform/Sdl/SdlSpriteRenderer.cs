@@ -13,10 +13,12 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
     private readonly nint _renderer;
     private readonly nint _window;
     private readonly SdlTileMapRenderer _tileMapRenderer;
+    private readonly string _screenshotsFolderName;
 
-    public SdlSpriteRenderer(nint window, nint renderer, SdlTextureManager textures)
+    public SdlSpriteRenderer(nint window, nint renderer, SdlTextureManager textures, string screenshotsFolderName)
         : base(new SdlFontRenderer(renderer, textures), textures)
     {
+        _screenshotsFolderName = screenshotsFolderName;
         _window = window;
         _renderer = renderer;
         // Enable alpha blending so draw calls with a < 255 are translucent
@@ -540,7 +542,7 @@ public class SdlSpriteRenderer : BaseSpriteRenderer
             {
                 var dir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                    "SpaceExplorationGame", "Screenshots");
+                    _screenshotsFolderName, "Screenshots");
                 Directory.CreateDirectory(dir);
 
                 var fileName = $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png";

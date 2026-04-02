@@ -4,7 +4,7 @@ namespace RogueLikeNet.Server.Persistence;
 /// Abstraction for save game storage. Implementations: SQLite (desktop/server), in-memory (web).
 /// All methods are synchronous — they run on the server tick thread.
 /// </summary>
-public interface ISaveGameProvider
+public interface ISaveGameProvider : IDisposable
 {
     List<SaveSlotInfo> ListSaveSlots();
     SaveSlotInfo CreateSaveSlot(string name, long seed, string generatorId);

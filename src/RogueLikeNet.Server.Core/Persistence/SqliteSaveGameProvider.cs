@@ -8,25 +8,28 @@ namespace RogueLikeNet.Server.Persistence;
 /// </summary>
 public class SqliteSaveGameProvider : ISaveGameProvider
 {
-    private readonly string _connectionString;
+    private readonly SqliteConnection _conn;
 
-    public SqliteSaveGameProvider(string dbPath = "game.db")
+    private readonly TextWriter _logWriter;
+
+    public SqliteSaveGameProvider(string dbPath = "game.db", TextWriter? logWriter = null)
     {
-        _connectionString = new SqliteConnectionStringBuilder { DataSource = dbPath }.ToString();
+        _logWriter = logWriter ?? TextWriter.Null;
+        _conn = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = dbPath }.ToString());
+        _conn.Open();
         EnsureCreated();
+        _logWriter.WriteLine($"[SqliteSaveGameProvider] Initialized SQLite SaveGameProvider with DB at '{dbPath}'");
     }
 
-    private SqliteConnection OpenConnection()
+    public void Dispose()
     {
-        var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        return conn;
+        _conn.Dispose();
+        _logWriter.WriteLine("[SqliteSaveGameProvider] Disposed SQLite SaveGameProvider and closed DB connection");
     }
 
     private void EnsureCreated()
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
             CREATE TABLE IF NOT EXISTS SaveSlots (
                 SlotId TEXT PRIMARY KEY,
@@ -79,8 +82,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public List<SaveSlotInfo> ListSaveSlots()
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT SlotId, Name, Seed, GeneratorId, CreatedAt, LastSavedAt FROM SaveSlots";
         using var reader = cmd.ExecuteReader();
         var list = new List<SaveSlotInfo>();
@@ -103,8 +105,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
     {
         var slotId = Guid.NewGuid().ToString("N");
         var now = DateTime.UtcNow;
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "INSERT INTO SaveSlots (SlotId, Name, Seed, GeneratorId, CreatedAt, LastSavedAt) VALUES ($slotId, $name, $seed, $genId, $created, $saved)";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         cmd.Parameters.AddWithValue("$name", name);
@@ -126,8 +127,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public SaveSlotInfo? GetSaveSlot(string slotId)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT SlotId, Name, Seed, GeneratorId, CreatedAt, LastSavedAt FROM SaveSlots WHERE SlotId = $slotId";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         using var reader = cmd.ExecuteReader();
@@ -145,19 +145,17 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public void DeleteSaveSlot(string slotId)
     {
-        using var conn = OpenConnection();
-        using var transaction = conn.BeginTransaction();
-        Execute(conn, "DELETE FROM Chunks WHERE SlotId = $slotId", ("$slotId", slotId));
-        Execute(conn, "DELETE FROM Players WHERE SlotId = $slotId", ("$slotId", slotId));
-        Execute(conn, "DELETE FROM WorldMetas WHERE SlotId = $slotId", ("$slotId", slotId));
-        Execute(conn, "DELETE FROM SaveSlots WHERE SlotId = $slotId", ("$slotId", slotId));
+        using var transaction = _conn.BeginTransaction();
+        Execute("DELETE FROM Chunks WHERE SlotId = $slotId", ("$slotId", slotId));
+        Execute("DELETE FROM Players WHERE SlotId = $slotId", ("$slotId", slotId));
+        Execute("DELETE FROM WorldMetas WHERE SlotId = $slotId", ("$slotId", slotId));
+        Execute("DELETE FROM SaveSlots WHERE SlotId = $slotId", ("$slotId", slotId));
         transaction.Commit();
     }
 
     public void SaveWorldMeta(string slotId, WorldSaveData data)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
             INSERT INTO WorldMetas (SlotId, Seed, GeneratorId, CurrentTick)
             VALUES ($slotId, $seed, $genId, $tick)
@@ -169,14 +167,13 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         cmd.Parameters.AddWithValue("$tick", data.CurrentTick);
         cmd.ExecuteNonQuery();
 
-        Execute(conn, "UPDATE SaveSlots SET LastSavedAt = $now WHERE SlotId = $slotId",
+        Execute("UPDATE SaveSlots SET LastSavedAt = $now WHERE SlotId = $slotId",
             ("$now", DateTime.UtcNow.ToString("O")), ("$slotId", slotId));
     }
 
     public WorldSaveData? LoadWorldMeta(string slotId)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT Seed, GeneratorId, CurrentTick FROM WorldMetas WHERE SlotId = $slotId";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         using var reader = cmd.ExecuteReader();
@@ -191,11 +188,10 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public void SaveChunks(string slotId, List<ChunkSaveEntry> chunks)
     {
-        using var conn = OpenConnection();
-        using var transaction = conn.BeginTransaction();
+        using var transaction = _conn.BeginTransaction();
         foreach (var chunk in chunks)
         {
-            using var cmd = conn.CreateCommand();
+            using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
                 INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData, EntityData)
                 VALUES ($slotId, $cx, $cy, $cz, $tile, $entity)
@@ -214,8 +210,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public ChunkSaveEntry? LoadChunk(string slotId, int chunkX, int chunkY, int chunkZ)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT ChunkX, ChunkY, ChunkZ, TileData, EntityData FROM Chunks WHERE SlotId=$slotId AND ChunkX=$cx AND ChunkY=$cy AND ChunkZ=$cz";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         cmd.Parameters.AddWithValue("$cx", chunkX);
@@ -235,11 +230,10 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public void SavePlayers(string slotId, List<PlayerSaveData> players)
     {
-        using var conn = OpenConnection();
-        using var transaction = conn.BeginTransaction();
+        using var transaction = _conn.BeginTransaction();
         foreach (var p in players)
         {
-            using var cmd = conn.CreateCommand();
+            using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
                 INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson)
                 VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots)
@@ -274,8 +268,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public PlayerSaveData? LoadPlayer(string slotId, string playerName)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM Players WHERE SlotId=$slotId AND PlayerName=$name";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         cmd.Parameters.AddWithValue("$name", playerName);
@@ -286,8 +279,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
 
     public List<PlayerSaveData> LoadAllPlayers(string slotId)
     {
-        using var conn = OpenConnection();
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM Players WHERE SlotId=$slotId";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         using var reader = cmd.ExecuteReader();
@@ -317,9 +309,9 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         QuickSlotsJson = reader.GetString(reader.GetOrdinal("QuickSlotsJson")),
     };
 
-    private static void Execute(SqliteConnection conn, string sql, params (string name, object value)[] parameters)
+    private void Execute(string sql, params (string name, object value)[] parameters)
     {
-        using var cmd = conn.CreateCommand();
+        using var cmd = _conn.CreateCommand();
         cmd.CommandText = sql;
         foreach (var (name, value) in parameters)
             cmd.Parameters.AddWithValue(name, value);

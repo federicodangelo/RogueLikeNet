@@ -6,7 +6,7 @@ var app = builder.Build();
 
 // Create game loop with SQLite persistence
 long worldSeed = 12345; // TODO: configurable
-var saveProvider = new SqliteSaveGameProvider("game.db");
+using var saveProvider = new SqliteSaveGameProvider("game.db");
 var gameServer = new GameServer(worldSeed, logWriter: Console.Out, saveProvider: saveProvider);
 
 // Auto-load last save or create a new default slot
@@ -37,4 +37,3 @@ app.Lifetime.ApplicationStopping.Register(() =>
 });
 
 app.Run();
-
