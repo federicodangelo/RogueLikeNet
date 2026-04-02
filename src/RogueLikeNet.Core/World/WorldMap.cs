@@ -7,17 +7,25 @@ namespace RogueLikeNet.Core.World;
 
 /// <summary>
 /// Manages all chunks in the game world. Generates new chunks on demand.
-/// Owns door auto-close timers.
+/// Tracks dynamic tiles (e.g. open doors with auto-close timers) for efficient per-tick processing.
 /// </summary>
 public class WorldMap
 {
-    // Grace period (in ticks) before an opened door can auto-close.
-    private const int DoorGraceTicks = 20;
+    /// <summary>
+    /// Grace period (in ticks) before an opened door auto-closes.
+    /// Stored directly in TileInfo.PlaceableItemExtra so it survives save/load.
+    /// </summary>
+    public const int DoorGraceTicks = 20;
 
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly HashSet<long> _chunksDontExist = new();
-    private readonly Dictionary<long, int> _openDoorTimers = new();
     private readonly long _seed;
+
+    /// <summary>
+    /// Tracks world coordinates of tiles that need per-tick processing, grouped by chunk key.
+    /// Used to avoid scanning every tile every tick.
+    /// </summary>
+    private readonly Dictionary<long, HashSet<long>> _dynamicTilesByChunk = new();
 
     public long Seed => _seed;
 
@@ -48,6 +56,7 @@ public class WorldMap
 
         var result = generator.Generate(chunkX, chunkY, chunkZ);
         _chunks[key] = result.Chunk;
+        ScanChunkForDynamicTiles(result.Chunk);
         return (result.Chunk, result);
     }
 
@@ -84,8 +93,17 @@ public class WorldMap
         if (chunk == null) return;
         int lx = worldX - cx * Chunk.Size;
         int ly = worldY - cy * Chunk.Size;
+
+        bool wasDynamic = IsDynamicTile(chunk.Tiles[lx, ly]);
+        bool isDynamic = IsDynamicTile(tile);
+
         chunk.Tiles[lx, ly] = tile;
         chunk.MarkTileDirty(worldX, worldY, worldZ);
+
+        if (isDynamic && !wasDynamic)
+            TrackDynamicTile(worldX, worldY, worldZ);
+        else if (!isDynamic && wasDynamic)
+            UntrackDynamicTile(worldX, worldY, worldZ);
     }
 
     public void SetPlaceable(int worldX, int worldY, int worldZ, int placeableId, int extraData = 0)
@@ -131,6 +149,7 @@ public class WorldMap
     {
         long key = Position.PackCoord(chunkX, chunkY, chunkZ);
         _chunks.Remove(key);
+        _dynamicTilesByChunk.Remove(key);
     }
 
     /// <summary>Returns all loaded chunks that have been modified since last save.</summary>
@@ -150,32 +169,90 @@ public class WorldMap
     {
         long key = Position.PackCoord(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
         _chunks[key] = chunk;
+        ScanChunkForDynamicTiles(chunk);
     }
 
     /// <summary>
-    /// Opens a closed door at the given position. Starts the auto-close grace timer.
+    /// Opens a closed door at the given position. Sets the auto-close countdown in PlaceableItemExtra.
     /// </summary>
     public void OpenDoor(int worldX, int worldY, int worldZ)
     {
         var tile = GetTile(worldX, worldY, worldZ);
         if (!IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra)) return;
-        tile.PlaceableItemExtra = 1; // open
+        tile.PlaceableItemExtra = DoorGraceTicks; // ticks until auto-close
         SetTile(worldX, worldY, worldZ, tile);
-        _openDoorTimers[Position.PackCoord(worldX, worldY, worldZ)] = DoorGraceTicks;
     }
 
     /// <summary>
-    /// Per-tick update: auto-closes doors that are no longer occupied.
+    /// Per-tick update: processes all dynamic tiles (e.g. auto-closing doors).
     /// </summary>
     public void Update(Arch.Core.World ecsWorld)
     {
-        ProcessDoorTimers(ecsWorld);
+        ProcessDynamicTiles(ecsWorld);
     }
 
-    private void ProcessDoorTimers(Arch.Core.World ecsWorld)
+    /// <summary>Returns true if the given world position is tracked as a dynamic tile.</summary>
+    public bool IsDynamicTileTracked(int worldX, int worldY, int worldZ)
     {
-        if (_openDoorTimers.Count == 0) return;
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
+        long chunkKey = Position.PackCoord(cx, cy, cz);
+        if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set)) return false;
+        return set.Contains(Position.PackCoord(worldX, worldY, worldZ));
+    }
 
+    /// <summary>Returns true if a tile has a stateful placeable in a non-default state (e.g. open door).</summary>
+    private static bool IsDynamicTile(TileInfo tile)
+    {
+        if (tile.PlaceableItemId == 0) return false;
+        var def = PlaceableDefinitions.Get(tile.PlaceableItemId);
+        return def.HasState && tile.PlaceableItemExtra > 0;
+    }
+
+    private void TrackDynamicTile(int worldX, int worldY, int worldZ)
+    {
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
+        long chunkKey = Position.PackCoord(cx, cy, cz);
+        if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
+        {
+            set = new HashSet<long>();
+            _dynamicTilesByChunk[chunkKey] = set;
+        }
+        set.Add(Position.PackCoord(worldX, worldY, worldZ));
+    }
+
+    private void UntrackDynamicTile(int worldX, int worldY, int worldZ)
+    {
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
+        long chunkKey = Position.PackCoord(cx, cy, cz);
+        if (_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
+        {
+            set.Remove(Position.PackCoord(worldX, worldY, worldZ));
+            if (set.Count == 0)
+                _dynamicTilesByChunk.Remove(chunkKey);
+        }
+    }
+
+    private void ScanChunkForDynamicTiles(Chunk chunk)
+    {
+        for (int lx = 0; lx < Chunk.Size; lx++)
+        {
+            for (int ly = 0; ly < Chunk.Size; ly++)
+            {
+                if (IsDynamicTile(chunk.Tiles[lx, ly]))
+                {
+                    int wx = chunk.ChunkX * Chunk.Size + lx;
+                    int wy = chunk.ChunkY * Chunk.Size + ly;
+                    TrackDynamicTile(wx, wy, chunk.ChunkZ);
+                }
+            }
+        }
+    }
+
+    private void ProcessDynamicTiles(Arch.Core.World ecsWorld)
+    {
+        if (_dynamicTilesByChunk.Count == 0) return;
+
+        // Build set of occupied positions for door blocking checks
         var occupied = new HashSet<long>();
         var posQuery = new QueryDescription().WithAll<Position, Health>();
         ecsWorld.Query(in posQuery, (ref Position p, ref Health h) =>
@@ -184,30 +261,54 @@ public class WorldMap
                 occupied.Add(Position.PackCoord(p.X, p.Y, p.Z));
         });
 
-        var toRemove = new List<long>();
-        var updates = new List<(long Key, int Ticks)>();
-        foreach (var (key, ticksLeft) in _openDoorTimers)
+        // Snapshot all tile keys to avoid modifying collections during iteration
+        var allTiles = new List<(long ChunkKey, long TileKey)>();
+        foreach (var (chunkKey, tileCoords) in _dynamicTilesByChunk)
+            foreach (var tileKey in tileCoords)
+                allTiles.Add((chunkKey, tileKey));
+
+        foreach (var (chunkKey, tileKey) in allTiles)
         {
-            var (x, y, z) = Position.UnpackCoord(key);
-            var tile = GetTile(x, y, z);
-            if (!IsDoor(tile.PlaceableItemId) || tile.PlaceableItemExtra != 1) { toRemove.Add(key); continue; }
+            var (x, y, z) = Position.UnpackCoord(tileKey);
+            var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
+            var chunk = TryGetChunk(cx, cy, cz);
+            if (chunk == null) { UntrackDynamicTile(x, y, z); continue; }
 
-            int next = ticksLeft - 1;
-            if (occupied.Contains(key) || next > 0)
+            int lx = x - cx * Chunk.Size;
+            int ly = y - cy * Chunk.Size;
+            ref var tile = ref chunk.Tiles[lx, ly];
+
+            if (IsDoor(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0)
             {
-                updates.Add((key, Math.Max(0, next)));
-                continue;
+                int next = tile.PlaceableItemExtra - 1;
+                if (next > 0)
+                {
+                    // Still counting down — quiet update (no network sync needed)
+                    tile.PlaceableItemExtra = next;
+                    chunk.MarkModified();
+                }
+                else if (!occupied.Contains(tileKey))
+                {
+                    // Grace expired and unoccupied — close the door
+                    tile.PlaceableItemExtra = 0;
+                    chunk.MarkTileDirty(x, y, z);
+                    UntrackDynamicTile(x, y, z);
+                }
+                else
+                {
+                    // Occupied — keep door open at minimum countdown
+                    if (tile.PlaceableItemExtra != 1)
+                    {
+                        tile.PlaceableItemExtra = 1;
+                        chunk.MarkModified();
+                    }
+                }
             }
-
-            // Grace expired and unoccupied — close the door
-            tile.PlaceableItemExtra = 0; // closed
-            SetTile(x, y, z, tile);
-            toRemove.Add(key);
+            else
+            {
+                // No longer a dynamic tile
+                UntrackDynamicTile(x, y, z);
+            }
         }
-
-        foreach (var key in toRemove)
-            _openDoorTimers.Remove(key);
-        foreach (var (key, ticks) in updates)
-            _openDoorTimers[key] = ticks;
     }
 }

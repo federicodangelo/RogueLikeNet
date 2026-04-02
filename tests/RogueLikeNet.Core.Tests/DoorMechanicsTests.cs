@@ -76,10 +76,10 @@ public class DoorMechanicsTests
         input.TargetY = 0;
         engine.Tick();
 
-        // Door should now be open (PlaceableItemExtra = 1)
+        // Door should now be open (PlaceableItemExtra > 0 = ticks remaining)
         var tile = engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
-        Assert.Equal(1, tile.PlaceableItemExtra);
+        Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
         ref var pos = ref engine.EcsWorld.Get<Position>(player);
@@ -114,7 +114,9 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra); // open
+        Assert.True(PlaceableDefinitions.IsDoorOpen(
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra)); // open
 
         // Tick 2: Walk onto door
         ref var delay = ref engine.EcsWorld.Get<MoveDelay>(player);
@@ -139,7 +141,9 @@ public class DoorMechanicsTests
         Assert.Equal(doorX + 1, pos2.X);
 
         // Door should still be open during grace period
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
+        Assert.True(PlaceableDefinitions.IsDoorOpen(
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
 
         // Tick enough times for grace period to expire (6 ticks grace from open)
         for (int i = 0; i < 30; i++)
@@ -167,11 +171,15 @@ public class DoorMechanicsTests
         input.TargetX = 1;
         input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
+        Assert.True(PlaceableDefinitions.IsDoorOpen(
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
 
         // One more tick — door should stay open (grace period active)
         engine.Tick();
-        Assert.Equal(1, engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra);
+        Assert.True(PlaceableDefinitions.IsDoorOpen(
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
+            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
     }
 
     [Fact]
