@@ -91,7 +91,7 @@ public sealed class GameWorldRenderer
                     {
                         var worldDoorX = cameraCenterX - visibleCols / 2 + col;
                         var worldDoorY = cameraCenterY - visibleRows / 2 + row;
-                        glyphId = GetDoorGlyph(state, worldDoorX, worldDoorY);
+                        glyphId = GetDoorGlyph(state, tile.PlaceableItemExtra, worldDoorX, worldDoorY);
                     }
 
                     var ch = AsciiDraw.GlyphIdToChar(glyphId);
@@ -283,8 +283,14 @@ public sealed class GameWorldRenderer
     /// Determines the door glyph based on surrounding wall tiles (client-side only).
     /// Walls N/S → vertical |, walls E/W → horizontal -.
     /// </summary>
-    private static int GetDoorGlyph(ClientGameState state, int x, int y)
+    private static int GetDoorGlyph(ClientGameState state, int extra, int x, int y)
     {
+        if (extra > 0)
+        {
+            // Open door!
+            return TileDefinitions.GlyphDoor;
+        }
+
         bool wallN = IsWallLike(state.GetTile(x, y - 1));
         bool wallS = IsWallLike(state.GetTile(x, y + 1));
         bool wallE = IsWallLike(state.GetTile(x + 1, y));

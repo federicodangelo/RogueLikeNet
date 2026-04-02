@@ -10,10 +10,10 @@ public static class TileDefinitions
     public const int GlyphVoid = 0;       // null character
     public const int GlyphFloor = 250;    // middle dot ·
     public const int GlyphWall = 219;     // full block █
-    public const int GlyphDoor = 43;      // + (open door, fallback)
+    public const int GlyphDoor = 0;      // " " (open door, fallback)
     public const int GlyphDoorClosed = 197; // ┼ (closed door, fallback)
-    public const int GlyphDoorVertical = 124;   // | (door between N/S walls)
-    public const int GlyphDoorHorizontal = 45;  // - (door between E/W walls)
+    public const int GlyphDoorVertical = 179;   // | (door between N/S walls)
+    public const int GlyphDoorHorizontal = 196;  // ─ (door between E/W walls)
     public const int GlyphStairsDown = 62; // >
     public const int GlyphStairsUp = 60;   // <
     public const int GlyphWater = 247;    // ≈
