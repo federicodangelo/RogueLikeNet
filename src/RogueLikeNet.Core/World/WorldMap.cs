@@ -84,6 +84,8 @@ public class WorldMap
                 if (!m.IsDead) set.Add(Position.PackCoord(m.X, m.Y, m.Z));
             foreach (var n in chunk.TownNpcs)
                 if (!n.IsDead) set.Add(Position.PackCoord(n.X, n.Y, n.Z));
+            foreach (var n in chunk.ResourceNodes)
+                if (!n.IsDead) set.Add(Position.PackCoord(n.X, n.Y, n.Z));
         }
         return set;
     }
