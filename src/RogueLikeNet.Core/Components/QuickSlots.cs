@@ -1,12 +1,9 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
 /// <summary>
 /// Stores quick-use slot assignments. Each slot holds an inventory index (-1 = empty).
 /// Decoupled from inventory position — the player explicitly assigns items.
 /// </summary>
-[Component]
 public struct QuickSlots
 {
     public const int SlotCount = 4;

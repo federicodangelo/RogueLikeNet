@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using CommunityToolkit.HighPerformance;
+using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.World;
 
@@ -13,6 +13,13 @@ public class Chunk
     public TileInfo[,] Tiles { get; }
 
     public int[,] LightLevels { get; }
+
+    // ── Entity storage ────────────────────────────────────────────────
+    public List<MonsterEntity> Monsters { get; } = new();
+    public List<GroundItemEntity> GroundItems { get; } = new();
+    public List<ResourceNodeEntity> ResourceNodes { get; } = new();
+    public List<TownNpcEntity> TownNpcs { get; } = new();
+    public List<ElementEntity> Elements { get; } = new();
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
     private readonly List<(int WorldX, int WorldY, int WorldZ)> _dirtyTiles = new();
@@ -78,6 +85,25 @@ public class Chunk
 
     public void ResetLight()
     {
-        LightLevels.AsSpan().Clear();
+        Array.Clear(LightLevels, 0, LightLevels.Length);
+    }
+
+    /// <summary>Removes dead entities from all lists (compacts in-place).</summary>
+    public void RemoveDeadEntities()
+    {
+        Monsters.RemoveAll(m => m.IsDead);
+        GroundItems.RemoveAll(i => i.IsDead);
+        ResourceNodes.RemoveAll(r => r.IsDead);
+        TownNpcs.RemoveAll(n => n.IsDead);
+    }
+
+    /// <summary>Clears all entity lists (used when unloading a chunk).</summary>
+    public void ClearEntities()
+    {
+        Monsters.Clear();
+        GroundItems.Clear();
+        ResourceNodes.Clear();
+        TownNpcs.Clear();
+        Elements.Clear();
     }
 }

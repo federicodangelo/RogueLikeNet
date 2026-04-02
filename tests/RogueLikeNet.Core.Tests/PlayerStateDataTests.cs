@@ -51,13 +51,11 @@ public class PlayerStateDataTests
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.PickUp;
+        player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input2.ActionType = ActionTypes.UseItem;
-        input2.ItemSlot = 0;
+        player.Input.ActionType = ActionTypes.UseItem;
+        player.Input.ItemSlot = 0;
         engine.Tick();
 
         var hud = engine.GetPlayerStateData(player);
@@ -77,13 +75,11 @@ public class PlayerStateDataTests
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
         engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.PickUp;
+        player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input2.ActionType = ActionTypes.UseItem;
-        input2.ItemSlot = 0;
+        player.Input.ActionType = ActionTypes.UseItem;
+        player.Input.ItemSlot = 0;
         engine.Tick();
 
         var hud = engine.GetPlayerStateData(player);
@@ -103,8 +99,7 @@ public class PlayerStateDataTests
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
         engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.PickUp;
+        player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         var hud = engine.GetPlayerStateData(player);
@@ -124,8 +119,7 @@ public class PlayerStateDataTests
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 2, sx, sy, Position.DefaultZ);
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.PickUp;
+        player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         var hud = engine.GetPlayerStateData(player);

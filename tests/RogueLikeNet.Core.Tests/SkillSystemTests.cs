@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
@@ -24,17 +23,14 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         // Damage the player
-        ref var health = ref engine.EcsWorld.Get<Health>(player);
-        health.Current = 50;
+        player.Health.Current = 50;
 
         // Use Heal skill (slot 1 for Mage)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1; // Heal is slot 1 for Mage
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1; // Heal is slot 1 for Mage
         engine.Tick();
 
-        ref var healthAfter = ref engine.EcsWorld.Get<Health>(player);
-        Assert.True(healthAfter.Current > 50, $"Health {healthAfter.Current} should be > 50 after Heal");
+        Assert.True(player.Health.Current > 50, $"Health {player.Health.Current} should be > 50 after Heal");
     }
 
     [Fact]
@@ -44,16 +40,13 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
-        ref var health = ref engine.EcsWorld.Get<Health>(player);
-        health.Current = 50;
+        player.Health.Current = 50;
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1; // Heal
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1; // Heal
         engine.Tick();
 
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.True(slots.Cooldown1 > 0, "Cooldown should be set after using Heal skill");
+        Assert.True(player.Skills.Cooldown1 > 0, "Cooldown should be set after using Heal skill");
     }
 
     [Fact]
@@ -63,21 +56,17 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
-        ref var health = ref engine.EcsWorld.Get<Health>(player);
-        health.Current = 50;
+        player.Health.Current = 50;
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
         engine.Tick();
 
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        int cdAfterUse = slots.Cooldown1;
+        int cdAfterUse = player.Skills.Cooldown1;
 
         engine.Tick(); // one more tick
 
-        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.True(slotsAfter.Cooldown1 < cdAfterUse, "Cooldown should decrease each tick");
+        Assert.True(player.Skills.Cooldown1 < cdAfterUse, "Cooldown should decrease each tick");
     }
 
     [Fact]
@@ -88,19 +77,16 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
         // PowerStrike is slot 0 for Warrior, target direction (1, 0)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.True(mHealthAfter.Current < hpBefore, $"Monster HP {mHealthAfter.Current} should be < {hpBefore} after PowerStrike");
+        Assert.True(monster.Health.Current < hpBefore, $"Monster HP {monster.Health.Current} should be < {hpBefore} after PowerStrike");
     }
 
     [Fact]
@@ -111,19 +97,16 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
         var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
         // ShieldBash is slot 1 for Warrior
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.True(mHealthAfter.Current < hpBefore, $"Monster HP {mHealthAfter.Current} should be < {hpBefore} after ShieldBash");
+        Assert.True(monster.Health.Current < hpBefore, $"Monster HP {monster.Health.Current} should be < {hpBefore} after ShieldBash");
     }
 
     [Fact]
@@ -134,19 +117,16 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Rogue);
         var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
         // Backstab is slot 0 for Rogue
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.True(mHealthAfter.Current < hpBefore, $"Monster HP {mHealthAfter.Current} should be < {hpBefore} after Backstab");
+        Assert.True(monster.Health.Current < hpBefore, $"Monster HP {monster.Health.Current} should be < {hpBefore} after Backstab");
     }
 
     [Fact]
@@ -156,17 +136,14 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Rogue);
 
-        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
-        int defBefore = statsBefore.Defense;
+        int defBefore = player.CombatStats.Defense;
 
         // Dodge is slot 1 for Rogue
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
         engine.Tick();
 
-        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
-        Assert.True(statsAfter.Defense > defBefore, $"Defense {statsAfter.Defense} should be > {defBefore} after Dodge");
+        Assert.True(player.CombatStats.Defense > defBefore, $"Defense {player.CombatStats.Defense} should be > {defBefore} after Dodge");
     }
 
     [Fact]
@@ -178,19 +155,16 @@ public class SkillSystemTests
         // Spawn monster near the target area
         var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
         // Fireball is slot 0 for Mage, target direction (1, 0)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.True(mHealthAfter.Current < hpBefore, $"Monster HP {mHealthAfter.Current} should be < {hpBefore} after Fireball");
+        Assert.True(monster.Health.Current < hpBefore, $"Monster HP {monster.Health.Current} should be < {hpBefore} after Fireball");
     }
 
     [Fact]
@@ -202,19 +176,16 @@ public class SkillSystemTests
         // Spawn monster at distance
         var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
         // PowerShot is slot 0 for Ranger, target direction (3, 0)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 3;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 3;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.True(mHealthAfter.Current < hpBefore, $"Monster HP {mHealthAfter.Current} should be < {hpBefore} after PowerShot");
+        Assert.True(monster.Health.Current < hpBefore, $"Monster HP {monster.Health.Current} should be < {hpBefore} after PowerShot");
     }
 
     [Fact]
@@ -224,29 +195,24 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
-        ref var health = ref engine.EcsWorld.Get<Health>(player);
-        health.Current = 50;
+        player.Health.Current = 50;
 
         // Use Heal once to set cooldown
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
         engine.Tick();
 
-        int hpAfterFirstHeal = engine.EcsWorld.Get<Health>(player).Current;
+        int hpAfterFirstHeal = player.Health.Current;
 
         // Try to use Heal again while on cooldown
         // Damage a bit first
-        ref var health2 = ref engine.EcsWorld.Get<Health>(player);
-        health2.Current = 50;
+        player.Health.Current = 50;
 
-        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input2.ActionType = ActionTypes.UseSkill;
-        input2.ItemSlot = 1;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
         engine.Tick();
 
-        ref var healthAfter = ref engine.EcsWorld.Get<Health>(player);
-        Assert.Equal(50, healthAfter.Current); // Should not have healed (on cooldown)
+        Assert.Equal(50, player.Health.Current); // Should not have healed (on cooldown)
     }
 
     [Fact]
@@ -257,9 +223,8 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Use an invalid skill slot (99)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 99;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 99;
         engine.Tick(); // Should not crash
     }
 
@@ -271,16 +236,14 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // PowerStrike with no monster at target - should not crash
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
         // Skill should not set cooldown when it misses
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.Equal(0, slots.Cooldown0);
+        Assert.Equal(0, player.Skills.Cooldown0);
     }
 
     [Fact]
@@ -290,20 +253,18 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
-        // Manually set cooldowns on all 4 slots
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        slots.Cooldown0 = 5;
-        slots.Cooldown1 = 5;
-        slots.Cooldown2 = 5;
-        slots.Cooldown3 = 5;
+        // Manually set cooldowns on all 4 player.Skills
+        player.Skills.Cooldown0 = 5;
+        player.Skills.Cooldown1 = 5;
+        player.Skills.Cooldown2 = 5;
+        player.Skills.Cooldown3 = 5;
 
         engine.Tick();
 
-        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.Equal(4, slotsAfter.Cooldown0);
-        Assert.Equal(4, slotsAfter.Cooldown1);
-        Assert.Equal(4, slotsAfter.Cooldown2);
-        Assert.Equal(4, slotsAfter.Cooldown3);
+        Assert.Equal(4, player.Skills.Cooldown0);
+        Assert.Equal(4, player.Skills.Cooldown1);
+        Assert.Equal(4, player.Skills.Cooldown2);
+        Assert.Equal(4, player.Skills.Cooldown3);
     }
 
     [Fact]
@@ -313,26 +274,21 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
-        // Manually assign skills to slots 2 and 3
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        slots.Skill2 = SkillDefinitions.Heal;
-        slots.Skill3 = SkillDefinitions.Dodge;
+        // Manually assign skills to player.Skills 2 and 3
+        player.Skills.Skill2 = SkillDefinitions.Heal;
+        player.Skills.Skill3 = SkillDefinitions.Dodge;
 
         // Damage player
-        ref var health = ref engine.EcsWorld.Get<Health>(player);
-        health.Current = 50;
+        player.Health.Current = 50;
 
         // Use skill slot 2 (Heal)
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 2;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 2;
         engine.Tick();
 
-        ref var healthAfter = ref engine.EcsWorld.Get<Health>(player);
-        Assert.True(healthAfter.Current > 50, "Skill in slot 2 should have healed");
+        Assert.True(player.Health.Current > 50, "Skill in slot 2 should have healed");
 
-        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.True(slotsAfter.Cooldown2 > 0, "Cooldown2 should be set");
+        Assert.True(player.Skills.Cooldown2 > 0, "Cooldown2 should be set");
     }
 
     [Fact]
@@ -343,22 +299,17 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
 
         // Assign Dodge to slot 3
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        slots.Skill3 = SkillDefinitions.Dodge;
+        player.Skills.Skill3 = SkillDefinitions.Dodge;
 
-        ref var statsBefore = ref engine.EcsWorld.Get<CombatStats>(player);
-        int defBefore = statsBefore.Defense;
+        int defBefore = player.CombatStats.Defense;
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 3;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 3;
         engine.Tick();
 
-        ref var statsAfter = ref engine.EcsWorld.Get<CombatStats>(player);
-        Assert.True(statsAfter.Defense > defBefore, "Dodge in slot 3 should boost defense");
+        Assert.True(player.CombatStats.Defense > defBefore, "Dodge in slot 3 should boost defense");
 
-        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.True(slotsAfter.Cooldown3 > 0, "Cooldown3 should be set after Dodge");
+        Assert.True(player.Skills.Cooldown3 > 0, "Cooldown3 should be set after Dodge");
     }
 
     [Fact]
@@ -370,18 +321,15 @@ public class SkillSystemTests
         // Spawn monster well beyond PowerShot range (range=5)
         var monster = engine.SpawnMonster(sx + 10, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
-        ref var mHealthBefore = ref engine.EcsWorld.Get<Health>(monster);
-        int hpBefore = mHealthBefore.Current;
+        int hpBefore = monster.Health.Current;
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 10;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 10;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var mHealthAfter = ref engine.EcsWorld.Get<Health>(monster);
-        Assert.Equal(hpBefore, mHealthAfter.Current);
+        Assert.Equal(hpBefore, monster.Health.Current);
     }
 
     [Fact]
@@ -392,18 +340,15 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
 
         // Assign Trap to slot 1
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        slots.Skill1 = SkillDefinitions.Trap;
+        player.Skills.Skill1 = SkillDefinitions.Trap;
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 1;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 1;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var slotsAfter = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.Equal(0, slotsAfter.Cooldown1); // Trap returns false, no cooldown
+        Assert.Equal(0, player.Skills.Cooldown1); // Trap returns false, no cooldown
     }
 
     [Fact]
@@ -414,16 +359,14 @@ public class SkillSystemTests
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
 
         // No monsters nearby
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 3;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 3;
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
         // Fireball missed (no enemies) → no cooldown set
-        Assert.Equal(0, slots.Cooldown0);
+        Assert.Equal(0, player.Skills.Cooldown0);
     }
 
     [Fact]
@@ -433,14 +376,12 @@ public class SkillSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Ranger);
 
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.UseSkill;
-        input.ItemSlot = 0;
-        input.TargetX = 10; // Beyond range 5
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.UseSkill;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetX = 10; // Beyond range 5
+        player.Input.TargetY = 0;
         engine.Tick();
 
-        ref var slots = ref engine.EcsWorld.Get<SkillSlots>(player);
-        Assert.Equal(0, slots.Cooldown0);
+        Assert.Equal(0, player.Skills.Cooldown0);
     }
 }

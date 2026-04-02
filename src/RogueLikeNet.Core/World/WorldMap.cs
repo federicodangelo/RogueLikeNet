@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using static RogueLikeNet.Core.Definitions.PlaceableDefinitions;
@@ -21,6 +20,13 @@ public class WorldMap
     private readonly HashSet<long> _chunksDontExist = new();
     private readonly long _seed;
 
+    // ── Player storage (global, not per-chunk) ────────────────────────
+    private readonly Dictionary<int, PlayerEntity> _players = new();
+    private readonly Dictionary<long, int> _playersByConnection = new();
+    private int _nextEntityId = 1;
+
+    public IReadOnlyDictionary<int, PlayerEntity> Players => _players;
+
     /// <summary>
     /// Tracks world coordinates of tiles that need per-tick processing, grouped by chunk key.
     /// Used to avoid scanning every tile every tick.
@@ -32,6 +38,107 @@ public class WorldMap
     public WorldMap(long seed)
     {
         _seed = seed;
+    }
+
+    // ── Entity ID management ──────────────────────────────────────────
+
+    public int AllocateEntityId() => _nextEntityId++;
+
+    /// <summary>Sets the next entity ID (used when restoring from persistence).</summary>
+    public void SetNextEntityId(int nextId) => _nextEntityId = nextId;
+
+    // ── Player management ────────────────────────────────────────────
+
+    public void AddPlayer(PlayerEntity player)
+    {
+        _players[player.Id] = player;
+        _playersByConnection[player.ConnectionId] = player.Id;
+    }
+
+    public void RemovePlayer(int entityId)
+    {
+        if (_players.TryGetValue(entityId, out var player))
+        {
+            _playersByConnection.Remove(player.ConnectionId);
+            _players.Remove(entityId);
+        }
+    }
+
+    public PlayerEntity? GetPlayer(int entityId)
+        => _players.TryGetValue(entityId, out var p) ? p : null;
+
+    public PlayerEntity? GetPlayerByConnection(long connectionId)
+        => _playersByConnection.TryGetValue(connectionId, out var id) && _players.TryGetValue(id, out var p) ? p : null;
+
+    // ── Spatial queries ──────────────────────────────────────────────
+
+    /// <summary>Builds a set of packed coordinates for all alive actors (players, monsters, NPCs).</summary>
+    public HashSet<long> CollectAliveActorPositions()
+    {
+        var set = new HashSet<long>();
+        foreach (var p in _players.Values)
+            if (!p.IsDead) set.Add(Position.PackCoord(p.X, p.Y, p.Z));
+        foreach (var chunk in _chunks.Values)
+        {
+            foreach (var m in chunk.Monsters)
+                if (!m.IsDead) set.Add(Position.PackCoord(m.X, m.Y, m.Z));
+            foreach (var n in chunk.TownNpcs)
+                if (!n.IsDead) set.Add(Position.PackCoord(n.X, n.Y, n.Z));
+        }
+        return set;
+    }
+
+    /// <summary>Checks if any alive actor (player, monster, NPC) occupies the given position.</summary>
+    public bool IsPositionOccupiedByActor(int x, int y, int z)
+    {
+        long key = Position.PackCoord(x, y, z);
+        foreach (var p in _players.Values)
+            if (!p.IsDead && p.X == x && p.Y == y && p.Z == z) return true;
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
+        var chunk = TryGetChunk(cx, cy, cz);
+        if (chunk == null) return false;
+        foreach (var m in chunk.Monsters)
+            if (!m.IsDead && m.X == x && m.Y == y && m.Z == z) return true;
+        foreach (var n in chunk.TownNpcs)
+            if (!n.IsDead && n.X == x && n.Y == y && n.Z == z) return true;
+        return false;
+    }
+
+    /// <summary>Convenience: get the chunk that contains the given world position.</summary>
+    public Chunk? GetChunkForWorldPos(int x, int y, int z)
+    {
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
+        return TryGetChunk(cx, cy, cz);
+    }
+
+    // ── Chunk migration (for moving entities) ────────────────────────
+
+    /// <summary>Moves a monster to the correct chunk if it crossed a boundary.</summary>
+    public void MigrateMonsterIfNeeded(MonsterEntity monster, int oldX, int oldY, int oldZ)
+    {
+        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(oldX, oldY, oldZ);
+        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(monster.X, monster.Y, monster.Z);
+        if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
+        var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
+        var newChunk = TryGetChunk(newCx, newCy, newCz);
+        oldChunk?.Monsters.Remove(monster);
+        oldChunk?.MarkModified();
+        newChunk?.Monsters.Add(monster);
+        newChunk?.MarkModified();
+    }
+
+    /// <summary>Moves a town NPC to the correct chunk if it crossed a boundary.</summary>
+    public void MigrateNpcIfNeeded(TownNpcEntity npc, int oldX, int oldY, int oldZ)
+    {
+        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(oldX, oldY, oldZ);
+        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(npc.X, npc.Y, npc.Z);
+        if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
+        var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
+        var newChunk = TryGetChunk(newCx, newCy, newCz);
+        oldChunk?.TownNpcs.Remove(npc);
+        oldChunk?.MarkModified();
+        newChunk?.TownNpcs.Add(npc);
+        newChunk?.MarkModified();
     }
 
     public bool ExistsChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)
@@ -186,9 +293,9 @@ public class WorldMap
     /// <summary>
     /// Per-tick update: processes all dynamic tiles (e.g. auto-closing doors).
     /// </summary>
-    public void Update(Arch.Core.World ecsWorld)
+    public void Update()
     {
-        ProcessDynamicTiles(ecsWorld);
+        ProcessDynamicTiles();
     }
 
     /// <summary>Returns true if the given world position is tracked as a dynamic tile.</summary>
@@ -251,17 +358,21 @@ public class WorldMap
     private readonly List<(long ChunkKey, long TileKey)> _tmpTileKeys = new();
     private readonly HashSet<long> _tmpOccupiedPositions = new();
 
-    private void ProcessDynamicTiles(Arch.Core.World ecsWorld)
+    private void ProcessDynamicTiles()
     {
         if (_dynamicTilesByChunk.Count == 0) return;
 
         // Build set of occupied positions for door blocking checks
         _tmpOccupiedPositions.Clear();
-        ecsWorld.Query(in GameQueries.PositionedActors, (ref Position p, ref Health h) =>
+        foreach (var p in _players.Values)
+            if (!p.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(p.X, p.Y, p.Z));
+        foreach (var chunk in _chunks.Values)
         {
-            if (h.IsAlive)
-                _tmpOccupiedPositions.Add(Position.PackCoord(p.X, p.Y, p.Z));
-        });
+            foreach (var m in chunk.Monsters)
+                if (!m.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(m.X, m.Y, m.Z));
+            foreach (var n in chunk.TownNpcs)
+                if (!n.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(n.X, n.Y, n.Z));
+        }
 
         // Snapshot all tile keys to avoid modifying collections during iteration
         _tmpTileKeys.Clear();

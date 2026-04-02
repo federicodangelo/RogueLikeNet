@@ -1,27 +1,23 @@
-using Arch.Core;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
-using Chunk = RogueLikeNet.Core.World.Chunk;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
-/// Computes FOV for all entities that have FOVData (typically players).
-/// Uses recursive shadow casting with integer arithmetic.
+/// Computes FOV for all players using recursive shadow casting.
 /// </summary>
 public class FOVSystem
 {
-    public void Update(Arch.Core.World world, WorldMap map)
+    public void Update(WorldMap map)
     {
-        world.Query(in GameQueries.FOVEntities, (ref Position pos, ref FOVData fov) =>
+        foreach (var player in map.Players.Values)
         {
-            fov.VisibleTiles ??= new HashSet<long>();
-            fov.VisibleTiles.Clear();
+            player.FOV.VisibleTiles ??= new HashSet<long>();
+            player.FOV.VisibleTiles.Clear();
 
-            // Capture ref params into locals for use in lambda
-            var visibleTiles = fov.VisibleTiles;
-            int px = pos.X, py = pos.Y, pz = pos.Z, radius = fov.Radius;
+            var visibleTiles = player.FOV.VisibleTiles;
+            int px = player.X, py = player.Y, pz = player.Z, radius = player.FOV.Radius;
 
             ShadowCastFov.Compute(
                 px, py, radius,
@@ -30,6 +26,6 @@ public class FOVSystem
                 {
                     visibleTiles.Add(Position.PackCoord(x, y, pz));
                 });
-        });
+        }
     }
 }

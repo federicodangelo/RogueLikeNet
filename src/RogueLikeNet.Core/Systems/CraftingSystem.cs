@@ -1,6 +1,6 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
 
@@ -9,56 +9,46 @@ namespace RogueLikeNet.Core.Systems;
 /// </summary>
 public class CraftingSystem
 {
-    public void Update(Arch.Core.World world)
+    public void Update(WorldMap map)
     {
-        var actions = new List<(Entity Player, int RecipeId)>();
-
-        world.Query(in GameQueries.PlayerInventory, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.Craft) return;
-            actions.Add((player, input.ItemSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.Craft) continue;
 
-        foreach (var (player, recipeId) in actions)
-        {
-            if (!world.IsAlive(player)) continue;
+            int recipeId = player.Input.ItemSlot;
+            player.Input.ActionType = ActionTypes.None;
+
             if (recipeId < 0 || recipeId >= CraftingDefinitions.All.Length) continue;
-
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null) continue;
+            if (player.Inventory.Items == null) continue;
 
             var recipe = CraftingDefinitions.All[recipeId];
-            if (!CraftingDefinitions.CanCraft(recipe, inv.Items)) continue;
+            if (!CraftingDefinitions.CanCraft(recipe, player.Inventory.Items)) continue;
 
             // Remove ingredients
             foreach (var ingredient in recipe.Ingredients)
             {
                 int remaining = ingredient.Count;
-                for (int i = inv.Items.Count - 1; i >= 0 && remaining > 0; i--)
+                for (int i = player.Inventory.Items.Count - 1; i >= 0 && remaining > 0; i--)
                 {
-                    if (inv.Items[i].ItemTypeId != ingredient.ItemTypeId) continue;
-                    var item = inv.Items[i];
+                    if (player.Inventory.Items[i].ItemTypeId != ingredient.ItemTypeId) continue;
+                    var item = player.Inventory.Items[i];
                     int take = Math.Min(remaining, item.StackCount);
                     item.StackCount -= take;
                     remaining -= take;
                     if (item.StackCount <= 0)
                     {
-                        inv.Items.RemoveAt(i);
-                        if (world.Has<QuickSlots>(player))
-                        {
-                            ref var qs = ref world.Get<QuickSlots>(player);
-                            qs.OnItemRemoved(i);
-                        }
+                        player.Inventory.Items.RemoveAt(i);
+                        player.QuickSlots.OnItemRemoved(i);
                     }
                     else
                     {
-                        inv.Items[i] = item;
+                        player.Inventory.Items[i] = item;
                     }
                 }
             }
 
-            // Add crafted item to inventory
+            // Add crafted item
             var resultDef = ItemDefinitions.Get(recipe.ResultItemTypeId);
             var resultItem = new ItemData
             {
@@ -67,29 +57,28 @@ public class CraftingSystem
                 StackCount = recipe.ResultCount,
             };
 
-            // Try to stack with existing items
             bool stacked = false;
             if (resultDef.Stackable)
             {
-                for (int i = 0; i < inv.Items.Count; i++)
+                for (int i = 0; i < player.Inventory.Items.Count; i++)
                 {
-                    if (inv.Items[i].ItemTypeId == resultItem.ItemTypeId &&
-                        inv.Items[i].StackCount < resultDef.MaxStackSize)
+                    if (player.Inventory.Items[i].ItemTypeId == resultItem.ItemTypeId &&
+                        player.Inventory.Items[i].StackCount < resultDef.MaxStackSize)
                     {
-                        var existing = inv.Items[i];
+                        var existing = player.Inventory.Items[i];
                         int canAdd = resultDef.MaxStackSize - existing.StackCount;
                         int toAdd = Math.Min(canAdd, resultItem.StackCount);
                         existing.StackCount += toAdd;
-                        inv.Items[i] = existing;
+                        player.Inventory.Items[i] = existing;
                         resultItem.StackCount -= toAdd;
                         if (resultItem.StackCount <= 0) { stacked = true; break; }
                     }
                 }
             }
 
-            if (!stacked && resultItem.StackCount > 0 && !inv.IsFull)
+            if (!stacked && resultItem.StackCount > 0 && !player.Inventory.IsFull)
             {
-                inv.Items.Add(resultItem);
+                player.Inventory.Items.Add(resultItem);
             }
         }
     }

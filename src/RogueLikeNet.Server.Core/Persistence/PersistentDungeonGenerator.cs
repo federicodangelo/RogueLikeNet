@@ -1,4 +1,3 @@
-using RogueLikeNet.Core;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 
@@ -14,7 +13,6 @@ public class PersistentDungeonGenerator : IDungeonGenerator
     private readonly IDungeonGenerator _baseGenerator;
     private readonly ISaveGameProvider _provider;
     private readonly string _slotId;
-    private GameEngine? _engine;
 
     public PersistentDungeonGenerator(IDungeonGenerator baseGenerator, ISaveGameProvider provider, string slotId)
     {
@@ -22,11 +20,6 @@ public class PersistentDungeonGenerator : IDungeonGenerator
         _provider = provider;
         _slotId = slotId;
     }
-
-    /// <summary>
-    /// Must be called after GameEngine is created so entity deserialization can spawn into the ECS world.
-    /// </summary>
-    public void SetEngine(GameEngine engine) => _engine = engine;
 
     public bool Exists(int chunkX, int chunkY, int chunkZ)
     {
@@ -49,12 +42,11 @@ public class PersistentDungeonGenerator : IDungeonGenerator
             Array.Copy(tiles, chunk.Tiles, tiles.Length);
             var result = new GenerationResult(chunk);
 
-            // Restore entities — they'll be spawned by the engine when it processes the result
-            // We deserialize them directly here since GenerationResult entity lists
-            // use different types than our JSON format
-            if (_engine != null && !string.IsNullOrEmpty(saved.EntityData) && saved.EntityData != "[]")
+            // Pass entity data through to ProcessGenerationResult, which runs
+            // after the chunk is registered in WorldMap so Spawn* can find it.
+            if (!string.IsNullOrEmpty(saved.EntityData) && saved.EntityData != "[]")
             {
-                EntitySerializer.DeserializeEntities(saved.EntityData, _engine);
+                result.RawEntityJson = saved.EntityData;
             }
 
             return result;

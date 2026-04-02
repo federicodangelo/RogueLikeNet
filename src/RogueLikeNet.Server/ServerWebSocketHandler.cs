@@ -102,7 +102,7 @@ public static class ServerWebSocketHandler
             switch (envelope.MessageType)
             {
                 case MessageTypes.LoginSend:
-                    if (conn.PlayerEntity == null)
+                    if (conn.PlayerEntityId == null)
                     {
                         var login = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
                         gameServer.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);

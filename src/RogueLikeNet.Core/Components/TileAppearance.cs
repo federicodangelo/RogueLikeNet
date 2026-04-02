@@ -1,12 +1,9 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
 /// <summary>
 /// Game-semantic tile appearance data. All int values.
 /// GlyphId maps to CP437 charset index. Colors are packed 0xRRGGBB.
 /// </summary>
-[Component]
 public struct TileAppearance
 {
     public int GlyphId;

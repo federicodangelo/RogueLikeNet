@@ -1,9 +1,6 @@
 using System.Runtime.CompilerServices;
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
-[Component]
 public struct Position
 {
     public const int DefaultZ = 127;

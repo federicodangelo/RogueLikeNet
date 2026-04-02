@@ -1,4 +1,3 @@
-using CommunityToolkit.HighPerformance;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Protocol.Messages;

@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
@@ -7,33 +6,28 @@ using Chunk = RogueLikeNet.Core.World.Chunk;
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
-/// Shadow-cast lighting from all LightSource entities.
-/// Computes integer light levels per tile in the world map.
+/// Shadow-cast lighting from all LightSource entities and player ambient light.
 /// </summary>
 public class LightingSystem
 {
-    public void Update(Arch.Core.World world, WorldMap map)
+    public void Update(WorldMap map)
     {
-        // Reset light levels for all loaded chunks
         foreach (var chunk in map.LoadedChunks)
             chunk.ResetLight();
 
-        // Gather all light sources
-        world.Query(in GameQueries.LightSources, (ref Position pos, ref LightSource light) =>
-        {
-            FloodLight(map, pos.X, pos.Y, pos.Z, light.Radius);
-        });
+        // Light sources from elements
+        foreach (var chunk in map.LoadedChunks)
+            foreach (var elem in chunk.Elements)
+                if (elem.Light.HasValue)
+                    FloodLight(map, elem.X, elem.Y, elem.Z, elem.Light.Value.Radius);
 
-        // Players also emit ambient light matching their FOV
-        world.Query(in GameQueries.PlayerFOV, (ref Position pos, ref FOVData fov, ref PlayerTag _) =>
-        {
-            FloodLight(map, pos.X, pos.Y, pos.Z, fov.Radius);
-        });
+        // Players emit ambient light matching their FOV
+        foreach (var player in map.Players.Values)
+            FloodLight(map, player.X, player.Y, player.Z, player.FOV.Radius);
     }
 
     private static void FloodLight(WorldMap map, int originX, int originY, int originZ, int radius)
     {
-        // Use shadow casting so light doesn't bleed through walls
         ShadowCastFov.Compute(originX, originY, radius,
             isOpaque: (x, y) => !map.IsTransparent(x, y, originZ),
             markVisible: (x, y) =>

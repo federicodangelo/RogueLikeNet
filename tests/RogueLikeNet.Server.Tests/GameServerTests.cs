@@ -2,6 +2,7 @@ using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -53,8 +54,9 @@ public class GameServerTests
         using var loop = new TestGameServer(42, _gen);
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.SpawnPlayerForConnection(conn.ConnectionId);
-        Assert.NotNull(conn.PlayerEntity);
-        Assert.True(loop.Engine.EcsWorld.IsAlive(conn.PlayerEntity.Value));
+        Assert.NotNull(conn.PlayerEntityId);
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value);
+        Assert.NotNull(player);
     }
 
     [Fact]
@@ -64,10 +66,11 @@ public class GameServerTests
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
-        var entity = conn.PlayerEntity!.Value;
+        var entityId = conn.PlayerEntityId!.Value;
         loop.RemoveConnection(conn.ConnectionId);
 
-        Assert.False(loop.Engine.EcsWorld.IsAlive(entity));
+        var player = loop.Engine.WorldMap.GetPlayer(entityId);
+        Assert.Null(player);
     }
 
     [Fact]
@@ -98,6 +101,7 @@ public class GameServerTests
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         Assert.NotNull(receivedData);
+        Assert.NotNull(conn.PlayerEntityId);
         var envelope = NetSerializer.UnwrapMessage(receivedData);
         Assert.Equal(MessageTypes.WorldDelta, envelope.MessageType);
 
@@ -361,9 +365,9 @@ public class GameServerTests
         });
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
-        // Kill the entity
-        var entity = conn.PlayerEntity!.Value;
-        loop.Engine.EcsWorld.Destroy(entity);
+        // Kill the entity by removing from WorldMap
+        var entityId = conn.PlayerEntityId!.Value;
+        loop.Engine.WorldMap.RemovePlayer(entityId);
 
         messages.Clear();
 
@@ -388,9 +392,9 @@ public class GameServerTests
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Get the player's position and spawn a monster right next to them
-        ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
-        int monsterX = playerPos.X + 1;
-        int monsterY = playerPos.Y;
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
+        int monsterX = player.X + 1;
+        int monsterY = player.Y;
         loop.Engine.SpawnMonster(monsterX, monsterY, Position.DefaultZ, new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
 
         // Send an attack input targeting the monster
@@ -495,11 +499,12 @@ public class GameServerTests
         // Determine where the player will spawn so we can place the test entity nearby
         var (spawnX, spawnY, _) = loop.Engine.FindSpawnPosition();
 
-        // Create an entity with Position + TileAppearance but NO Health — near the spawn
-        loop.Engine.EcsWorld.Create(
+        // Create an element entity with Position + TileAppearance but NO Health — near the spawn
+        loop.Engine.SpawnElement(new DungeonElement(
             new Position(spawnX, spawnY, Position.DefaultZ),
-            new TileAppearance(42, 0x00FF00)
-        );
+            new TileAppearance(42, 0x00FF00),
+            null
+        ));
 
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
@@ -529,14 +534,14 @@ public class GameServerTests
         messages.Clear();
 
         // Get the player's position so the entity is within FOV
-        var playerEntity = conn.PlayerEntity!.Value;
-        ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(playerEntity);
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
 
-        // Create an entity with Position + TileAppearance but NO Health — at player pos
-        loop.Engine.EcsWorld.Create(
-            new Position(playerPos.X, playerPos.Y, Position.DefaultZ),
-            new TileAppearance(88, 0xFF0000)
-        );
+        // Create an element entity with Position + TileAppearance but NO Health — at player pos
+        loop.Engine.SpawnElement(new DungeonElement(
+            new Position(player.X, player.Y, Position.DefaultZ),
+            new TileAppearance(88, 0xFF0000),
+            null
+        ));
 
         loop.Start();
         await Task.Delay(200);
@@ -564,19 +569,16 @@ public class GameServerTests
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Record starting position
-        ref var startPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
-        int startX = startPos.X;
-        int startY = startPos.Y;
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
+        int startX = player.X;
+        int startY = player.Y;
 
         // Clear any actors that could block the path (spawned by chunk generation)
-        var clearQuery = new Arch.Core.QueryDescription().WithAll<Position, Health>();
-        var toDestroy = new List<Arch.Core.Entity>();
-        loop.Engine.EcsWorld.Query(in clearQuery, (Arch.Core.Entity e, ref Position _, ref Health _) =>
+        foreach (var chunk in loop.Engine.WorldMap.LoadedChunks)
         {
-            if (e != conn.PlayerEntity!.Value)
-                toDestroy.Add(e);
-        });
-        foreach (var e in toDestroy) loop.Engine.EcsWorld.Destroy(e);
+            chunk.Monsters.Clear();
+            chunk.TownNpcs.Clear();
+        }
 
         // Queue 3 right-moves before start — all drained in tick 1, only the last is applied
         loop.EnqueueInput(conn.ConnectionId, new ClientInputMsg { ActionType = ActionTypes.Move, TargetX = 1, TargetY = 0 });
@@ -589,9 +591,8 @@ public class GameServerTests
         loop.Dispose();
 
         // Player should have moved exactly 1 tile right (all 3 queued drained in tick 1, latest applied)
-        ref var endPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
-        Assert.Equal(startX + 1, endPos.X);
-        Assert.Equal(startY, endPos.Y);
+        Assert.Equal(startX + 1, player.X);
+        Assert.Equal(startY, player.Y);
     }
 
     [Fact]
@@ -607,9 +608,9 @@ public class GameServerTests
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
         // Place an item at the player's position
-        ref var playerPos = ref loop.Engine.EcsWorld.Get<Position>(conn.PlayerEntity!.Value);
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
         var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion); // Health Potion
-        loop.Engine.SpawnItemOnGround(template, 0, playerPos.X, playerPos.Y, Position.DefaultZ);
+        loop.Engine.SpawnItemOnGround(template, 0, player.X, player.Y, Position.DefaultZ);
 
         messages.Clear();
         loop.Start();
@@ -662,7 +663,8 @@ public class GameServerTests
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
-        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, conn.PlayerEntity!.Value);
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
+        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, player);
         Assert.NotNull(hudMsg);
         Assert.True(hudMsg!.MaxHealth > 0);
         Assert.True(hudMsg.Attack > 0);
@@ -680,10 +682,11 @@ public class GameServerTests
         var conn = loop.AddConnection(_ => Task.CompletedTask);
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
-        var entity = conn.PlayerEntity!.Value;
-        loop.Engine.EcsWorld.Destroy(entity);
+        var entityId = conn.PlayerEntityId!.Value;
+        var player = loop.Engine.WorldMap.GetPlayer(entityId)!;
+        player.IsDead = true;
 
-        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, entity);
+        var hudMsg = GameStateSerializer.BuildPlayerState(loop.Engine, player);
         Assert.Null(hudMsg);
     }
 
@@ -784,9 +787,9 @@ public class GameServerTests
 
         loop.SpawnPlayerForConnection(conn.ConnectionId, classId: RogueLikeNet.Core.Definitions.ClassDefinitions.Mage);
 
-        Assert.NotNull(conn.PlayerEntity);
-        ref var classData = ref loop.Engine.EcsWorld.Get<RogueLikeNet.Core.Components.ClassData>(conn.PlayerEntity.Value);
-        Assert.Equal(RogueLikeNet.Core.Definitions.ClassDefinitions.Mage, classData.ClassId);
+        Assert.NotNull(conn.PlayerEntityId);
+        var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
+        Assert.Equal(RogueLikeNet.Core.Definitions.ClassDefinitions.Mage, player.ClassData.ClassId);
     }
 
     [Fact]
@@ -812,7 +815,7 @@ public class GameServerTests
 
         // Should have received at least the snapshot
         Assert.True(messages.Count > 0);
-        Assert.NotNull(conn.PlayerEntity);
+        Assert.NotNull(conn.PlayerEntityId);
     }
 
     [Fact]
@@ -828,8 +831,8 @@ public class GameServerTests
         loop.SpawnPlayerForConnection(conn.ConnectionId);
         await Task.Delay(200);
 
-        Assert.NotNull(conn.PlayerEntity);
-        var entity = conn.PlayerEntity.Value;
+        Assert.NotNull(conn.PlayerEntityId);
+        var entityId = conn.PlayerEntityId.Value;
 
         // RemoveConnection while running enqueues destroy command
         loop.RemoveConnection(conn.ConnectionId);

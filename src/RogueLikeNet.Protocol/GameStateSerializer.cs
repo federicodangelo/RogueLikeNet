@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
@@ -109,7 +108,7 @@ public static class GameStateSerializer
     /// previously-visible entities that left FOV as removed.
     /// Returns updated previousState for the next tick.
     /// </summary>
-    public static SerializedEntityData SerializeEntityDelta(World world, FOVData fov,
+    public static SerializedEntityData SerializeEntityDelta(WorldMap map, FOVData fov,
             Dictionary<long, EntityUpdateMsg> previousState, bool debugVisibilityOff = false)
     {
         var fullUpdates = new List<EntityUpdateMsg>();
@@ -117,43 +116,19 @@ public static class GameStateSerializer
         var removals = new List<EntityRemovedMsg>();
         var currentIds = new HashSet<long>();
 
-        world.Query(in GameQueries.TileAppearanceEntities, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
+        void ProcessEntity(long id, int ex, int ey, int ez, TileAppearance appearance,
+            int hp, int maxHp, int lightRadius, ItemDataMsg? item)
         {
-            if (!debugVisibilityOff && !fov.IsVisible(ePos.X, ePos.Y, ePos.Z)) return;
+            if (!debugVisibilityOff && !fov.IsVisible(ex, ey, ez)) return;
 
-            long id = e.Id;
             currentIds.Add(id);
-
-            int hp = 0, maxHp = 0;
-            if (world.Has<Health>(e))
-            {
-                ref var health = ref world.Get<Health>(e);
-                hp = health.Current;
-                maxHp = health.Max;
-            }
-            int lightRadius = world.Has<LightSource>(e) ? world.Get<LightSource>(e).Radius : 0;
-            ItemDataMsg? item = null;
-            if (world.Has<ItemData>(e))
-            {
-                var itemData = world.Get<ItemData>(e);
-                item = new ItemDataMsg
-                {
-                    ItemTypeId = itemData.ItemTypeId,
-                    Rarity = itemData.Rarity,
-                    Category = ItemDefinitions.Get(itemData.ItemTypeId).Category,
-                    StackCount = itemData.StackCount,
-                    BonusAttack = itemData.BonusAttack,
-                    BonusDefense = itemData.BonusDefense,
-                    BonusHealth = itemData.BonusHealth,
-                };
-            }
 
             var current = new EntityUpdateMsg
             {
                 Id = id,
-                X = ePos.X,
-                Y = ePos.Y,
-                Z = ePos.Z,
+                X = ex,
+                Y = ey,
+                Z = ez,
                 GlyphId = appearance.GlyphId,
                 FgColor = appearance.FgColor,
                 Health = hp,
@@ -167,19 +142,75 @@ public static class GameStateSerializer
                 if (!current.SameValues(prev))
                 {
                     if (current.HasOnlyPositionHealthChanges(prev))
-                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ePos.X, Y = ePos.Y, Z = ePos.Z, Health = hp });
+                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ex, Y = ey, Z = ez, Health = hp });
                     else
                         fullUpdates.Add(current);
                 }
             }
             else
             {
-                // New entity
                 fullUpdates.Add(current);
             }
 
             previousState[id] = current;
-        });
+        }
+
+        // Players
+        foreach (var p in map.Players.Values)
+        {
+            if (p.IsDead) continue;
+            ProcessEntity((long)p.Id, p.X, p.Y, p.Z, p.Appearance,
+                p.Health.Current, p.Health.Max, 0, null);
+        }
+
+        // Iterate loaded chunks
+        foreach (var chunk in map.LoadedChunks)
+        {
+            foreach (var m in chunk.Monsters)
+            {
+                if (m.IsDead) continue;
+                ProcessEntity((long)m.Id, m.X, m.Y, m.Z, m.Appearance,
+                    m.Health.Current, m.Health.Max, 0, null);
+            }
+
+            foreach (var gi in chunk.GroundItems)
+            {
+                if (gi.IsDead) continue;
+                var item = new ItemDataMsg
+                {
+                    ItemTypeId = gi.Item.ItemTypeId,
+                    Rarity = gi.Item.Rarity,
+                    Category = ItemDefinitions.Get(gi.Item.ItemTypeId).Category,
+                    StackCount = gi.Item.StackCount,
+                    BonusAttack = gi.Item.BonusAttack,
+                    BonusDefense = gi.Item.BonusDefense,
+                    BonusHealth = gi.Item.BonusHealth,
+                };
+                ProcessEntity((long)gi.Id, gi.X, gi.Y, gi.Z, gi.Appearance,
+                    0, 0, 0, item);
+            }
+
+            foreach (var r in chunk.ResourceNodes)
+            {
+                if (r.IsDead) continue;
+                ProcessEntity((long)r.Id, r.X, r.Y, r.Z, r.Appearance,
+                    r.Health.Current, r.Health.Max, 0, null);
+            }
+
+            foreach (var n in chunk.TownNpcs)
+            {
+                if (n.IsDead) continue;
+                ProcessEntity((long)n.Id, n.X, n.Y, n.Z, n.Appearance,
+                    n.Health.Current, n.Health.Max, 0, null);
+            }
+
+            foreach (var e in chunk.Elements)
+            {
+                int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
+                ProcessEntity((long)e.Id, e.X, e.Y, e.Z, e.Appearance,
+                    0, 0, lightRadius, null);
+            }
+        }
 
         // Entities that were visible last tick but are no longer → removed
         var staleIds = previousState.Keys.Where(id => !currentIds.Contains(id)).ToList();
@@ -220,9 +251,9 @@ public static class GameStateSerializer
         }).ToArray();
     }
 
-    public static PlayerStateMsg? BuildPlayerState(GameEngine engine, Entity playerEntity)
+    public static PlayerStateMsg? BuildPlayerState(GameEngine engine, PlayerEntity player)
     {
-        var stateData = engine.GetPlayerStateData(playerEntity);
+        var stateData = engine.GetPlayerStateData(player);
         if (stateData == null) return null;
         return new PlayerStateMsg
         {
@@ -239,13 +270,13 @@ public static class GameStateSerializer
             EquippedWeapon = stateData.EquippedWeapon.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedWeapon.Value.ItemTypeId, StackCount = stateData.EquippedWeapon.Value.StackCount, Rarity = stateData.EquippedWeapon.Value.Rarity, Category = stateData.EquippedWeapon.Value.Category, BonusAttack = stateData.EquippedWeapon.Value.BonusAttack, BonusDefense = stateData.EquippedWeapon.Value.BonusDefense, BonusHealth = stateData.EquippedWeapon.Value.BonusHealth } : null,
             EquippedArmor = stateData.EquippedArmor.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedArmor.Value.ItemTypeId, StackCount = stateData.EquippedArmor.Value.StackCount, Rarity = stateData.EquippedArmor.Value.Rarity, Category = stateData.EquippedArmor.Value.Category, BonusAttack = stateData.EquippedArmor.Value.BonusAttack, BonusDefense = stateData.EquippedArmor.Value.BonusDefense, BonusHealth = stateData.EquippedArmor.Value.BonusHealth } : null,
             QuickSlotIndices = stateData.QuickSlotIndices,
-            PlayerEntityId = playerEntity.Id,
+            PlayerEntityId = (long)player.Id,
         };
     }
 
-    public static PlayerStateMsg? SerializePlayerStateDelta(GameEngine engine, Entity playerEntity, PlayerStateMsg? lastSentPlayerState)
+    public static PlayerStateMsg? SerializePlayerStateDelta(GameEngine engine, PlayerEntity player, PlayerStateMsg? lastSentPlayerState)
     {
-        var playerState = BuildPlayerState(engine, playerEntity);
+        var playerState = BuildPlayerState(engine, player);
 
         if (playerState == null) return null;
 

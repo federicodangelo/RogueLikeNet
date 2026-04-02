@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Arch.Core;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Server.Persistence;
 
@@ -20,119 +20,93 @@ internal partial class PlayerJsonContext : JsonSerializerContext;
 /// </summary>
 public static class PlayerSerializer
 {
-    private static readonly JsonSerializerOptions JsonOptions = PlayerJsonContext.Default.Options;
-
     /// <summary>
-    /// Extracts all player state from an ECS entity into a PlayerSaveData.
+    /// Extracts all player state from a PlayerEntity into a PlayerSaveData.
     /// </summary>
-    public static PlayerSaveData SerializePlayer(Arch.Core.World ecsWorld, Entity playerEntity, string playerName)
+    public static PlayerSaveData SerializePlayer(PlayerEntity player, string playerName)
     {
-        ref var pos = ref ecsWorld.Get<Position>(playerEntity);
-        ref var hp = ref ecsWorld.Get<Health>(playerEntity);
-        ref var stats = ref ecsWorld.Get<CombatStats>(playerEntity);
-        ref var classData = ref ecsWorld.Get<ClassData>(playerEntity);
-
         var data = new PlayerSaveData
         {
             PlayerName = playerName,
-            ClassId = classData.ClassId,
-            Level = classData.Level,
-            Experience = classData.Experience,
-            PositionX = pos.X,
-            PositionY = pos.Y,
-            PositionZ = pos.Z,
-            HealthCurrent = hp.Current,
-            HealthMax = hp.Max,
-            Attack = stats.Attack,
-            Defense = stats.Defense,
-            Speed = stats.Speed,
+            ClassId = player.ClassData.ClassId,
+            Level = player.ClassData.Level,
+            Experience = player.ClassData.Experience,
+            PositionX = player.X,
+            PositionY = player.Y,
+            PositionZ = player.Z,
+            HealthCurrent = player.Health.Current,
+            HealthMax = player.Health.Max,
+            Attack = player.CombatStats.Attack,
+            Defense = player.CombatStats.Defense,
+            Speed = player.CombatStats.Speed,
         };
 
         // Inventory
-        if (ecsWorld.Has<Inventory>(playerEntity))
+        var items = player.Inventory.Items?.Select(i => new ItemDataJson
         {
-            ref var inv = ref ecsWorld.Get<Inventory>(playerEntity);
-            var items = inv.Items?.Select(i => new ItemDataJson
-            {
-                ItemTypeId = i.ItemTypeId,
-                Rarity = i.Rarity,
-                BonusAttack = i.BonusAttack,
-                BonusDefense = i.BonusDefense,
-                BonusHealth = i.BonusHealth,
-                StackCount = i.StackCount,
-            }).ToList() ?? [];
-            data.InventoryJson = JsonSerializer.Serialize(items, PlayerJsonContext.Default.ListItemDataJson);
-        }
+            ItemTypeId = i.ItemTypeId,
+            Rarity = i.Rarity,
+            BonusAttack = i.BonusAttack,
+            BonusDefense = i.BonusDefense,
+            BonusHealth = i.BonusHealth,
+            StackCount = i.StackCount,
+        }).ToList() ?? [];
+        data.InventoryJson = JsonSerializer.Serialize(items, PlayerJsonContext.Default.ListItemDataJson);
 
         // Equipment
-        if (ecsWorld.Has<Equipment>(playerEntity))
+        var equipData = new EquipmentJson
         {
-            ref var equip = ref ecsWorld.Get<Equipment>(playerEntity);
-            var equipData = new EquipmentJson
-            {
-                Weapon = equip.HasWeapon ? ToItemJson(equip.Weapon!.Value) : null,
-                Armor = equip.HasArmor ? ToItemJson(equip.Armor!.Value) : null,
-            };
-            data.EquipmentJson = JsonSerializer.Serialize(equipData, PlayerJsonContext.Default.EquipmentJson);
-        }
+            Weapon = player.Equipment.HasWeapon ? ToItemJson(player.Equipment.Weapon!.Value) : null,
+            Armor = player.Equipment.HasArmor ? ToItemJson(player.Equipment.Armor!.Value) : null,
+        };
+        data.EquipmentJson = JsonSerializer.Serialize(equipData, PlayerJsonContext.Default.EquipmentJson);
 
         // Skills
-        if (ecsWorld.Has<SkillSlots>(playerEntity))
+        var skillData = new SkillSlotsJson
         {
-            ref var skills = ref ecsWorld.Get<SkillSlots>(playerEntity);
-            var skillData = new SkillSlotsJson
-            {
-                Skill0 = skills.Skill0,
-                Skill1 = skills.Skill1,
-                Skill2 = skills.Skill2,
-                Skill3 = skills.Skill3,
-                Cooldown0 = skills.Cooldown0,
-                Cooldown1 = skills.Cooldown1,
-                Cooldown2 = skills.Cooldown2,
-                Cooldown3 = skills.Cooldown3,
-            };
-            data.SkillsJson = JsonSerializer.Serialize(skillData, PlayerJsonContext.Default.SkillSlotsJson);
-        }
+            Skill0 = player.Skills.Skill0,
+            Skill1 = player.Skills.Skill1,
+            Skill2 = player.Skills.Skill2,
+            Skill3 = player.Skills.Skill3,
+            Cooldown0 = player.Skills.Cooldown0,
+            Cooldown1 = player.Skills.Cooldown1,
+            Cooldown2 = player.Skills.Cooldown2,
+            Cooldown3 = player.Skills.Cooldown3,
+        };
+        data.SkillsJson = JsonSerializer.Serialize(skillData, PlayerJsonContext.Default.SkillSlotsJson);
 
         // QuickSlots
-        if (ecsWorld.Has<QuickSlots>(playerEntity))
+        var qsData = new QuickSlotsJson
         {
-            ref var qs = ref ecsWorld.Get<QuickSlots>(playerEntity);
-            var qsData = new QuickSlotsJson
-            {
-                Slot0 = qs.Slot0,
-                Slot1 = qs.Slot1,
-                Slot2 = qs.Slot2,
-                Slot3 = qs.Slot3,
-            };
-            data.QuickSlotsJson = JsonSerializer.Serialize(qsData, PlayerJsonContext.Default.QuickSlotsJson);
-        }
+            Slot0 = player.QuickSlots.Slot0,
+            Slot1 = player.QuickSlots.Slot1,
+            Slot2 = player.QuickSlots.Slot2,
+            Slot3 = player.QuickSlots.Slot3,
+        };
+        data.QuickSlotsJson = JsonSerializer.Serialize(qsData, PlayerJsonContext.Default.QuickSlotsJson);
 
         return data;
     }
 
     /// <summary>
     /// Restores a player entity in the game engine from saved data.
-    /// Returns the spawned entity.
+    /// Returns the spawned PlayerEntity.
     /// </summary>
-    public static Entity RestorePlayer(GameEngine engine, long connectionId, PlayerSaveData data)
+    public static PlayerEntity RestorePlayer(GameEngine engine, long connectionId, PlayerSaveData data)
     {
         // Spawn shell player (gets default stats)
-        var entity = engine.SpawnPlayer(connectionId, data.PositionX, data.PositionY, data.PositionZ, data.ClassId);
+        var player = engine.SpawnPlayer(connectionId, data.PositionX, data.PositionY, data.PositionZ, data.ClassId);
 
         // Override with saved state
-        ref var hp = ref engine.EcsWorld.Get<Health>(entity);
-        hp.Current = data.HealthCurrent;
-        hp.Max = data.HealthMax;
+        player.Health.Current = data.HealthCurrent;
+        player.Health.Max = data.HealthMax;
 
-        ref var stats = ref engine.EcsWorld.Get<CombatStats>(entity);
-        stats.Attack = data.Attack;
-        stats.Defense = data.Defense;
-        stats.Speed = data.Speed;
+        player.CombatStats.Attack = data.Attack;
+        player.CombatStats.Defense = data.Defense;
+        player.CombatStats.Speed = data.Speed;
 
-        ref var classData = ref engine.EcsWorld.Get<ClassData>(entity);
-        classData.Level = data.Level;
-        classData.Experience = data.Experience;
+        player.ClassData.Level = data.Level;
+        player.ClassData.Experience = data.Experience;
 
         // Restore inventory
         if (!string.IsNullOrEmpty(data.InventoryJson) && data.InventoryJson != "[]")
@@ -140,12 +114,11 @@ public static class PlayerSerializer
             var items = JsonSerializer.Deserialize(data.InventoryJson, PlayerJsonContext.Default.ListItemDataJson);
             if (items != null)
             {
-                ref var inv = ref engine.EcsWorld.Get<Inventory>(entity);
-                inv.Items ??= new();
-                inv.Items.Clear();
+                player.Inventory.Items ??= new();
+                player.Inventory.Items.Clear();
                 foreach (var item in items)
                 {
-                    inv.Items.Add(new ItemData
+                    player.Inventory.Items.Add(new ItemData
                     {
                         ItemTypeId = item.ItemTypeId,
                         Rarity = item.Rarity,
@@ -164,9 +137,8 @@ public static class PlayerSerializer
             var equipData = JsonSerializer.Deserialize(data.EquipmentJson, PlayerJsonContext.Default.EquipmentJson);
             if (equipData != null)
             {
-                ref var equip = ref engine.EcsWorld.Get<Equipment>(entity);
-                equip.Weapon = equipData.Weapon != null ? FromItemJson(equipData.Weapon) : null;
-                equip.Armor = equipData.Armor != null ? FromItemJson(equipData.Armor) : null;
+                player.Equipment.Weapon = equipData.Weapon != null ? FromItemJson(equipData.Weapon) : null;
+                player.Equipment.Armor = equipData.Armor != null ? FromItemJson(equipData.Armor) : null;
             }
         }
 
@@ -176,15 +148,14 @@ public static class PlayerSerializer
             var skillData = JsonSerializer.Deserialize(data.SkillsJson, PlayerJsonContext.Default.SkillSlotsJson);
             if (skillData != null)
             {
-                ref var skills = ref engine.EcsWorld.Get<SkillSlots>(entity);
-                skills.Skill0 = skillData.Skill0;
-                skills.Skill1 = skillData.Skill1;
-                skills.Skill2 = skillData.Skill2;
-                skills.Skill3 = skillData.Skill3;
-                skills.Cooldown0 = skillData.Cooldown0;
-                skills.Cooldown1 = skillData.Cooldown1;
-                skills.Cooldown2 = skillData.Cooldown2;
-                skills.Cooldown3 = skillData.Cooldown3;
+                player.Skills.Skill0 = skillData.Skill0;
+                player.Skills.Skill1 = skillData.Skill1;
+                player.Skills.Skill2 = skillData.Skill2;
+                player.Skills.Skill3 = skillData.Skill3;
+                player.Skills.Cooldown0 = skillData.Cooldown0;
+                player.Skills.Cooldown1 = skillData.Cooldown1;
+                player.Skills.Cooldown2 = skillData.Cooldown2;
+                player.Skills.Cooldown3 = skillData.Cooldown3;
             }
         }
 
@@ -194,15 +165,14 @@ public static class PlayerSerializer
             var qsData = JsonSerializer.Deserialize(data.QuickSlotsJson, PlayerJsonContext.Default.QuickSlotsJson);
             if (qsData != null)
             {
-                ref var qs = ref engine.EcsWorld.Get<QuickSlots>(entity);
-                qs.Slot0 = qsData.Slot0;
-                qs.Slot1 = qsData.Slot1;
-                qs.Slot2 = qsData.Slot2;
-                qs.Slot3 = qsData.Slot3;
+                player.QuickSlots.Slot0 = qsData.Slot0;
+                player.QuickSlots.Slot1 = qsData.Slot1;
+                player.QuickSlots.Slot2 = qsData.Slot2;
+                player.QuickSlots.Slot3 = qsData.Slot3;
             }
         }
 
-        return entity;
+        return player;
     }
 
     private static ItemDataJson ToItemJson(ItemData item) => new()

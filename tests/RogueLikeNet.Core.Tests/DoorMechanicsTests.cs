@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
@@ -70,10 +69,9 @@ public class DoorMechanicsTests
         engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Move toward the door
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.Move;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
 
         // Door should now be open (PlaceableItemExtra > 0 = ticks remaining)
@@ -82,9 +80,8 @@ public class DoorMechanicsTests
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
-        ref var pos = ref engine.EcsWorld.Get<Position>(player);
-        Assert.Equal(sx, pos.X);
-        Assert.Equal(sy, pos.Y);
+        Assert.Equal(sx, player.X);
+        Assert.Equal(sy, player.Y);
     }
 
     [Fact]
@@ -109,36 +106,29 @@ public class DoorMechanicsTests
         engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Tick 1: Bump to open
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.Move;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
         Assert.True(PlaceableDefinitions.IsDoorOpen(
             engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
             engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra)); // open
 
         // Tick 2: Walk onto door
-        ref var delay = ref engine.EcsWorld.Get<MoveDelay>(player);
-        delay.Current = 0;
-        ref var input2 = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input2.ActionType = ActionTypes.Move;
-        input2.TargetX = 1;
-        input2.TargetY = 0;
+        player.MoveDelay.Current = 0;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
-        ref var pos = ref engine.EcsWorld.Get<Position>(player);
-        Assert.Equal(doorX, pos.X);
+        Assert.Equal(doorX, player.X);
 
         // Tick 3: Move past door
-        ref var delay2 = ref engine.EcsWorld.Get<MoveDelay>(player);
-        delay2.Current = 0;
-        ref var input3 = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input3.ActionType = ActionTypes.Move;
-        input3.TargetX = 1;
-        input3.TargetY = 0;
+        player.MoveDelay.Current = 0;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
-        ref var pos2 = ref engine.EcsWorld.Get<Position>(player);
-        Assert.Equal(doorX + 1, pos2.X);
+        Assert.Equal(doorX + 1, player.X);
 
         // Door should still be open during grace period
         Assert.True(PlaceableDefinitions.IsDoorOpen(
@@ -166,10 +156,9 @@ public class DoorMechanicsTests
         engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
 
         // Bump to open
-        ref var input = ref engine.EcsWorld.Get<PlayerInput>(player);
-        input.ActionType = ActionTypes.Move;
-        input.TargetX = 1;
-        input.TargetY = 0;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
         engine.Tick();
         Assert.True(PlaceableDefinitions.IsDoorOpen(
             engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,

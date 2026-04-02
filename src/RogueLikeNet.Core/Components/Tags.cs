@@ -1,11 +1,8 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
 /// <summary>
 /// Tag component marking an entity as a player (vs monster/item).
 /// </summary>
-[Component]
 public struct PlayerTag
 {
     public long ConnectionId;
@@ -14,14 +11,12 @@ public struct PlayerTag
 /// <summary>
 /// Marks an entity for removal at end of tick.
 /// </summary>
-[Component]
 public struct DeadTag { }
 
 /// <summary>
 /// Tag for peaceful town NPCs that wander within their town area.
 /// Hitting this NPC triggers a conversation instead of an attack.
 /// </summary>
-[Component]
 public struct TownNpcTag
 {
     /// <summary>Display name of this NPC.</summary>

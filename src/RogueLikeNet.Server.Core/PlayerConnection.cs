@@ -10,7 +10,7 @@ namespace RogueLikeNet.Server;
 public class PlayerConnection
 {
     public long ConnectionId { get; }
-    public Arch.Core.Entity? PlayerEntity { get; set; }
+    public int? PlayerEntityId { get; set; }
     public string PlayerName { get; set; } = "";
     public long LastAckedTick { get; set; }
     public ConcurrentQueue<Protocol.Messages.ClientInputMsg> InputQueue { get; } = new();

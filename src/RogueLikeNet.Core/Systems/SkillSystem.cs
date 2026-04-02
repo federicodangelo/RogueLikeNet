@@ -1,179 +1,215 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Processes skill usage and cooldown ticking.
-/// Handles UseSkill actions from PlayerInput.
 /// </summary>
 public class SkillSystem
 {
-    public void Update(Arch.Core.World world)
+    public void Update(WorldMap map)
     {
-        TickCooldowns(world);
-        ProcessSkillUse(world);
+        TickCooldowns(map);
+        ProcessSkillUse(map);
     }
 
-    private void TickCooldowns(Arch.Core.World world)
+    private void TickCooldowns(WorldMap map)
     {
-        world.Query(in GameQueries.SkillCooldowns, (ref SkillSlots slots) =>
+        foreach (var player in map.Players.Values)
         {
-            if (slots.Cooldown0 > 0) slots.Cooldown0--;
-            if (slots.Cooldown1 > 0) slots.Cooldown1--;
-            if (slots.Cooldown2 > 0) slots.Cooldown2--;
-            if (slots.Cooldown3 > 0) slots.Cooldown3--;
-        });
+            if (player.Skills.Cooldown0 > 0) player.Skills.Cooldown0--;
+            if (player.Skills.Cooldown1 > 0) player.Skills.Cooldown1--;
+            if (player.Skills.Cooldown2 > 0) player.Skills.Cooldown2--;
+            if (player.Skills.Cooldown3 > 0) player.Skills.Cooldown3--;
+        }
     }
 
-    private void ProcessSkillUse(Arch.Core.World world)
+    private void ProcessSkillUse(WorldMap map)
     {
-        var actions = new List<(Entity Player, int SkillSlot, int TargetX, int TargetY)>();
+        var actions = new List<(PlayerEntity Player, int SkillSlot, int TargetX, int TargetY)>();
 
-        world.Query(in GameQueries.PlayerSkillUse, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.UseSkill) return;
-            actions.Add((player, input.ItemSlot, input.TargetX, input.TargetY));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.UseSkill) continue;
+            actions.Add((player, player.Input.ItemSlot, player.Input.TargetX, player.Input.TargetY));
+            player.Input.ActionType = ActionTypes.None;
+        }
 
         foreach (var (player, skillSlot, tx, ty) in actions)
         {
-            if (!world.IsAlive(player)) continue;
-
-            ref var slots = ref world.Get<SkillSlots>(player);
-            int skillId = GetSkillId(ref slots, skillSlot);
+            int skillId = GetSkillId(player, skillSlot);
             if (skillId == SkillDefinitions.None) continue;
 
-            int cooldown = GetCooldown(ref slots, skillSlot);
-            if (cooldown > 0) continue; // still on cooldown
-
-            ref var pos = ref world.Get<Position>(player);
-            ref var stats = ref world.Get<CombatStats>(player);
+            int cooldown = GetCooldown(player, skillSlot);
+            if (cooldown > 0) continue;
 
             int range = SkillDefinitions.GetRange(skillId);
-            int targetX = pos.X + tx;
-            int targetY = pos.Y + ty;
+            int targetX = player.X + tx;
+            int targetY = player.Y + ty;
 
             bool used = skillId switch
             {
-                SkillDefinitions.PowerStrike => ExecuteMelee(world, player, ref stats, targetX, targetY, 200),
-                SkillDefinitions.ShieldBash => ExecuteMelee(world, player, ref stats, targetX, targetY, 50),
-                SkillDefinitions.Backstab => ExecuteMelee(world, player, ref stats, targetX, targetY, 300),
-                SkillDefinitions.Dodge => ExecuteDodge(world, player, ref stats),
-                SkillDefinitions.Fireball => ExecuteAoe(world, ref stats, targetX, targetY, 150, 1),
-                SkillDefinitions.Heal => ExecuteHeal(world, player),
-                SkillDefinitions.PowerShot => ExecuteRanged(world, ref stats, pos, targetX, targetY, range, 180),
-                SkillDefinitions.Trap => false, // TODO: place trap entity
+                SkillDefinitions.PowerStrike => ExecuteMelee(map, player, targetX, targetY, 200),
+                SkillDefinitions.ShieldBash => ExecuteMelee(map, player, targetX, targetY, 50),
+                SkillDefinitions.Backstab => ExecuteMelee(map, player, targetX, targetY, 300),
+                SkillDefinitions.Dodge => ExecuteDodge(player),
+                SkillDefinitions.Fireball => ExecuteAoe(map, player, targetX, targetY, 150, 1),
+                SkillDefinitions.Heal => ExecuteHeal(player),
+                SkillDefinitions.PowerShot => ExecuteRanged(map, player, targetX, targetY, range, 180),
+                SkillDefinitions.Trap => false,
                 _ => false,
             };
 
             if (used)
-            {
-                SetCooldown(ref slots, skillSlot, SkillDefinitions.GetCooldown(skillId));
-            }
+                SetCooldown(player, skillSlot, SkillDefinitions.GetCooldown(skillId));
         }
     }
 
-    private static bool ExecuteMelee(Arch.Core.World world, Entity attacker, ref CombatStats stats,
-        int targetX, int targetY, int damagePercent)
+    private static bool ExecuteMelee(WorldMap map, PlayerEntity attacker, int targetX, int targetY, int damagePercent)
     {
         bool hit = false;
-        int attackerAttack = stats.Attack;
-        world.Query(in GameQueries.AliveCombatTargets, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+        var chunk = map.GetChunkForWorldPos(targetX, targetY, attacker.Z);
+        if (chunk == null) return false;
+
+        foreach (var monster in chunk.Monsters)
         {
-            if (tPos.X == targetX && tPos.Y == targetY && target != attacker)
-            {
-                int baseDamage = Math.Max(1, attackerAttack - tStats.Defense);
-                int damage = Math.Max(1, baseDamage * damagePercent / 100);
-                tHealth.Current = Math.Max(0, tHealth.Current - damage);
-                hit = true;
-            }
-        });
+            if (monster.IsDead || monster.X != targetX || monster.Y != targetY) continue;
+            int baseDamage = Math.Max(1, attacker.CombatStats.Attack - monster.CombatStats.Defense);
+            int damage = Math.Max(1, baseDamage * damagePercent / 100);
+            monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
+            if (!monster.Health.IsAlive) monster.IsDead = true;
+            hit = true;
+        }
+
+        foreach (var node in chunk.ResourceNodes)
+        {
+            if (node.IsDead || node.X != targetX || node.Y != targetY) continue;
+            int baseDamage = Math.Max(1, attacker.CombatStats.Attack - node.CombatStats.Defense);
+            int damage = Math.Max(1, baseDamage * damagePercent / 100);
+            node.Health.Current = Math.Max(0, node.Health.Current - damage);
+            if (!node.Health.IsAlive) node.IsDead = true;
+            hit = true;
+        }
+
         return hit;
     }
 
-    private static bool ExecuteDodge(Arch.Core.World world, Entity player, ref CombatStats stats)
+    private static bool ExecuteDodge(PlayerEntity player)
     {
-        // Temporary defense boost (+10) for one action
-        stats.Defense += 10;
+        player.CombatStats.Defense += 10;
         return true;
     }
 
-    private static bool ExecuteAoe(Arch.Core.World world, ref CombatStats stats,
-        int centerX, int centerY, int damagePercent, int radius)
+    private static bool ExecuteAoe(WorldMap map, PlayerEntity attacker, int centerX, int centerY, int damagePercent, int radius)
     {
         bool hitAny = false;
-        int attackerAttack = stats.Attack;
-        world.Query(in GameQueries.AliveEnemyCombatTargets, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
-        {
-            if (Math.Abs(tPos.X - centerX) <= radius && Math.Abs(tPos.Y - centerY) <= radius)
+        int attackerAttack = attacker.CombatStats.Attack;
+
+        // Check chunks around the center
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(centerX, centerY, attacker.Z);
+        for (int dcx = -1; dcx <= 1; dcx++)
+            for (int dcy = -1; dcy <= 1; dcy++)
             {
-                int baseDamage = Math.Max(1, attackerAttack - tStats.Defense);
-                int damage = Math.Max(1, baseDamage * damagePercent / 100);
-                tHealth.Current = Math.Max(0, tHealth.Current - damage);
-                hitAny = true;
+                var chunk = map.TryGetChunk(cx + dcx, cy + dcy, cz);
+                if (chunk == null) continue;
+
+                foreach (var monster in chunk.Monsters)
+                {
+                    if (monster.IsDead) continue;
+                    if (Math.Abs(monster.X - centerX) <= radius && Math.Abs(monster.Y - centerY) <= radius)
+                    {
+                        int baseDamage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
+                        int damage = Math.Max(1, baseDamage * damagePercent / 100);
+                        monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
+                        if (!monster.Health.IsAlive) monster.IsDead = true;
+                        hitAny = true;
+                    }
+                }
+
+                foreach (var node in chunk.ResourceNodes)
+                {
+                    if (node.IsDead) continue;
+                    if (Math.Abs(node.X - centerX) <= radius && Math.Abs(node.Y - centerY) <= radius)
+                    {
+                        int baseDamage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
+                        int damage = Math.Max(1, baseDamage * damagePercent / 100);
+                        node.Health.Current = Math.Max(0, node.Health.Current - damage);
+                        if (!node.Health.IsAlive) node.IsDead = true;
+                        hitAny = true;
+                    }
+                }
             }
-        });
+
         return hitAny;
     }
 
-    private static bool ExecuteHeal(Arch.Core.World world, Entity player)
+    private static bool ExecuteHeal(PlayerEntity player)
     {
-        if (!world.Has<Health>(player)) return false;
-        ref var health = ref world.Get<Health>(player);
-        health.Current = Math.Min(health.Max, health.Current + 30);
+        player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + 30);
         return true;
     }
 
-    private static bool ExecuteRanged(Arch.Core.World world, ref CombatStats stats,
-        Position origin, int targetX, int targetY, int maxRange, int damagePercent)
+    private static bool ExecuteRanged(WorldMap map, PlayerEntity attacker, int targetX, int targetY, int maxRange, int damagePercent)
     {
-        int dist = Position.ChebyshevDistance(origin, new Position(targetX, targetY, origin.Z));
+        int dist = Math.Max(Math.Abs(targetX - attacker.X), Math.Abs(targetY - attacker.Y));
         if (dist > maxRange) return false;
 
         bool hit = false;
-        int attackerAttack = stats.Attack;
-        world.Query(in GameQueries.AliveEnemyCombatTargets, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+        var chunk = map.GetChunkForWorldPos(targetX, targetY, attacker.Z);
+        if (chunk == null) return false;
+
+        foreach (var monster in chunk.Monsters)
         {
-            if (tPos.X == targetX && tPos.Y == targetY)
-            {
-                int baseDamage = Math.Max(1, attackerAttack - tStats.Defense);
-                int damage = Math.Max(1, baseDamage * damagePercent / 100);
-                tHealth.Current = Math.Max(0, tHealth.Current - damage);
-                hit = true;
-            }
-        });
+            if (monster.IsDead || monster.X != targetX || monster.Y != targetY) continue;
+            int baseDamage = Math.Max(1, attacker.CombatStats.Attack - monster.CombatStats.Defense);
+            int damage = Math.Max(1, baseDamage * damagePercent / 100);
+            monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
+            if (!monster.Health.IsAlive) monster.IsDead = true;
+            hit = true;
+        }
+
+        foreach (var node in chunk.ResourceNodes)
+        {
+            if (node.IsDead || node.X != targetX || node.Y != targetY) continue;
+            int baseDamage = Math.Max(1, attacker.CombatStats.Attack - node.CombatStats.Defense);
+            int damage = Math.Max(1, baseDamage * damagePercent / 100);
+            node.Health.Current = Math.Max(0, node.Health.Current - damage);
+            if (!node.Health.IsAlive) node.IsDead = true;
+            hit = true;
+        }
+
         return hit;
     }
 
-    private static int GetSkillId(ref SkillSlots slots, int index) => index switch
+    private static int GetSkillId(PlayerEntity player, int index) => index switch
     {
-        0 => slots.Skill0,
-        1 => slots.Skill1,
-        2 => slots.Skill2,
-        3 => slots.Skill3,
+        0 => player.Skills.Skill0,
+        1 => player.Skills.Skill1,
+        2 => player.Skills.Skill2,
+        3 => player.Skills.Skill3,
         _ => SkillDefinitions.None,
     };
 
-    private static int GetCooldown(ref SkillSlots slots, int index) => index switch
+    private static int GetCooldown(PlayerEntity player, int index) => index switch
     {
-        0 => slots.Cooldown0,
-        1 => slots.Cooldown1,
-        2 => slots.Cooldown2,
-        3 => slots.Cooldown3,
+        0 => player.Skills.Cooldown0,
+        1 => player.Skills.Cooldown1,
+        2 => player.Skills.Cooldown2,
+        3 => player.Skills.Cooldown3,
         _ => 0,
     };
 
-    private static void SetCooldown(ref SkillSlots slots, int index, int value)
+    private static void SetCooldown(PlayerEntity player, int index, int value)
     {
         switch (index)
         {
-            case 0: slots.Cooldown0 = value; break;
-            case 1: slots.Cooldown1 = value; break;
-            case 2: slots.Cooldown2 = value; break;
-            case 3: slots.Cooldown3 = value; break;
+            case 0: player.Skills.Cooldown0 = value; break;
+            case 1: player.Skills.Cooldown1 = value; break;
+            case 2: player.Skills.Cooldown2 = value; break;
+            case 3: player.Skills.Cooldown3 = value; break;
         }
     }
 }

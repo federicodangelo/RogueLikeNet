@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
@@ -78,7 +77,6 @@ public class WorldMapTests
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
         map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
-        // After generation, at least some tiles should be non-void
         bool hasNonVoid = false;
         for (int x = 0; x < Chunk.Size && !hasNonVoid; x++)
             for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
@@ -140,11 +138,9 @@ public class WorldMapTests
 
         map.OpenDoor(5, 5, Position.DefaultZ);
 
-        using var ecs = Arch.Core.World.Create();
-
         // Tick (GraceTicks - 1) times: door should still be open
         for (int i = 0; i < WorldMap.DoorGraceTicks - 1; i++)
-            map.Update(ecs);
+            map.Update();
 
         var tile = map.GetTile(5, 5, Position.DefaultZ);
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
@@ -152,7 +148,7 @@ public class WorldMapTests
         Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
 
         // One more tick: door should close
-        map.Update(ecs);
+        map.Update();
 
         tile = map.GetTile(5, 5, Position.DefaultZ);
         Assert.Equal(0, tile.PlaceableItemExtra);
@@ -170,13 +166,21 @@ public class WorldMapTests
 
         map.OpenDoor(5, 5, Position.DefaultZ);
 
-        using var ecs = Arch.Core.World.Create();
-        // Place a living entity on the door tile
-        ecs.Create(new Position(5, 5, Position.DefaultZ), new Health { Current = 10, Max = 10 });
+        // Place a monster on the door tile to keep it occupied
+        chunk.Monsters.Add(new MonsterEntity
+        {
+            Id = map.AllocateEntityId(),
+            X = 5,
+            Y = 5,
+            Z = Position.DefaultZ,
+            Health = new Health(10),
+            CombatStats = default,
+            MonsterData = new MonsterData { MonsterTypeId = 1 }
+        });
 
         // Tick well past grace period
         for (int i = 0; i < WorldMap.DoorGraceTicks + 10; i++)
-            map.Update(ecs);
+            map.Update();
 
         // Door should remain open because it's occupied
         var tile = map.GetTile(5, 5, Position.DefaultZ);
@@ -194,12 +198,21 @@ public class WorldMapTests
 
         map.OpenDoor(5, 5, Position.DefaultZ);
 
-        using var ecs = Arch.Core.World.Create();
-        var entity = ecs.Create(new Position(5, 5, Position.DefaultZ), new Health { Current = 10, Max = 10 });
+        var monster = new MonsterEntity
+        {
+            Id = map.AllocateEntityId(),
+            X = 5,
+            Y = 5,
+            Z = Position.DefaultZ,
+            Health = new Health(10),
+            CombatStats = default,
+            MonsterData = new MonsterData { MonsterTypeId = 1 }
+        };
+        chunk.Monsters.Add(monster);
 
         // Tick past grace period while occupied
         for (int i = 0; i < WorldMap.DoorGraceTicks + 5; i++)
-            map.Update(ecs);
+            map.Update();
 
         // Door still open
         Assert.True(PlaceableDefinitions.IsDoorOpen(
@@ -207,11 +220,10 @@ public class WorldMapTests
             map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra));
 
         // Move entity away
-        ref var pos = ref ecs.Get<Position>(entity);
-        pos.X = 10;
+        monster.X = 10;
 
         // One tick should close the door (timer is at 1 = minimum open, unoccupied -> close)
-        map.Update(ecs);
+        map.Update();
 
         var tile = map.GetTile(5, 5, Position.DefaultZ);
         Assert.Equal(0, tile.PlaceableItemExtra);
@@ -221,22 +233,20 @@ public class WorldMapTests
     [Fact]
     public void SaveLoad_OpenDoor_PreservesStateAndAutoCloses()
     {
-        // --- Setup: open a door and partially count down ---
         var map = new WorldMap(42);
         var chunk = new Chunk(0, 0, Position.DefaultZ);
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
         map.OpenDoor(5, 5, Position.DefaultZ);
 
-        using var ecs = Arch.Core.World.Create();
         int ticksBeforeSave = 5;
         for (int i = 0; i < ticksBeforeSave; i++)
-            map.Update(ecs);
+            map.Update();
 
         int remainingTicks = map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra;
         Assert.Equal(WorldMap.DoorGraceTicks - ticksBeforeSave, remainingTicks);
 
-        // --- Simulate save/load: copy tile data to a new chunk + new WorldMap ---
+        // Simulate save/load
         var newMap = new WorldMap(42);
         var newChunk = new Chunk(0, 0, Position.DefaultZ);
         for (int x = 0; x < Chunk.Size; x++)
@@ -244,18 +254,13 @@ public class WorldMapTests
                 newChunk.Tiles[x, y] = chunk.Tiles[x, y];
         newMap.AddChunk(newChunk);
 
-        // Loaded door should be open with the remaining tick count
         var loadedTile = newMap.GetTile(5, 5, Position.DefaultZ);
         Assert.True(PlaceableDefinitions.IsDoorOpen(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
         Assert.Equal(remainingTicks, loadedTile.PlaceableItemExtra);
-
-        // AddChunk should have detected the dynamic tile
         Assert.True(newMap.IsDynamicTileTracked(5, 5, Position.DefaultZ));
 
-        // --- Tick the remaining amount: door should auto-close ---
-        using var newEcs = Arch.Core.World.Create();
         for (int i = 0; i < remainingTicks; i++)
-            newMap.Update(newEcs);
+            newMap.Update();
 
         loadedTile = newMap.GetTile(5, 5, Position.DefaultZ);
         Assert.Equal(0, loadedTile.PlaceableItemExtra);
@@ -271,16 +276,13 @@ public class WorldMapTests
         chunk.Tiles[5, 5] = MakeFloor();
         map.AddChunk(chunk);
 
-        // Not tracked initially
         Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
 
-        // Place an open door via SetTile
         var openDoor = MakeClosedDoor();
         openDoor.PlaceableItemExtra = WorldMap.DoorGraceTicks;
         map.SetTile(5, 5, Position.DefaultZ, openDoor);
         Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
 
-        // Replace with a regular floor tile
         map.SetTile(5, 5, Position.DefaultZ, MakeFloor());
         Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
     }
@@ -291,11 +293,10 @@ public class WorldMapTests
         var map = new WorldMap(42);
         var chunk = new Chunk(0, 0, Position.DefaultZ);
 
-        // Pre-populate with an open door (as if loaded from save)
         var openDoor = MakeClosedDoor();
-        openDoor.PlaceableItemExtra = 10; // partially counted down
+        openDoor.PlaceableItemExtra = 10;
         chunk.Tiles[3, 7] = openDoor;
-        chunk.Tiles[10, 20] = MakeClosedDoor(); // closed door — NOT dynamic
+        chunk.Tiles[10, 20] = MakeClosedDoor();
 
         map.AddChunk(chunk);
 
@@ -327,28 +328,130 @@ public class WorldMapTests
         chunk.Tiles[10, 10] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        using var ecs = Arch.Core.World.Create();
-
         // Open first door
         map.OpenDoor(5, 5, Position.DefaultZ);
 
         // Tick 5 times then open second door
         for (int i = 0; i < 5; i++)
-            map.Update(ecs);
+            map.Update();
         map.OpenDoor(10, 10, Position.DefaultZ);
 
-        // First door has 15 ticks left, second has 20
         Assert.Equal(WorldMap.DoorGraceTicks - 5, map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra);
         Assert.Equal(WorldMap.DoorGraceTicks, map.GetTile(10, 10, Position.DefaultZ).PlaceableItemExtra);
 
         // Tick until first door closes
         for (int i = 0; i < WorldMap.DoorGraceTicks - 5; i++)
-            map.Update(ecs);
+            map.Update();
 
-        // First closed, second still open with 5 ticks
         Assert.Equal(0, map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra);
         Assert.Equal(5, map.GetTile(10, 10, Position.DefaultZ).PlaceableItemExtra);
         Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
         Assert.True(map.IsDynamicTileTracked(10, 10, Position.DefaultZ));
+    }
+
+    // ──────────────────────────────────────────────
+    // Entity migration marks chunks dirty
+    // ──────────────────────────────────────────────
+
+    [Fact]
+    public void MigrateMonster_MarksBothChunksDirty()
+    {
+        var map = new WorldMap(42);
+        var chunkA = new Chunk(0, 0, Position.DefaultZ);
+        var chunkB = new Chunk(1, 0, Position.DefaultZ);
+        map.AddChunk(chunkA);
+        map.AddChunk(chunkB);
+
+        // Place monster in chunk A
+        int xA = 5;
+        var monster = new MonsterEntity
+        {
+            Id = map.AllocateEntityId(),
+            X = xA,
+            Y = 5,
+            Z = Position.DefaultZ,
+            Health = new Health(10),
+            CombatStats = default,
+            MonsterData = new MonsterData { MonsterTypeId = 1 },
+        };
+        chunkA.Monsters.Add(monster);
+
+        // Clear save flags
+        chunkA.ClearSaveFlag();
+        chunkB.ClearSaveFlag();
+        Assert.False(chunkA.IsModifiedSinceLastSave);
+        Assert.False(chunkB.IsModifiedSinceLastSave);
+
+        // Move monster across chunk boundary
+        int oldX = monster.X;
+        monster.X = Chunk.Size + 3; // now in chunk B
+        map.MigrateMonsterIfNeeded(monster, oldX, 5, Position.DefaultZ);
+
+        Assert.True(chunkA.IsModifiedSinceLastSave);
+        Assert.True(chunkB.IsModifiedSinceLastSave);
+        Assert.DoesNotContain(monster, chunkA.Monsters);
+        Assert.Contains(monster, chunkB.Monsters);
+    }
+
+    [Fact]
+    public void MigrateNpc_MarksBothChunksDirty()
+    {
+        var map = new WorldMap(42);
+        var chunkA = new Chunk(0, 0, Position.DefaultZ);
+        var chunkB = new Chunk(1, 0, Position.DefaultZ);
+        map.AddChunk(chunkA);
+        map.AddChunk(chunkB);
+
+        var npc = new TownNpcEntity
+        {
+            Id = map.AllocateEntityId(),
+            X = 5,
+            Y = 5,
+            Z = Position.DefaultZ,
+            Health = new Health(100),
+            CombatStats = default,
+            NpcData = new TownNpcTag { Name = "Test" },
+        };
+        chunkA.TownNpcs.Add(npc);
+
+        chunkA.ClearSaveFlag();
+        chunkB.ClearSaveFlag();
+
+        int oldX = npc.X;
+        npc.X = Chunk.Size + 3;
+        map.MigrateNpcIfNeeded(npc, oldX, 5, Position.DefaultZ);
+
+        Assert.True(chunkA.IsModifiedSinceLastSave);
+        Assert.True(chunkB.IsModifiedSinceLastSave);
+        Assert.DoesNotContain(npc, chunkA.TownNpcs);
+        Assert.Contains(npc, chunkB.TownNpcs);
+    }
+
+    [Fact]
+    public void MigrateMonster_SameChunk_DoesNotDirty()
+    {
+        var map = new WorldMap(42);
+        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        map.AddChunk(chunk);
+
+        var monster = new MonsterEntity
+        {
+            Id = map.AllocateEntityId(),
+            X = 5,
+            Y = 5,
+            Z = Position.DefaultZ,
+            Health = new Health(10),
+            CombatStats = default,
+            MonsterData = new MonsterData { MonsterTypeId = 1 },
+        };
+        chunk.Monsters.Add(monster);
+        chunk.ClearSaveFlag();
+
+        // Move within same chunk
+        int oldX = monster.X;
+        monster.X = 6;
+        map.MigrateMonsterIfNeeded(monster, oldX, 5, Position.DefaultZ);
+
+        Assert.False(chunk.IsModifiedSinceLastSave);
     }
 }

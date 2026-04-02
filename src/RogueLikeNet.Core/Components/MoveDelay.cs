@@ -1,5 +1,3 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
 /// <summary>
@@ -7,7 +5,6 @@ namespace RogueLikeNet.Core.Components;
 /// the entity can only move when it reaches zero, then resets to <see cref="Interval"/>.
 /// Lower Interval = faster movement. Players always have Interval 0 (move every tick).
 /// </summary>
-[Component]
 public struct MoveDelay
 {
     /// <summary>Ticks between moves. 0 = move every tick, 1 = every other tick, etc.</summary>

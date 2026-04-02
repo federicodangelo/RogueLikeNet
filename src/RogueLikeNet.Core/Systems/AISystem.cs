@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
@@ -25,186 +24,169 @@ public class AISystem
         _rng = new SeededRandom(seed ^ 0xA15EED);
     }
 
-    public void Update(Arch.Core.World world, WorldMap map)
+    public void Update(WorldMap map)
     {
-        // First, collect player positions
+        // Collect player positions
         var playerPositions = new List<(int X, int Y, int Z)>();
-        world.Query(in GameQueries.PlayerPositions, (ref Position pos, ref PlayerTag _) =>
-        {
-            playerPositions.Add((pos.X, pos.Y, pos.Z));
-        });
+        foreach (var p in map.Players.Values)
+            if (!p.IsDead) playerPositions.Add((p.X, p.Y, p.Z));
 
         if (playerPositions.Count == 0) return;
 
         // Collect all actor positions (alive) for collision
-        var actorPositions = new HashSet<long>();
-        world.Query(in GameQueries.PositionedActors, (ref Position aPos, ref Health h) =>
-        {
-            if (h.IsAlive)
-                actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y, aPos.Z));
-        });
+        var actorPositions = map.CollectAliveActorPositions();
 
-        // Tick down move delays
-        world.Query(in GameQueries.MoveDelays, (ref MoveDelay delay) =>
+        // Tick down all move and attack delays
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (delay.Current > 0)
-                delay.Current--;
-        });
-
-        // Tick down attack delays
-        world.Query(in GameQueries.AttackDelays, (ref AttackDelay attackDelay) =>
-        {
-            if (attackDelay.Current > 0)
-                attackDelay.Current--;
-        });
-
-        // Process monster AI (exclude town NPCs — they have their own wandering logic)
-        world.Query(in GameQueries.MonsterAI, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
-        {
-            if (!health.IsAlive) return;
-
-            // Check move delay — skip movement (not state transitions) if on cooldown
-            bool canMove = true;
-            if (world.Has<MoveDelay>(entity))
+            foreach (var m in chunk.Monsters)
             {
-                ref var delay = ref world.Get<MoveDelay>(entity);
-                if (delay.Current > 0)
-                    canMove = false;
+                if (m.MoveDelay.Current > 0) m.MoveDelay.Current--;
+                if (m.AttackDelay.Current > 0) m.AttackDelay.Current--;
             }
-
-            // Find nearest player (same Z or ±1 Z)
-            // Track both nearest overall and nearest within the same Z for better chasing behavior
-            int nearestDist = int.MaxValue;
-            int nearestPx = 0, nearestPy = 0, nearestPz = 0;
-            int nearestDistAboveOrBelow = int.MaxValue;
-            int nearestAboveOrBelowPx = 0, nearestAboveOrBelowPy = 0, nearestAboveOrBelowPz = 0;
-
-            foreach (var (px, py, pz) in playerPositions)
+            foreach (var n in chunk.TownNpcs)
             {
-                int zDiff = Math.Abs(pz - pos.Z);
-                if (zDiff > 1) continue; // Only detect players within ±1 Z
-                int dist = Math.Abs(pos.X - px) + Math.Abs(pos.Y - py) + zDiff;
-                if (zDiff == 0 && dist < nearestDist)
+                if (n.MoveDelay.Current > 0) n.MoveDelay.Current--;
+                if (n.AttackDelay.Current > 0) n.AttackDelay.Current--;
+            }
+        }
+
+        // Tick down player delays too
+        foreach (var p in map.Players.Values)
+        {
+            if (p.MoveDelay.Current > 0) p.MoveDelay.Current--;
+            if (p.AttackDelay.Current > 0) p.AttackDelay.Current--;
+        }
+
+        // Process monster AI (exclude town NPCs)
+        foreach (var chunk in map.LoadedChunks)
+        {
+            foreach (var monster in chunk.Monsters)
+            {
+                if (monster.IsDead || !monster.Health.IsAlive) continue;
+
+                bool canMove = monster.MoveDelay.Current <= 0;
+
+                // Find nearest player (same Z or ±1 Z)
+                int nearestDist = int.MaxValue;
+                int nearestPx = 0, nearestPy = 0, nearestPz = 0;
+                int nearestDistAboveOrBelow = int.MaxValue;
+                int nearestAboveOrBelowPx = 0, nearestAboveOrBelowPy = 0, nearestAboveOrBelowPz = 0;
+
+                foreach (var (px, py, pz) in playerPositions)
                 {
-                    nearestDist = dist;
-                    nearestPx = px;
-                    nearestPy = py;
-                    nearestPz = pz;
+                    int zDiff = Math.Abs(pz - monster.Z);
+                    if (zDiff > 1) continue;
+                    int dist = Math.Abs(monster.X - px) + Math.Abs(monster.Y - py) + zDiff;
+                    if (zDiff == 0 && dist < nearestDist)
+                    {
+                        nearestDist = dist;
+                        nearestPx = px; nearestPy = py; nearestPz = pz;
+                    }
+                    if (dist < nearestDistAboveOrBelow)
+                    {
+                        nearestDistAboveOrBelow = dist;
+                        nearestAboveOrBelowPx = px; nearestAboveOrBelowPy = py; nearestAboveOrBelowPz = pz;
+                    }
                 }
 
-                if (dist < nearestDistAboveOrBelow)
+                switch (monster.AI.StateId)
                 {
-                    nearestDistAboveOrBelow = dist;
-                    nearestAboveOrBelowPx = px;
-                    nearestAboveOrBelowPy = py;
-                    nearestAboveOrBelowPz = pz;
-                }
-            }
-
-            switch (ai.StateId)
-            {
-                case AIStates.Idle:
-                    if (nearestDist <= DetectionRange)
-                        ai.StateId = AIStates.Chase;
-                    break;
-
-                case AIStates.Chase:
-                    if (nearestDistAboveOrBelow > ChaseRange)
-                    {
-                        ai.StateId = AIStates.Idle;
+                    case AIStates.Idle:
+                        if (nearestDist <= DetectionRange)
+                            monster.AI.StateId = AIStates.Chase;
                         break;
-                    }
-                    if (nearestDist <= 1)
-                    {
-                        ai.StateId = AIStates.Attack;
-                        break;
-                    }
-                    if (!canMove) break; // Wait for move delay
-                    // Move towards player using 3D A*
-                    int chaseZ = pos.Z; // capture for lambda
-                    var path = AStarPathfinder.FindPath(
-                        pos.X, pos.Y, pos.Z, nearestAboveOrBelowPx, nearestAboveOrBelowPy, nearestAboveOrBelowPz,
-                        (x, y, z) =>
-                        {
-                            var tile = map.GetTile(x, y, z);
-                            if (!tile.IsWalkable) return TileWalkability.None;
-                            if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
-                            if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
-                            return TileWalkability.Walkable;
-                        },
-                        maxSteps: 200);
-                    if (path != null && path.Count >= 2)
-                    {
-                        var next = path[1];
-                        long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
-                        if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
-                        {
-                            // Remove old position, move, add new position
-                            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y, pos.Z));
-                            pos.X = next.X;
-                            pos.Y = next.Y;
-                            pos.Z = next.Z;
-                            actorPositions.Add(nextKey);
 
-                            // Reset move delay after moving
-                            if (world.Has<MoveDelay>(entity))
+                    case AIStates.Chase:
+                        if (nearestDistAboveOrBelow > ChaseRange)
+                        {
+                            monster.AI.StateId = AIStates.Idle;
+                            break;
+                        }
+                        if (nearestDist <= 1)
+                        {
+                            monster.AI.StateId = AIStates.Attack;
+                            break;
+                        }
+                        if (!canMove) break;
+
+                        var path = AStarPathfinder.FindPath(
+                            monster.X, monster.Y, monster.Z, nearestAboveOrBelowPx, nearestAboveOrBelowPy, nearestAboveOrBelowPz,
+                            (x, y, z) =>
                             {
-                                ref var delay = ref world.Get<MoveDelay>(entity);
-                                delay.Current = delay.Interval;
+                                var tile = map.GetTile(x, y, z);
+                                if (!tile.IsWalkable) return TileWalkability.None;
+                                if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
+                                if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
+                                return TileWalkability.Walkable;
+                            },
+                            maxSteps: 200);
+                        if (path != null && path.Count >= 2)
+                        {
+                            var next = path[1];
+                            long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
+                            if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
+                            {
+                                actorPositions.Remove(Position.PackCoord(monster.X, monster.Y, monster.Z));
+                                int oldX = monster.X, oldY = monster.Y, oldZ = monster.Z;
+                                monster.X = next.X;
+                                monster.Y = next.Y;
+                                monster.Z = next.Z;
+                                actorPositions.Add(nextKey);
+                                monster.MoveDelay.Current = monster.MoveDelay.Interval;
+                                map.MigrateMonsterIfNeeded(monster, oldX, oldY, oldZ);
                             }
                         }
-                    }
-                    break;
+                        break;
 
-                case AIStates.Attack:
-                    if (nearestDist > 1)
-                        ai.StateId = AIStates.Chase;
-                    // Actual damage dealt by CombatSystem
-                    break;
+                    case AIStates.Attack:
+                        if (nearestDist > 1)
+                            monster.AI.StateId = AIStates.Chase;
+                        break;
+                }
             }
-        });
+        }
 
         // Process town NPC wandering
-        world.Query(in GameQueries.AliveNpcs, (Entity entity, ref Position pos, ref TownNpcTag npc, ref MoveDelay delay, ref Health health) =>
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (!health.IsAlive) return;
-
-            // Tick down talk timer
-            if (npc.TalkTimer > 0)
-                npc.TalkTimer--;
-
-            // Wait for move delay
-            if (delay.Current > 0) return;
-
-            // Random walk: pick a cardinal direction
-            int dir = _rng.Next(4);
-            int nx = pos.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
-            int ny = pos.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
-
-            // Stay within wander radius of town center
-            if (Math.Abs(nx - npc.TownCenterX) > npc.WanderRadius ||
-                Math.Abs(ny - npc.TownCenterY) > npc.WanderRadius)
-                return;
-
-            // Check for closed doors — NPCs can open them
-            var targetTile = map.GetTile(nx, ny, pos.Z);
-            if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+            foreach (var npc in chunk.TownNpcs)
             {
-                map.OpenDoor(nx, ny, pos.Z);
-                delay.Current = delay.Interval;
-                return; // Spend this turn opening the door, move through next turn
+                if (npc.IsDead || !npc.Health.IsAlive) continue;
+
+                if (npc.NpcData.TalkTimer > 0)
+                    npc.NpcData.TalkTimer--;
+
+                if (npc.MoveDelay.Current > 0) continue;
+
+                int dir = _rng.Next(4);
+                int nx = npc.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
+                int ny = npc.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
+
+                if (Math.Abs(nx - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
+                    Math.Abs(ny - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
+                    continue;
+
+                var targetTile = map.GetTile(nx, ny, npc.Z);
+                if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+                {
+                    map.OpenDoor(nx, ny, npc.Z);
+                    npc.MoveDelay.Current = npc.MoveDelay.Interval;
+                    continue;
+                }
+
+                if (!map.IsWalkable(nx, ny, npc.Z)) continue;
+                long nextKey = Position.PackCoord(nx, ny, npc.Z);
+                if (actorPositions.Contains(nextKey)) continue;
+
+                actorPositions.Remove(Position.PackCoord(npc.X, npc.Y, npc.Z));
+                int oldNpcX = npc.X, oldNpcY = npc.Y, oldNpcZ = npc.Z;
+                npc.X = nx;
+                npc.Y = ny;
+                actorPositions.Add(nextKey);
+                npc.MoveDelay.Current = npc.MoveDelay.Interval;
+                map.MigrateNpcIfNeeded(npc, oldNpcX, oldNpcY, oldNpcZ);
             }
-
-            // Check walkability and no collision
-            if (!map.IsWalkable(nx, ny, pos.Z)) return;
-            long nextKey = Position.PackCoord(nx, ny, pos.Z);
-            if (actorPositions.Contains(nextKey)) return;
-
-            actorPositions.Remove(Position.PackCoord(pos.X, pos.Y, pos.Z));
-            pos.X = nx;
-            pos.Y = ny;
-            actorPositions.Add(nextKey);
-            delay.Current = delay.Interval;
-        });
+        }
     }
 }

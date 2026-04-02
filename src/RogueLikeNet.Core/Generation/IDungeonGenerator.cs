@@ -32,6 +32,12 @@ public class GenerationResult
     /// </summary>
     public (int X, int Y, int Z)? SpawnPosition { get; set; }
 
+    /// <summary>
+    /// Raw JSON entity data from a saved chunk, to be deserialized after the chunk
+    /// is registered in the WorldMap (so Spawn* methods can find it via TryGetChunk).
+    /// </summary>
+    public string? RawEntityJson { get; set; }
+
     public GenerationResult(Chunk chunk)
     {
         Chunk = chunk;

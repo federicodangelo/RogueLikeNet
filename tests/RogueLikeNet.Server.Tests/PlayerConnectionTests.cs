@@ -31,10 +31,10 @@ public class PlayerConnectionTests
     }
 
     [Fact]
-    public void PlayerEntity_DefaultsToNull()
+    public void PlayerEntityId_DefaultsToNull()
     {
         var conn = new PlayerConnection(1, _ => Task.CompletedTask);
-        Assert.Null(conn.PlayerEntity);
+        Assert.Null(conn.PlayerEntityId);
     }
 
     [Fact]
@@ -60,12 +60,12 @@ public class PlayerConnectionTests
     }
 
     [Fact]
-    public void PlayerEntity_CanBeSet()
+    public void PlayerEntityId_CanBeSet()
     {
         var conn = new PlayerConnection(1, _ => Task.CompletedTask);
-        Assert.Null(conn.PlayerEntity);
-        conn.PlayerEntity = new Arch.Core.Entity();
-        Assert.NotNull(conn.PlayerEntity);
+        Assert.Null(conn.PlayerEntityId);
+        conn.PlayerEntityId = 1;
+        Assert.NotNull(conn.PlayerEntityId);
     }
 
     [Fact]

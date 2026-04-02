@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
@@ -11,393 +10,303 @@ namespace RogueLikeNet.Core.Systems;
 /// </summary>
 public class InventorySystem
 {
-    public void Update(Arch.Core.World world, WorldMap worldMap)
+    public void Update(WorldMap worldMap, GameEngine engine)
     {
-        ProcessPickups(world);
-        ProcessDrops(world);
-        ProcessUseItem(world);
-        ProcessUseQuickSlot(world);
-        ProcessSetQuickSlot(world);
-        ProcessSwapItems(world);
-        ProcessUnequip(world);
-        ProcessEquip(world);
+        ProcessPickups(worldMap);
+        ProcessDrops(worldMap, engine);
+        ProcessUseItem(worldMap);
+        ProcessUseQuickSlot(worldMap);
+        ProcessSetQuickSlot(worldMap);
+        ProcessSwapItems(worldMap);
+        ProcessUnequip(worldMap);
+        ProcessEquip(worldMap);
     }
 
-    private void ProcessPickups(Arch.Core.World world)
+    private void ProcessPickups(WorldMap map)
     {
-        var pickups = new List<(Entity Player, Entity Item)>();
-
-        world.Query(in GameQueries.PlayerInventoryPosition, (Entity player, ref Position pPos, ref PlayerInput input, ref Inventory inv) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.PickUp) return;
-            input.ActionType = ActionTypes.None;
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.PickUp) continue;
+            player.Input.ActionType = ActionTypes.None;
 
-            if (inv.Items == null || inv.IsFull) return;
+            if (player.Inventory.Items == null || player.Inventory.IsFull) continue;
 
-            int px = pPos.X, py = pPos.Y, pz = pPos.Z;
+            var chunk = map.GetChunkForWorldPos(player.X, player.Y, player.Z);
+            if (chunk == null) continue;
 
-            world.Query(in GameQueries.GroundItems, (Entity item, ref Position iPos) =>
+            for (int i = chunk.GroundItems.Count - 1; i >= 0; i--)
             {
-                if (iPos.X == px && iPos.Y == py && iPos.Z == pz)
-                    pickups.Add((player, item));
-            });
-        });
+                var gi = chunk.GroundItems[i];
+                if (gi.IsDead || gi.X != player.X || gi.Y != player.Y || gi.Z != player.Z) continue;
 
-        foreach (var (player, item) in pickups)
-        {
-            if (!world.IsAlive(item) || !world.IsAlive(player)) continue;
-
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null) continue;
-
-            var itemData = world.Get<ItemData>(item);
-            if (AddItemToInventory(world, player, itemData))
-                world.Add<DeadTag>(item);
+                if (AddItemToInventory(player, gi.Item))
+                    gi.IsDead = true;
+            }
         }
     }
 
-    private void ProcessDrops(Arch.Core.World world)
+    private void ProcessDrops(WorldMap map, GameEngine engine)
     {
-        var drops = new List<(Entity Player, int Slot)>();
+        var drops = new List<(PlayerEntity Player, int Slot)>();
 
-        world.Query(in GameQueries.PlayerInventoryPosition, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.Drop) return;
-            drops.Add((player, input.ItemSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.Drop) continue;
+            drops.Add((player, player.Input.ItemSlot));
+            player.Input.ActionType = ActionTypes.None;
+        }
 
         foreach (var (player, slot) in drops)
         {
-            if (!world.IsAlive(player)) continue;
-            ref var inv = ref world.Get<Inventory>(player);
-            ref var pos = ref world.Get<Position>(player);
+            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
 
-            if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
+            var itemData = player.Inventory.Items[slot];
+            player.Inventory.Items.RemoveAt(slot);
+            player.QuickSlots.OnItemRemoved(slot);
 
-            var itemData = inv.Items[slot];
-            inv.Items.RemoveAt(slot);
+            var (dropX, dropY, dropZ) = engine.FindDropPosition(player.X, player.Y, player.Z);
 
-            // Adjust quick-slot references after removal
-            if (world.Has<QuickSlots>(player))
-            {
-                ref var qs = ref world.Get<QuickSlots>(player);
-                qs.OnItemRemoved(slot);
-            }
-
-            // Find a position without an existing ground item (spiral outward)
-            var (dropX, dropY, dropZ) = GameEngine.FindDropPosition(world, pos.X, pos.Y, pos.Z);
-
-            // Create a new entity on the ground
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
             int dropGlyph = def.Category == ItemDefinitions.CategoryPlaceable
                 ? TileDefinitions.GlyphDroppedPlaceable
                 : def.GlyphId;
-            int dropColor = def.Color;
-            world.Create(
-                new Position(dropX, dropY, dropZ),
-                new TileAppearance(dropGlyph, dropColor),
-                itemData);
+            engine.SpawnItemOnGround(itemData, dropX, dropY, dropZ);
         }
     }
 
-    private void ProcessUseItem(Arch.Core.World world)
+    private void ProcessUseItem(WorldMap map)
     {
-        var uses = new List<(Entity Player, int Slot)>();
+        var uses = new List<(PlayerEntity Player, int Slot)>();
 
-        world.Query(in GameQueries.PlayerInventoryHealth, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.UseItem) return;
-            uses.Add((player, input.ItemSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.UseItem) continue;
+            uses.Add((player, player.Input.ItemSlot));
+            player.Input.ActionType = ActionTypes.None;
+        }
 
         foreach (var (player, slot) in uses)
         {
-            if (!world.IsAlive(player)) continue;
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
+            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
 
-            var itemData = inv.Items[slot];
+            var itemData = player.Inventory.Items[slot];
             var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
 
             switch (template.Category)
             {
                 case ItemDefinitions.CategoryPotion:
-                    ApplyPotion(world, player, itemData);
-                    inv.Items.RemoveAt(slot);
-                    if (world.Has<QuickSlots>(player))
-                    {
-                        ref var qs = ref world.Get<QuickSlots>(player);
-                        qs.OnItemRemoved(slot);
-                    }
+                    ApplyPotion(player, itemData);
+                    player.Inventory.Items.RemoveAt(slot);
+                    player.QuickSlots.OnItemRemoved(slot);
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
-                    EquipItem(world, player, slot);
-                    break;
-
                 case ItemDefinitions.CategoryArmor:
-                    EquipItem(world, player, slot);
+                    EquipItem(player, slot);
                     break;
             }
         }
     }
 
-    private static void ApplyPotion(Arch.Core.World world, Entity player, ItemData itemData)
+    private static void ApplyPotion(PlayerEntity player, ItemData itemData)
     {
-        ref var health = ref world.Get<Health>(player);
-        ref var stats = ref world.Get<CombatStats>(player);
-
         if (itemData.BonusHealth > 0)
-            health.Current = Math.Min(health.Max, health.Current + itemData.BonusHealth);
+            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + itemData.BonusHealth);
         if (itemData.BonusAttack > 0)
-            stats.Attack += itemData.BonusAttack;
+            player.CombatStats.Attack += itemData.BonusAttack;
         if (itemData.BonusDefense > 0)
-            stats.Defense += itemData.BonusDefense;
+            player.CombatStats.Defense += itemData.BonusDefense;
     }
 
-    private static void ApplyItemStats(ref CombatStats stats, ref Health health, ItemData item)
+    private static void ApplyItemStats(PlayerEntity player, ItemData item)
     {
-        stats.Attack += item.BonusAttack;
-        stats.Defense += item.BonusDefense;
-        health.Max += item.BonusHealth;
-        health.Current = Math.Min(health.Current, health.Max);
+        player.CombatStats.Attack += item.BonusAttack;
+        player.CombatStats.Defense += item.BonusDefense;
+        player.Health.Max += item.BonusHealth;
+        player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
-    private static void RemoveItemStats(ref CombatStats stats, ref Health health, ItemData item)
+    private static void RemoveItemStats(PlayerEntity player, ItemData item)
     {
-        stats.Attack -= item.BonusAttack;
-        stats.Defense -= item.BonusDefense;
-        health.Max -= item.BonusHealth;
-        health.Current = Math.Min(health.Current, health.Max);
+        player.CombatStats.Attack -= item.BonusAttack;
+        player.CombatStats.Defense -= item.BonusDefense;
+        player.Health.Max -= item.BonusHealth;
+        player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
-    private static void EquipItem(Arch.Core.World world, Entity player, int slot)
+    private static void EquipItem(PlayerEntity player, int slot)
     {
-        if (!world.Has<Equipment>(player)) return;
-        ref var equip = ref world.Get<Equipment>(player);
-        ref var inv = ref world.Get<Inventory>(player);
-        ref var stats = ref world.Get<CombatStats>(player);
-        ref var health = ref world.Get<Health>(player);
-
-        var newItem = inv.Items![slot];
+        var newItem = player.Inventory.Items![slot];
         var def = ItemDefinitions.Get(newItem.ItemTypeId);
-        inv.Items.RemoveAt(slot);
+        player.Inventory.Items.RemoveAt(slot);
+        player.QuickSlots.OnItemRemoved(slot);
 
-        // Adjust quick-slot references after removal
-        if (world.Has<QuickSlots>(player))
-        {
-            ref var qs = ref world.Get<QuickSlots>(player);
-            qs.OnItemRemoved(slot);
-        }
-
-        // Unequip current item in the same slot category and return it to inventory
         if (def.Category == ItemDefinitions.CategoryWeapon)
         {
-            if (equip.HasWeapon)
+            if (player.Equipment.HasWeapon)
             {
-                RemoveItemStats(ref stats, ref health, equip.Weapon!.Value);
-                inv.Items.Add(equip.Weapon!.Value);
+                RemoveItemStats(player, player.Equipment.Weapon!.Value);
+                player.Inventory.Items.Add(player.Equipment.Weapon!.Value);
             }
-            equip.Weapon = newItem;
+            player.Equipment.Weapon = newItem;
         }
-        else // Armor
+        else
         {
-            if (equip.HasArmor)
+            if (player.Equipment.HasArmor)
             {
-                RemoveItemStats(ref stats, ref health, equip.Armor!.Value);
-                inv.Items.Add(equip.Armor!.Value);
+                RemoveItemStats(player, player.Equipment.Armor!.Value);
+                player.Inventory.Items.Add(player.Equipment.Armor!.Value);
             }
-            equip.Armor = newItem;
+            player.Equipment.Armor = newItem;
         }
 
-        ApplyItemStats(ref stats, ref health, newItem);
+        ApplyItemStats(player, newItem);
     }
 
-    private void ProcessSwapItems(Arch.Core.World world)
+    private void ProcessSwapItems(WorldMap map)
     {
-        var swaps = new List<(Entity Player, int SlotA, int SlotB)>();
-
-        world.Query(in GameQueries.PlayerInventory, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.SwapItems) return;
-            swaps.Add((player, input.ItemSlot, input.TargetSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.SwapItems) continue;
 
-        foreach (var (player, slotA, slotB) in swaps)
-        {
-            if (!world.IsAlive(player)) continue;
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null) continue;
-            if (slotA < 0 || slotA >= inv.Items.Count) continue;
-            if (slotB < 0 || slotB >= inv.Items.Count) continue;
+            int slotA = player.Input.ItemSlot;
+            int slotB = player.Input.TargetSlot;
+            player.Input.ActionType = ActionTypes.None;
+
+            if (player.Inventory.Items == null) continue;
+            if (slotA < 0 || slotA >= player.Inventory.Items.Count) continue;
+            if (slotB < 0 || slotB >= player.Inventory.Items.Count) continue;
             if (slotA == slotB) continue;
 
-            (inv.Items[slotA], inv.Items[slotB]) = (inv.Items[slotB], inv.Items[slotA]);
+            (player.Inventory.Items[slotA], player.Inventory.Items[slotB]) = (player.Inventory.Items[slotB], player.Inventory.Items[slotA]);
 
-            // Update quick-slot references to track the swapped positions
-            if (world.Has<QuickSlots>(player))
+            for (int i = 0; i < QuickSlots.SlotCount; i++)
             {
-                ref var qs = ref world.Get<QuickSlots>(player);
-                for (int i = 0; i < QuickSlots.SlotCount; i++)
-                {
-                    if (qs[i] == slotA) qs[i] = slotB;
-                    else if (qs[i] == slotB) qs[i] = slotA;
-                }
+                if (player.QuickSlots[i] == slotA) player.QuickSlots[i] = slotB;
+                else if (player.QuickSlots[i] == slotB) player.QuickSlots[i] = slotA;
             }
         }
     }
 
-    private void ProcessUnequip(Arch.Core.World world)
+    private void ProcessUnequip(WorldMap map)
     {
-        var actions = new List<(Entity Player, int EquipSlot)>();
-
-        world.Query(in GameQueries.PlayerEquipment, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.Unequip) return;
-            actions.Add((player, input.ItemSlot)); // 0 = weapon, 1 = armor
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.Unequip) continue;
 
-        foreach (var (player, equipSlot) in actions)
-        {
-            if (!world.IsAlive(player)) continue;
-            ref var equip = ref world.Get<Equipment>(player);
-            ref var inv = ref world.Get<Inventory>(player);
-            ref var stats = ref world.Get<CombatStats>(player);
-            if (inv.Items == null || inv.IsFull) continue;
+            int equipSlot = player.Input.ItemSlot;
+            player.Input.ActionType = ActionTypes.None;
 
-            if (equipSlot == 0 && equip.HasWeapon)
+            if (player.Inventory.Items == null || player.Inventory.IsFull) continue;
+
+            if (equipSlot == 0 && player.Equipment.HasWeapon)
             {
-                var old = equip.Weapon!.Value;
-                RemoveItemStats(ref stats, ref world.Get<Health>(player), old);
-                inv.Items.Add(old);
-                equip.Weapon = null;
+                var old = player.Equipment.Weapon!.Value;
+                RemoveItemStats(player, old);
+                player.Inventory.Items.Add(old);
+                player.Equipment.Weapon = null;
             }
-            else if (equipSlot == 1 && equip.HasArmor)
+            else if (equipSlot == 1 && player.Equipment.HasArmor)
             {
-                var old = equip.Armor!.Value;
-                RemoveItemStats(ref stats, ref world.Get<Health>(player), old);
-                inv.Items.Add(old);
-                equip.Armor = null;
+                var old = player.Equipment.Armor!.Value;
+                RemoveItemStats(player, old);
+                player.Inventory.Items.Add(old);
+                player.Equipment.Armor = null;
             }
         }
     }
 
-    private void ProcessEquip(Arch.Core.World world)
+    private void ProcessEquip(WorldMap map)
     {
-        var actions = new List<(Entity Player, int Slot)>();
-
-        world.Query(in GameQueries.PlayerEquipmentFull, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.Equip) return;
-            actions.Add((player, input.ItemSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.Equip) continue;
 
-        foreach (var (player, slot) in actions)
-        {
-            if (!world.IsAlive(player)) continue;
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null || slot < 0 || slot >= inv.Items.Count) continue;
+            int slot = player.Input.ItemSlot;
+            player.Input.ActionType = ActionTypes.None;
 
-            var itemData = inv.Items[slot];
+            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
+
+            var itemData = player.Inventory.Items[slot];
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
 
             switch (def.Category)
             {
                 case ItemDefinitions.CategoryWeapon:
                 case ItemDefinitions.CategoryArmor:
-                    EquipItem(world, player, slot);
+                    EquipItem(player, slot);
                     break;
             }
         }
     }
 
-    /// <summary>
-    /// Handles SetQuickSlot action: toggle-assign an inventory item to a quick slot.
-    /// ItemSlot = quick slot number (0-3), TargetSlot = inventory index to assign.
-    /// If the quick slot already holds that inventory index, clear it (toggle off).
-    /// </summary>
-    private void ProcessSetQuickSlot(Arch.Core.World world)
+    private void ProcessSetQuickSlot(WorldMap map)
     {
-        var actions = new List<(Entity Player, int QuickSlotNum, int InvIndex)>();
-
-        world.Query(in GameQueries.PlayerQuickSlots, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.SetQuickSlot) return;
-            actions.Add((player, input.ItemSlot, input.TargetSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.SetQuickSlot) continue;
 
-        foreach (var (player, qsNum, invIndex) in actions)
-        {
-            if (!world.IsAlive(player)) continue;
+            int qsNum = player.Input.ItemSlot;
+            int invIndex = player.Input.TargetSlot;
+            player.Input.ActionType = ActionTypes.None;
+
             if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
 
-            ref var qs = ref world.Get<QuickSlots>(player);
-            ref var inv = ref world.Get<Inventory>(player);
-
-            // Toggle: if this quick slot already points to this item, clear it
-            if (qs[qsNum] == invIndex)
+            if (player.QuickSlots[qsNum] == invIndex)
             {
-                qs[qsNum] = -1;
+                player.QuickSlots[qsNum] = -1;
             }
             else
             {
-                // Validate the inventory index
-                if (inv.Items == null || invIndex < 0 || invIndex >= inv.Items.Count) continue;
-
-                // Clear any other quick slot that had this inventory index
-                qs.ClearIndex(invIndex);
-                qs[qsNum] = invIndex;
+                if (player.Inventory.Items == null || invIndex < 0 || invIndex >= player.Inventory.Items.Count) continue;
+                player.QuickSlots.ClearIndex(invIndex);
+                player.QuickSlots[qsNum] = invIndex;
             }
         }
     }
 
-    /// <summary>
-    /// Handles UseQuickSlot action: resolves quick slot to inventory index, then uses the item.
-    /// ItemSlot = quick slot number (0-3).
-    /// </summary>
-    private void ProcessUseQuickSlot(Arch.Core.World world)
+    private void ProcessUseQuickSlot(WorldMap map)
     {
-        var uses = new List<(Entity Player, int QuickSlotNum)>();
+        var uses = new List<(PlayerEntity Player, int QuickSlotNum)>();
 
-        world.Query(in GameQueries.PlayerQuickSlotUse, (Entity player, ref PlayerInput input) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.UseQuickSlot) return;
-            uses.Add((player, input.ItemSlot));
-            input.ActionType = ActionTypes.None;
-        });
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.UseQuickSlot) continue;
+            uses.Add((player, player.Input.ItemSlot));
+            player.Input.ActionType = ActionTypes.None;
+        }
 
         foreach (var (player, qsNum) in uses)
         {
-            if (!world.IsAlive(player)) continue;
             if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
 
-            ref var qs = ref world.Get<QuickSlots>(player);
-            int invIndex = qs[qsNum];
+            int invIndex = player.QuickSlots[qsNum];
             if (invIndex < 0) continue;
 
-            ref var inv = ref world.Get<Inventory>(player);
-            if (inv.Items == null || invIndex >= inv.Items.Count) continue;
+            if (player.Inventory.Items == null || invIndex >= player.Inventory.Items.Count) continue;
 
-            var itemData = inv.Items[invIndex];
+            var itemData = player.Inventory.Items[invIndex];
             var template = Array.Find(ItemDefinitions.All, t => t.TypeId == itemData.ItemTypeId);
 
             switch (template.Category)
             {
                 case ItemDefinitions.CategoryPotion:
-                    ApplyPotion(world, player, itemData);
-                    inv.Items.RemoveAt(invIndex);
-                    qs.OnItemRemoved(invIndex);
+                    ApplyPotion(player, itemData);
+                    player.Inventory.Items.RemoveAt(invIndex);
+                    player.QuickSlots.OnItemRemoved(invIndex);
                     break;
 
                 case ItemDefinitions.CategoryWeapon:
                 case ItemDefinitions.CategoryArmor:
-                    EquipItem(world, player, invIndex);
+                    EquipItem(player, invIndex);
                     break;
             }
         }
@@ -405,73 +314,62 @@ public class InventorySystem
 
     /// <summary>
     /// Adds an item to the player's inventory, handling auto-stacking and quick-slot assignment.
-    /// Returns true if the item was fully added (caller can destroy the floor entity).
+    /// Returns true if the item was fully added.
     /// </summary>
-    public static bool AddItemToInventory(Arch.Core.World world, Entity player, ItemData itemData)
+    public static bool AddItemToInventory(PlayerEntity player, ItemData itemData)
     {
-        if (!world.IsAlive(player)) return false;
-        ref var inv = ref world.Get<Inventory>(player);
-        if (inv.Items == null) return false;
+        if (player.Inventory.Items == null) return false;
 
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
 
         if (def.Stackable)
         {
-            // Try auto-stack into existing slots
-            for (int i = 0; i < inv.Items.Count; i++)
+            for (int i = 0; i < player.Inventory.Items.Count; i++)
             {
-                if (inv.Items[i].ItemTypeId == itemData.ItemTypeId &&
-                    inv.Items[i].Rarity == itemData.Rarity &&
-                    inv.Items[i].StackCount < def.MaxStackSize)
+                if (player.Inventory.Items[i].ItemTypeId == itemData.ItemTypeId &&
+                    player.Inventory.Items[i].Rarity == itemData.Rarity &&
+                    player.Inventory.Items[i].StackCount < def.MaxStackSize)
                 {
-                    var existing = inv.Items[i];
+                    var existing = player.Inventory.Items[i];
                     int canAdd = def.MaxStackSize - existing.StackCount;
                     int toAdd = Math.Min(canAdd, itemData.StackCount);
                     existing.StackCount += toAdd;
-                    inv.Items[i] = existing;
+                    player.Inventory.Items[i] = existing;
                     itemData.StackCount -= toAdd;
                     if (itemData.StackCount <= 0) return true;
                 }
             }
-            // Remaining stack goes into new slot
-            if (itemData.StackCount > 0 && !inv.IsFull)
+            if (itemData.StackCount > 0 && !player.Inventory.IsFull)
             {
-                int newIndex = inv.Items.Count;
-                inv.Items.Add(itemData);
-                AutoAssignQuickSlot(world, player, newIndex);
+                int newIndex = player.Inventory.Items.Count;
+                player.Inventory.Items.Add(itemData);
+                AutoAssignQuickSlot(player, newIndex);
                 return true;
             }
             return false;
         }
         else
         {
-            if (inv.IsFull) return false;
-            int newIndex = inv.Items.Count;
-            inv.Items.Add(itemData);
-            AutoAssignQuickSlot(world, player, newIndex);
+            if (player.Inventory.IsFull) return false;
+            int newIndex = player.Inventory.Items.Count;
+            player.Inventory.Items.Add(itemData);
+            AutoAssignQuickSlot(player, newIndex);
             return true;
         }
     }
 
-    /// <summary>
-    /// Auto-assigns a newly added inventory item to the first empty quick slot.
-    /// Only assigns items that are usable from quick slots (weapons, armor, potions).
-    /// </summary>
-    private static void AutoAssignQuickSlot(Arch.Core.World world, Entity player, int newIndex)
+    private static void AutoAssignQuickSlot(PlayerEntity player, int newIndex)
     {
-        if (!world.Has<QuickSlots>(player)) return;
-        ref var inv = ref world.Get<Inventory>(player);
-        if (inv.Items == null || newIndex < 0 || newIndex >= inv.Items.Count) return;
-        var itemData = inv.Items[newIndex];
+        if (player.Inventory.Items == null || newIndex < 0 || newIndex >= player.Inventory.Items.Count) return;
+        var itemData = player.Inventory.Items[newIndex];
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
         if (def.Category != ItemDefinitions.CategoryWeapon &&
             def.Category != ItemDefinitions.CategoryArmor &&
             def.Category != ItemDefinitions.CategoryPotion &&
             def.Category != ItemDefinitions.CategoryPlaceable)
             return;
-        ref var qs = ref world.Get<QuickSlots>(player);
-        int emptySlot = qs.FirstEmptySlot();
+        int emptySlot = player.QuickSlots.FirstEmptySlot();
         if (emptySlot >= 0)
-            qs[emptySlot] = newIndex;
+            player.QuickSlots[emptySlot] = newIndex;
     }
 }

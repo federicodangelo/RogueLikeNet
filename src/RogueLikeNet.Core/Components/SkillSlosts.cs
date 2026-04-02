@@ -1,8 +1,5 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
-[Component]
 public struct SkillSlots
 {
     public int Skill0;

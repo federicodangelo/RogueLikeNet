@@ -1,0 +1,12 @@
+namespace RogueLikeNet.Core.World;
+
+public enum EntityType
+{
+    None = 0,
+    Player,
+    Monster,
+    GroundItem,
+    ResourceNode,
+    TownNpc,
+    Element,
+}

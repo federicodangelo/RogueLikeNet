@@ -1,11 +1,11 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
-/// Handles melee and ranged combat. All damage is integer.
+/// Handles melee combat. All damage is integer.
 /// Melee attacks auto-target the closest adjacent enemy (cardinal + same tile).
 /// Bumping a town NPC triggers dialogue instead of damage.
 /// </summary>
@@ -14,198 +14,212 @@ public class CombatSystem
     private readonly List<CombatEvent> _events = new();
     private readonly List<NpcDialogueEvent> _dialogueEvents = new();
 
-    // Cardinal directions + same tile for melee auto-targeting
     private static readonly (int DX, int DY)[] MeleeOffsets =
         [(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)];
 
     public IReadOnlyList<CombatEvent> LastTickEvents => _events;
     public IReadOnlyList<NpcDialogueEvent> LastTickDialogueEvents => _dialogueEvents;
 
-    public void Update(Arch.Core.World world, bool debugInvulnerable = false)
+    public void Update(WorldMap map, bool debugInvulnerable = false)
     {
         _events.Clear();
         _dialogueEvents.Clear();
 
-        world.Query(in GameQueries.PlayerAttack, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats, ref AttackDelay delay) =>
+        foreach (var player in map.Players.Values)
         {
-            if (input.ActionType != ActionTypes.Attack) return;
+            if (player.IsDead) continue;
+            if (player.Input.ActionType != ActionTypes.Attack) continue;
+            if (player.AttackDelay.Current > 0) continue;
 
-            // Respect player attack cooldown — preserve action to execute next tick
-            if (delay.Current > 0) return;
+            int attackerAttack = player.CombatStats.Attack;
+            int attackerX = player.X;
+            int attackerY = player.Y;
 
-            int attackerAttack = stats.Attack;
-            int attackerX = pos.X;
-            int attackerY = pos.Y;
-
-            // Auto-target: find closest adjacent enemy
             int targetX, targetY;
-            if (input.TargetX == 0 && input.TargetY == 0)
+            if (player.Input.TargetX == 0 && player.Input.TargetY == 0)
             {
-                var best = FindClosestAdjacentTarget(world, attacker, attackerX, attackerY);
+                var best = FindClosestAdjacentTarget(map, player, attackerX, attackerY);
                 if (best == null)
                 {
-                    input.ActionType = ActionTypes.None;
-                    return;
+                    player.Input.ActionType = ActionTypes.None;
+                    continue;
                 }
                 targetX = best.Value.X;
                 targetY = best.Value.Y;
             }
             else
             {
-                targetX = attackerX + input.TargetX;
-                targetY = attackerY + input.TargetY;
+                targetX = attackerX + player.Input.TargetX;
+                targetY = attackerY + player.Input.TargetY;
             }
 
-            // Find entity at target position (exclude self)
-            Entity attackerEntity = attacker;
-            int atkX = attackerX, atkY = attackerY;
-            world.Query(in GameQueries.CombatTargets, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+            // Check monsters and resource nodes at target position
+            var chunk = map.GetChunkForWorldPos(targetX, targetY, player.Z);
+            if (chunk != null)
             {
-                if (target == attackerEntity) return;
-                if (tPos.X != targetX || tPos.Y != targetY || !tHealth.IsAlive) return;
-
-                // Town NPC: trigger dialogue instead of damage
-                if (world.Has<TownNpcTag>(target))
+                // Check Town NPCs first (dialogue instead of damage)
+                foreach (var npc in chunk.TownNpcs)
                 {
-                    ref var npc = ref world.Get<TownNpcTag>(target);
-                    if (npc.TalkTimer <= 0) // Don't re-trigger while already talking
+                    if (npc.IsDead || npc.X != targetX || npc.Y != targetY) continue;
+                    if (npc.NpcData.TalkTimer <= 0)
                     {
-                        npc.TalkTimer = 60; // ~3 seconds at 20 ticks/sec
-                        string dialogue = TownNpcDefinitions.Dialogues[npc.DialogueIndex];
-                        npc.DialogueIndex = (npc.DialogueIndex + 1) % TownNpcDefinitions.Dialogues.Length;
+                        npc.NpcData.TalkTimer = 60;
+                        string dialogue = TownNpcDefinitions.Dialogues[npc.NpcData.DialogueIndex];
+                        npc.NpcData.DialogueIndex = (npc.NpcData.DialogueIndex + 1) % TownNpcDefinitions.Dialogues.Length;
                         _dialogueEvents.Add(new NpcDialogueEvent
                         {
-                            NpcX = tPos.X,
-                            NpcY = tPos.Y,
-                            NpcName = npc.Name,
+                            NpcX = npc.X,
+                            NpcY = npc.Y,
+                            NpcName = npc.NpcData.Name,
                             Text = dialogue,
                         });
                     }
-                    return;
                 }
 
-                int damage = Math.Max(1, attackerAttack - tStats.Defense);
-                tHealth.Current = Math.Max(0, tHealth.Current - damage);
-
-                int tx2 = tPos.X, ty2 = tPos.Y;
-                _events.Add(new CombatEvent
+                // Monsters
+                foreach (var monster in chunk.Monsters)
                 {
-                    AttackerX = atkX,
-                    AttackerY = atkY,
-                    TargetX = tx2,
-                    TargetY = ty2,
-                    Damage = damage,
-                    TargetDied = !tHealth.IsAlive
-                });
-            });
+                    if (monster.IsDead || monster.X != targetX || monster.Y != targetY) continue;
+                    if (!monster.Health.IsAlive) continue;
 
-            input.ActionType = ActionTypes.None;
-            // Reset player attack cooldown after attacking
-            delay.Current = delay.Interval;
-        });
+                    int damage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
+                    monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
 
-        // Monster attacks: AI entities in Attack state hit adjacent players
-        ProcessMonsterAttacks(world, debugInvulnerable);
+                    _events.Add(new CombatEvent
+                    {
+                        AttackerX = attackerX,
+                        AttackerY = attackerY,
+                        TargetX = monster.X,
+                        TargetY = monster.Y,
+                        Damage = damage,
+                        TargetDied = !monster.Health.IsAlive
+                    });
+
+                    if (!monster.Health.IsAlive)
+                        monster.IsDead = true;
+                }
+
+                // Resource nodes
+                foreach (var node in chunk.ResourceNodes)
+                {
+                    if (node.IsDead || node.X != targetX || node.Y != targetY) continue;
+                    if (!node.Health.IsAlive) continue;
+
+                    int damage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
+                    node.Health.Current = Math.Max(0, node.Health.Current - damage);
+
+                    _events.Add(new CombatEvent
+                    {
+                        AttackerX = attackerX,
+                        AttackerY = attackerY,
+                        TargetX = node.X,
+                        TargetY = node.Y,
+                        Damage = damage,
+                        TargetDied = !node.Health.IsAlive
+                    });
+
+                    if (!node.Health.IsAlive)
+                        node.IsDead = true;
+                }
+            }
+
+            player.Input.ActionType = ActionTypes.None;
+            player.AttackDelay.Current = player.AttackDelay.Interval;
+        }
+
+        // Monster attacks
+        ProcessMonsterAttacks(map, debugInvulnerable);
 
         // Mark dead entities
-        world.Query(in GameQueries.AliveEntities, (Entity entity, ref Health health) =>
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (!health.IsAlive)
-            {
-                world.Add<DeadTag>(entity);
-            }
-        });
+            foreach (var m in chunk.Monsters)
+                if (!m.IsDead && !m.Health.IsAlive) m.IsDead = true;
+            foreach (var r in chunk.ResourceNodes)
+                if (!r.IsDead && !r.Health.IsAlive) r.IsDead = true;
+        }
+
+        foreach (var p in map.Players.Values)
+            if (!p.IsDead && !p.Health.IsAlive) p.IsDead = true;
     }
 
-    /// <summary>
-    /// Process monster attacks: monsters in Attack state hit an adjacent player each tick.
-    /// Called from <see cref="Update"/> after player attacks.
-    /// </summary>
-    private void ProcessMonsterAttacks(Arch.Core.World world, bool debugInvulnerable)
+    private void ProcessMonsterAttacks(WorldMap map, bool debugInvulnerable)
     {
-        // Collect player positions
-        var players = new List<(Entity Entity, int X, int Y)>();
-        world.Query(in GameQueries.PlayersWithCombat, (Entity entity, ref Position pos, ref Health health) =>
+        var players = new List<PlayerEntity>();
+        foreach (var p in map.Players.Values)
+            if (!p.IsDead && p.Health.IsAlive)
+                players.Add(p);
+
+        if (players.Count == 0 || debugInvulnerable) return;
+
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (health.IsAlive)
-                players.Add((entity, pos.X, pos.Y));
-        });
-        if (players.Count == 0) return;
-
-        // Skip monster attacks entirely when player is invulnerable
-        if (debugInvulnerable) return;
-
-        // Process monster attacks (exclude peaceful town NPCs)
-        world.Query(in GameQueries.MonsterAttackers, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth, ref AttackDelay attackDelay) =>
-        {
-            if (!mHealth.IsAlive || ai.StateId != AIStates.Attack) return;
-
-            // Respect attack delay
-            if (attackDelay.Current > 0) return;
-
-            // Find adjacent player
-            foreach (var (playerEntity, px, py) in players)
+            foreach (var monster in chunk.Monsters)
             {
-                int dx = Math.Abs(mPos.X - px);
-                int dy = Math.Abs(mPos.Y - py);
-                if (dx + dy > 1) continue; // not adjacent
+                if (monster.IsDead || !monster.Health.IsAlive || monster.AI.StateId != AIStates.Attack) continue;
+                if (monster.AttackDelay.Current > 0) continue;
 
-                // Deal damage
-                ref var pHealth = ref world.Get<Health>(playerEntity);
-                ref var pStats = ref world.Get<CombatStats>(playerEntity);
-                if (!pHealth.IsAlive) continue;
-
-                int damage = Math.Max(1, mStats.Attack - pStats.Defense);
-                pHealth.Current = Math.Max(0, pHealth.Current - damage);
-
-                _events.Add(new CombatEvent
+                foreach (var player in players)
                 {
-                    AttackerX = mPos.X,
-                    AttackerY = mPos.Y,
-                    TargetX = px,
-                    TargetY = py,
-                    Damage = damage,
-                    TargetDied = !pHealth.IsAlive
-                });
-                // Reset attack delay after attacking
-                attackDelay.Current = attackDelay.Interval;
-                break; // One attack per monster per tick
+                    int dx = Math.Abs(monster.X - player.X);
+                    int dy = Math.Abs(monster.Y - player.Y);
+                    if (dx + dy > 1) continue;
+                    if (!player.Health.IsAlive) continue;
+
+                    int damage = Math.Max(1, monster.CombatStats.Attack - player.CombatStats.Defense);
+                    player.Health.Current = Math.Max(0, player.Health.Current - damage);
+
+                    _events.Add(new CombatEvent
+                    {
+                        AttackerX = monster.X,
+                        AttackerY = monster.Y,
+                        TargetX = player.X,
+                        TargetY = player.Y,
+                        Damage = damage,
+                        TargetDied = !player.Health.IsAlive
+                    });
+                    monster.AttackDelay.Current = monster.AttackDelay.Interval;
+                    break;
+                }
             }
-        });
+        }
     }
 
     private static (int X, int Y)? FindClosestAdjacentTarget(
-        Arch.Core.World world, Entity attacker, int ax, int ay)
+        WorldMap map, PlayerEntity attacker, int ax, int ay)
     {
         (int X, int Y)? best = null;
         int bestDist = int.MaxValue;
 
-        world.Query(in GameQueries.NonNpcCombatTargets, (Entity candidate, ref Position cPos, ref Health cHealth) =>
+        var chunk = map.GetChunkForWorldPos(ax, ay, attacker.Z);
+        if (chunk == null) return null;
+
+        // Check monsters and resource nodes at adjacent positions
+        foreach (var monster in chunk.Monsters)
         {
-            if (candidate == attacker || !cHealth.IsAlive) return;
-
-            int dx = cPos.X - ax;
-            int dy = cPos.Y - ay;
-
-            // Check if candidate is at one of the melee offsets
+            if (monster.IsDead || !monster.Health.IsAlive) continue;
+            int dx = monster.X - ax;
+            int dy = monster.Y - ay;
             bool adjacent = false;
             foreach (var (ox, oy) in MeleeOffsets)
-            {
-                if (dx == ox && dy == oy)
-                {
-                    adjacent = true;
-                    break;
-                }
-            }
-            if (!adjacent) return;
-
+                if (dx == ox && dy == oy) { adjacent = true; break; }
+            if (!adjacent) continue;
             int dist = Math.Abs(dx) + Math.Abs(dy);
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                best = (cPos.X, cPos.Y);
-            }
-        });
+            if (dist < bestDist) { bestDist = dist; best = (monster.X, monster.Y); }
+        }
+
+        foreach (var node in chunk.ResourceNodes)
+        {
+            if (node.IsDead || !node.Health.IsAlive) continue;
+            int dx = node.X - ax;
+            int dy = node.Y - ay;
+            bool adjacent = false;
+            foreach (var (ox, oy) in MeleeOffsets)
+                if (dx == ox && dy == oy) { adjacent = true; break; }
+            if (!adjacent) continue;
+            int dist = Math.Abs(dx) + Math.Abs(dy);
+            if (dist < bestDist) { bestDist = dist; best = (node.X, node.Y); }
+        }
 
         return best;
     }

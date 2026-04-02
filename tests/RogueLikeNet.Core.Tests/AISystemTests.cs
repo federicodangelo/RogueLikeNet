@@ -1,4 +1,3 @@
-using Arch.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
@@ -36,18 +35,15 @@ public class AISystemTests
         });
 
         // Set the monster's AI state to Attack
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Attack;
+        monster.AI.StateId = AIStates.Attack;
 
         // Move the player far away so nearestDist > 1
-        ref var playerPos = ref engine.EcsWorld.Get<Position>(player);
-        playerPos.X = sx + 10;
+        player.X = sx + 10;
 
         engine.Tick();
 
         // Monster should transition from Attack → Chase
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Chase, aiAfter.StateId);
+        Assert.Equal(AIStates.Chase, monster.AI.StateId);
     }
 
     [Fact]
@@ -68,24 +64,19 @@ public class AISystemTests
         });
 
         // Set the monster's AI state to Chase with no move delay
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Chase;
-        ref var delay = ref engine.EcsWorld.Get<MoveDelay>(monster);
-        delay.Current = 0;
+        monster.AI.StateId = AIStates.Chase;
+        monster.MoveDelay.Current = 0;
 
-        ref var posBefore = ref engine.EcsWorld.Get<Position>(monster);
-        int originalX = posBefore.X;
+        int originalX = monster.X;
 
         engine.Tick();
 
-        // Check that move delay was reset (monster moved)
-        ref var delayAfter = ref engine.EcsWorld.Get<MoveDelay>(monster);
-        ref var posAfter = ref engine.EcsWorld.Get<Position>(monster);
+        // Check that move monster.MoveDelay was reset (monster moved)
 
-        // If monster moved, delay should have been reset
-        if (posAfter.X != originalX || posAfter.Y != sy)
+        // If monster moved, monster.MoveDelay should have been reset
+        if (monster.X != originalX || monster.Y != sy)
         {
-            Assert.True(delayAfter.Current > 0, "Move delay should be reset after movement");
+            Assert.True(monster.MoveDelay.Current > 0, "Move monster.MoveDelay should be reset after movement");
         }
     }
 
@@ -106,14 +97,12 @@ public class AISystemTests
         });
 
         // Set to Chase state
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Chase;
+        monster.AI.StateId = AIStates.Chase;
 
         engine.Tick();
 
         // Distance is 13 > ChaseRange(12), so should go Idle
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Idle, aiAfter.StateId);
+        Assert.Equal(AIStates.Idle, monster.AI.StateId);
     }
 
     [Fact]
@@ -132,13 +121,11 @@ public class AISystemTests
             Speed = 8
         });
 
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Chase;
+        monster.AI.StateId = AIStates.Chase;
 
         engine.Tick();
 
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Attack, aiAfter.StateId);
+        Assert.Equal(AIStates.Attack, monster.AI.StateId);
     }
 
     [Fact]
@@ -158,13 +145,11 @@ public class AISystemTests
         });
 
         // Start in Idle
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Idle;
+        monster.AI.StateId = AIStates.Idle;
 
         engine.Tick();
 
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Chase, aiAfter.StateId);
+        Assert.Equal(AIStates.Chase, monster.AI.StateId);
     }
 
     [Fact]
@@ -183,22 +168,18 @@ public class AISystemTests
             Speed = 2
         });
 
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Chase;
+        monster.AI.StateId = AIStates.Chase;
         // Set very high cooldown
-        ref var delay = ref engine.EcsWorld.Get<MoveDelay>(monster);
-        delay.Current = 100;
+        monster.MoveDelay.Current = 100;
 
-        ref var posBefore = ref engine.EcsWorld.Get<Position>(monster);
-        int origX = posBefore.X;
-        int origY = posBefore.Y;
+        int origX = monster.X;
+        int origY = monster.Y;
 
         engine.Tick();
 
-        ref var posAfter = ref engine.EcsWorld.Get<Position>(monster);
-        // Tick decrements delay by 1, but 99 >> 0, so monster stays put
-        Assert.Equal(origX, posAfter.X);
-        Assert.Equal(origY, posAfter.Y);
+        // Tick decrements monster.MoveDelay by 1, but 99 >> 0, so monster stays put
+        Assert.Equal(origX, monster.X);
+        Assert.Equal(origY, monster.Y);
     }
 
     [Fact]
@@ -221,13 +202,11 @@ public class AISystemTests
         });
 
         // Start in Idle — player is 3 XY + 1 Z = 4 Manhattan, within DetectionRange(8)
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Idle;
+        monster.AI.StateId = AIStates.Idle;
 
         engine.Tick();
 
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Idle, aiAfter.StateId);
+        Assert.Equal(AIStates.Idle, monster.AI.StateId);
     }
 
     [Fact]
@@ -250,12 +229,10 @@ public class AISystemTests
         });
 
         // Start in Idle — player is 2 Z levels away, zDiff > 1, should NOT detect
-        ref var ai = ref engine.EcsWorld.Get<AIState>(monster);
-        ai.StateId = AIStates.Idle;
+        monster.AI.StateId = AIStates.Idle;
 
         engine.Tick();
 
-        ref var aiAfter = ref engine.EcsWorld.Get<AIState>(monster);
-        Assert.Equal(AIStates.Idle, aiAfter.StateId);
+        Assert.Equal(AIStates.Idle, monster.AI.StateId);
     }
 }

@@ -1,11 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Arch.Core;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Server.Persistence;
 
@@ -24,8 +23,6 @@ internal partial class EntityJsonContext : JsonSerializerContext;
 /// </summary>
 public static class EntitySerializer
 {
-    private static readonly JsonSerializerOptions JsonOptions = EntityJsonContext.Default.Options;
-
     private const string TypeMonster = "Monster";
     private const string TypeGroundItem = "GroundItem";
     private const string TypeResourceNode = "ResourceNode";
@@ -34,19 +31,19 @@ public static class EntitySerializer
 
     // ── Serialization helpers ──────────────────────────────────────────
 
-    private static void SerializePosition(Dictionary<string, object> dict, ref Position pos)
+    private static void SerializePosition(Dictionary<string, object> dict, int x, int y, int z)
     {
-        dict["X"] = pos.X;
-        dict["Y"] = pos.Y;
-        dict["Z"] = pos.Z;
+        dict["X"] = x;
+        dict["Y"] = y;
+        dict["Z"] = z;
     }
 
-    private static void SerializeHealth(Dictionary<string, object> dict, ref Health hp)
+    private static void SerializeHealth(Dictionary<string, object> dict, Health hp)
     {
         dict["HealthCurrent"] = hp.Current;
     }
 
-    private static void SerializeAIState(Dictionary<string, object> dict, ref AIState ai)
+    private static void SerializeAIState(Dictionary<string, object> dict, AIState ai)
     {
         dict["AIStateId"] = ai.StateId;
         dict["PatrolX"] = ai.PatrolX;
@@ -54,17 +51,17 @@ public static class EntitySerializer
         dict["AlertCooldown"] = ai.AlertCooldown;
     }
 
-    private static void SerializeMoveDelay(Dictionary<string, object> dict, ref MoveDelay move)
+    private static void SerializeMoveDelay(Dictionary<string, object> dict, MoveDelay move)
     {
         dict["MoveCurrent"] = move.Current;
     }
 
-    private static void SerializeAttackDelay(Dictionary<string, object> dict, ref AttackDelay atk)
+    private static void SerializeAttackDelay(Dictionary<string, object> dict, AttackDelay atk)
     {
         dict["AttackCurrent"] = atk.Current;
     }
 
-    private static void SerializeMonsterData(Dictionary<string, object> dict, ref MonsterData md)
+    private static void SerializeMonsterData(Dictionary<string, object> dict, MonsterData md)
     {
         dict["MonsterTypeId"] = md.MonsterTypeId;
         dict["MonsterHealth"] = md.Health;
@@ -73,7 +70,7 @@ public static class EntitySerializer
         dict["MonsterSpeed"] = md.Speed;
     }
 
-    private static void SerializeItemData(Dictionary<string, object> dict, ref ItemData id)
+    private static void SerializeItemData(Dictionary<string, object> dict, ItemData id)
     {
         dict["ItemTypeId"] = id.ItemTypeId;
         dict["Rarity"] = id.Rarity;
@@ -83,12 +80,12 @@ public static class EntitySerializer
         dict["StackCount"] = id.StackCount;
     }
 
-    private static void SerializeResourceNodeData(Dictionary<string, object> dict, ref ResourceNodeData rnd)
+    private static void SerializeResourceNodeData(Dictionary<string, object> dict, ResourceNodeData rnd)
     {
         dict["NodeTypeId"] = rnd.NodeTypeId;
     }
 
-    private static void SerializeTownNpcTag(Dictionary<string, object> dict, ref TownNpcTag npc)
+    private static void SerializeTownNpcTag(Dictionary<string, object> dict, TownNpcTag npc)
     {
         dict["Name"] = npc.Name ?? "";
         dict["TownCenterX"] = npc.TownCenterX;
@@ -96,136 +93,89 @@ public static class EntitySerializer
         dict["WanderRadius"] = npc.WanderRadius;
     }
 
-    private static void SerializeTileAppearance(Dictionary<string, object> dict, ref TileAppearance ta)
+    private static void SerializeTileAppearance(Dictionary<string, object> dict, TileAppearance ta)
     {
         dict["GlyphId"] = ta.GlyphId;
         dict["FgColor"] = ta.FgColor;
         dict["BgColor"] = ta.BgColor;
     }
 
-    private static void SerializeLightSource(Dictionary<string, object> dict, ref LightSource ls)
+    private static void SerializeLightSource(Dictionary<string, object> dict, LightSource ls)
     {
         dict["LightRadius"] = ls.Radius;
         dict["LightColor"] = ls.ColorRgb;
     }
 
-    // ── Deserialization helpers ────────────────────────────────────────
-
-    private static void RestoreHealth(Arch.Core.World world, Entity entity, Dictionary<string, JsonElement> dict)
-    {
-        ref var hp = ref world.TryGetRef<Health>(entity, out var found);
-        if (!found) return;
-        hp.Current = GetInt(dict, "HealthCurrent", hp.Current);
-    }
-
-    private static void RestoreAIState(Arch.Core.World world, Entity entity, Dictionary<string, JsonElement> dict)
-    {
-        ref var ai = ref world.TryGetRef<AIState>(entity, out var found);
-        if (!found) return;
-        ai.StateId = GetInt(dict, "AIStateId");
-        ai.PatrolX = GetInt(dict, "PatrolX");
-        ai.PatrolY = GetInt(dict, "PatrolY");
-        ai.AlertCooldown = GetInt(dict, "AlertCooldown");
-    }
-
-    private static void RestoreMoveDelay(Arch.Core.World world, Entity entity, Dictionary<string, JsonElement> dict)
-    {
-        ref var move = ref world.TryGetRef<MoveDelay>(entity, out var found);
-        if (!found) return;
-        move.Current = GetInt(dict, "MoveCurrent");
-    }
-
-    private static void RestoreAttackDelay(Arch.Core.World world, Entity entity, Dictionary<string, JsonElement> dict)
-    {
-        ref var atk = ref world.TryGetRef<AttackDelay>(entity, out var found);
-        if (!found) return;
-        atk.Current = GetInt(dict, "AttackCurrent");
-    }
-
     // ── Serialization ─────────────────────────────────────────────────
 
     /// <summary>
-    /// Serializes all non-player, non-dead entities within the given chunk bounds to JSON.
+    /// Serializes all non-player, non-dead entities within the given chunk to JSON.
     /// Only runtime state is persisted; definition-derived values are rebuilt from IDs on load.
     /// </summary>
-    public static string SerializeEntities(Arch.Core.World ecsWorld, int chunkX, int chunkY, int chunkZ)
+    public static string SerializeEntities(Chunk chunk)
     {
-        int minX = chunkX * Core.World.Chunk.Size;
-        int maxX = minX + Core.World.Chunk.Size - 1;
-        int minY = chunkY * Core.World.Chunk.Size;
-        int maxY = minY + Core.World.Chunk.Size - 1;
-
         var entities = new List<Dictionary<string, object>>();
 
         // Monsters
-        ecsWorld.Query(in GameQueries.SerializableMonsters, (Entity entity, ref Position pos, ref MonsterData md, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
+        foreach (var m in chunk.Monsters)
         {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
+            if (m.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeMonster };
-            SerializePosition(dict, ref pos);
-            SerializeMonsterData(dict, ref md);
-            SerializeHealth(dict, ref hp);
-            SerializeAIState(dict, ref ai);
-            SerializeMoveDelay(dict, ref move);
-            SerializeAttackDelay(dict, ref atk);
+            SerializePosition(dict, m.X, m.Y, m.Z);
+            SerializeMonsterData(dict, m.MonsterData);
+            SerializeHealth(dict, m.Health);
+            SerializeAIState(dict, m.AI);
+            SerializeMoveDelay(dict, m.MoveDelay);
+            SerializeAttackDelay(dict, m.AttackDelay);
             entities.Add(dict);
-        });
+        }
 
-        // Ground items (entities with ItemData but NOT in inventory — they have Position)
-        ecsWorld.Query(in GameQueries.SerializableGroundItems, (Entity entity, ref Position pos, ref ItemData id) =>
+        // Ground items
+        foreach (var gi in chunk.GroundItems)
         {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
+            if (gi.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeGroundItem };
-            SerializePosition(dict, ref pos);
-            SerializeItemData(dict, ref id);
+            SerializePosition(dict, gi.X, gi.Y, gi.Z);
+            SerializeItemData(dict, gi.Item);
             entities.Add(dict);
-        });
+        }
 
         // Resource nodes
-        ecsWorld.Query(in GameQueries.SerializableResourceNodes, (Entity entity, ref Position pos, ref ResourceNodeData rnd, ref Health hp, ref AttackDelay atk) =>
+        foreach (var r in chunk.ResourceNodes)
         {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
+            if (r.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeResourceNode };
-            SerializePosition(dict, ref pos);
-            SerializeResourceNodeData(dict, ref rnd);
-            SerializeHealth(dict, ref hp);
-            SerializeAttackDelay(dict, ref atk);
+            SerializePosition(dict, r.X, r.Y, r.Z);
+            SerializeResourceNodeData(dict, r.NodeData);
+            SerializeHealth(dict, r.Health);
+            SerializeAttackDelay(dict, r.AttackDelay);
             entities.Add(dict);
-        });
+        }
 
         // Elements (decorations with optional light)
-        ecsWorld.Query(in GameQueries.SerializableLitElements, (Entity entity, ref Position pos, ref TileAppearance ta, ref LightSource ls) =>
+        foreach (var e in chunk.Elements)
         {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
-            SerializePosition(dict, ref pos);
-            SerializeTileAppearance(dict, ref ta);
-            SerializeLightSource(dict, ref ls);
+            SerializePosition(dict, e.X, e.Y, e.Z);
+            SerializeTileAppearance(dict, e.Appearance);
+            if (e.Light.HasValue)
+                SerializeLightSource(dict, e.Light.Value);
             entities.Add(dict);
-        });
-
-        ecsWorld.Query(in GameQueries.SerializableElements, (Entity entity, ref Position pos, ref TileAppearance ta) =>
-        {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
-            var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
-            SerializePosition(dict, ref pos);
-            SerializeTileAppearance(dict, ref ta);
-            entities.Add(dict);
-        });
+        }
 
         // Town NPCs
-        ecsWorld.Query(in GameQueries.SerializableNpcs, (Entity entity, ref Position pos, ref TownNpcTag npc, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
+        foreach (var n in chunk.TownNpcs)
         {
-            if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
+            if (n.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeTownNpc };
-            SerializePosition(dict, ref pos);
-            SerializeTownNpcTag(dict, ref npc);
-            SerializeHealth(dict, ref hp);
-            SerializeAIState(dict, ref ai);
-            SerializeMoveDelay(dict, ref move);
-            SerializeAttackDelay(dict, ref atk);
+            SerializePosition(dict, n.X, n.Y, n.Z);
+            SerializeTownNpcTag(dict, n.NpcData);
+            SerializeHealth(dict, n.Health);
+            SerializeAIState(dict, n.AI);
+            SerializeMoveDelay(dict, n.MoveDelay);
+            SerializeAttackDelay(dict, n.AttackDelay);
             entities.Add(dict);
-        });
+        }
 
         return JsonSerializer.Serialize(entities, EntityJsonContext.Default.ListDictionaryStringObject);
     }
@@ -265,7 +215,6 @@ public static class EntitySerializer
     private static void PatchUpEntity(Dictionary<string, JsonElement> dict)
     {
         // v1→v2: Resource nodes now use NodeTypeId instead of inline definition values.
-        // Reverse-lookup NodeTypeId from ResourceItemTypeId for old saves.
         if (GetString(dict, "Type") == TypeResourceNode && !dict.ContainsKey("NodeTypeId"))
         {
             int resourceItemTypeId = GetInt(dict, "ResourceItemTypeId");
@@ -294,12 +243,16 @@ public static class EntitySerializer
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        var entity = engine.SpawnMonster(x, y, z, monsterData);
+        var monster = engine.SpawnMonster(x, y, z, monsterData);
 
-        RestoreHealth(engine.EcsWorld, entity, dict);
-        RestoreAIState(engine.EcsWorld, entity, dict);
-        RestoreMoveDelay(engine.EcsWorld, entity, dict);
-        RestoreAttackDelay(engine.EcsWorld, entity, dict);
+        // Restore runtime state
+        monster.Health.Current = GetInt(dict, "HealthCurrent", monster.Health.Current);
+        monster.AI.StateId = GetInt(dict, "AIStateId");
+        monster.AI.PatrolX = GetInt(dict, "PatrolX");
+        monster.AI.PatrolY = GetInt(dict, "PatrolY");
+        monster.AI.AlertCooldown = GetInt(dict, "AlertCooldown");
+        monster.MoveDelay.Current = GetInt(dict, "MoveCurrent");
+        monster.AttackDelay.Current = GetInt(dict, "AttackCurrent");
     }
 
     private static void DeserializeGroundItem(Dictionary<string, JsonElement> dict, GameEngine engine)
@@ -323,10 +276,11 @@ public static class EntitySerializer
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         int nodeTypeId = GetInt(dict, "NodeTypeId");
         var def = ResourceNodeDefinitions.Get(nodeTypeId);
-        var entity = engine.SpawnResourceNode(x, y, z, def);
+        var node = engine.SpawnResourceNode(x, y, z, def);
 
-        RestoreHealth(engine.EcsWorld, entity, dict);
-        RestoreAttackDelay(engine.EcsWorld, entity, dict);
+        // Restore runtime state
+        node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);
+        node.AttackDelay.Current = GetInt(dict, "AttackCurrent");
     }
 
     private static void DeserializeElement(Dictionary<string, JsonElement> dict, GameEngine engine)
@@ -347,12 +301,16 @@ public static class EntitySerializer
         string name = GetString(dict, "Name", "NPC");
         int tcx = GetInt(dict, "TownCenterX"), tcy = GetInt(dict, "TownCenterY"), radius = GetInt(dict, "WanderRadius");
 
-        var entity = engine.SpawnTownNpc(x, y, z, name, tcx, tcy, radius);
+        var npc = engine.SpawnTownNpc(x, y, z, name, tcx, tcy, radius);
 
-        RestoreHealth(engine.EcsWorld, entity, dict);
-        RestoreAIState(engine.EcsWorld, entity, dict);
-        RestoreMoveDelay(engine.EcsWorld, entity, dict);
-        RestoreAttackDelay(engine.EcsWorld, entity, dict);
+        // Restore runtime state
+        npc.Health.Current = GetInt(dict, "HealthCurrent", npc.Health.Current);
+        npc.AI.StateId = GetInt(dict, "AIStateId");
+        npc.AI.PatrolX = GetInt(dict, "PatrolX");
+        npc.AI.PatrolY = GetInt(dict, "PatrolY");
+        npc.AI.AlertCooldown = GetInt(dict, "AlertCooldown");
+        npc.MoveDelay.Current = GetInt(dict, "MoveCurrent");
+        npc.AttackDelay.Current = GetInt(dict, "AttackCurrent");
     }
 
     // ── JSON helpers ──────────────────────────────────────────────────

@@ -147,10 +147,6 @@ public class GameServer : IDisposable
     // Save slot management commands
     // ──────────────────────────────────────────────
 
-    /// <summary>
-    /// Creates a new game in a new save slot and replaces the current engine.
-    /// Must be called before any players connect, or after all disconnect.
-    /// </summary>
     private void StartNewGame(string slotName, long seed, string generatorId)
     {
         if (_saveProvider == null) return;
@@ -166,7 +162,7 @@ public class GameServer : IDisposable
             var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
 
             _engine = new GameEngine(seed, persistentGen);
-            persistentGen.SetEngine(_engine);
+            _engine.RawEntityJsonHandler = EntitySerializer.DeserializeEntities;
             StartEngine();
 
             _saveProvider.SaveWorldMeta(_currentSlotId, new WorldSaveData
@@ -180,9 +176,6 @@ public class GameServer : IDisposable
         };
     }
 
-    /// <summary>
-    /// Loads a saved game from an existing slot, replacing the current engine.
-    /// </summary>
     private void LoadSaveSlot(string slotId)
     {
         if (_saveProvider == null) return;
@@ -211,7 +204,8 @@ public class GameServer : IDisposable
             var persistentGen = new PersistentDungeonGenerator(baseGenerator, _saveProvider, _currentSlotId);
 
             _engine = new GameEngine(meta.Seed, persistentGen);
-            persistentGen.SetEngine(_engine);
+            _engine.RawEntityJsonHandler = EntitySerializer.DeserializeEntities;
+            StartEngine();
             StartEngine();
 
             _logWriter.WriteLine($"[Server] Loaded save: slot={slotId} name={slot.Name} seed={meta.Seed} gen={meta.GeneratorId} tick={meta.CurrentTick}");
@@ -234,7 +228,6 @@ public class GameServer : IDisposable
         _engineStarted = true;
     }
 
-    /// <summary>Deletes a save slot.</summary>
     private void DeleteSaveSlot(string slotId)
     {
         if (_saveProvider == null) return;
@@ -242,17 +235,12 @@ public class GameServer : IDisposable
         _logWriter.WriteLine($"[Server] Deleted save slot: {slotId}");
     }
 
-    /// <summary>Manually triggers a save of the current game state.</summary>
     private void SaveCurrentGame()
     {
         if (_saveProvider == null || _currentSlotId == null) return;
         PerformAutoSave();
     }
 
-    /// <summary>
-    /// Processes a save game command from a client and sends the response.
-    /// Enqueued on the server thread for thread-safety.
-    /// </summary>
     public Task HandleSaveGameCommand(long connectionId, SaveGameCommandMsg cmd)
     {
         if (!_connections.TryGetValue(connectionId, out var _))
@@ -271,8 +259,6 @@ public class GameServer : IDisposable
             }
             if (_restartGameTask != null)
             {
-                // Wait for restart to complete, we have to do this in another thread because otherwise we
-                // would lock the server thread while waiting, which would prevent the restart from completing
                 _ = Task.Run(async () =>
                 {
                     while (_restartGameTask != null)
@@ -289,7 +275,6 @@ public class GameServer : IDisposable
         return tcs.Task;
     }
 
-    /// <summary>Processes a save command synchronously and returns the response.</summary>
     private SaveGameResponseMsg ProcessSaveCommand(SaveGameCommandMsg cmd)
     {
         if (_saveProvider == null)
@@ -328,7 +313,6 @@ public class GameServer : IDisposable
                     return new SaveGameResponseMsg { Action = cmd.Action, Success = false, Message = $"Unknown action: {cmd.Action}" };
             }
 
-            // Always return the refreshed slot list so clients stay in sync
             var slots = _saveProvider.ListSaveSlots();
             return new SaveGameResponseMsg
             {
@@ -375,22 +359,20 @@ public class GameServer : IDisposable
         {
             EnqueueCommand(() =>
             {
-                // Save player before destroying
-                if (_saveProvider != null && _currentSlotId != null && conn.PlayerEntity.HasValue)
+                // Save player before removing
+                if (_saveProvider != null && _currentSlotId != null && conn.PlayerEntityId.HasValue)
                 {
-                    var entity = conn.PlayerEntity.Value;
-                    if (_engine.EcsWorld.IsAlive(entity))
+                    var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
+                    if (player != null)
                     {
-                        var playerData = PlayerSerializer.SerializePlayer(_engine.EcsWorld, entity, conn.PlayerName);
+                        var playerData = PlayerSerializer.SerializePlayer(player, conn.PlayerName);
                         _saveProvider.SavePlayers(_currentSlotId, [playerData]);
                     }
                 }
 
-                if (conn.PlayerEntity.HasValue)
+                if (conn.PlayerEntityId.HasValue)
                 {
-                    var entity = conn.PlayerEntity.Value;
-                    if (_engine.EcsWorld.IsAlive(entity))
-                        _engine.EcsWorld.Destroy(entity);
+                    _engine.WorldMap.RemovePlayer(conn.PlayerEntityId.Value);
                 }
                 return Task.CompletedTask;
             });
@@ -463,21 +445,19 @@ public class GameServer : IDisposable
         conn.PlayerName = playerName;
 
         // Check for saved player data
-        Arch.Core.Entity entity;
         if (_saveProvider != null && _currentSlotId != null)
         {
             var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
             if (savedPlayer != null)
             {
-                // Ensure the chunk at the saved position is loaded
                 var (cx, cy, cz) = Chunk.WorldToChunkCoord(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ);
                 _engine.EnsureChunkLoaded(cx, cy, cz);
 
-                entity = PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
-                conn.PlayerEntity = entity;
+                var player = PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
+                conn.PlayerEntityId = player.Id;
 
                 if (DebugGiveResources)
-                    _engine.GiveDebugResources(entity);
+                    _engine.GiveDebugResources(player);
 
                 _engine.Tick();
                 ResetConnectionTracking(conn);
@@ -488,11 +468,11 @@ public class GameServer : IDisposable
 
         // No saved player — spawn fresh
         var (spawnX, spawnY, spawnZ) = _engine.FindSpawnPosition();
-        entity = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
-        conn.PlayerEntity = entity;
+        var newPlayer = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
+        conn.PlayerEntityId = newPlayer.Id;
 
         if (DebugGiveResources)
-            _engine.GiveDebugResources(entity);
+            _engine.GiveDebugResources(newPlayer);
 
         _engine.Tick();
         ResetConnectionTracking(conn);
@@ -515,10 +495,6 @@ public class GameServer : IDisposable
         await conn.SendAsync(data);
     }
 
-    /// <summary>
-    /// Enqueues a command for execution on the server thread.
-    /// If the server loop is not running (e.g. in tests), executes immediately.
-    /// </summary>
     private void EnqueueCommand(Func<Task> command)
     {
         if (IsRunning)
@@ -552,17 +528,14 @@ public class GameServer : IDisposable
             {
                 if (_restartGameTask != null)
                 {
-                    // Auto-save current game before switching
                     if (_currentSlotId != null)
                         PerformAutoSave();
 
-                    // Disconnect everyone before restarting the engine to avoid complications with entity references, chunk tracking, etc.
                     _logWriter.WriteLine("[Server] Disconnecting players...");
                     foreach (var conn in _connections.Values)
                     {
                         try
                         {
-
                             await conn.CloseAsync();
                         }
                         catch
@@ -586,7 +559,6 @@ public class GameServer : IDisposable
                 await BroadcastDeltas();
                 _pendingTileUpdates = [];
 
-                // Persistence: auto-save and chunk unload
                 if (_saveProvider != null && _currentSlotId != null)
                 {
                     var currentTick = _engine.CurrentTick;
@@ -627,7 +599,6 @@ public class GameServer : IDisposable
         }
         finally
         {
-            // Save on shutdown
             if (_saveProvider != null && _currentSlotId != null)
             {
                 _logWriter.WriteLine("[Server] Saving game on shutdown...");
@@ -661,7 +632,7 @@ public class GameServer : IDisposable
                         ChunkY = chunk.ChunkY,
                         ChunkZ = chunk.ChunkZ,
                         TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
-                        EntityData = EntitySerializer.SerializeEntities(_engine.EcsWorld, chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ),
+                        EntityData = EntitySerializer.SerializeEntities(chunk),
                     });
                     chunk.ClearSaveFlag();
                 }
@@ -672,9 +643,11 @@ public class GameServer : IDisposable
             var playerEntries = new List<PlayerSaveData>();
             foreach (var conn in _connections.Values)
             {
-                if (conn.PlayerEntity.HasValue && _engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
+                if (!conn.PlayerEntityId.HasValue) continue;
+                var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
+                if (player != null)
                 {
-                    playerEntries.Add(PlayerSerializer.SerializePlayer(_engine.EcsWorld, conn.PlayerEntity.Value, conn.PlayerName));
+                    playerEntries.Add(PlayerSerializer.SerializePlayer(player, conn.PlayerName));
                 }
             }
             if (playerEntries.Count > 0)
@@ -710,10 +683,8 @@ public class GameServer : IDisposable
 
         var currentTick = _engine.CurrentTick;
 
-        // Update viewed chunks from connected players
         UpdateChunkViewTracking(currentTick);
 
-        // Find chunks to unload
         var toUnload = new List<(int cx, int cy, int cz, long key)>();
         foreach (var (key, lastViewed) in _chunkLastViewedTick)
         {
@@ -740,11 +711,10 @@ public class GameServer : IDisposable
                 ChunkY = cy,
                 ChunkZ = cz,
                 TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
-                EntityData = EntitySerializer.SerializeEntities(_engine.EcsWorld, cx, cy, cz),
+                EntityData = EntitySerializer.SerializeEntities(chunk),
             };
             _saveProvider.SaveChunks(_currentSlotId, [entry]);
 
-            // Destroy entities in chunk, then unload
             _engine.DestroyEntitiesInChunk(cx, cy, cz);
             _engine.WorldMap.UnloadChunk(cx, cy, cz);
             _chunkLastViewedTick.Remove(key);
@@ -757,11 +727,11 @@ public class GameServer : IDisposable
     {
         foreach (var conn in _connections.Values)
         {
-            if (!conn.PlayerEntity.HasValue || !_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value))
-                continue;
+            if (!conn.PlayerEntityId.HasValue) continue;
+            var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
+            if (player == null || player.IsDead) continue;
 
-            ref var pos = ref _engine.EcsWorld.Get<Position>(conn.PlayerEntity.Value);
-            var (pcx, pcy, pcz) = Chunk.WorldToChunkCoord(pos.X, pos.Y, pos.Z);
+            var (pcx, pcy, pcz) = Chunk.WorldToChunkCoord(player.X, player.Y, player.Z);
             int radius = conn.VisibleChunks;
 
             for (int dx = -radius; dx <= radius; dx++)
@@ -783,8 +753,9 @@ public class GameServer : IDisposable
     {
         foreach (var conn in _connections.Values)
         {
-            if (!conn.PlayerEntity.HasValue) continue;
-            if (!_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value)) continue;
+            if (!conn.PlayerEntityId.HasValue) continue;
+            var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
+            if (player == null || player.IsDead) continue;
 
             // Drain all queued inputs; keep only the latest one
             ClientInputMsg? latestInput = null;
@@ -794,12 +765,11 @@ public class GameServer : IDisposable
             if (latestInput != null)
             {
                 var input = latestInput;
-                ref var playerInput = ref _engine.EcsWorld.Get<PlayerInput>(conn.PlayerEntity.Value);
-                playerInput.ActionType = input.ActionType;
-                playerInput.TargetX = input.TargetX;
-                playerInput.TargetY = input.TargetY;
-                playerInput.ItemSlot = input.ItemSlot;
-                playerInput.TargetSlot = input.TargetSlot;
+                player.Input.ActionType = input.ActionType;
+                player.Input.TargetX = input.TargetX;
+                player.Input.TargetY = input.TargetY;
+                player.Input.ItemSlot = input.ItemSlot;
+                player.Input.TargetSlot = input.TargetSlot;
             }
         }
     }
@@ -808,8 +778,9 @@ public class GameServer : IDisposable
     {
         foreach (var conn in _connections.Values)
         {
-            if (!conn.PlayerEntity.HasValue) continue;
-            if (!_engine.EcsWorld.IsAlive(conn.PlayerEntity.Value)) continue;
+            if (!conn.PlayerEntityId.HasValue) continue;
+            var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
+            if (player == null || player.IsDead) continue;
 
             try
             {
@@ -851,27 +822,24 @@ public class GameServer : IDisposable
 
     private WorldDeltaMsg BuildDelta(PlayerConnection conn, bool isSnapshot = false)
     {
-        var playerEntity = conn.PlayerEntity!.Value;
-        ref var playerPos = ref _engine.EcsWorld.Get<Position>(playerEntity);
-        ref var fov = ref _engine.EcsWorld.Get<FOVData>(playerEntity);
+        var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
 
         var ticksSinceLastSentChunks = _engine.CurrentTick - conn.LastSentChunksTick;
         var shouldSendChunks = isSnapshot || ticksSinceLastSentChunks >= MinTicksBetweenChunkResend;
 
         var chunkDelta =
             shouldSendChunks ?
-                GameStateSerializer.SerializeChunksDelta(_engine, playerPos.X, playerPos.Y, playerPos.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                GameStateSerializer.SerializeChunksDelta(_engine, player.X, player.Y, player.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
                 new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
 
         if (chunkDelta.NewChunks.Length > 0)
             conn.LastSentChunksTick = _engine.CurrentTick;
 
-        // State delta compression: always send on snapshot, otherwise only when changed
-        var playerState = GameStateSerializer.SerializePlayerStateDelta(_engine, playerEntity, conn.LastSentPlayerState);
+        var playerState = GameStateSerializer.SerializePlayerStateDelta(_engine, player, conn.LastSentPlayerState);
         if (playerState != null || isSnapshot)
             conn.LastSentPlayerState = playerState;
 
-        var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.EcsWorld, fov, conn.LastSentEntities, DebugVisibilityOff);
+        var serializedEntityData = GameStateSerializer.SerializeEntityDelta(_engine.WorldMap, player.FOV, conn.LastSentEntities, DebugVisibilityOff);
 
         return new WorldDeltaMsg
         {

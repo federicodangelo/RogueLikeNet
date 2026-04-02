@@ -1,8 +1,5 @@
-using Arch.AOT.SourceGenerator;
-
 namespace RogueLikeNet.Core.Components;
 
-[Component]
 public struct LightSource
 {
     public int Radius;
