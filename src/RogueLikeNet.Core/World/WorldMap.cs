@@ -248,26 +248,29 @@ public class WorldMap
         }
     }
 
+    private readonly List<(long ChunkKey, long TileKey)> _tmpTileKeys = new();
+    private readonly HashSet<long> _tmpOccupiedPositions = new();
+
     private void ProcessDynamicTiles(Arch.Core.World ecsWorld)
     {
         if (_dynamicTilesByChunk.Count == 0) return;
 
         // Build set of occupied positions for door blocking checks
-        var occupied = new HashSet<long>();
+        _tmpOccupiedPositions.Clear();
         var posQuery = new QueryDescription().WithAll<Position, Health>();
         ecsWorld.Query(in posQuery, (ref Position p, ref Health h) =>
         {
             if (h.IsAlive)
-                occupied.Add(Position.PackCoord(p.X, p.Y, p.Z));
+                _tmpOccupiedPositions.Add(Position.PackCoord(p.X, p.Y, p.Z));
         });
 
         // Snapshot all tile keys to avoid modifying collections during iteration
-        var allTiles = new List<(long ChunkKey, long TileKey)>();
+        _tmpTileKeys.Clear();
         foreach (var (chunkKey, tileCoords) in _dynamicTilesByChunk)
             foreach (var tileKey in tileCoords)
-                allTiles.Add((chunkKey, tileKey));
+                _tmpTileKeys.Add((chunkKey, tileKey));
 
-        foreach (var (chunkKey, tileKey) in allTiles)
+        foreach (var (chunkKey, tileKey) in _tmpTileKeys)
         {
             var (x, y, z) = Position.UnpackCoord(tileKey);
             var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
@@ -287,7 +290,7 @@ public class WorldMap
                     tile.PlaceableItemExtra = next;
                     chunk.MarkModified();
                 }
-                else if (!occupied.Contains(tileKey))
+                else if (!_tmpOccupiedPositions.Contains(tileKey))
                 {
                     // Grace expired and unoccupied — close the door
                     tile.PlaceableItemExtra = 0;
