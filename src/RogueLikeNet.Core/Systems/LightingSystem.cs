@@ -19,15 +19,13 @@ public class LightingSystem
             chunk.ResetLight();
 
         // Gather all light sources
-        var query = new QueryDescription().WithAll<Position, LightSource>();
-        world.Query(in query, (ref Position pos, ref LightSource light) =>
+        world.Query(in GameQueries.LightSources, (ref Position pos, ref LightSource light) =>
         {
             FloodLight(map, pos.X, pos.Y, pos.Z, light.Radius);
         });
 
         // Players also emit ambient light matching their FOV
-        var playerQuery = new QueryDescription().WithAll<Position, FOVData, PlayerTag>();
-        world.Query(in playerQuery, (ref Position pos, ref FOVData fov, ref PlayerTag _) =>
+        world.Query(in GameQueries.PlayerFOV, (ref Position pos, ref FOVData fov, ref PlayerTag _) =>
         {
             FloodLight(map, pos.X, pos.Y, pos.Z, fov.Radius);
         });

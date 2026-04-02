@@ -116,9 +116,8 @@ public static class GameStateSerializer
         var positionHealthUpdates = new List<EntityPositionHealthMsg>();
         var removals = new List<EntityRemovedMsg>();
         var currentIds = new HashSet<long>();
-        var query = new QueryDescription().WithAll<Position, TileAppearance>();
 
-        world.Query(in query, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
+        world.Query(in GameQueries.TileAppearanceEntities, (Entity e, ref Position ePos, ref TileAppearance appearance) =>
         {
             if (!debugVisibilityOff && !fov.IsVisible(ePos.X, ePos.Y, ePos.Z)) return;
 

@@ -14,8 +14,7 @@ public class FOVSystem
 {
     public void Update(Arch.Core.World world, WorldMap map)
     {
-        var query = new QueryDescription().WithAll<Position, FOVData>();
-        world.Query(in query, (ref Position pos, ref FOVData fov) =>
+        world.Query(in GameQueries.FOVEntities, (ref Position pos, ref FOVData fov) =>
         {
             fov.VisibleTiles ??= new HashSet<long>();
             fov.VisibleTiles.Clear();

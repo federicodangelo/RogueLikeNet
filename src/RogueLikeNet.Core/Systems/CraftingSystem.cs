@@ -13,8 +13,7 @@ public class CraftingSystem
     {
         var actions = new List<(Entity Player, int RecipeId)>();
 
-        var query = new QueryDescription().WithAll<PlayerInput, Inventory>();
-        world.Query(in query, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerInventory, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.Craft) return;
             actions.Add((player, input.ItemSlot));

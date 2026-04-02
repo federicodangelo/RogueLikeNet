@@ -16,15 +16,13 @@ public class MovementSystem
     {
         // Collect all actor positions (entities with Position + Health, alive)
         var actorPositions = new HashSet<long>();
-        var actorQuery = new QueryDescription().WithAll<Position, Health>();
-        world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
+        world.Query(in GameQueries.PositionedActors, (ref Position aPos, ref Health h) =>
         {
             if (h.IsAlive)
                 actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y, aPos.Z));
         });
 
-        var query = new QueryDescription().WithAll<Position, PlayerInput, MoveDelay>();
-        world.Query(in query, (ref Position pos, ref PlayerInput input, ref MoveDelay delay) =>
+        world.Query(in GameQueries.PlayerMovement, (ref Position pos, ref PlayerInput input, ref MoveDelay delay) =>
         {
             if (input.ActionType == ActionTypes.UseStairs)
             {
@@ -91,8 +89,7 @@ public class MovementSystem
         });
 
         // Process GridVelocity-based movement (for entities with velocity)
-        var velQuery = new QueryDescription().WithAll<Position, GridVelocity>();
-        world.Query(in velQuery, (ref Position pos, ref GridVelocity vel) =>
+        world.Query(in GameQueries.VelocityEntities, (ref Position pos, ref GridVelocity vel) =>
         {
             if (vel.DX == 0 && vel.DY == 0) return;
 

@@ -158,8 +158,7 @@ public static class EntitySerializer
         var entities = new List<Dictionary<string, object>>();
 
         // Monsters
-        var monsterQuery = new QueryDescription().WithAll<Position, MonsterData, Health, AIState, MoveDelay, AttackDelay>().WithNone<PlayerTag, DeadTag>();
-        ecsWorld.Query(in monsterQuery, (Entity entity, ref Position pos, ref MonsterData md, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
+        ecsWorld.Query(in GameQueries.SerializableMonsters, (Entity entity, ref Position pos, ref MonsterData md, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeMonster };
@@ -173,8 +172,7 @@ public static class EntitySerializer
         });
 
         // Ground items (entities with ItemData but NOT in inventory — they have Position)
-        var itemQuery = new QueryDescription().WithAll<Position, ItemData>().WithNone<PlayerTag, DeadTag, MonsterData, ResourceNodeData>();
-        ecsWorld.Query(in itemQuery, (Entity entity, ref Position pos, ref ItemData id) =>
+        ecsWorld.Query(in GameQueries.SerializableGroundItems, (Entity entity, ref Position pos, ref ItemData id) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeGroundItem };
@@ -184,8 +182,7 @@ public static class EntitySerializer
         });
 
         // Resource nodes
-        var nodeQuery = new QueryDescription().WithAll<Position, ResourceNodeData, Health, AttackDelay>().WithNone<PlayerTag, DeadTag>();
-        ecsWorld.Query(in nodeQuery, (Entity entity, ref Position pos, ref ResourceNodeData rnd, ref Health hp, ref AttackDelay atk) =>
+        ecsWorld.Query(in GameQueries.SerializableResourceNodes, (Entity entity, ref Position pos, ref ResourceNodeData rnd, ref Health hp, ref AttackDelay atk) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeResourceNode };
@@ -197,8 +194,7 @@ public static class EntitySerializer
         });
 
         // Elements (decorations with optional light)
-        var elemQueryWithLight = new QueryDescription().WithAll<Position, TileAppearance, LightSource>().WithNone<PlayerTag, DeadTag, MonsterData, ItemData, ResourceNodeData, Health, TownNpcTag>();
-        ecsWorld.Query(in elemQueryWithLight, (Entity entity, ref Position pos, ref TileAppearance ta, ref LightSource ls) =>
+        ecsWorld.Query(in GameQueries.SerializableLitElements, (Entity entity, ref Position pos, ref TileAppearance ta, ref LightSource ls) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
@@ -208,8 +204,7 @@ public static class EntitySerializer
             entities.Add(dict);
         });
 
-        var elemQuery = new QueryDescription().WithAll<Position, TileAppearance>().WithNone<PlayerTag, DeadTag, MonsterData, ItemData, ResourceNodeData, Health, LightSource, TownNpcTag>();
-        ecsWorld.Query(in elemQuery, (Entity entity, ref Position pos, ref TileAppearance ta) =>
+        ecsWorld.Query(in GameQueries.SerializableElements, (Entity entity, ref Position pos, ref TileAppearance ta) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
@@ -219,8 +214,7 @@ public static class EntitySerializer
         });
 
         // Town NPCs
-        var npcQuery = new QueryDescription().WithAll<Position, TownNpcTag, Health, AIState, MoveDelay, AttackDelay>().WithNone<DeadTag>();
-        ecsWorld.Query(in npcQuery, (Entity entity, ref Position pos, ref TownNpcTag npc, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
+        ecsWorld.Query(in GameQueries.SerializableNpcs, (Entity entity, ref Position pos, ref TownNpcTag npc, ref Health hp, ref AIState ai, ref MoveDelay move, ref AttackDelay atk) =>
         {
             if (pos.X < minX || pos.X > maxX || pos.Y < minY || pos.Y > maxY || pos.Z != chunkZ) return;
             var dict = new Dictionary<string, object> { ["Type"] = TypeTownNpc };

@@ -257,8 +257,7 @@ public class WorldMap
 
         // Build set of occupied positions for door blocking checks
         _tmpOccupiedPositions.Clear();
-        var posQuery = new QueryDescription().WithAll<Position, Health>();
-        ecsWorld.Query(in posQuery, (ref Position p, ref Health h) =>
+        ecsWorld.Query(in GameQueries.PositionedActors, (ref Position p, ref Health h) =>
         {
             if (h.IsAlive)
                 _tmpOccupiedPositions.Add(Position.PackCoord(p.X, p.Y, p.Z));

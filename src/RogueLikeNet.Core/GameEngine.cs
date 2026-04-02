@@ -214,8 +214,7 @@ public class GameEngine : IDisposable
     private void ProcessLootDrops()
     {
         var deadMonsters = new List<(int X, int Y, int Z, int MonsterTypeId)>();
-        var deathQuery = new QueryDescription().WithAll<DeadTag, MonsterData, Position>();
-        _ecsWorld.Query(in deathQuery, (ref Position pos, ref MonsterData tag) =>
+        _ecsWorld.Query(in GameQueries.DeadMonstersWithPosition, (ref Position pos, ref MonsterData tag) =>
         {
             deadMonsters.Add((pos.X, pos.Y, pos.Z, tag.MonsterTypeId));
         });
@@ -234,8 +233,7 @@ public class GameEngine : IDisposable
 
         // Resource node drops
         var deadNodes = new List<(int X, int Y, int Z, ResourceNodeData Data)>();
-        var nodeDeathQuery = new QueryDescription().WithAll<DeadTag, ResourceNodeData, Position>();
-        _ecsWorld.Query(in nodeDeathQuery, (ref Position pos, ref ResourceNodeData node) =>
+        _ecsWorld.Query(in GameQueries.DeadResourceNodesWithPosition, (ref Position pos, ref ResourceNodeData node) =>
         {
             deadNodes.Add((pos.X, pos.Y, pos.Z, node));
         });
@@ -262,8 +260,7 @@ public class GameEngine : IDisposable
     {
         // Collect positions of all ground items
         var occupied = new HashSet<long>();
-        var groundQuery = new QueryDescription().WithAll<Position, ItemData>();
-        world.Query(in groundQuery, (ref Position gPos) =>
+        world.Query(in GameQueries.GroundItems, (ref Position gPos) =>
         {
             occupied.Add(Position.PackCoord(gPos.X, gPos.Y, gPos.Z));
         });
@@ -294,8 +291,7 @@ public class GameEngine : IDisposable
     private void ProcessPlayerDeath()
     {
         var deadPlayers = new List<Entity>();
-        var playerDeathQuery = new QueryDescription().WithAll<DeadTag, Health, PlayerTag, Position>();
-        _ecsWorld.Query(in playerDeathQuery, (Entity entity) =>
+        _ecsWorld.Query(in GameQueries.DeadPlayers, (Entity entity) =>
         {
             deadPlayers.Add(entity);
         });
@@ -327,18 +323,15 @@ public class GameEngine : IDisposable
     private void CleanupDead()
     {
         var toDestroy = new List<Entity>();
-        var deadQuery = new QueryDescription().WithAll<DeadTag, MonsterData>();
-        _ecsWorld.Query(in deadQuery, (Entity entity) =>
+        _ecsWorld.Query(in GameQueries.DeadMonsters, (Entity entity) =>
         {
             toDestroy.Add(entity);
         });
-        var deadNodeQuery = new QueryDescription().WithAll<DeadTag, ResourceNodeData>();
-        _ecsWorld.Query(in deadNodeQuery, (Entity entity) =>
+        _ecsWorld.Query(in GameQueries.DeadResourceNodes, (Entity entity) =>
         {
             toDestroy.Add(entity);
         });
-        var deadItemQuery = new QueryDescription().WithAll<DeadTag, ItemData>();
-        _ecsWorld.Query(in deadItemQuery, (Entity entity) =>
+        _ecsWorld.Query(in GameQueries.DeadItems, (Entity entity) =>
         {
             toDestroy.Add(entity);
         });
@@ -378,16 +371,14 @@ public class GameEngine : IDisposable
 
         // Collect enemy positions to enforce safety radius
         var enemyPositions = new List<(int X, int Y)>();
-        var enemyQuery = new QueryDescription().WithAll<Position, MonsterData>();
-        _ecsWorld.Query(in enemyQuery, (ref Position p) =>
+        _ecsWorld.Query(in GameQueries.MonsterPositions, (ref Position p) =>
         {
             enemyPositions.Add((p.X, p.Y));
         });
 
         // Collect occupied positions to avoid spawning on entities
         var occupied = new HashSet<long>();
-        var posQuery = new QueryDescription().WithAll<Position>();
-        _ecsWorld.Query(in posQuery, (ref Position p) =>
+        _ecsWorld.Query(in GameQueries.AllPositioned, (ref Position p) =>
         {
             occupied.Add(Position.PackCoord(p.X, p.Y, p.Z));
         });
@@ -445,8 +436,7 @@ public class GameEngine : IDisposable
         int maxY = minY + Chunk.Size - 1;
 
         var toDestroy = new List<Entity>();
-        var query = new QueryDescription().WithAll<Position>().WithNone<PlayerTag>();
-        _ecsWorld.Query(in query, (Entity entity, ref Position pos) =>
+        _ecsWorld.Query(GameQueries.NonPlayerPositioned, (Entity entity, ref Position pos) =>
         {
             if (pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z == chunkZ)
                 toDestroy.Add(entity);

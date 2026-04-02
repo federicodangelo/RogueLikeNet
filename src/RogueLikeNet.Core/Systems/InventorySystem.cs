@@ -27,8 +27,7 @@ public class InventorySystem
     {
         var pickups = new List<(Entity Player, Entity Item)>();
 
-        var playerQuery = new QueryDescription().WithAll<Position, PlayerInput, Inventory>();
-        world.Query(in playerQuery, (Entity player, ref Position pPos, ref PlayerInput input, ref Inventory inv) =>
+        world.Query(in GameQueries.PlayerInventoryPosition, (Entity player, ref Position pPos, ref PlayerInput input, ref Inventory inv) =>
         {
             if (input.ActionType != ActionTypes.PickUp) return;
             input.ActionType = ActionTypes.None;
@@ -37,8 +36,7 @@ public class InventorySystem
 
             int px = pPos.X, py = pPos.Y, pz = pPos.Z;
 
-            var itemQuery = new QueryDescription().WithAll<Position, ItemData>();
-            world.Query(in itemQuery, (Entity item, ref Position iPos) =>
+            world.Query(in GameQueries.GroundItems, (Entity item, ref Position iPos) =>
             {
                 if (iPos.X == px && iPos.Y == py && iPos.Z == pz)
                     pickups.Add((player, item));
@@ -62,8 +60,7 @@ public class InventorySystem
     {
         var drops = new List<(Entity Player, int Slot)>();
 
-        var playerQuery = new QueryDescription().WithAll<Position, PlayerInput, Inventory>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerInventoryPosition, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.Drop) return;
             drops.Add((player, input.ItemSlot));
@@ -108,8 +105,7 @@ public class InventorySystem
     {
         var uses = new List<(Entity Player, int Slot)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, Health, CombatStats>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerInventoryHealth, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.UseItem) return;
             uses.Add((player, input.ItemSlot));
@@ -223,8 +219,7 @@ public class InventorySystem
     {
         var swaps = new List<(Entity Player, int SlotA, int SlotB)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerInventory, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.SwapItems) return;
             swaps.Add((player, input.ItemSlot, input.TargetSlot));
@@ -259,8 +254,7 @@ public class InventorySystem
     {
         var actions = new List<(Entity Player, int EquipSlot)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, Equipment, CombatStats>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerEquipment, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.Unequip) return;
             actions.Add((player, input.ItemSlot)); // 0 = weapon, 1 = armor
@@ -296,8 +290,7 @@ public class InventorySystem
     {
         var actions = new List<(Entity Player, int Slot)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, Equipment, Health, CombatStats>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerEquipmentFull, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.Equip) return;
             actions.Add((player, input.ItemSlot));
@@ -332,8 +325,7 @@ public class InventorySystem
     {
         var actions = new List<(Entity Player, int QuickSlotNum, int InvIndex)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, QuickSlots>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerQuickSlots, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.SetQuickSlot) return;
             actions.Add((player, input.ItemSlot, input.TargetSlot));
@@ -373,8 +365,7 @@ public class InventorySystem
     {
         var uses = new List<(Entity Player, int QuickSlotNum)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, Inventory, QuickSlots, Health, CombatStats>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerQuickSlotUse, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.UseQuickSlot) return;
             uses.Add((player, input.ItemSlot));

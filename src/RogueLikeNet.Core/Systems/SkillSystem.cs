@@ -18,8 +18,7 @@ public class SkillSystem
 
     private void TickCooldowns(Arch.Core.World world)
     {
-        var query = new QueryDescription().WithAll<SkillSlots>();
-        world.Query(in query, (ref SkillSlots slots) =>
+        world.Query(in GameQueries.SkillCooldowns, (ref SkillSlots slots) =>
         {
             if (slots.Cooldown0 > 0) slots.Cooldown0--;
             if (slots.Cooldown1 > 0) slots.Cooldown1--;
@@ -32,8 +31,7 @@ public class SkillSystem
     {
         var actions = new List<(Entity Player, int SkillSlot, int TargetX, int TargetY)>();
 
-        var playerQuery = new QueryDescription().WithAll<PlayerInput, SkillSlots, Position, CombatStats>();
-        world.Query(in playerQuery, (Entity player, ref PlayerInput input) =>
+        world.Query(in GameQueries.PlayerSkillUse, (Entity player, ref PlayerInput input) =>
         {
             if (input.ActionType != ActionTypes.UseSkill) return;
             actions.Add((player, input.ItemSlot, input.TargetX, input.TargetY));
@@ -83,8 +81,7 @@ public class SkillSystem
     {
         bool hit = false;
         int attackerAttack = stats.Attack;
-        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>().WithNone<DeadTag>();
-        world.Query(in targetQuery, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+        world.Query(in GameQueries.AliveCombatTargets, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
         {
             if (tPos.X == targetX && tPos.Y == targetY && target != attacker)
             {
@@ -109,8 +106,7 @@ public class SkillSystem
     {
         bool hitAny = false;
         int attackerAttack = stats.Attack;
-        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>().WithNone<DeadTag, PlayerTag>();
-        world.Query(in targetQuery, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+        world.Query(in GameQueries.AliveEnemyCombatTargets, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
         {
             if (Math.Abs(tPos.X - centerX) <= radius && Math.Abs(tPos.Y - centerY) <= radius)
             {
@@ -139,8 +135,7 @@ public class SkillSystem
 
         bool hit = false;
         int attackerAttack = stats.Attack;
-        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>().WithNone<DeadTag, PlayerTag>();
-        world.Query(in targetQuery, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+        world.Query(in GameQueries.AliveEnemyCombatTargets, (ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
         {
             if (tPos.X == targetX && tPos.Y == targetY)
             {

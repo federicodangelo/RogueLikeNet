@@ -26,8 +26,7 @@ public class CombatSystem
         _events.Clear();
         _dialogueEvents.Clear();
 
-        var attackQuery = new QueryDescription().WithAll<Position, PlayerInput, CombatStats, AttackDelay>();
-        world.Query(in attackQuery, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats, ref AttackDelay delay) =>
+        world.Query(in GameQueries.PlayerAttack, (Entity attacker, ref Position pos, ref PlayerInput input, ref CombatStats stats, ref AttackDelay delay) =>
         {
             if (input.ActionType != ActionTypes.Attack) return;
 
@@ -58,10 +57,9 @@ public class CombatSystem
             }
 
             // Find entity at target position (exclude self)
-            var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>();
             Entity attackerEntity = attacker;
             int atkX = attackerX, atkY = attackerY;
-            world.Query(in targetQuery, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
+            world.Query(in GameQueries.CombatTargets, (Entity target, ref Position tPos, ref Health tHealth, ref CombatStats tStats) =>
             {
                 if (target == attackerEntity) return;
                 if (tPos.X != targetX || tPos.Y != targetY || !tHealth.IsAlive) return;
@@ -110,8 +108,7 @@ public class CombatSystem
         ProcessMonsterAttacks(world, debugInvulnerable);
 
         // Mark dead entities
-        var deathQuery = new QueryDescription().WithAll<Health>().WithNone<DeadTag>();
-        world.Query(in deathQuery, (Entity entity, ref Health health) =>
+        world.Query(in GameQueries.AliveEntities, (Entity entity, ref Health health) =>
         {
             if (!health.IsAlive)
             {
@@ -128,8 +125,7 @@ public class CombatSystem
     {
         // Collect player positions
         var players = new List<(Entity Entity, int X, int Y)>();
-        var playerQuery = new QueryDescription().WithAll<Position, Health, CombatStats, PlayerTag>();
-        world.Query(in playerQuery, (Entity entity, ref Position pos, ref Health health) =>
+        world.Query(in GameQueries.PlayersWithCombat, (Entity entity, ref Position pos, ref Health health) =>
         {
             if (health.IsAlive)
                 players.Add((entity, pos.X, pos.Y));
@@ -140,8 +136,7 @@ public class CombatSystem
         if (debugInvulnerable) return;
 
         // Process monster attacks (exclude peaceful town NPCs)
-        var monsterQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health, AttackDelay>().WithNone<DeadTag, TownNpcTag>();
-        world.Query(in monsterQuery, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth, ref AttackDelay attackDelay) =>
+        world.Query(in GameQueries.MonsterAttackers, (Entity monster, ref Position mPos, ref AIState ai, ref CombatStats mStats, ref Health mHealth, ref AttackDelay attackDelay) =>
         {
             if (!mHealth.IsAlive || ai.StateId != AIStates.Attack) return;
 
@@ -185,8 +180,7 @@ public class CombatSystem
         (int X, int Y)? best = null;
         int bestDist = int.MaxValue;
 
-        var targetQuery = new QueryDescription().WithAll<Position, Health, CombatStats>().WithNone<TownNpcTag>();
-        world.Query(in targetQuery, (Entity candidate, ref Position cPos, ref Health cHealth) =>
+        world.Query(in GameQueries.NonNpcCombatTargets, (Entity candidate, ref Position cPos, ref Health cHealth) =>
         {
             if (candidate == attacker || !cHealth.IsAlive) return;
 

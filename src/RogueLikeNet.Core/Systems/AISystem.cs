@@ -29,8 +29,7 @@ public class AISystem
     {
         // First, collect player positions
         var playerPositions = new List<(int X, int Y, int Z)>();
-        var playerQuery = new QueryDescription().WithAll<Position, PlayerTag>();
-        world.Query(in playerQuery, (ref Position pos, ref PlayerTag _) =>
+        world.Query(in GameQueries.PlayerPositions, (ref Position pos, ref PlayerTag _) =>
         {
             playerPositions.Add((pos.X, pos.Y, pos.Z));
         });
@@ -39,32 +38,28 @@ public class AISystem
 
         // Collect all actor positions (alive) for collision
         var actorPositions = new HashSet<long>();
-        var actorQuery = new QueryDescription().WithAll<Position, Health>();
-        world.Query(in actorQuery, (ref Position aPos, ref Health h) =>
+        world.Query(in GameQueries.PositionedActors, (ref Position aPos, ref Health h) =>
         {
             if (h.IsAlive)
                 actorPositions.Add(Position.PackCoord(aPos.X, aPos.Y, aPos.Z));
         });
 
         // Tick down move delays
-        var delayQuery = new QueryDescription().WithAll<MoveDelay>();
-        world.Query(in delayQuery, (ref MoveDelay delay) =>
+        world.Query(in GameQueries.MoveDelays, (ref MoveDelay delay) =>
         {
             if (delay.Current > 0)
                 delay.Current--;
         });
 
         // Tick down attack delays
-        var attackDelayQuery = new QueryDescription().WithAll<AttackDelay>();
-        world.Query(in attackDelayQuery, (ref AttackDelay attackDelay) =>
+        world.Query(in GameQueries.AttackDelays, (ref AttackDelay attackDelay) =>
         {
             if (attackDelay.Current > 0)
                 attackDelay.Current--;
         });
 
         // Process monster AI (exclude town NPCs — they have their own wandering logic)
-        var aiQuery = new QueryDescription().WithAll<Position, AIState, CombatStats, Health>().WithNone<DeadTag, TownNpcTag>();
-        world.Query(in aiQuery, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
+        world.Query(in GameQueries.MonsterAI, (Entity entity, ref Position pos, ref AIState ai, ref CombatStats stats, ref Health health) =>
         {
             if (!health.IsAlive) return;
 
@@ -170,8 +165,7 @@ public class AISystem
         });
 
         // Process town NPC wandering
-        var npcQuery = new QueryDescription().WithAll<Position, TownNpcTag, MoveDelay, Health>().WithNone<DeadTag>();
-        world.Query(in npcQuery, (Entity entity, ref Position pos, ref TownNpcTag npc, ref MoveDelay delay, ref Health health) =>
+        world.Query(in GameQueries.AliveNpcs, (Entity entity, ref Position pos, ref TownNpcTag npc, ref MoveDelay delay, ref Health health) =>
         {
             if (!health.IsAlive) return;
 
