@@ -1,3 +1,4 @@
+using CommunityToolkit.HighPerformance;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Protocol.Messages;
@@ -49,7 +50,7 @@ public sealed class SaveSlotScreen : IScreen
 
     public void SetSlots(SaveSlotInfoMsg[] slots)
     {
-        _slots = slots;
+        _slots = slots.OrderByDescending(s => s.LastSavedAtUnixMs).ToArray();
         _waitingForResponse = false;
         if (_selectedIndex >= TotalItemCount)
             _selectedIndex = Math.Max(0, TotalItemCount - 1);
