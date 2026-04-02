@@ -57,6 +57,7 @@ public static class EntityFactory
             new TileAppearance(def.GlyphId, def.Color),
             new ResourceNodeData
             {
+                NodeTypeId = def.NodeTypeId,
                 ResourceItemTypeId = def.ResourceItemTypeId,
                 MinDrop = def.MinDrop,
                 MaxDrop = def.MaxDrop,
