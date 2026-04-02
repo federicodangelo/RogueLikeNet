@@ -122,32 +122,7 @@ public class GameEngine : IDisposable
     /// Class choice affects starting stats.
     /// </summary>
     public Entity SpawnPlayer(long connectionId, int x, int y, int z, int classId)
-    {
-        var def = ClassDefinitions.Get(classId);
-        var classStats = def.StartingStats; ;
-        var stats = classStats + ClassDefinitions.BaseStats;
-
-        // Speed maps to delay: higher speed → lower delay
-        var moveDelay = Math.Max(0, 10 - (6 + classStats.Speed));
-        var attackDelay = Math.Max(0, 10 - (6 + classStats.Speed));
-
-        return _ecsWorld.Create(
-            new Position(x, y, z),
-            new Health(stats.Health),
-            new CombatStats(stats.Attack, stats.Defense, stats.Speed),
-            new FOVData(ClassDefinitions.FOVRadius),
-            new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
-            new PlayerTag { ConnectionId = connectionId },
-            new PlayerInput(),
-            new ClassData { ClassId = classId, Level = 1 },
-            new SkillSlots { Skill0 = def.StartingSkill0, Skill1 = def.StartingSkill1 },
-            new Inventory(ClassDefinitions.InventorySlots),
-            new Equipment(),
-            new QuickSlots(),
-            new MoveDelay(moveDelay),
-            new AttackDelay(attackDelay)
-        );
-    }
+        => EntityFactory.CreatePlayer(_ecsWorld, connectionId, x, y, z, classId);
 
     /// <summary>
     /// Gives the player 9999 of each resource type. Used for debug mode.
@@ -174,24 +149,7 @@ public class GameEngine : IDisposable
     /// Spawns a monster at the given position using fully-populated MonsterData.
     /// </summary>
     public Entity SpawnMonster(int x, int y, int z, MonsterData data)
-    {
-        var def = NpcDefinitions.Get(data.MonsterTypeId);
-
-        // Speed maps to move delay: higher speed → lower delay.
-        // Speed 10 = every tick (0 delay), speed 6 = every 3rd tick, etc.
-        int moveInterval = Math.Max(0, 10 - data.Speed);
-
-        return _ecsWorld.Create(
-            new Position(x, y, z),
-            new Health(data.Health),
-            new CombatStats(data.Attack, data.Defense, data.Speed),
-            new TileAppearance(def.GlyphId, def.Color),
-            data,
-            new AIState { StateId = AIStates.Idle },
-            new MoveDelay(moveInterval),
-            new AttackDelay(moveInterval)
-        );
-    }
+        => EntityFactory.CreateMonster(_ecsWorld, x, y, z, data);
 
     /// <summary>
     /// Creates an item entity lying on the ground.
@@ -206,78 +164,25 @@ public class GameEngine : IDisposable
     /// Creates an item entity on the ground from pre-built ItemData.
     /// </summary>
     public Entity SpawnItemOnGround(ItemData itemData, int x, int y, int z)
-    {
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
-        return _ecsWorld.Create(
-            new Position(x, y, z),
-            new TileAppearance(def.GlyphId, def.Color),
-            itemData
-        );
-    }
+        => EntityFactory.CreateItemOnGround(_ecsWorld, itemData, x, y, z);
 
     /// <summary>
     /// Spawns a dungeon element (decoration with optional light).
     /// </summary>
     public Entity SpawnElement(DungeonElement element)
-    {
-        if (element.Light is { } light)
-        {
-            return _ecsWorld.Create(
-                element.Position,
-                element.Appearance,
-                light
-            );
-        }
-        return _ecsWorld.Create(
-            element.Position,
-            element.Appearance
-        );
-    }
+        => EntityFactory.CreateElement(_ecsWorld, element.Position, element.Appearance, element.Light);
 
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
     public Entity SpawnResourceNode(int x, int y, int z, ResourceNodeDefinition def)
-    {
-        return _ecsWorld.Create(
-            new Position(x, y, z),
-            new Health(def.Health),
-            new CombatStats(0, def.Defense, 0),
-            new TileAppearance(def.GlyphId, def.Color),
-            new ResourceNodeData
-            {
-                ResourceItemTypeId = def.ResourceItemTypeId,
-                MinDrop = def.MinDrop,
-                MaxDrop = def.MaxDrop,
-            },
-            new AttackDelay(0)
-        );
-    }
+        => EntityFactory.CreateResourceNode(_ecsWorld, x, y, z, def);
 
     /// <summary>
     /// Spawns a peaceful town NPC that wanders within a radius.
     /// </summary>
     public Entity SpawnTownNpc(int x, int y, int z, string name, int townCenterX, int townCenterY, int wanderRadius)
-    {
-        return _ecsWorld.Create(
-            new Position(x, y, z),
-            new Health(9999), // Effectively unkillable
-            new CombatStats(0, 999, 3),
-            new TileAppearance(TileDefinitions.GlyphTownNpc, TileDefinitions.ColorTownNpcFg),
-            new AIState { StateId = AIStates.Idle },
-            new MoveDelay(5),
-            new AttackDelay(0),
-            new TownNpcTag
-            {
-                Name = name,
-                TownCenterX = townCenterX,
-                TownCenterY = townCenterY,
-                WanderRadius = wanderRadius,
-                TalkTimer = 0,
-                DialogueIndex = 0,
-            }
-        );
-    }
+        => EntityFactory.CreateTownNpc(_ecsWorld, x, y, z, name, townCenterX, townCenterY, wanderRadius);
 
     /// <summary>
     /// Runs one game tick: process inputs → move → combat → AI → inventory → skills → FOV → lighting.
