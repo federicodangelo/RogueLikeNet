@@ -9,11 +9,11 @@
   </a>
 </p>
 
-A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons with multiple generators (BSP, biome-based, cellular automata caves, overworld), real-time combat, ECS architecture, item stacking and equipment, and both desktop (SDL3/native AOT) and web browser (WASM) clients.
+A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons with multiple generators (BSP, biome-based, cellular automata caves, overworld), real-time combat, typed entity architecture, item stacking and equipment, persistent save/load with SQLite, and both desktop (SDL3/native AOT) and web browser (WASM) clients.
 
 ## About This Project
 
-This project was created as an experiment to push the boundaries of what's possible when using **AI coding agents** for game development. The entire codebase — rendering, procedural generation, ECS architecture, UI, and gameplay — was written by [Claude](https://www.anthropic.com/claude) (Opus 4.6 and Sonnet 4.6) through iterative prompting.
+This project was created as an experiment to push the boundaries of what's possible when using **AI coding agents** for game development. The entire codebase — rendering, procedural generation, entity architecture, UI, and gameplay — was written by [Claude](https://www.anthropic.com/claude) (Opus 4.6 and Sonnet 4.6) through iterative prompting.
 
 ## Architecture
 
@@ -52,7 +52,7 @@ This project was created as an experiment to push the boundaries of what's possi
 │              └───────┬────────┘                         │
 │              ┌───────┴────────┐                         │
 │              │     Core       │                         │
-│              │  ECS (Arch)    │                         │
+│              │  Typed Entities│                         │
 │              │  Game Logic    │                         │
 │              └────────────────┘                         │
 └─────────────────────────────────────────────────────────┘
@@ -116,17 +116,17 @@ Browser / WebAssembly implementation of the Engine platform interfaces. Used by 
 
 ### `src/RogueLikeNet.Core`
 
-The pure game logic library. Zero dependencies on networking, rendering, or persistence. Uses the [Arch](https://github.com/genaray/Arch) ECS framework.
+The pure game logic library. Zero external dependencies (only references the Engine abstraction). Contains no networking, rendering, or persistence code. Uses typed entity classes stored in per-chunk lists.
 
 | Folder          | Description                                                                                                                                                                                                                                                                                                          |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Components/`   | ECS components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots`                                                                                                 |
+| `World/`        | Entity definitions and world structure: `Entities.cs` (6 entity classes: `PlayerEntity`, `MonsterEntity`, `GroundItemEntity`, `ResourceNodeEntity`, `TownNpcEntity`, `ElementEntity`), `Chunk` (64×64 tiles + entity lists), `WorldMap` (chunk dictionary + player registry), `TileInfo`                             |
+| `Components/`   | Entity components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots`                                                                                              |
 | `Algorithms/`   | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS                                                                                                                                                                           |
-| `Systems/`      | ECS systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `SkillSystem`                                                                                                                                                                                           |
+| `Systems/`      | Game systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `SkillSystem`, `CraftingSystem`, `BuildingSystem`                                                                                                                                                      |
 | `Generation/`   | Procedural content: `BspDungeonGenerator` (BSP rooms+corridors), `BiomeDungeonGenerator` (biome-themed floors), `CellularAutomataCaveGenerator` (organic caves), `DirectionalTunnelGenerator` (winding tunnels), `OverworldGenerator` (world map with biome climate), `PerlinNoise`, `SeededRandom` (xoshiro256\*\*) |
-| `World/`        | World structure: `Chunk` (64×64 tiles), `WorldMap` (chunk dictionary), `TileInfo`                                                                                                                                                                                                                                    |
-| `Definitions/`  | Data-driven definitions: `ItemTypeDefinition` (stackable items), `SkillDefinition` (array-based lookup), `NpcDefinition` (NPC templates)                                                                                                                                                                             |
-| `GameEngine.cs` | Orchestrates all systems, manages the ECS world and world map                                                                                                                                                                                                                                                        |
+| `Definitions/`  | Data-driven definitions: `ItemDefinitions` (stackable items), `SkillDefinitions` (array-based lookup), `NpcDefinitions` (NPC templates), `ClassDefinitions`, `CraftingDefinitions`, `PlaceableDefinitions`, `ResourceNodeDefinitions`, `TownNpcDefinitions`                                                          |
+| `GameEngine.cs` | Orchestrates all systems, manages entity spawning/migration and the world map                                                                                                                                                                                                                                        |
 
 ### `src/RogueLikeNet.Protocol`
 
@@ -143,18 +143,31 @@ Network message definitions using [MessagePack](https://github.com/MessagePack-C
 | `NetSerializer.cs`             | Serialize/deserialize helpers with `UntrustedData` security                |
 | `GameStateSerializer.cs`       | Shared helpers for entity/chunk/HUD serialization                          |
 
+### `src/RogueLikeNet.Server.Core`
+
+Server-side game logic: authoritative game loop, connection management, and persistence.
+
+| File / Folder                               | Description                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GameServer.cs`                             | 20 tick/sec authoritative loop, manages connections, processes inputs, broadcasts deltas, auto-save every 5s |
+| `PlayerConnection.cs`                       | Per-player server state with concurrent input queue                                                          |
+| `Persistence/ISaveGameProvider.cs`          | Save/load abstraction — chunk, player, and world metadata persistence                                        |
+| `Persistence/SqliteSaveGameProvider.cs`     | SQLite implementation via `Microsoft.Data.Sqlite` — save slots, chunks, players                              |
+| `Persistence/InMemorySaveGameProvider.cs`   | In-memory implementation for tests and offline play                                                          |
+| `Persistence/EntitySerializer.cs`           | JSON serialization for chunk entities (monsters, items, NPCs, etc.)                                          |
+| `Persistence/PlayerSerializer.cs`           | Player state serialization (position, stats, inventory, equipment, skills)                                   |
+| `Persistence/ChunkSerializer.cs`            | Tile data serialization for chunk persistence                                                                |
+| `Persistence/PersistentDungeonGenerator.cs` | Wraps dungeon generators to restore previously-saved chunks on load                                          |
+| `Persistence/SaveDataTypes.cs`              | Save data DTOs: `PlayerSaveData`, `ChunkSaveEntry`, `WorldSaveData`, `SaveSlotInfo`                          |
+
 ### `src/RogueLikeNet.Server`
 
-Authoritative game server built on ASP.NET Core with WebSocket transport.
+ASP.NET Core host for the authoritative game server.
 
-| File                             | Description                                                                              |
-| -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `Program.cs`                     | Server entry point — WebSocket endpoint at `/ws`, health check at `/`                    |
-| `GameServer.cs`                  | 20 tick/sec authoritative loop, manages connections, processes inputs, broadcasts deltas |
-| `PlayerConnection.cs`            | Per-player server state with concurrent input queue                                      |
-| `WebSocketHandler.cs`            | WebSocket middleware — read loop, message dispatch                                       |
-| `Persistence/GameDbContext.cs`   | EF Core context with SQLite — player accounts, characters, world chunks                  |
-| `Persistence/GamePersistence.cs` | Save/load operations for player and world data                                           |
+| File                        | Description                                                           |
+| --------------------------- | --------------------------------------------------------------------- |
+| `Program.cs`                | Server entry point — WebSocket endpoint at `/ws`, health check at `/` |
+| `ServerWebSocketHandler.cs` | WebSocket middleware — read loop, message dispatch                    |
 
 **Default URL:** `http://localhost:5090` (WebSocket at `ws://localhost:5090/ws`)
 
@@ -193,12 +206,12 @@ Browser WebAssembly client (`RuntimeIdentifier: browser-wasm`). Runs the game en
 
 ### `tests/`
 
-| Project                          | Tests | Coverage                                                                                                                                                                                                                                                                     |
-| -------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RogueLikeNet.Core.Tests`        | 276   | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, SkillSystem, ItemTypeDefinition, SkillDefinition, NpcDefinition, ClassData, Loot, QuickSlots |
-| `RogueLikeNet.Client.Core.Tests` | 64    | BiomePalette, ClientGameState, HudLayout, ParticleSystem                                                                                                                                                                                                                     |
-| `RogueLikeNet.Protocol.Tests`    | 45    | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer                                                                                                                                                                             |
-| `RogueLikeNet.Server.Tests`      | 73    | GameLoop lifecycle, connections, player spawning, input queuing                                                                                                                                                                                                              |
+| Project                          | Tests | Coverage                                                                                                                                                                                                                                                                                                            |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RogueLikeNet.Core.Tests`        | 421   | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, SkillSystem, ItemDefinitions, SkillDefinitions, NpcDefinitions, ClassData, Loot, QuickSlots, entity migration, chunk dirty tracking |
+| `RogueLikeNet.Client.Core.Tests` | 87    | BiomePalette, ClientGameState, HudLayout, ParticleSystem, DebugSettings                                                                                                                                                                                                                                             |
+| `RogueLikeNet.Protocol.Tests`    | 62    | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer, ChunkTracker                                                                                                                                                                                                      |
+| `RogueLikeNet.Server.Tests`      | 110   | GameServer lifecycle, connections, player spawning, input queuing, save/load persistence, entity serialization round-trip, player serialization, SQLite provider                                                                                                                                                    |
 
 ## Prerequisites
 
@@ -297,17 +310,17 @@ Platform-specific scripts are provided in the `scripts/` folder:
 
 ## Technology Stack
 
-| Component            | Technology                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
-| Game Logic           | [Arch ECS](https://github.com/genaray/Arch) 2.0 — Entity Component System                            |
-| Serialization        | [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp) 3.1 — binary protocol |
-| Platform Abstraction | Custom `Engine` library — `IPlatform`, `ISpriteRenderer`, `IInputManager`, `IAudioManager`           |
-| Desktop Rendering    | [SDL3-CS](https://github.com/flibitijibibo/SDL3-CS) 3.4.2 — GPU-accelerated 2D via SDL3              |
-| Web Rendering        | Browser Canvas 2D via `[JSImport]`/`[JSExport]` interop (`browser-wasm` runtime)                     |
-| Desktop Compilation  | Native AOT — full-trimmed native executable, no JIT                                                  |
-| Persistence          | EF Core 10 + SQLite — player accounts, characters, world chunks                                      |
-| Server               | ASP.NET Core (Kestrel) — WebSocket transport                                                         |
-| PRNG                 | xoshiro256\*\* — deterministic seeded generation                                                     |
+| Component            | Technology                                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Game Logic           | Custom typed entity classes with per-chunk storage                                                                         |
+| Serialization        | [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp) 3.1 — binary protocol                       |
+| Platform Abstraction | Custom `Engine` library — `IPlatform`, `ISpriteRenderer`, `IInputManager`, `IAudioManager`                                 |
+| Desktop Rendering    | [SDL3-CS](https://github.com/flibitijibibo/SDL3-CS) 3.4.2 — GPU-accelerated 2D via SDL3                                    |
+| Web Rendering        | Browser Canvas 2D via `[JSImport]`/`[JSExport]` interop (`browser-wasm` runtime)                                           |
+| Desktop Compilation  | Native AOT — full-trimmed native executable, no JIT                                                                        |
+| Persistence          | [Microsoft.Data.Sqlite](https://learn.microsoft.com/dotnet/standard/data/sqlite/) — save slots, player state, world chunks |
+| Server               | ASP.NET Core (Kestrel) — WebSocket transport                                                                               |
+| PRNG                 | xoshiro256\*\* — deterministic seeded generation                                                                           |
 
 ## Design Principles
 
