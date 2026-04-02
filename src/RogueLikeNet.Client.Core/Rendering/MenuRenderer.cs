@@ -300,7 +300,7 @@ public sealed class MenuRenderer
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
         int boxW = 52;
-        int slotLines = slots.Length * 3; // 2 lines per slot + 1 gap
+        int slotLines = slots.Length * 4; // 3 lines per slot + 1 gap
         int boxH = Math.Max(14, slotLines + 12);
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
@@ -349,10 +349,12 @@ public sealed class MenuRenderer
 
             string dateStr = FormatUnixMs(slot.LastSavedAtUnixMs);
             string genName = GeneratorRegistry.GetNameOrId(slot.GeneratorId);
-            string details = $"     Seed: {slot.Seed}  Gen: {genName}  Saved: {dateStr}";
-            AsciiDraw.DrawString(r, bx + 4, row + 1, Truncate(details, boxW - 6), RenderingTheme.SlotDate);
+            string details1 = $"     Seed: {slot.Seed}  Gen: {genName}";
+            string details2 = $"     Saved: {dateStr}";
+            AsciiDraw.DrawString(r, bx + 4, row + 1, Truncate(details1, boxW - 6), RenderingTheme.SlotDate);
+            AsciiDraw.DrawString(r, bx + 4, row + 2, Truncate(details2, boxW - 6), RenderingTheme.SlotDate);
 
-            row += 3;
+            row += 4;
         }
 
         // "New Game" action item
