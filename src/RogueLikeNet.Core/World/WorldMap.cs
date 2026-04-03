@@ -79,14 +79,8 @@ public class WorldMap
         foreach (var p in _players.Values)
             if (!p.IsDead) set.Add(Position.PackCoord(p.X, p.Y, p.Z));
         foreach (var chunk in _chunks.Values)
-        {
-            foreach (var m in chunk.Monsters)
+            foreach (var m in chunk.AllSolidEntitiesWithHealth)
                 if (!m.IsDead) set.Add(Position.PackCoord(m.X, m.Y, m.Z));
-            foreach (var n in chunk.TownNpcs)
-                if (!n.IsDead) set.Add(Position.PackCoord(n.X, n.Y, n.Z));
-            foreach (var n in chunk.ResourceNodes)
-                if (!n.IsDead) set.Add(Position.PackCoord(n.X, n.Y, n.Z));
-        }
         return set;
     }
 
@@ -98,12 +92,8 @@ public class WorldMap
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
         var chunk = TryGetChunk(cx, cy, cz);
         if (chunk == null) return false;
-        foreach (var m in chunk.Monsters)
+        foreach (var m in chunk.AllSolidEntitiesWithHealth)
             if (!m.IsDead && m.X == x && m.Y == y && m.Z == z) return true;
-        foreach (var n in chunk.TownNpcs)
-            if (!n.IsDead && n.X == x && n.Y == y && n.Z == z) return true;
-        foreach (var n in chunk.ResourceNodes)
-            if (!n.IsDead && n.X == x && n.Y == y && n.Z == z) return true;
         return false;
     }
 

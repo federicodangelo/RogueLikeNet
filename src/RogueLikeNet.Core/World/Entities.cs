@@ -13,20 +13,24 @@ public class Entity
         Id = id;
         Type = type;
     }
-
 }
 
-public class MonsterEntity : Entity
+public class EntityWithHealth : Entity
+{
+    public EntityWithHealth(int id, EntityType type) : base(id, type) { }
+    public Health Health;
+    public bool IsDead;
+}
+
+public class MonsterEntity : EntityWithHealth
 {
     public MonsterEntity(int id) : base(id, EntityType.Monster) { }
     public MonsterData MonsterData;
-    public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public AIState AI;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
-    public bool IsDead;
 }
 
 public class GroundItemEntity : Entity
@@ -37,28 +41,24 @@ public class GroundItemEntity : Entity
     public bool IsDead;
 }
 
-public class ResourceNodeEntity : Entity
+public class ResourceNodeEntity : EntityWithHealth
 {
     public ResourceNodeEntity(int id) : base(id, EntityType.ResourceNode) { }
-    public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public ResourceNodeData NodeData;
     public AttackDelay AttackDelay;
-    public bool IsDead;
 }
 
-public class TownNpcEntity : Entity
+public class TownNpcEntity : EntityWithHealth
 {
     public TownNpcEntity(int id) : base(id, EntityType.TownNpc) { }
-    public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public AIState AI;
     public TownNpcTag NpcData;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
-    public bool IsDead;
 }
 
 public class ElementEntity : Entity
@@ -68,11 +68,10 @@ public class ElementEntity : Entity
     public LightSource? Light;
 }
 
-public class PlayerEntity : Entity
+public class PlayerEntity : EntityWithHealth
 {
     public PlayerEntity(int id) : base(id, EntityType.Player) { }
     public long ConnectionId;
-    public Health Health;
     public CombatStats CombatStats;
     public FOVData FOV;
     public TileAppearance Appearance;
@@ -84,5 +83,4 @@ public class PlayerEntity : Entity
     public QuickSlots QuickSlots;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
-    public bool IsDead;
 }

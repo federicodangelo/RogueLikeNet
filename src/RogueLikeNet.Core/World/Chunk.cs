@@ -21,6 +21,18 @@ public class Chunk
     public IEnumerable<TownNpcEntity> TownNpcs => _townNpcs;
     public IEnumerable<ElementEntity> Elements => _elements;
 
+    public IEnumerable<Entity> AllEntities =>
+        _monsters.Cast<Entity>()
+        .Concat(_groundItems)
+        .Concat(_resourceNodes)
+        .Concat(_townNpcs)
+        .Concat(_elements);
+
+    public IEnumerable<EntityWithHealth> AllSolidEntitiesWithHealth =>
+        _monsters.Cast<EntityWithHealth>()
+        .Concat(_resourceNodes)
+        .Concat(_townNpcs);
+
     private readonly List<MonsterEntity> _monsters = [];
     private readonly List<GroundItemEntity> _groundItems = [];
     private readonly List<ResourceNodeEntity> _resourceNodes = [];
