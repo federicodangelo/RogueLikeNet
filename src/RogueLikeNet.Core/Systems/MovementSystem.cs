@@ -14,7 +14,7 @@ public class MovementSystem
     public void Update(WorldMap map, bool debugNoCollision = false, bool debugMaxSpeed = false)
     {
         // Collect all actor positions (alive players + monsters + NPCs)
-        var actorPositions = map.CollectAliveActorPositions();
+        var actorPositions = map.CollectEntitiesPositions();
 
         foreach (var player in map.Players.Values)
         {

@@ -1,5 +1,6 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
+using RogueLikeNet.Client.Core.Screens;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
@@ -120,7 +121,8 @@ public abstract class BaseProgram
 
         await _connection.ReconnectAsync();
 
-        await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = "Player" });
+        // We have to use the default player name since it needs to match the name in the savegame
+        await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = ClassSelectScreen.DefaultPlayerName });
 
         while (!Game.IsFirstDeltaProcessed)
         {

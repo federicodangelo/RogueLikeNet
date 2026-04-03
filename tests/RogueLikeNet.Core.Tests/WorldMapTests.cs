@@ -383,9 +383,7 @@ public class WorldMapTests
         Assert.False(chunkB.IsModifiedSinceLastSave);
 
         // Move monster across chunk boundary
-        int oldX = monster.X;
-        monster.X = Chunk.Size + 3; // now in chunk B
-        map.MigrateMonsterIfNeeded(monster, oldX, 5, Position.DefaultZ);
+        map.MoveMonsterEntity(monster, Chunk.Size + 3, 5, Position.DefaultZ);
 
         Assert.True(chunkA.IsModifiedSinceLastSave);
         Assert.True(chunkB.IsModifiedSinceLastSave);
@@ -417,9 +415,7 @@ public class WorldMapTests
         chunkA.ClearSaveFlag();
         chunkB.ClearSaveFlag();
 
-        int oldX = npc.X;
-        npc.X = Chunk.Size + 3;
-        map.MigrateNpcIfNeeded(npc, oldX, 5, Position.DefaultZ);
+        map.MoveNpcEntity(npc, Chunk.Size + 3, 5, Position.DefaultZ);
 
         Assert.True(chunkA.IsModifiedSinceLastSave);
         Assert.True(chunkB.IsModifiedSinceLastSave);
@@ -448,9 +444,7 @@ public class WorldMapTests
         chunk.ClearSaveFlag();
 
         // Move within same chunk
-        int oldX = monster.X;
-        monster.X = 6;
-        map.MigrateMonsterIfNeeded(monster, oldX, 5, Position.DefaultZ);
+        map.MoveMonsterEntity(monster, 6, 5, Position.DefaultZ);
 
         Assert.False(chunk.IsModifiedSinceLastSave);
     }

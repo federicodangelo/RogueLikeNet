@@ -250,9 +250,9 @@ public class GameServer : IDisposable
 
         EnqueueCommand(async () =>
         {
-            var response = ProcessSaveCommand(cmd);
             if (_connections.TryGetValue(connectionId, out var conn))
             {
+                var response = ProcessSaveCommand(cmd);
                 var payload = NetSerializer.Serialize(response);
                 var data = NetSerializer.WrapMessage(MessageTypes.SaveGameResponse, payload);
                 await conn.SendAsync(data);
@@ -355,9 +355,9 @@ public class GameServer : IDisposable
 
     public void RemoveConnection(long connectionId)
     {
-        if (_connections.TryRemove(connectionId, out var conn))
+        EnqueueCommand(() =>
         {
-            EnqueueCommand(() =>
+            if (_connections.TryRemove(connectionId, out var conn))
             {
                 // Save player before removing
                 if (_saveProvider != null && _currentSlotId != null && conn.PlayerEntityId.HasValue)
@@ -374,9 +374,9 @@ public class GameServer : IDisposable
                 {
                     _engine.WorldMap.RemovePlayer(conn.PlayerEntityId.Value);
                 }
-                return Task.CompletedTask;
-            });
-        }
+            }
+            return Task.CompletedTask;
+        });
     }
 
     public void EnqueueInput(long connectionId, ClientInputMsg input)
@@ -387,14 +387,12 @@ public class GameServer : IDisposable
 
     public void UpdateVisibleChunks(long connectionId, int visibleChunks)
     {
-        if (_connections.TryGetValue(connectionId, out var conn))
+        EnqueueCommand(() =>
         {
-            EnqueueCommand(() =>
-            {
+            if (_connections.TryGetValue(connectionId, out var conn))
                 conn.VisibleChunks = Math.Clamp(visibleChunks, 1, ChunkTracker.MaxVisibleChunks);
-                return Task.CompletedTask;
-            });
-        }
+            return Task.CompletedTask;
+        });
     }
 
     public void BroadcastChat(long senderConnectionId, string text)
@@ -404,9 +402,9 @@ public class GameServer : IDisposable
 
     private async Task BroadcastChatInternal(long senderConnectionId, string text)
     {
-        string senderName = "Player";
-        if (_connections.TryGetValue(senderConnectionId, out var sender))
-            senderName = sender.PlayerName.Length > 0 ? sender.PlayerName : $"Player {senderConnectionId}";
+        if (!_connections.TryGetValue(senderConnectionId, out var sender))
+            return;
+        var senderName = sender.PlayerName.Length > 0 ? sender.PlayerName : $"Player {senderConnectionId}";
         var chat = new ChatMsg
         {
             SenderId = senderConnectionId,

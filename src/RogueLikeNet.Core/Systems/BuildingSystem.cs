@@ -56,7 +56,7 @@ public class BuildingSystem
             if (tile.PlaceableItemId != 0) continue;
 
             // Check no entity occupies the target position
-            if (map.IsPositionOccupiedByActor(targetX, targetY, targetZ)) continue;
+            if (map.IsPositionOccupiedByEntity(targetX, targetY, targetZ)) continue;
 
             map.SetPlaceable(targetX, targetY, targetZ, itemData.ItemTypeId, 0);
 

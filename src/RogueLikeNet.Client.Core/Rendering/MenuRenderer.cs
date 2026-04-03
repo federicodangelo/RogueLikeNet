@@ -112,7 +112,7 @@ public sealed class MenuRenderer
     }
 
     public void RenderClassSelect(ISpriteRenderer r, int totalCols, int totalRows,
-        int selectedClassIndex, string playerName, bool nameEditing, string nameEditText)
+        int selectedClassIndex, string playerName, bool nameEditing, string nameEditText, bool canEditName)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
@@ -129,7 +129,7 @@ public sealed class MenuRenderer
         string nameDisplay = nameEditing ? nameEditText + "_" : playerName;
         string nameLabel = $"Name: {nameDisplay}";
         AsciiDraw.DrawCentered(r, totalCols, nameY, nameLabel, nameEditing ? RenderingTheme.Selected : RenderingTheme.NameField);
-        if (!nameEditing)
+        if (!nameEditing && canEditName)
             AsciiDraw.DrawCentered(r, totalCols, nameY + 1, "(T to edit name)", RenderingTheme.Dim);
 
         int cardStartY = nameY + 3;
@@ -178,7 +178,7 @@ public sealed class MenuRenderer
         int footerY = cardStartY + cardH + 1;
         string footer = nameEditing
             ? "Type name   Enter Confirm   Esc Cancel"
-            : "\u2190\u2192 Select Class   T Edit Name   Enter Confirm   Esc Back";
+            : $"\u2190\u2192 Select Class {(canEditName ? " T Edit Name " : " ")} Enter Confirm   Esc Back";
         AsciiDraw.DrawCentered(r, totalCols, footerY, footer, RenderingTheme.Dim);
     }
 

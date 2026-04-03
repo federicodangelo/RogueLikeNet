@@ -72,8 +72,8 @@ public class WorldMap
 
     // ── Spatial queries ──────────────────────────────────────────────
 
-    /// <summary>Builds a set of packed coordinates for all alive actors (players, monsters, NPCs).</summary>
-    public HashSet<long> CollectAliveActorPositions()
+    /// <summary>Builds a set of packed coordinates for all alive entities (players, monsters, NPCs, resource nodes).</summary>
+    public HashSet<long> CollectEntitiesPositions()
     {
         var set = new HashSet<long>();
         foreach (var p in _players.Values)
@@ -91,9 +91,8 @@ public class WorldMap
     }
 
     /// <summary>Checks if any alive actor (player, monster, NPC) occupies the given position.</summary>
-    public bool IsPositionOccupiedByActor(int x, int y, int z)
+    public bool IsPositionOccupiedByEntity(int x, int y, int z)
     {
-        long key = Position.PackCoord(x, y, z);
         foreach (var p in _players.Values)
             if (!p.IsDead && p.X == x && p.Y == y && p.Z == z) return true;
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
@@ -102,6 +101,8 @@ public class WorldMap
         foreach (var m in chunk.Monsters)
             if (!m.IsDead && m.X == x && m.Y == y && m.Z == z) return true;
         foreach (var n in chunk.TownNpcs)
+            if (!n.IsDead && n.X == x && n.Y == y && n.Z == z) return true;
+        foreach (var n in chunk.ResourceNodes)
             if (!n.IsDead && n.X == x && n.Y == y && n.Z == z) return true;
         return false;
     }
@@ -116,10 +117,13 @@ public class WorldMap
     // ── Chunk migration (for moving entities) ────────────────────────
 
     /// <summary>Moves a monster to the correct chunk if it crossed a boundary.</summary>
-    public void MigrateMonsterIfNeeded(MonsterEntity monster, int oldX, int oldY, int oldZ)
+    public void MoveMonsterEntity(MonsterEntity monster, int newX, int newY, int newZ)
     {
-        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(oldX, oldY, oldZ);
-        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(monster.X, monster.Y, monster.Z);
+        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(monster.X, monster.Y, monster.Z);
+        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(newX, newY, newZ);
+        monster.X = newX;
+        monster.Y = newY;
+        monster.Z = newZ;
         if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
         var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
         var newChunk = TryGetChunk(newCx, newCy, newCz);
@@ -130,10 +134,13 @@ public class WorldMap
     }
 
     /// <summary>Moves a town NPC to the correct chunk if it crossed a boundary.</summary>
-    public void MigrateNpcIfNeeded(TownNpcEntity npc, int oldX, int oldY, int oldZ)
+    public void MoveNpcEntity(TownNpcEntity npc, int newX, int newY, int newZ)
     {
-        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(oldX, oldY, oldZ);
-        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(npc.X, npc.Y, npc.Z);
+        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(npc.X, npc.Y, npc.Z);
+        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(newX, newY, newZ);
+        npc.X = newX;
+        npc.Y = newY;
+        npc.Z = newZ;
         if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
         var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
         var newChunk = TryGetChunk(newCx, newCy, newCz);
