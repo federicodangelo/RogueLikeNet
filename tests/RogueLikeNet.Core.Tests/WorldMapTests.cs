@@ -167,9 +167,8 @@ public class WorldMapTests
         map.OpenDoor(5, 5, Position.DefaultZ);
 
         // Place a monster on the door tile to keep it occupied
-        chunk.Monsters.Add(new MonsterEntity
+        chunk.Monsters.Add(new MonsterEntity(map.AllocateEntityId())
         {
-            Id = map.AllocateEntityId(),
             X = 5,
             Y = 5,
             Z = Position.DefaultZ,
@@ -198,9 +197,8 @@ public class WorldMapTests
 
         map.OpenDoor(5, 5, Position.DefaultZ);
 
-        var monster = new MonsterEntity
+        var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            Id = map.AllocateEntityId(),
             X = 5,
             Y = 5,
             Z = Position.DefaultZ,
@@ -364,9 +362,8 @@ public class WorldMapTests
 
         // Place monster in chunk A
         int xA = 5;
-        var monster = new MonsterEntity
+        var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            Id = map.AllocateEntityId(),
             X = xA,
             Y = 5,
             Z = Position.DefaultZ,
@@ -400,9 +397,8 @@ public class WorldMapTests
         map.AddChunk(chunkA);
         map.AddChunk(chunkB);
 
-        var npc = new TownNpcEntity
+        var npc = new TownNpcEntity(map.AllocateEntityId())
         {
-            Id = map.AllocateEntityId(),
             X = 5,
             Y = 5,
             Z = Position.DefaultZ,
@@ -430,9 +426,8 @@ public class WorldMapTests
         var chunk = new Chunk(0, 0, Position.DefaultZ);
         map.AddChunk(chunk);
 
-        var monster = new MonsterEntity
+        var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            Id = map.AllocateEntityId(),
             X = 5,
             Y = 5,
             Z = Position.DefaultZ,

@@ -128,9 +128,8 @@ public class GameEngine : IDisposable
         var moveDelay = Math.Max(0, 10 - (6 + classStats.Speed));
         var attackDelay = Math.Max(0, 10 - (6 + classStats.Speed));
 
-        var player = new PlayerEntity
+        var player = new PlayerEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             ConnectionId = connectionId,
             X = x,
             Y = y,
@@ -178,9 +177,8 @@ public class GameEngine : IDisposable
     {
         var def = NpcDefinitions.Get(data.MonsterTypeId);
         int moveInterval = Math.Max(0, 10 - data.Speed);
-        var monster = new MonsterEntity
+        var monster = new MonsterEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             X = x,
             Y = y,
             Z = z,
@@ -218,9 +216,8 @@ public class GameEngine : IDisposable
     public GroundItemEntity SpawnItemOnGround(ItemData itemData, int x, int y, int z)
     {
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
-        var item = new GroundItemEntity
+        var item = new GroundItemEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             X = x,
             Y = y,
             Z = z,
@@ -243,9 +240,8 @@ public class GameEngine : IDisposable
     /// </summary>
     public ElementEntity SpawnElement(DungeonElement element)
     {
-        var elem = new ElementEntity
+        var elem = new ElementEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             X = element.Position.X,
             Y = element.Position.Y,
             Z = element.Position.Z,
@@ -268,9 +264,8 @@ public class GameEngine : IDisposable
     /// </summary>
     public ResourceNodeEntity SpawnResourceNode(int x, int y, int z, ResourceNodeDefinition def)
     {
-        var node = new ResourceNodeEntity
+        var node = new ResourceNodeEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             X = x,
             Y = y,
             Z = z,
@@ -302,9 +297,8 @@ public class GameEngine : IDisposable
     /// </summary>
     public TownNpcEntity SpawnTownNpc(int x, int y, int z, string name, int townCenterX, int townCenterY, int wanderRadius)
     {
-        var npc = new TownNpcEntity
+        var npc = new TownNpcEntity(_worldMap.AllocateEntityId())
         {
-            Id = _worldMap.AllocateEntityId(),
             X = x,
             Y = y,
             Z = z,

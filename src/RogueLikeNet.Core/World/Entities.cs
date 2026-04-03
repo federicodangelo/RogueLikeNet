@@ -2,23 +2,23 @@ using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.World;
 
-/// <summary>Lightweight reference to any entity by ID and type.</summary>
-public readonly struct EntityRef
+public class Entity
 {
     public readonly int Id;
     public readonly EntityType Type;
+    public int X, Y, Z;
 
-    public EntityRef(int id, EntityType type)
+    public Entity(int id, EntityType type)
     {
         Id = id;
         Type = type;
     }
+
 }
 
-public class MonsterEntity
+public class MonsterEntity : Entity
 {
-    public int Id;
-    public int X, Y, Z;
+    public MonsterEntity(int id) : base(id, EntityType.Monster) { }
     public MonsterData MonsterData;
     public Health Health;
     public CombatStats CombatStats;
@@ -29,19 +29,17 @@ public class MonsterEntity
     public bool IsDead;
 }
 
-public class GroundItemEntity
+public class GroundItemEntity : Entity
 {
-    public int Id;
-    public int X, Y, Z;
+    public GroundItemEntity(int id) : base(id, EntityType.GroundItem) { }
     public TileAppearance Appearance;
     public ItemData Item;
     public bool IsDead;
 }
 
-public class ResourceNodeEntity
+public class ResourceNodeEntity : Entity
 {
-    public int Id;
-    public int X, Y, Z;
+    public ResourceNodeEntity(int id) : base(id, EntityType.ResourceNode) { }
     public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
@@ -50,10 +48,9 @@ public class ResourceNodeEntity
     public bool IsDead;
 }
 
-public class TownNpcEntity
+public class TownNpcEntity : Entity
 {
-    public int Id;
-    public int X, Y, Z;
+    public TownNpcEntity(int id) : base(id, EntityType.TownNpc) { }
     public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
@@ -64,19 +61,17 @@ public class TownNpcEntity
     public bool IsDead;
 }
 
-public class ElementEntity
+public class ElementEntity : Entity
 {
-    public int Id;
-    public int X, Y, Z;
+    public ElementEntity(int id) : base(id, EntityType.Element) { }
     public TileAppearance Appearance;
     public LightSource? Light;
 }
 
-public class PlayerEntity
+public class PlayerEntity : Entity
 {
-    public int Id;
+    public PlayerEntity(int id) : base(id, EntityType.Player) { }
     public long ConnectionId;
-    public int X, Y, Z;
     public Health Health;
     public CombatStats CombatStats;
     public FOVData FOV;
