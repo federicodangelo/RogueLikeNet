@@ -159,8 +159,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         var chunk = engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
 
-        int entityCount = chunk.Monsters.Count + chunk.GroundItems.Count +
-                          chunk.ResourceNodes.Count + chunk.TownNpcs.Count + chunk.Elements.Count;
+        int entityCount = chunk.Monsters.Count() + chunk.GroundItems.Count() +
+                          chunk.ResourceNodes.Count() + chunk.TownNpcs.Count() + chunk.Elements.Count();
         Assert.True(entityCount > 0, "Chunk loading should spawn entities");
     }
 

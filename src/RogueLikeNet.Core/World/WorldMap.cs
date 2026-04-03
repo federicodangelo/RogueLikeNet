@@ -127,10 +127,8 @@ public class WorldMap
         if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
         var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
         var newChunk = TryGetChunk(newCx, newCy, newCz);
-        oldChunk?.Monsters.Remove(monster);
-        oldChunk?.MarkModified();
-        newChunk?.Monsters.Add(monster);
-        newChunk?.MarkModified();
+        oldChunk?.RemoveEntity(monster);
+        newChunk?.AddEntity(monster);
     }
 
     /// <summary>Moves a town NPC to the correct chunk if it crossed a boundary.</summary>
@@ -144,10 +142,8 @@ public class WorldMap
         if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
         var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
         var newChunk = TryGetChunk(newCx, newCy, newCz);
-        oldChunk?.TownNpcs.Remove(npc);
-        oldChunk?.MarkModified();
-        newChunk?.TownNpcs.Add(npc);
-        newChunk?.MarkModified();
+        oldChunk?.RemoveEntity(npc);
+        newChunk?.AddEntity(npc);
     }
 
     public bool ExistsChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)

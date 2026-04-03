@@ -35,9 +35,8 @@ public class InventorySystem
             var chunk = map.GetChunkForWorldPos(player.X, player.Y, player.Z);
             if (chunk == null) continue;
 
-            for (int i = chunk.GroundItems.Count - 1; i >= 0; i--)
+            foreach (var gi in chunk.GroundItems)
             {
-                var gi = chunk.GroundItems[i];
                 if (gi.IsDead || gi.X != player.X || gi.Y != player.Y || gi.Z != player.Z) continue;
 
                 if (AddItemToInventory(player, gi.Item))

@@ -167,7 +167,7 @@ public class WorldMapTests
         map.OpenDoor(5, 5, Position.DefaultZ);
 
         // Place a monster on the door tile to keep it occupied
-        chunk.Monsters.Add(new MonsterEntity(map.AllocateEntityId())
+        chunk.AddEntity(new MonsterEntity(map.AllocateEntityId())
         {
             X = 5,
             Y = 5,
@@ -206,7 +206,7 @@ public class WorldMapTests
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 }
         };
-        chunk.Monsters.Add(monster);
+        chunk.AddEntity(monster);
 
         // Tick past grace period while occupied
         for (int i = 0; i < WorldMap.DoorGraceTicks + 5; i++)
@@ -371,7 +371,7 @@ public class WorldMapTests
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 },
         };
-        chunkA.Monsters.Add(monster);
+        chunkA.AddEntity(monster);
 
         // Clear save flags
         chunkA.ClearSaveFlag();
@@ -406,7 +406,7 @@ public class WorldMapTests
             CombatStats = default,
             NpcData = new TownNpcTag { Name = "Test" },
         };
-        chunkA.TownNpcs.Add(npc);
+        chunkA.AddEntity(npc);
 
         chunkA.ClearSaveFlag();
         chunkB.ClearSaveFlag();
@@ -435,7 +435,7 @@ public class WorldMapTests
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 },
         };
-        chunk.Monsters.Add(monster);
+        chunk.AddEntity(monster);
         chunk.ClearSaveFlag();
 
         // Move within same chunk

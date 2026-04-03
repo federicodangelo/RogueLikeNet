@@ -15,11 +15,17 @@ public class Chunk
     public int[,] LightLevels { get; }
 
     // ── Entity storage ────────────────────────────────────────────────
-    public List<MonsterEntity> Monsters { get; } = new();
-    public List<GroundItemEntity> GroundItems { get; } = new();
-    public List<ResourceNodeEntity> ResourceNodes { get; } = new();
-    public List<TownNpcEntity> TownNpcs { get; } = new();
-    public List<ElementEntity> Elements { get; } = new();
+    public IEnumerable<MonsterEntity> Monsters => _monsters;
+    public IEnumerable<GroundItemEntity> GroundItems => _groundItems;
+    public IEnumerable<ResourceNodeEntity> ResourceNodes => _resourceNodes;
+    public IEnumerable<TownNpcEntity> TownNpcs => _townNpcs;
+    public IEnumerable<ElementEntity> Elements => _elements;
+
+    private readonly List<MonsterEntity> _monsters = [];
+    private readonly List<GroundItemEntity> _groundItems = [];
+    private readonly List<ResourceNodeEntity> _resourceNodes = [];
+    private readonly List<TownNpcEntity> _townNpcs = [];
+    private readonly List<ElementEntity> _elements = [];
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
     private readonly List<(int WorldX, int WorldY, int WorldZ)> _dirtyTiles = new();
@@ -83,6 +89,52 @@ public class Chunk
         return (cx, cy, worldZ);
     }
 
+    public void RemoveEntity(Entity entity)
+    {
+        switch (entity)
+        {
+            case MonsterEntity m:
+                _monsters.Remove(m);
+                break;
+            case GroundItemEntity i:
+                _groundItems.Remove(i);
+                break;
+            case ResourceNodeEntity r:
+                _resourceNodes.Remove(r);
+                break;
+            case TownNpcEntity n:
+                _townNpcs.Remove(n);
+                break;
+            case ElementEntity e:
+                _elements.Remove(e);
+                break;
+        }
+        MarkModified();
+    }
+
+    public void AddEntity(Entity entity)
+    {
+        switch (entity)
+        {
+            case MonsterEntity m:
+                _monsters.Add(m);
+                break;
+            case GroundItemEntity i:
+                _groundItems.Add(i);
+                break;
+            case ResourceNodeEntity r:
+                _resourceNodes.Add(r);
+                break;
+            case TownNpcEntity n:
+                _townNpcs.Add(n);
+                break;
+            case ElementEntity e:
+                _elements.Add(e);
+                break;
+        }
+        MarkModified();
+    }
+
     public void ResetLight()
     {
         Array.Clear(LightLevels, 0, LightLevels.Length);
@@ -91,19 +143,19 @@ public class Chunk
     /// <summary>Removes dead entities from all lists (compacts in-place).</summary>
     public void RemoveDeadEntities()
     {
-        Monsters.RemoveAll(m => m.IsDead);
-        GroundItems.RemoveAll(i => i.IsDead);
-        ResourceNodes.RemoveAll(r => r.IsDead);
-        TownNpcs.RemoveAll(n => n.IsDead);
+        _monsters.RemoveAll(m => m.IsDead);
+        _groundItems.RemoveAll(i => i.IsDead);
+        _resourceNodes.RemoveAll(r => r.IsDead);
+        _townNpcs.RemoveAll(n => n.IsDead);
     }
 
     /// <summary>Clears all entity lists (used when unloading a chunk).</summary>
     public void ClearEntities()
     {
-        Monsters.Clear();
-        GroundItems.Clear();
-        ResourceNodes.Clear();
-        TownNpcs.Clear();
-        Elements.Clear();
+        _monsters.Clear();
+        _groundItems.Clear();
+        _resourceNodes.Clear();
+        _townNpcs.Clear();
+        _elements.Clear();
     }
 }

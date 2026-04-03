@@ -193,11 +193,7 @@ public class GameEngine : IDisposable
 
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
         var chunk = _worldMap.TryGetChunk(cx, cy, cz);
-        if (chunk != null)
-        {
-            chunk.Monsters.Add(monster);
-            chunk.MarkModified();
-        }
+        chunk?.AddEntity(monster);
         return monster;
     }
 
@@ -227,11 +223,7 @@ public class GameEngine : IDisposable
 
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
         var chunk = _worldMap.TryGetChunk(cx, cy, cz);
-        if (chunk != null)
-        {
-            chunk.GroundItems.Add(item);
-            chunk.MarkModified();
-        }
+        chunk?.AddEntity(item);
         return item;
     }
 
@@ -251,11 +243,7 @@ public class GameEngine : IDisposable
 
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(elem.X, elem.Y, elem.Z);
         var chunk = _worldMap.TryGetChunk(cx, cy, cz);
-        if (chunk != null)
-        {
-            chunk.Elements.Add(elem);
-            chunk.MarkModified();
-        }
+        chunk?.AddEntity(elem);
         return elem;
     }
 
@@ -284,11 +272,7 @@ public class GameEngine : IDisposable
 
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
         var chunk = _worldMap.TryGetChunk(cx, cy, cz);
-        if (chunk != null)
-        {
-            chunk.ResourceNodes.Add(node);
-            chunk.MarkModified();
-        }
+        chunk?.AddEntity(node);
         return node;
     }
 
@@ -321,11 +305,7 @@ public class GameEngine : IDisposable
 
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
         var chunk = _worldMap.TryGetChunk(cx, cy, cz);
-        if (chunk != null)
-        {
-            chunk.TownNpcs.Add(npc);
-            chunk.MarkModified();
-        }
+        chunk?.AddEntity(npc);
         return npc;
     }
 

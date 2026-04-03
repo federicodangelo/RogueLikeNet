@@ -56,7 +56,7 @@ public class EntitySerializerTests : IDisposable
 
         // Find the deserialized monster
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Monsters.Find(m => m.X == 1 && m.Y == 2 && m.Z == Z);
+        var found = chunk2.Monsters.FirstOrDefault(m => m.X == 1 && m.Y == 2 && m.Z == Z);
         Assert.NotNull(found);
 
         Assert.Equal(7, found!.MonsterData.MonsterTypeId);
@@ -100,7 +100,7 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.GroundItems.Find(gi => gi.X == 4 && gi.Y == 5 && gi.Z == Z);
+        var found = chunk2.GroundItems.FirstOrDefault(gi => gi.X == 4 && gi.Y == 5 && gi.Z == Z);
         Assert.NotNull(found);
 
         Assert.Equal(3, found!.Item.ItemTypeId);
@@ -130,7 +130,7 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.ResourceNodes.Find(r => r.X == 3 && r.Y == 3 && r.Z == Z);
+        var found = chunk2.ResourceNodes.FirstOrDefault(r => r.X == 3 && r.Y == 3 && r.Z == Z);
         Assert.NotNull(found);
 
         Assert.Equal(ResourceNodeDefinitions.CopperRock, found!.NodeData.NodeTypeId);
@@ -163,7 +163,7 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Elements.Find(e => e.X == 6 && e.Y == 7 && e.Z == Z);
+        var found = chunk2.Elements.FirstOrDefault(e => e.X == 6 && e.Y == 7 && e.Z == Z);
         Assert.NotNull(found);
 
         Assert.Equal(99, found!.Appearance.GlyphId);
@@ -189,7 +189,7 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Elements.Find(e => e.X == 8 && e.Y == 9 && e.Z == Z);
+        var found = chunk2.Elements.FirstOrDefault(e => e.X == 8 && e.Y == 9 && e.Z == Z);
         Assert.NotNull(found);
 
         Assert.NotNull(found!.Light);
@@ -215,7 +215,7 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.TownNpcs.Find(n => n.X == 2 && n.Y == 8 && n.Z == Z);
+        var found = chunk2.TownNpcs.FirstOrDefault(n => n.X == 2 && n.Y == 8 && n.Z == Z);
         Assert.NotNull(found);
 
         Assert.Equal("Blacksmith", found!.NpcData.Name);
@@ -260,7 +260,7 @@ public class EntitySerializerTests : IDisposable
         int monsters = chunk2.Monsters.Count(m => !m.IsDead);
         int items = chunk2.GroundItems.Count(gi => !gi.IsDead);
         int nodes = chunk2.ResourceNodes.Count(r => !r.IsDead);
-        int elements = chunk2.Elements.Count;
+        int elements = chunk2.Elements.Count();
         int npcs = chunk2.TownNpcs.Count(n => !n.IsDead);
 
         Assert.True(monsters >= 1, $"Expected >= 1 monster, got {monsters}");

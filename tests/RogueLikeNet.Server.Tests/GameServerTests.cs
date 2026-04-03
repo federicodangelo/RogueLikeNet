@@ -576,8 +576,8 @@ public class GameServerTests
         // Clear any actors that could block the path (spawned by chunk generation)
         foreach (var chunk in loop.Engine.WorldMap.LoadedChunks)
         {
-            chunk.Monsters.Clear();
-            chunk.TownNpcs.Clear();
+            chunk.Monsters.ToList().ForEach(chunk.RemoveEntity);
+            chunk.TownNpcs.ToList().ForEach(chunk.RemoveEntity);
         }
 
         // Queue 3 right-moves before start — all drained in tick 1, only the last is applied
