@@ -39,7 +39,7 @@ public class BuildingSystem
         var target = Position.FromCoords(targetX, targetY, player.Position.Z);
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
@@ -83,7 +83,7 @@ public class BuildingSystem
         var target = Position.FromCoords(targetX, targetY, player.Position.Z);
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull) return;
 
         var tile = map.GetTile(target);
         if (tile.PlaceableItemId == ItemDefinitions.None)

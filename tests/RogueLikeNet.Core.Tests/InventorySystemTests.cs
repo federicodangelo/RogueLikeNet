@@ -35,7 +35,7 @@ public class InventorySystemTests
 
         // Item data should be in inventory, floor entity should be destroyed
         player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        Assert.Single(player.Inventory.Items!);
+        Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
         Assert.Equal(template.TypeId, player.Inventory.Items[0].ItemTypeId);
     }
@@ -60,7 +60,7 @@ public class InventorySystemTests
         player.Input.ItemSlot = 0;
         engine.Tick();
 
-        Assert.Empty(player.Inventory.Items!);
+        Assert.Empty(player.Inventory.Items);
 
         // Original entity was destroyed on pickup; drop creates a new ground entity
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
@@ -155,7 +155,7 @@ public class InventorySystemTests
         // Fill inventory to capacity with ItemData
         int cap = player.Inventory.Capacity;
         for (int i = 0; i < cap; i++)
-            player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword });
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword });
 
         // Now spawn another item and try to pick it up
         var extraItem = engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
@@ -222,7 +222,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        int countBefore = player.Inventory.Items!.Count;
+        int countBefore = player.Inventory.Items.Count;
 
         // Try to use gold
         player.Input.ActionType = ActionTypes.UseItem;
@@ -230,7 +230,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Gold should still be in inventory (no effect for CategoryGold)
-        Assert.Equal(countBefore, player.Inventory.Items!.Count);
+        Assert.Equal(countBefore, player.Inventory.Items.Count);
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Old weapon should be back in inventory
-        Assert.True(player.Inventory.Items!.Count >= 1, "Old weapon should be swapped into inventory");
+        Assert.True(player.Inventory.Items.Count >= 1, "Old weapon should be swapped into inventory");
     }
 
     [Fact]
@@ -299,7 +299,7 @@ public class InventorySystemTests
         player.Input.ItemSlot = 0;
         engine.Tick();
 
-        Assert.True(player.Inventory.Items!.Count >= 1, "Old armor should be swapped into inventory");
+        Assert.True(player.Inventory.Items.Count >= 1, "Old armor should be swapped into inventory");
 
         // Chain Mail has more defense than Leather Armor
         Assert.True(player.CombatStats.Defense > defWithFirstArmor || player.CombatStats.Defense == defWithFirstArmor,
@@ -352,7 +352,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Should be one slot (stacked), not two
-        Assert.Single(player.Inventory.Items!);
+        Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
         Assert.True(player.Inventory.Items[0].StackCount > 1, "Stack count should be > 1 after auto-stacking");
     }
@@ -376,7 +376,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        int typeAtSlot0 = player.Inventory.Items![0].ItemTypeId;
+        int typeAtSlot0 = player.Inventory.Items[0].ItemTypeId;
         int typeAtSlot1 = player.Inventory.Items[1].ItemTypeId;
 
         // Swap slots 0 and 1
@@ -385,7 +385,7 @@ public class InventorySystemTests
         player.Input.TargetSlot = 1;
         engine.Tick();
 
-        Assert.Equal(typeAtSlot1, player.Inventory.Items![0].ItemTypeId);
+        Assert.Equal(typeAtSlot1, player.Inventory.Items[0].ItemTypeId);
         Assert.Equal(typeAtSlot0, player.Inventory.Items[1].ItemTypeId);
     }
 
@@ -432,7 +432,7 @@ public class InventorySystemTests
 
         Assert.False(player.Equipment.HasWeapon);
 
-        Assert.Single(player.Inventory.Items!);
+        Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
         Assert.Equal(ItemDefinitions.LongSword, player.Inventory.Items[0].ItemTypeId);
 
@@ -468,7 +468,7 @@ public class InventorySystemTests
 
         Assert.False(player.Equipment.HasArmor);
 
-        Assert.Single(player.Inventory.Items!);
+        Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
         Assert.Equal(ItemDefinitions.ChainMail, player.Inventory.Items[0].ItemTypeId);
 
@@ -500,7 +500,7 @@ public class InventorySystemTests
 
         Assert.True(player.CombatStats.Attack > baseAtk);
 
-        Assert.Empty(player.Inventory.Items!);
+        Assert.Empty(player.Inventory.Items);
     }
 
     [Fact]
@@ -528,7 +528,7 @@ public class InventorySystemTests
 
         Assert.True(player.CombatStats.Defense > baseDef);
 
-        Assert.Empty(player.Inventory.Items!);
+        Assert.Empty(player.Inventory.Items);
     }
 
     [Fact]
@@ -541,7 +541,7 @@ public class InventorySystemTests
 
         // Manually add a potion at max stack size to inventory
         var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
-        player.Inventory.Items!.Add(new ItemData
+        player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
             StackCount = potionDef.MaxStackSize // Full stack (10)
@@ -554,7 +554,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        Assert.Equal(2, player.Inventory.Items!.Count); // Original full stack + new slot
+        Assert.Equal(2, player.Inventory.Items.Count); // Original full stack + new slot
         Assert.Equal(potionDef.MaxStackSize, player.Inventory.Items[0].StackCount);
         Assert.Equal(1, player.Inventory.Items[1].StackCount);
     }
@@ -570,7 +570,7 @@ public class InventorySystemTests
         var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
 
         // Add a non-matching item, a FULL potion stack, and a partial potion stack
-        player.Inventory.Items!.Add(new ItemData
+        player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.ShortSword, // Different item — forces "if" false branch
             StackCount = 1
@@ -593,7 +593,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        Assert.Equal(3, player.Inventory.Items!.Count);
+        Assert.Equal(3, player.Inventory.Items.Count);
         Assert.Equal(ItemDefinitions.ShortSword, player.Inventory.Items[0].ItemTypeId);
         Assert.Equal(potionDef.MaxStackSize, player.Inventory.Items[1].StackCount);
         Assert.Equal(4, player.Inventory.Items[2].StackCount); // 3 + 1
@@ -611,7 +611,7 @@ public class InventorySystemTests
         // MaxStackSize for potions is 10
 
         // Inventory: slot 0 has potion at 9 (can absorb 1 more), slot 1 has potion at 5
-        player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 9 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 9 });
         player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5 });
 
         // Spawn potion and manually increase its StackCount to 3
@@ -623,7 +623,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        Assert.Equal(2, player.Inventory.Items!.Count);
+        Assert.Equal(2, player.Inventory.Items.Count);
         Assert.Equal(10, player.Inventory.Items[0].StackCount); // Was 9, absorbed 1
         Assert.Equal(7, player.Inventory.Items[1].StackCount); // Was 5, absorbed 2
     }
@@ -637,7 +637,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Add a Common player.Health potion to inventory
-        player.Inventory.Items!.Add(new ItemData
+        player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
             Rarity = ItemDefinitions.RarityCommon,
@@ -653,7 +653,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Should be two separate slots because rarities differ
-        Assert.Equal(2, player.Inventory.Items!.Count);
+        Assert.Equal(2, player.Inventory.Items.Count);
         Assert.Equal(ItemDefinitions.RarityCommon, player.Inventory.Items[0].Rarity);
         Assert.Equal(3, player.Inventory.Items[0].StackCount);
         Assert.Equal(ItemDefinitions.RarityRare, player.Inventory.Items[1].Rarity);
@@ -668,7 +668,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Add a Rare player.Health potion to inventory
-        player.Inventory.Items!.Add(new ItemData
+        player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
             Rarity = ItemDefinitions.RarityRare,
@@ -701,7 +701,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Give player an item directly
-        player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
 
         player.Input.ActionType = ActionTypes.Drop;
         player.Input.ItemSlot = 0;
@@ -730,7 +730,7 @@ public class InventorySystemTests
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Give player an item to drop
-        player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
 
         player.Input.ActionType = ActionTypes.Drop;
         player.Input.ItemSlot = 0;
@@ -759,7 +759,7 @@ public class InventorySystemTests
         // Drop 3 items — each should land at a different position
         for (int i = 0; i < 3; i++)
         {
-            player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
 
             player.Input.ActionType = ActionTypes.Drop;
             player.Input.ItemSlot = 0;

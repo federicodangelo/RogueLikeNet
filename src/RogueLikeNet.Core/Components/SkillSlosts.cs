@@ -14,7 +14,7 @@ public struct SkillSlots
     public int Cooldown3;
 
 
-    public int GetSkillId(int index) => index switch
+    public readonly int GetSkillId(int index) => index switch
     {
         0 => Skill0,
         1 => Skill1,
@@ -23,7 +23,7 @@ public struct SkillSlots
         _ => SkillDefinitions.None,
     };
 
-    public int GetCooldown(int index) => index switch
+    public readonly int GetCooldown(int index) => index switch
     {
         0 => Cooldown0,
         1 => Cooldown1,

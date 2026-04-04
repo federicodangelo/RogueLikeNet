@@ -97,4 +97,9 @@ public struct PlayerEntity
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
     public bool IsDead => !Health.IsAlive;
+
+    public PlayerEntity()
+    {
+        Inventory = new Inventory();
+    }
 }

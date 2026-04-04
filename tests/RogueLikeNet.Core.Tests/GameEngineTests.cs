@@ -460,7 +460,7 @@ public class GameEngineTests
         int[] expectedResources = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
         foreach (int resId in expectedResources)
         {
-            var item = playerRef.Inventory.Items!.Find(i => i.ItemTypeId == resId);
+            var item = playerRef.Inventory.Items.Find(i => i.ItemTypeId == resId);
             Assert.Equal(9999, item.StackCount);
         }
     }

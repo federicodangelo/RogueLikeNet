@@ -23,7 +23,7 @@ public struct QuickSlots
 
     public int this[int index]
     {
-        get => index switch { 0 => Slot0, 1 => Slot1, 2 => Slot2, 3 => Slot3, _ => -1 };
+        readonly get => index switch { 0 => Slot0, 1 => Slot1, 2 => Slot2, 3 => Slot3, _ => -1 };
         set { switch (index) { case 0: Slot0 = value; break; case 1: Slot1 = value; break; case 2: Slot2 = value; break; case 3: Slot3 = value; break; } }
     }
 

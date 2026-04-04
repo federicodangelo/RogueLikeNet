@@ -22,7 +22,7 @@ public class BuildingSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        player.Inventory.Items!.Add(new ItemData
+        player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = itemTypeId,
             Rarity = ItemDefinitions.RarityCommon,
@@ -116,7 +116,7 @@ public class BuildingSystemTests
         // Verify wall was placed and item removed
         var tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
-        Assert.Empty(player.Inventory.Items!);
+        Assert.Empty(player.Inventory.Items);
 
         // Now pick it up
         player.Input.ActionType = ActionTypes.PickUpPlaced;
@@ -131,8 +131,8 @@ public class BuildingSystemTests
         Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
 
         // Item should be back in inventory
-        Assert.Single(player.Inventory.Items!);
-        Assert.Equal(ItemDefinitions.WoodenWall, player.Inventory.Items![0].ItemTypeId);
+        Assert.Single(player.Inventory.Items);
+        Assert.Equal(ItemDefinitions.WoodenWall, player.Inventory.Items[0].ItemTypeId);
     }
 
     [Fact]
@@ -172,8 +172,8 @@ public class BuildingSystemTests
 
         tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(TileType.Floor, tile.Type);
-        Assert.Single(player.Inventory.Items!);
-        Assert.Equal(ItemDefinitions.CopperDoor, player.Inventory.Items![0].ItemTypeId);
+        Assert.Single(player.Inventory.Items);
+        Assert.Equal(ItemDefinitions.CopperDoor, player.Inventory.Items[0].ItemTypeId);
     }
 
     [Fact]

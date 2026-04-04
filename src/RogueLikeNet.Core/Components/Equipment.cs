@@ -1,10 +1,12 @@
+using RogueLikeNet.Core.Definitions;
+
 namespace RogueLikeNet.Core.Components;
 
 public struct Equipment
 {
-    public ItemData? Weapon;
-    public ItemData? Armor;
+    public ItemData Weapon;
+    public ItemData Armor;
 
-    public bool HasWeapon => Weapon.HasValue;
-    public bool HasArmor => Armor.HasValue;
+    public readonly bool HasWeapon => !Weapon.IsNone;
+    public bool HasArmor => !Armor.IsNone;
 }

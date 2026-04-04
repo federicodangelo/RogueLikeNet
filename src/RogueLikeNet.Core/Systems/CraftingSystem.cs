@@ -20,7 +20,6 @@ public class CraftingSystem
             player.Input.ActionType = ActionTypes.None;
 
             if (recipeId < 0 || recipeId >= CraftingDefinitions.All.Length) continue;
-            if (player.Inventory.Items == null) continue;
 
             var recipe = CraftingDefinitions.All[recipeId];
             if (!CraftingDefinitions.CanCraft(recipe, player.Inventory.Items)) continue;

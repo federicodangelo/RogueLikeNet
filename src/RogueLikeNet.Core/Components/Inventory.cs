@@ -2,8 +2,13 @@ namespace RogueLikeNet.Core.Components;
 
 public struct Inventory
 {
-    public List<ItemData>? Items;
+    public List<ItemData> Items;
     public int Capacity;
+
+    public Inventory()
+    {
+        Items = [];
+    }
 
     public Inventory(int capacity)
     {
@@ -11,5 +16,5 @@ public struct Inventory
         Items = new List<ItemData>(capacity);
     }
 
-    public bool IsFull => Items != null && Items.Count >= Capacity;
+    public readonly bool IsFull => Items.Count >= Capacity;
 }

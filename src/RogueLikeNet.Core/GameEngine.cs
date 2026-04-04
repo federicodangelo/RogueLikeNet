@@ -154,8 +154,6 @@ public class GameEngine : IDisposable
     /// </summary>
     public void GiveDebugResources(ref PlayerEntity player)
     {
-        if (player.Inventory.Items == null) return;
-
         ReadOnlySpan<int> resourceIds = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
         foreach (int resId in resourceIds)
         {
@@ -517,34 +515,30 @@ public class GameEngine : IDisposable
             Defense = player.CombatStats.Defense,
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
+            InventoryCount = player.Inventory.Items.Count,
+            InventoryCapacity = player.Inventory.Capacity
         };
 
-        if (player.Inventory.Items != null)
+        var items = new List<InventoryItemData>();
+        foreach (var item in player.Inventory.Items)
         {
-            state.InventoryCount = player.Inventory.Items.Count;
-            state.InventoryCapacity = player.Inventory.Capacity;
-
-            var items = new List<InventoryItemData>();
-            foreach (var item in player.Inventory.Items)
+            var def = ItemDefinitions.Get(item.ItemTypeId);
+            items.Add(new InventoryItemData
             {
-                var def = ItemDefinitions.Get(item.ItemTypeId);
-                items.Add(new InventoryItemData
-                {
-                    ItemTypeId = item.ItemTypeId,
-                    StackCount = item.StackCount,
-                    Rarity = item.Rarity,
-                    Category = def.Category,
-                    BonusAttack = item.BonusAttack,
-                    BonusDefense = item.BonusDefense,
-                    BonusHealth = item.BonusHealth,
-                });
-            }
-            state.InventoryItems = items.ToArray();
+                ItemTypeId = item.ItemTypeId,
+                StackCount = item.StackCount,
+                Rarity = item.Rarity,
+                Category = def.Category,
+                BonusAttack = item.BonusAttack,
+                BonusDefense = item.BonusDefense,
+                BonusHealth = item.BonusHealth,
+            });
         }
+        state.InventoryItems = items.ToArray();
 
         if (player.Equipment.HasWeapon)
         {
-            var w = player.Equipment.Weapon!.Value;
+            var w = player.Equipment.Weapon;
             var wDef = ItemDefinitions.Get(w.ItemTypeId);
             state.EquippedWeapon = new InventoryItemData
             {
@@ -559,7 +553,7 @@ public class GameEngine : IDisposable
         }
         if (player.Equipment.HasArmor)
         {
-            var a = player.Equipment.Armor!.Value;
+            var a = player.Equipment.Armor;
             var aDef = ItemDefinitions.Get(a.ItemTypeId);
             state.EquippedArmor = new InventoryItemData
             {

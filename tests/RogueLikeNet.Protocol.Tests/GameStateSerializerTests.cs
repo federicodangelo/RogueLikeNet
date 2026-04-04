@@ -296,7 +296,7 @@ public class GameStateSerializerTests
         Assert.NotNull(first);
         int initialCount = first.InventoryCount;
 
-        player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
 
         var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
         Assert.NotNull(second);
@@ -350,7 +350,7 @@ public class GameStateSerializerTests
     {
         var (engine, player) = CreateEngineWithPlayer();
 
-        player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1, Rarity = ItemDefinitions.RarityCommon });
 
         var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
         Assert.NotNull(first);

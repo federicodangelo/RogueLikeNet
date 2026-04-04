@@ -23,21 +23,21 @@ public class InventoryComponentTests
     [Fact]
     public void Inventory_NullItems_IsNotFull()
     {
-        var inv = new Inventory { Capacity = 5, Items = null };
+        var inv = new Inventory { Capacity = 5 };
         Assert.False(inv.IsFull);
     }
 
     [Fact]
     public void Equipment_HasWeapon_ReturnsFalseWhenNull()
     {
-        var equip = new Equipment { Weapon = null };
+        var equip = new Equipment { Weapon = ItemData.None };
         Assert.False(equip.HasWeapon);
     }
 
     [Fact]
     public void Equipment_HasArmor_ReturnsFalseWhenNull()
     {
-        var equip = new Equipment { Armor = null };
+        var equip = new Equipment { Armor = ItemData.None };
         Assert.False(equip.HasArmor);
     }
 

@@ -56,8 +56,8 @@ public static class PlayerSerializer
         // Equipment
         var equipData = new EquipmentJson
         {
-            Weapon = player.Equipment.HasWeapon ? ToItemJson(player.Equipment.Weapon!.Value) : null,
-            Armor = player.Equipment.HasArmor ? ToItemJson(player.Equipment.Armor!.Value) : null,
+            Weapon = player.Equipment.HasWeapon ? ToItemJson(player.Equipment.Weapon) : null,
+            Armor = player.Equipment.HasArmor ? ToItemJson(player.Equipment.Armor) : null,
         };
         data.EquipmentJson = JsonSerializer.Serialize(equipData, PlayerJsonContext.Default.EquipmentJson);
 
@@ -137,8 +137,8 @@ public static class PlayerSerializer
             var equipData = JsonSerializer.Deserialize(data.EquipmentJson, PlayerJsonContext.Default.EquipmentJson);
             if (equipData != null)
             {
-                player.Equipment.Weapon = equipData.Weapon != null ? FromItemJson(equipData.Weapon) : null;
-                player.Equipment.Armor = equipData.Armor != null ? FromItemJson(equipData.Armor) : null;
+                player.Equipment.Weapon = equipData.Weapon != null ? FromItemJson(equipData.Weapon) : ItemData.None;
+                player.Equipment.Armor = equipData.Armor != null ? FromItemJson(equipData.Armor) : ItemData.None;
             }
         }
 

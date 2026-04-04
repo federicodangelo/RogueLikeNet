@@ -50,7 +50,7 @@ public class InventorySystem
     {
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull) return;
 
         var chunk = map.GetChunkForWorldPos(player.Position);
         if (chunk == null) return;
@@ -69,7 +69,7 @@ public class InventorySystem
         int slot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
         player.Inventory.Items.RemoveAt(slot);
@@ -89,7 +89,7 @@ public class InventorySystem
         int slot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
         var template = ItemDefinitions.Get(itemData.ItemTypeId);
@@ -98,7 +98,7 @@ public class InventorySystem
         {
             case ItemDefinitions.CategoryPotion:
                 ApplyPotion(ref player, itemData);
-                player.Inventory.Items!.RemoveAt(slot);
+                player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
                 break;
 
@@ -137,7 +137,7 @@ public class InventorySystem
 
     private static void EquipItem(ref PlayerEntity player, int slot)
     {
-        var newItem = player.Inventory.Items![slot];
+        var newItem = player.Inventory.Items[slot];
         var def = ItemDefinitions.Get(newItem.ItemTypeId);
         player.Inventory.Items.RemoveAt(slot);
         player.QuickSlots.OnItemRemoved(slot);
@@ -146,8 +146,8 @@ public class InventorySystem
         {
             if (player.Equipment.HasWeapon)
             {
-                RemoveItemStats(ref player, player.Equipment.Weapon!.Value);
-                player.Inventory.Items!.Add(player.Equipment.Weapon!.Value);
+                RemoveItemStats(ref player, player.Equipment.Weapon);
+                player.Inventory.Items.Add(player.Equipment.Weapon);
             }
             player.Equipment.Weapon = newItem;
         }
@@ -155,8 +155,8 @@ public class InventorySystem
         {
             if (player.Equipment.HasArmor)
             {
-                RemoveItemStats(ref player, player.Equipment.Armor!.Value);
-                player.Inventory.Items!.Add(player.Equipment.Armor!.Value);
+                RemoveItemStats(ref player, player.Equipment.Armor);
+                player.Inventory.Items.Add(player.Equipment.Armor);
             }
             player.Equipment.Armor = newItem;
         }
@@ -170,7 +170,6 @@ public class InventorySystem
         int slotB = player.Input.TargetSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null) return;
         if (slotA < 0 || slotA >= player.Inventory.Items.Count) return;
         if (slotB < 0 || slotB >= player.Inventory.Items.Count) return;
         if (slotA == slotB) return;
@@ -189,21 +188,21 @@ public class InventorySystem
         int equipSlot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull) return;
 
         if (equipSlot == 0 && player.Equipment.HasWeapon)
         {
-            var old = player.Equipment.Weapon!.Value;
+            var old = player.Equipment.Weapon;
             RemoveItemStats(ref player, old);
-            player.Inventory.Items!.Add(old);
-            player.Equipment.Weapon = null;
+            player.Inventory.Items.Add(old);
+            player.Equipment.Weapon = ItemData.None;
         }
         else if (equipSlot == 1 && player.Equipment.HasArmor)
         {
-            var old = player.Equipment.Armor!.Value;
+            var old = player.Equipment.Armor;
             RemoveItemStats(ref player, old);
-            player.Inventory.Items!.Add(old);
-            player.Equipment.Armor = null;
+            player.Inventory.Items.Add(old);
+            player.Equipment.Armor = ItemData.None;
         }
     }
 
@@ -212,7 +211,7 @@ public class InventorySystem
         int slot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
@@ -240,7 +239,7 @@ public class InventorySystem
         }
         else
         {
-            if (player.Inventory.Items == null || invIndex < 0 || invIndex >= player.Inventory.Items.Count) return;
+            if (invIndex < 0 || invIndex >= player.Inventory.Items.Count) return;
             player.QuickSlots.ClearIndex(invIndex);
             player.QuickSlots[qsNum] = invIndex;
         }
@@ -256,7 +255,7 @@ public class InventorySystem
         int invIndex = player.QuickSlots[qsNum];
         if (invIndex < 0) return;
 
-        if (player.Inventory.Items == null || invIndex >= player.Inventory.Items.Count) return;
+        if (invIndex >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[invIndex];
         var template = ItemDefinitions.Get(itemData.ItemTypeId);
@@ -265,7 +264,7 @@ public class InventorySystem
         {
             case ItemDefinitions.CategoryPotion:
                 ApplyPotion(ref player, itemData);
-                player.Inventory.Items!.RemoveAt(invIndex);
+                player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
                 break;
 
@@ -282,8 +281,6 @@ public class InventorySystem
     /// </summary>
     public static bool AddItemToInventory(ref PlayerEntity player, ItemData itemData)
     {
-        if (player.Inventory.Items == null) return false;
-
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
 
         if (def.Stackable)
@@ -324,7 +321,7 @@ public class InventorySystem
 
     private static void AutoAssignQuickSlot(ref PlayerEntity player, int newIndex)
     {
-        if (player.Inventory.Items == null || newIndex < 0 || newIndex >= player.Inventory.Items.Count) return;
+        if (newIndex < 0 || newIndex >= player.Inventory.Items.Count) return;
         var itemData = player.Inventory.Items[newIndex];
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
         if (def.Category != ItemDefinitions.CategoryWeapon &&
