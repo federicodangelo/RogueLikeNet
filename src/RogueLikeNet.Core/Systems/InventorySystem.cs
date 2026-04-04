@@ -1,5 +1,6 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;

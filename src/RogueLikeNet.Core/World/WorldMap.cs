@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using static RogueLikeNet.Core.Definitions.PlaceableDefinitions;
 
 namespace RogueLikeNet.Core.World;

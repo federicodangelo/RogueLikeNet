@@ -3,6 +3,7 @@ using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
+using RogueLikeNet.Core.Entities;
 
 namespace RogueLikeNet.Core.Tests;
 

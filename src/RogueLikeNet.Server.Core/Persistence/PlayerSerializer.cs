@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.World;
+using RogueLikeNet.Core.Entities;
 
 namespace RogueLikeNet.Server.Persistence;
 

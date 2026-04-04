@@ -1,6 +1,7 @@
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Server.Persistence;

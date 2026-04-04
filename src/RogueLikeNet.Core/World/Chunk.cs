@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Entities;
 
 namespace RogueLikeNet.Core.World;
 

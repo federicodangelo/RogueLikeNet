@@ -1,4 +1,4 @@
-namespace RogueLikeNet.Core.World;
+namespace RogueLikeNet.Core.Entities;
 
 public enum EntityType
 {
