@@ -16,7 +16,7 @@ public class EntitySerializerTests : IDisposable
     public EntitySerializerTests()
     {
         _engine = new GameEngine(42, _gen);
-        _engine.EnsureChunkLoaded(0, 0, Z);
+        _engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
     }
 
     public void Dispose() => _engine.Dispose();
@@ -25,7 +25,7 @@ public class EntitySerializerTests : IDisposable
     public void SerializeEmpty_ReturnsEmptyArray()
     {
         // Chunk (99,99) has no entities - create an empty chunk
-        var emptyChunk = new Chunk(99, 99, Z);
+        var emptyChunk = new Chunk(Position.FromCoords(99, 99, Z));
         var json = EntitySerializer.SerializeEntities(emptyChunk);
         Assert.Equal("[]", json);
     }
@@ -34,7 +34,7 @@ public class EntitySerializerTests : IDisposable
     public void Monster_RoundTrip_PreservesData()
     {
         var md = new MonsterData { MonsterTypeId = 7, Health = 50, Attack = 12, Defense = 4, Speed = 8 };
-        var monster = _engine.SpawnMonster(1, 2, Z, md);
+        var monster = _engine.SpawnMonster(Position.FromCoords(1, 2, Z), md);
 
         // Tweak runtime state so we can verify it survives the round-trip
         ref var monsterRef = ref _engine.WorldMap.GetMonsterRef(monster.Id);
@@ -46,17 +46,17 @@ public class EntitySerializerTests : IDisposable
         monsterRef.MoveDelay.Current = 3;
         monsterRef.AttackDelay.Current = 7;
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"Monster\"", json);
 
         // Deserialize into a fresh engine
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
         // Find the deserialized monster
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.Monsters.ToArray().FirstOrDefault(m => m.Position.X == 1 && m.Position.Y == 2 && m.Position.Z == Z);
         Assert.NotEqual(0, found.Id);
 
@@ -90,17 +90,17 @@ public class EntitySerializerTests : IDisposable
             BonusHealth = 10,
             StackCount = 4,
         };
-        _engine.SpawnItemOnGround(itemData, 4, 5, Z);
+        _engine.SpawnItemOnGround(itemData, Position.FromCoords(4, 5, Z));
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"GroundItem\"", json);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.GroundItems.ToArray().FirstOrDefault(gi => gi.Position.X == 4 && gi.Position.Y == 5 && gi.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
@@ -116,22 +116,22 @@ public class EntitySerializerTests : IDisposable
     public void ResourceNode_RoundTrip_PreservesData()
     {
         var def = ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock];
-        var node = _engine.SpawnResourceNode(3, 3, Z, def);
+        var node = _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), def);
 
         // Damage the node to test HP preservation
         ref var nodeRef = ref _engine.WorldMap.GetResourceNodeRef(node.Id);
         nodeRef.Health.Current = 5;
         nodeRef.AttackDelay.Current = 2;
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"ResourceNode\"", json);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.ResourceNodes.ToArray().FirstOrDefault(r => r.Position.X == 3 && r.Position.Y == 3 && r.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
@@ -156,15 +156,15 @@ public class EntitySerializerTests : IDisposable
         );
         _engine.SpawnElement(element);
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"Element\"", json);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 6 && e.Position.Y == 7 && e.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
@@ -183,14 +183,14 @@ public class EntitySerializerTests : IDisposable
         );
         _engine.SpawnElement(element);
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 8 && e.Position.Y == 9 && e.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
@@ -202,22 +202,22 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void TownNpc_RoundTrip_PreservesData()
     {
-        var npc = _engine.SpawnTownNpc(2, 8, Z, "Blacksmith", 5, 10, 3);
+        var npc = _engine.SpawnTownNpc(Position.FromCoords(2, 8, Z), "Blacksmith", 5, 10, 3);
 
         ref var npcRef = ref _engine.WorldMap.GetTownNpcRef(npc.Id);
         npcRef.Health.Current = 8000;
         npcRef.AI.StateId = 1;
         npcRef.MoveDelay.Current = 2;
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"TownNpc\"", json);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var found = chunk2.TownNpcs.ToArray().FirstOrDefault(n => n.Position.X == 2 && n.Position.Y == 8 && n.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
@@ -237,9 +237,9 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void MultipleEntityTypes_RoundTrip()
     {
-        _engine.SpawnMonster(1, 1, Z, new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
-        _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, 2, 2, Z);
-        _engine.SpawnResourceNode(3, 3, Z, ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
+        _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
         _engine.SpawnElement(new DungeonElement(
             Position.FromCoords(4, 4, Z),
             new TileAppearance(20, 0, 0),
@@ -250,16 +250,16 @@ public class EntitySerializerTests : IDisposable
             new TileAppearance(30, 0, 0),
             new LightSource(3, 0xFFFFFF)
         ));
-        _engine.SpawnTownNpc(6, 6, Z, "Vendor", 6, 6, 2);
+        _engine.SpawnTownNpc(Position.FromCoords(6, 6, Z), "Vendor", 6, 6, 2);
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
 
-        var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk2 = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         int monsters = chunk2.Monsters.ToArray().Count(m => !m.IsDead);
         int items = chunk2.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
         int nodes = chunk2.ResourceNodes.ToArray().Count(r => !r.IsDead);
@@ -290,10 +290,10 @@ public class EntitySerializerTests : IDisposable
     public void OnlySerializesEntitiesInRequestedChunk()
     {
         // Spawn in chunk (0,0)
-        _engine.SpawnMonster(1, 1, Z, new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
 
         // Serialize chunk (1,1) — should not contain the monster at (1,1) since that's in chunk (0,0)
-        var chunk11 = new Chunk(1, 1, Z);
+        var chunk11 = new Chunk(Position.FromCoords(1, 1, Z));
         var json = EntitySerializer.SerializeEntities(chunk11);
 
         Assert.DoesNotContain("\"Type\":\"Monster\"", json);
@@ -302,12 +302,12 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void Serialize_SkipsDeadEntities()
     {
-        var monster = _engine.SpawnMonster(1, 1, Z, new MonsterData { MonsterTypeId = 9999, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
+        var monster = _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 9999, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
 
         ref var monsterRef = ref _engine.WorldMap.GetMonsterRef(monster.Id);
         monsterRef.Health.Current = 0;
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.DoesNotContain("\"MonsterTypeId\":9999", json);
     }
@@ -315,14 +315,14 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void TownNpc_NullName_SerializesAsEmpty()
     {
-        _engine.SpawnTownNpc(2, 2, Z, null!, 0, 0, 1);
+        _engine.SpawnTownNpc(Position.FromCoords(2, 2, Z), null!, 0, 0, 1);
 
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Name\":\"\"", json);
 
         using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
         EntitySerializer.DeserializeEntities(json, engine2);
     }
 
@@ -335,11 +335,11 @@ public class EntitySerializerTests : IDisposable
     public void PersistentGenerator_RoundTrip_RestoresAllEntityTypes()
     {
         // 1. Create a world, spawn entities, serialize the chunk
-        var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
-        _engine.SpawnMonster(1, 1, Z, new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
-        _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, 2, 2, Z);
-        _engine.SpawnResourceNode(3, 3, Z, ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
-        _engine.SpawnTownNpc(4, 4, Z, "Blacksmith", 4, 4, 3);
+        var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
+        _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
+        _engine.SpawnTownNpc(Position.FromCoords(4, 4, Z), "Blacksmith", 4, 4, 3);
 
         var entityJson = EntitySerializer.SerializeEntities(chunk);
         var tileData = ChunkSerializer.SerializeTiles(chunk.Tiles);
@@ -359,10 +359,10 @@ public class EntitySerializerTests : IDisposable
         using var engine2 = new GameEngine(42, persistentGen);
         engine2.RawEntityJsonHandler = EntitySerializer.DeserializeEntities;
 
-        engine2.EnsureChunkLoaded(0, 0, Z);
+        engine2.EnsureChunkLoaded(Position.FromCoords(0, 0, Z));
 
         // 4. Verify all entity types were restored
-        var loaded = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
+        var loaded = engine2.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Z))!;
         Assert.True(loaded.Monsters.ToArray().Any(m => m.Position.X == 1 && m.Position.Y == 1), "Monster should be restored");
         Assert.True(loaded.GroundItems.ToArray().Any(gi => gi.Position.X == 2 && gi.Position.Y == 2), "Ground item should be restored");
         Assert.True(loaded.ResourceNodes.ToArray().Any(r => r.Position.X == 3 && r.Position.Y == 3), "Resource node should be restored");

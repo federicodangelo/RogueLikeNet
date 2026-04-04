@@ -14,42 +14,52 @@ public enum TileWalkability
 /// A* pathfinding with Manhattan distance heuristic and 3D stair traversal.
 /// Returns a list of (X, Y, Z) positions from start to goal.
 /// </summary>
-public static class AStarPathfinder
+public class AStarPathfinder
 {
-    public static List<Position>? FindPath(
+    private readonly PriorityQueue<Position, int> _openSet = new();
+    private readonly Dictionary<long, long> _cameFrom = [];
+    private readonly Dictionary<long, int> _gScore = [];
+
+    // 4-directional movement
+    private static readonly int[] dx = [0, 1, 0, -1];
+    private static readonly int[] dy = [-1, 0, 1, 0];
+
+    public List<Position>? FindPath(
         Position start,
         Position goal,
         Func<Position, TileWalkability> getWalkability,
-        int maxSteps = 1000)
+        int maxSteps = 1000,
+        List<Position>? targetPositions = null)
     {
         if (start == goal)
-            return [start];
+        {
+            targetPositions ??= [];
+            targetPositions.Add(start);
+            return targetPositions;
+        }
 
-        var openSet = new PriorityQueue<Position, int>();
-        var cameFrom = new Dictionary<long, long>();
-        var gScore = new Dictionary<long, int>();
 
         long startKey = start.Pack();
         long goalKey = goal.Pack();
 
-        gScore[startKey] = 0;
-        openSet.Enqueue(start, Heuristic(start, goal));
+        _openSet.Clear();
+        _cameFrom.Clear();
+        _gScore.Clear();
+
+        _gScore[startKey] = 0;
+        _openSet.Enqueue(start, Heuristic(start, goal));
 
         int steps = 0;
 
-        // 4-directional movement
-        ReadOnlySpan<int> dx = [0, 1, 0, -1];
-        ReadOnlySpan<int> dy = [-1, 0, 1, 0];
-
-        while (openSet.Count > 0 && steps++ < maxSteps)
+        while (_openSet.Count > 0 && steps++ < maxSteps)
         {
-            var c = openSet.Dequeue();
+            var c = _openSet.Dequeue();
             long currentKey = c.Pack();
 
             if (currentKey == goalKey)
-                return ReconstructPath(cameFrom, goalKey, startKey);
+                return ReconstructPath(_cameFrom, goalKey, startKey, targetPositions);
 
-            int currentG = gScore[currentKey];
+            int currentG = _gScore[currentKey];
 
             // Try 4-directional movement on the same Z level
             for (int i = 0; i < 4; i++)
@@ -62,11 +72,11 @@ public static class AStarPathfinder
                 long neighborKey = n.Pack();
                 int tentativeG = currentG + 1;
 
-                if (!gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
+                if (!_gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
                 {
-                    cameFrom[neighborKey] = currentKey;
-                    gScore[neighborKey] = tentativeG;
-                    openSet.Enqueue(n, tentativeG + Heuristic(n, goal));
+                    _cameFrom[neighborKey] = currentKey;
+                    _gScore[neighborKey] = tentativeG;
+                    _openSet.Enqueue(n, tentativeG + Heuristic(n, goal));
                 }
             }
 
@@ -75,12 +85,12 @@ public static class AStarPathfinder
             if (currentWalkability == TileWalkability.StairsUp && c.Z < 255)
             {
                 TryAddNeighbor(Position.FromCoords(c.X, c.Y, c.Z + 1), currentG + 1, goal,
-                    currentKey, openSet, cameFrom, gScore, getWalkability);
+                    currentKey, _openSet, _cameFrom, _gScore, getWalkability);
             }
             else if (currentWalkability == TileWalkability.StairsDown && c.Z > 0)
             {
                 TryAddNeighbor(Position.FromCoords(c.X, c.Y, c.Z - 1), currentG + 1, goal,
-                    currentKey, openSet, cameFrom, gScore, getWalkability);
+                    currentKey, _openSet, _cameFrom, _gScore, getWalkability);
             }
         }
 
@@ -108,9 +118,9 @@ public static class AStarPathfinder
         }
     }
 
-    private static List<Position> ReconstructPath(Dictionary<long, long> cameFrom, long current, long start)
+    private static List<Position> ReconstructPath(Dictionary<long, long> cameFrom, long current, long start, List<Position>? targetPositions = null)
     {
-        var path = new List<Position>();
+        var path = targetPositions ?? [];
         while (current != start)
         {
             path.Add(Position.UnpackCoord(current));

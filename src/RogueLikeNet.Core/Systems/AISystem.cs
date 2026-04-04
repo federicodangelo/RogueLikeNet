@@ -26,18 +26,23 @@ public class AISystem
 
     private readonly List<(int Id, Position From, Position To)> _pendingMonsterMoves = new();
     private readonly List<(int Id, Position From, Position To)> _pendingNpcMoves = new();
+    private readonly List<Position> _playerPositions = new();
+    private readonly HashSet<long> _actorPositions = new();
+    private readonly AStarPathfinder _pathfinder = new();
+    private readonly List<Position> _pathfinderTargetPositions = new();
 
     public void Update(WorldMap map)
     {
         // Collect player positions
-        var playerPositions = new List<Position>();
+        _playerPositions.Clear();
         foreach (ref var p in map.Players)
-            if (!p.IsDead) playerPositions.Add(p.Position);
+            if (!p.IsDead) _playerPositions.Add(p.Position);
 
-        if (playerPositions.Count == 0) return;
+        if (_playerPositions.Count == 0) return;
 
         // Collect all actor positions (alive) for collision
-        var actorPositions = map.CollectEntitiesPositions();
+        _actorPositions.Clear();
+        map.CollectEntitiesPositions(_actorPositions);
 
         // Tick down all move and attack delays directly on chunk entities
         foreach (var chunk in map.LoadedChunks)
@@ -77,7 +82,7 @@ public class AISystem
                 var nearestDistAboveOrBelow = int.MaxValue;
                 var nearestAboveOrBelow = Position.Zero;
 
-                foreach (var p in playerPositions)
+                foreach (var p in _playerPositions)
                 {
                     int zDiff = Math.Abs(p.Z - monster.Position.Z);
                     if (zDiff > 1) continue;
@@ -114,7 +119,8 @@ public class AISystem
                         }
                         if (!canMove) break;
 
-                        var path = AStarPathfinder.FindPath(
+                        _pathfinderTargetPositions.Clear();
+                        var path = _pathfinder.FindPath(
                             monster.Position, nearestAboveOrBelow,
                             p =>
                             {
@@ -124,15 +130,17 @@ public class AISystem
                                 if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
                                 return TileWalkability.Walkable;
                             },
-                            maxSteps: 200);
+                            maxSteps: 200,
+                            _pathfinderTargetPositions
+                        );
                         if (path != null && path.Count >= 2)
                         {
                             var next = path[1];
-                            long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
-                            if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
+                            long nextKey = next.Pack();
+                            if (map.IsWalkable(next) && !_actorPositions.Contains(nextKey))
                             {
-                                actorPositions.Remove(Position.PackCoord(monster.Position.X, monster.Position.Y, monster.Position.Z));
-                                actorPositions.Add(nextKey);
+                                _actorPositions.Remove(Position.PackCoord(monster.Position.X, monster.Position.Y, monster.Position.Z));
+                                _actorPositions.Add(nextKey);
                                 monster.MoveDelay.Current = monster.MoveDelay.Interval;
                                 _pendingMonsterMoves.Add((monster.Id, monster.Position, next));
                             }
@@ -165,29 +173,32 @@ public class AISystem
                 if (npc.MoveDelay.Current > 0) continue;
 
                 int dir = _rng.Next(4);
-                int nx = npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
-                int ny = npc.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
+                var nextPosition = Position.FromCoords(
+                    npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),
+                    npc.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0),
+                    npc.Position.Z
+                );
 
-                if (Math.Abs(nx - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
-                    Math.Abs(ny - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
+                if (Math.Abs(nextPosition.X - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
+                    Math.Abs(nextPosition.Y - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
                     continue;
 
-                var targetTile = map.GetTile(nx, ny, npc.Position.Z);
+                var targetTile = map.GetTile(nextPosition);
                 if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
                 {
-                    map.OpenDoor(nx, ny, npc.Position.Z);
+                    map.OpenDoor(nextPosition);
                     npc.MoveDelay.Current = npc.MoveDelay.Interval;
                     continue;
                 }
 
-                if (!map.IsWalkable(nx, ny, npc.Position.Z)) continue;
-                long nextKey = Position.PackCoord(nx, ny, npc.Position.Z);
-                if (actorPositions.Contains(nextKey)) continue;
+                if (!map.IsWalkable(nextPosition)) continue;
+                long nextKey = nextPosition.Pack();
+                if (_actorPositions.Contains(nextKey)) continue;
 
-                actorPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
-                actorPositions.Add(nextKey);
+                _actorPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
+                _actorPositions.Add(nextKey);
                 npc.MoveDelay.Current = npc.MoveDelay.Interval;
-                _pendingNpcMoves.Add((npc.Id, npc.Position, Position.FromCoords(nx, ny, npc.Position.Z)));
+                _pendingNpcMoves.Add((npc.Id, npc.Position, nextPosition));
             }
         }
 

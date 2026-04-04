@@ -243,7 +243,7 @@ public static class EntitySerializer
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        ref var monster = ref engine.SpawnMonster(x, y, z, monsterData);
+        ref var monster = ref engine.SpawnMonster(Position.FromCoords(x, y, z), monsterData);
 
         // Restore runtime state
         monster.Health.Current = GetInt(dict, "HealthCurrent", monster.Health.Current);
@@ -268,7 +268,7 @@ public static class EntitySerializer
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        engine.SpawnItemOnGround(itemData, x, y, z);
+        engine.SpawnItemOnGround(itemData, Position.FromCoords(x, y, z));
     }
 
     private static void DeserializeResourceNode(Dictionary<string, JsonElement> dict, GameEngine engine)
@@ -276,7 +276,7 @@ public static class EntitySerializer
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         int nodeTypeId = GetInt(dict, "NodeTypeId");
         var def = ResourceNodeDefinitions.Get(nodeTypeId);
-        ref var node = ref engine.SpawnResourceNode(x, y, z, def);
+        ref var node = ref engine.SpawnResourceNode(Position.FromCoords(x, y, z), def);
 
         // Restore runtime state
         node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);
@@ -301,7 +301,7 @@ public static class EntitySerializer
         string name = GetString(dict, "Name", "NPC");
         int tcx = GetInt(dict, "TownCenterX"), tcy = GetInt(dict, "TownCenterY"), radius = GetInt(dict, "WanderRadius");
 
-        ref var npc = ref engine.SpawnTownNpc(x, y, z, name, tcx, tcy, radius);
+        ref var npc = ref engine.SpawnTownNpc(Position.FromCoords(x, y, z), name, tcx, tcy, radius);
 
         // Restore runtime state
         npc.Health.Current = GetInt(dict, "HealthCurrent", npc.Health.Current);

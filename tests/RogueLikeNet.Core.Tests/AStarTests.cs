@@ -12,7 +12,7 @@ public class AStarTests
     [Fact]
     public void FindPath_SameStartAndGoal()
     {
-        var path = AStarPathfinder.FindPath(Position.FromCoords(5, 5, Z), Position.FromCoords(5, 5, Z), AllWalkable);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(5, 5, Z), Position.FromCoords(5, 5, Z), AllWalkable);
         Assert.NotNull(path);
         Assert.Single(path);
         Assert.Equal(Position.FromCoords(5, 5, Z), path[0]);
@@ -21,7 +21,7 @@ public class AStarTests
     [Fact]
     public void FindPath_StraightLine()
     {
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(5, 0, Z), AllWalkable);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(5, 0, Z), AllWalkable);
         Assert.NotNull(path);
         Assert.Equal(6, path.Count);
         Assert.Equal(Position.FromCoords(0, 0, Z), path[0]);
@@ -32,7 +32,7 @@ public class AStarTests
     public void FindPath_NoPath()
     {
         // Block all movement except start
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(5, 0, Z),
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(5, 0, Z),
             p => p.X == 0 && p.Y == 0 ? TileWalkability.Walkable : TileWalkability.None);
         Assert.Null(path);
     }
@@ -44,7 +44,7 @@ public class AStarTests
         TileWalkability isWalkable(Position p) =>
             p.X >= 0 && p.Y >= 0 && p.X < 10 && p.Y < 10 && !(p.X == 2 && p.Y != 3)
                 ? TileWalkability.Walkable : TileWalkability.None;
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(4, 0, Z), isWalkable);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(4, 0, Z), isWalkable);
         Assert.NotNull(path);
         Assert.Equal(Position.FromCoords(0, 0, Z), path[0]);
         Assert.Equal(Position.FromCoords(4, 0, Z), path[^1]);
@@ -56,14 +56,14 @@ public class AStarTests
     public void FindPath_MaxStepsExceeded_ReturnsNull()
     {
         // Large open area but very few steps allowed
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(50, 50, Z), AllWalkable, maxSteps: 5);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(50, 50, Z), AllWalkable, maxSteps: 5);
         Assert.Null(path);
     }
 
     [Fact]
     public void FindPath_ReturnsXYZ_Coordinates()
     {
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(3, 0, Z), AllWalkable);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(3, 0, Z), AllWalkable);
         Assert.NotNull(path);
         foreach (var step in path)
             Assert.Equal(Z, step.Z);
@@ -82,7 +82,7 @@ public class AStarTests
             return TileWalkability.None;
         }
 
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(8, 0, Z - 1), getWalkability);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(8, 0, Z - 1), getWalkability);
         Assert.NotNull(path);
         Assert.Equal(Position.FromCoords(0, 0, Z), path[0]);
         Assert.Equal(Position.FromCoords(8, 0, Z - 1), path[^1]);
@@ -96,7 +96,7 @@ public class AStarTests
     public void FindPath_NoStairs_CannotCrossZ()
     {
         // Different Z, no stair tiles → no path
-        var path = AStarPathfinder.FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(0, 0, Z - 1), AllWalkable);
+        var path = new AStarPathfinder().FindPath(Position.FromCoords(0, 0, Z), Position.FromCoords(0, 0, Z - 1), AllWalkable);
         Assert.Null(path);
     }
 }

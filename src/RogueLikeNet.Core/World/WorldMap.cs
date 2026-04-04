@@ -138,15 +138,13 @@ public class WorldMap
     // ── Spatial queries ──────────────────────────────────────────────
 
     /// <summary>Builds a set of packed coordinates for all alive entities (players, monsters, NPCs, resource nodes).</summary>
-    public HashSet<long> CollectEntitiesPositions()
+    public void CollectEntitiesPositions(HashSet<long> set)
     {
-        var set = new HashSet<long>();
         foreach (var p in _players)
             if (!p.IsDead) set.Add(Position.PackCoord(p.Position.X, p.Position.Y, p.Position.Z));
         foreach (var chunk in _chunks.Values)
             foreach (var m in chunk.AllSolidEntitiesWithHealth)
                 if (!m.IsDead) set.Add(Position.PackCoord(m.Position.X, m.Position.Y, m.Position.Z));
-        return set;
     }
 
     /// <summary>Checks if any alive actor (player, monster, NPC) occupies the given position.</summary>
@@ -163,14 +161,11 @@ public class WorldMap
     }
 
     /// <summary>Convenience: get the chunk that contains the given world position.</summary>
-    public Chunk? GetChunkForWorldPos(int x, int y, int z)
+    public Chunk? GetChunkForWorldPos(Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        return TryGetChunk(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(pos);
+        return TryGetChunk(c);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Chunk? GetChunkForWorldPos(Position pos) => GetChunkForWorldPos(pos.X, pos.Y, pos.Z);
 
     // ── Chunk migration (for moving entities) ────────────────────────
 
@@ -197,7 +192,7 @@ public class WorldMap
                 }
                 else
                 {
-                    oldChunk.MarkTileDirty(from.X, from.Y, from.Z);
+                    oldChunk.MarkTileDirty(from);
                 }
                 return;
             }
@@ -234,139 +229,120 @@ public class WorldMap
         Debug.Assert(false, $"NPC entity {entityId} not found in old chunk at {oldC} when moving.");
     }
 
-    public bool ExistsChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)
+    public bool ExistsChunk(Position chunkPos, Generation.IDungeonGenerator generator)
     {
-        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         if (_chunks.ContainsKey(key))
             return true;
         if (_chunksDontExist.Contains(key))
             return false;
-        var exists = generator.Exists(chunkX, chunkY, chunkZ);
+        var exists = generator.Exists(chunkPos);
         if (!exists)
             _chunksDontExist.Add(key);
 
         return exists;
     }
 
-    public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)
+    public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(Position chunkPos, Generation.IDungeonGenerator generator)
     {
-        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         if (_chunks.TryGetValue(key, out var chunk))
             return (chunk, null);
 
-        var result = generator.Generate(chunkX, chunkY, chunkZ);
+        var result = generator.Generate(chunkPos);
         _chunks[key] = result.Chunk;
         ScanChunkForDynamicTiles(result.Chunk);
         return (result.Chunk, result);
     }
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Chunk? TryGetChunk(Position pos) => TryGetChunk(pos.X, pos.Y, pos.Z);
-    public Chunk? TryGetChunk(int chunkX, int chunkY, int chunkZ)
+    public Chunk? TryGetChunk(Position chunkPos)
     {
-        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         return _chunks.TryGetValue(key, out var chunk) ? chunk : null;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Chunk GetChunk(Position pos) => GetChunk(pos.X, pos.Y, pos.Z);
-    public Chunk GetChunk(int chunkX, int chunkY, int chunkZ)
+    public Chunk GetChunk(Position chunkPos)
     {
-        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         if (!_chunks.TryGetValue(key, out var chunk))
-            throw new KeyNotFoundException($"Chunk at ({chunkX}, {chunkY}, {chunkZ}) not found.");
+            throw new KeyNotFoundException($"Chunk at ({chunkPos.X}, {chunkPos.Y}, {chunkPos.Z}) not found.");
         return chunk;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TileInfo GetTile(Position p) => GetTile(p.X, p.Y, p.Z);
-    public TileInfo GetTile(int worldX, int worldY, int worldZ)
+    public TileInfo GetTile(Position p)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
-        var chunk = TryGetChunk(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(p);
+        var chunk = TryGetChunk(c);
         if (chunk == null) return default;
-        int lx = worldX - cx * Chunk.Size;
-        int ly = worldY - cy * Chunk.Size;
+        int lx = p.X - c.X * Chunk.Size;
+        int ly = p.Y - c.Y * Chunk.Size;
         return chunk.Tiles[lx, ly];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsWalkable(int worldX, int worldY, int worldZ)
+    public bool IsWalkable(Position pos)
     {
-        return GetTile(worldX, worldY, worldZ).IsWalkable;
+        return GetTile(pos).IsWalkable;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsTransparent(int worldX, int worldY, int worldZ)
+    public bool IsTransparent(Position pos)
     {
-        return GetTile(worldX, worldY, worldZ).IsTransparent;
+        return GetTile(pos).IsTransparent;
     }
 
-    public void SetTile(int worldX, int worldY, int worldZ, TileInfo tile)
+    public void SetTile(Position pos, TileInfo tile)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
-        var chunk = TryGetChunk(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(pos);
+        var chunk = TryGetChunk(c);
         if (chunk == null) return;
-        int lx = worldX - cx * Chunk.Size;
-        int ly = worldY - cy * Chunk.Size;
+        int lx = pos.X - c.X * Chunk.Size;
+        int ly = pos.Y - c.Y * Chunk.Size;
 
         bool wasDynamic = IsDynamicTile(chunk.Tiles[lx, ly]);
         bool isDynamic = IsDynamicTile(tile);
 
         chunk.Tiles[lx, ly] = tile;
-        chunk.MarkTileDirty(worldX, worldY, worldZ);
+        chunk.MarkTileDirty(pos);
 
         if (isDynamic && !wasDynamic)
-            TrackDynamicTile(worldX, worldY, worldZ);
+            TrackDynamicTile(pos);
         else if (!isDynamic && wasDynamic)
-            UntrackDynamicTile(worldX, worldY, worldZ);
+            UntrackDynamicTile(pos);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetPlaceable(Position world, int placeableId, int extraData = 0) => SetPlaceable(world.X, world.Y, world.Z, placeableId, extraData);
-
-    public void SetPlaceable(int worldX, int worldY, int worldZ, int placeableId, int extraData = 0)
+    public void SetPlaceable(Position pos, int placeableId, int extraData = 0)
     {
-        var tile = GetTile(worldX, worldY, worldZ);
+        var tile = GetTile(pos);
         tile.PlaceableItemId = placeableId;
         tile.PlaceableItemExtra = extraData;
-        SetTile(worldX, worldY, worldZ, tile);
+        SetTile(pos, tile);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetTileChunkDirty(int x, int y, int z)
+    public void SetTileChunkDirty(Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        TryGetChunk(cx, cy, cz)?.MarkModified();
+        var c = Chunk.WorldToChunkCoord(pos);
+        TryGetChunk(c)?.MarkModified();
     }
 
 
     /// <summary>Collects all dirty tile updates from loaded chunks and clears the dirty state.</summary>
-    public List<(int WorldX, int WorldY, int WorldZ, TileInfo Tile)> FlushDirtyTiles()
+    public void FlushDirtyTiles(List<(Position Pos, TileInfo Tile)> result)
     {
-        var result = new List<(int, int, int, TileInfo)>();
         foreach (var chunk in _chunks.Values)
-        {
-            if (chunk.DirtyTiles.Count == 0) continue;
-            foreach (var (wx, wy, wz) in chunk.DirtyTiles)
-            {
-                int lx = wx - chunk.ChunkX * Chunk.Size;
-                int ly = wy - chunk.ChunkY * Chunk.Size;
-                result.Add((wx, wy, wz, chunk.Tiles[lx, ly]));
-            }
-            chunk.ClearDirtyTiles();
-        }
-        return result;
+            chunk.FlushDirtyTiles(result);
     }
 
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
 
     /// <summary>Removes a chunk from the loaded set. Does not save — caller should save before calling.</summary>
-    public void UnloadChunk(int chunkX, int chunkY, int chunkZ)
+    public void UnloadChunk(Position chunkPos)
     {
-        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         _chunks.Remove(key);
         _dynamicTilesByChunk.Remove(key);
     }
@@ -386,7 +362,7 @@ public class WorldMap
     /// <summary>Adds a pre-built chunk to the loaded set (used when restoring from persistence).</summary>
     public void AddChunk(Chunk chunk)
     {
-        long key = Position.PackCoord(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
+        long key = chunk.ChunkPosition.Pack();
         _chunks[key] = chunk;
         ScanChunkForDynamicTiles(chunk);
     }
@@ -394,12 +370,12 @@ public class WorldMap
     /// <summary>
     /// Opens a closed door at the given position. Sets the auto-close countdown in PlaceableItemExtra.
     /// </summary>
-    public void OpenDoor(int worldX, int worldY, int worldZ)
+    public void OpenDoor(Position pos)
     {
-        var tile = GetTile(worldX, worldY, worldZ);
+        var tile = GetTile(pos);
         if (!IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra)) return;
         tile.PlaceableItemExtra = DoorGraceTicks; // ticks until auto-close
-        SetTile(worldX, worldY, worldZ, tile);
+        SetTile(pos, tile);
     }
 
     /// <summary>
@@ -411,12 +387,12 @@ public class WorldMap
     }
 
     /// <summary>Returns true if the given world position is tracked as a dynamic tile.</summary>
-    public bool IsDynamicTileTracked(int worldX, int worldY, int worldZ)
+    public bool IsDynamicTileTracked(Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
-        long chunkKey = Position.PackCoord(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(pos);
+        long chunkKey = Position.PackCoord(c);
         if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set)) return false;
-        return set.Contains(Position.PackCoord(worldX, worldY, worldZ));
+        return set.Contains(pos.Pack());
     }
 
     /// <summary>Returns true if a tile has a stateful placeable in a non-default state (e.g. open door).</summary>
@@ -427,25 +403,25 @@ public class WorldMap
         return def.HasState && tile.PlaceableItemExtra > 0;
     }
 
-    private void TrackDynamicTile(int worldX, int worldY, int worldZ)
+    private void TrackDynamicTile(Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
-        long chunkKey = Position.PackCoord(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(pos);
+        long chunkKey = Position.PackCoord(c);
         if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
         {
             set = new HashSet<long>();
             _dynamicTilesByChunk[chunkKey] = set;
         }
-        set.Add(Position.PackCoord(worldX, worldY, worldZ));
+        set.Add(pos.Pack());
     }
 
-    private void UntrackDynamicTile(int worldX, int worldY, int worldZ)
+    private void UntrackDynamicTile(Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
-        long chunkKey = Position.PackCoord(cx, cy, cz);
+        var c = Chunk.WorldToChunkCoord(pos);
+        long chunkKey = Position.PackCoord(c);
         if (_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
         {
-            set.Remove(Position.PackCoord(worldX, worldY, worldZ));
+            set.Remove(pos.Pack());
             if (set.Count == 0)
                 _dynamicTilesByChunk.Remove(chunkKey);
         }
@@ -454,17 +430,9 @@ public class WorldMap
     private void ScanChunkForDynamicTiles(Chunk chunk)
     {
         for (int lx = 0; lx < Chunk.Size; lx++)
-        {
             for (int ly = 0; ly < Chunk.Size; ly++)
-            {
                 if (IsDynamicTile(chunk.Tiles[lx, ly]))
-                {
-                    int wx = chunk.ChunkX * Chunk.Size + lx;
-                    int wy = chunk.ChunkY * Chunk.Size + ly;
-                    TrackDynamicTile(wx, wy, chunk.ChunkZ);
-                }
-            }
-        }
+                    TrackDynamicTile(chunk.LocalToWorld(lx, ly));
     }
 
     private readonly List<(long ChunkKey, long TileKey)> _tmpTileKeys = new();
@@ -494,13 +462,13 @@ public class WorldMap
 
         foreach (var (chunkKey, tileKey) in _tmpTileKeys)
         {
-            var (x, y, z) = Position.UnpackCoord(tileKey);
-            var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-            var chunk = TryGetChunk(cx, cy, cz);
-            if (chunk == null) { UntrackDynamicTile(x, y, z); continue; }
+            var p = Position.UnpackCoord(tileKey);
+            var c = Chunk.WorldToChunkCoord(p);
+            var chunk = TryGetChunk(c);
+            if (chunk == null) { UntrackDynamicTile(p); continue; }
 
-            int lx = x - cx * Chunk.Size;
-            int ly = y - cy * Chunk.Size;
+            int lx = p.X - c.X * Chunk.Size;
+            int ly = p.Y - c.Y * Chunk.Size;
             ref var tile = ref chunk.Tiles[lx, ly];
 
             if (IsDoor(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0)
@@ -516,8 +484,8 @@ public class WorldMap
                 {
                     // Grace expired and unoccupied — close the door
                     tile.PlaceableItemExtra = 0;
-                    chunk.MarkTileDirty(x, y, z);
-                    UntrackDynamicTile(x, y, z);
+                    chunk.MarkTileDirty(p);
+                    UntrackDynamicTile(p);
                 }
                 else
                 {
@@ -532,7 +500,7 @@ public class WorldMap
             else
             {
                 // No longer a dynamic tile
-                UntrackDynamicTile(x, y, z);
+                UntrackDynamicTile(p);
             }
         }
     }

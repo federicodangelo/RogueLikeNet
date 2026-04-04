@@ -284,8 +284,8 @@ internal static class DungeonHelper
 
     public static (int X, int Y)? FindSpawnPoint(Chunk chunk)
     {
-        int worldOffsetX = chunk.ChunkX * Chunk.Size;
-        int worldOffsetY = chunk.ChunkY * Chunk.Size;
+        int worldOffsetX = chunk.ChunkPosition.X * Chunk.Size;
+        int worldOffsetY = chunk.ChunkPosition.Y * Chunk.Size;
         int midX = Chunk.Size / 2;
         int midY = Chunk.Size / 2;
         // Spiral outward from center until we find an open floor tile

@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Utilities;
 
@@ -169,9 +170,9 @@ public static class BiomeDefinitions
     /// <summary>
     /// Deterministically picks a biome for the given chunk coordinates and world seed.
     /// </summary>
-    public static BiomeType GetBiomeForChunk(int chunkX, int chunkY, long seed)
+    public static BiomeType GetBiomeForChunk(Position chunkPos, long seed)
     {
-        long hash = chunkX * 73856093L ^ chunkY * 19349663L ^ seed * 0x27BB2EE687B0B0FDL;
+        long hash = chunkPos.X * 73856093L ^ chunkPos.Y * 19349663L ^ seed * 0x27BB2EE687B0B0FDL;
         int idx = (int)((hash & 0x7FFFFFFFL) % BiomeCount);
         return (BiomeType)idx;
     }

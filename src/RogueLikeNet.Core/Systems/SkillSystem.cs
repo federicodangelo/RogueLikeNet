@@ -44,18 +44,21 @@ public class SkillSystem
             if (cooldown > 0) continue;
 
             int range = SkillDefinitions.GetRange(skillId);
-            int targetX = player.Position.X + tx;
-            int targetY = player.Position.Y + ty;
+            var target = Position.FromCoords(
+                player.Position.X + tx,
+                player.Position.Y + ty,
+                player.Position.Z
+            );
 
             bool used = skillId switch
             {
-                SkillDefinitions.PowerStrike => ExecuteMelee(map, ref player, targetX, targetY, 200),
-                SkillDefinitions.ShieldBash => ExecuteMelee(map, ref player, targetX, targetY, 50),
-                SkillDefinitions.Backstab => ExecuteMelee(map, ref player, targetX, targetY, 300),
+                SkillDefinitions.PowerStrike => ExecuteMelee(map, ref player, target, 200),
+                SkillDefinitions.ShieldBash => ExecuteMelee(map, ref player, target, 50),
+                SkillDefinitions.Backstab => ExecuteMelee(map, ref player, target, 300),
                 SkillDefinitions.Dodge => ExecuteDodge(ref player),
-                SkillDefinitions.Fireball => ExecuteAoe(map, ref player, targetX, targetY, 150, 1),
+                SkillDefinitions.Fireball => ExecuteAoe(map, ref player, target, 150, 1),
                 SkillDefinitions.Heal => ExecuteHeal(ref player),
-                SkillDefinitions.PowerShot => ExecuteRanged(map, ref player, targetX, targetY, range, 180),
+                SkillDefinitions.PowerShot => ExecuteRanged(map, ref player, target, range, 180),
                 SkillDefinitions.Trap => false,
                 _ => false,
             };
@@ -65,15 +68,15 @@ public class SkillSystem
         }
     }
 
-    private static bool ExecuteMelee(WorldMap map, ref PlayerEntity attacker, int targetX, int targetY, int damagePercent)
+    private static bool ExecuteMelee(WorldMap map, ref PlayerEntity attacker, Position target, int damagePercent)
     {
         bool hit = false;
-        var chunk = map.GetChunkForWorldPos(targetX, targetY, attacker.Position.Z);
+        var chunk = map.GetChunkForWorldPos(target);
         if (chunk == null) return false;
 
         foreach (ref var monster in chunk.Monsters)
         {
-            if (monster.IsDead || monster.Position.X != targetX || monster.Position.Y != targetY) continue;
+            if (monster.IsDead || monster.Position != target) continue;
             int baseDamage = Math.Max(1, attacker.CombatStats.Attack - monster.CombatStats.Defense);
             int damage = Math.Max(1, baseDamage * damagePercent / 100);
             monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
@@ -82,7 +85,7 @@ public class SkillSystem
 
         foreach (ref var node in chunk.ResourceNodes)
         {
-            if (node.IsDead || node.Position.X != targetX || node.Position.Y != targetY) continue;
+            if (node.IsDead || node.Position != target) continue;
             int baseDamage = Math.Max(1, attacker.CombatStats.Attack - node.CombatStats.Defense);
             int damage = Math.Max(1, baseDamage * damagePercent / 100);
             node.Health.Current = Math.Max(0, node.Health.Current - damage);
@@ -98,24 +101,24 @@ public class SkillSystem
         return true;
     }
 
-    private static bool ExecuteAoe(WorldMap map, ref PlayerEntity attacker, int centerX, int centerY, int damagePercent, int radius)
+    private static bool ExecuteAoe(WorldMap map, ref PlayerEntity attacker, Position center, int damagePercent, int radius)
     {
         bool hitAny = false;
         int attackerAttack = attacker.CombatStats.Attack;
 
         // Check chunks around the center
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(centerX, centerY, attacker.Position.Z);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(center);
         for (int dcx = -1; dcx <= 1; dcx++)
         {
             for (int dcy = -1; dcy <= 1; dcy++)
             {
-                var chunk = map.TryGetChunk(cx + dcx, cy + dcy, cz);
+                var chunk = map.TryGetChunk(Position.FromCoords(cx + dcx, cy + dcy, cz));
                 if (chunk == null) continue;
 
                 foreach (ref var monster in chunk.Monsters)
                 {
                     if (monster.IsDead) continue;
-                    if (Math.Abs(monster.Position.X - centerX) <= radius && Math.Abs(monster.Position.Y - centerY) <= radius)
+                    if (Math.Abs(monster.Position.X - center.X) <= radius && Math.Abs(monster.Position.Y - center.Y) <= radius)
                     {
                         int baseDamage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
                         int damage = Math.Max(1, baseDamage * damagePercent / 100);
@@ -127,7 +130,7 @@ public class SkillSystem
                 foreach (ref var node in chunk.ResourceNodes)
                 {
                     if (node.IsDead) continue;
-                    if (Math.Abs(node.Position.X - centerX) <= radius && Math.Abs(node.Position.Y - centerY) <= radius)
+                    if (Math.Abs(node.Position.X - center.X) <= radius && Math.Abs(node.Position.Y - center.Y) <= radius)
                     {
                         int baseDamage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
                         int damage = Math.Max(1, baseDamage * damagePercent / 100);
@@ -147,18 +150,18 @@ public class SkillSystem
         return true;
     }
 
-    private static bool ExecuteRanged(WorldMap map, ref PlayerEntity attacker, int targetX, int targetY, int maxRange, int damagePercent)
+    private static bool ExecuteRanged(WorldMap map, ref PlayerEntity attacker, Position target, int maxRange, int damagePercent)
     {
-        int dist = Math.Max(Math.Abs(targetX - attacker.Position.X), Math.Abs(targetY - attacker.Position.Y));
+        int dist = Math.Max(Math.Abs(target.X - attacker.Position.X), Math.Abs(target.Y - attacker.Position.Y));
         if (dist > maxRange) return false;
 
         bool hit = false;
-        var chunk = map.GetChunkForWorldPos(targetX, targetY, attacker.Position.Z);
+        var chunk = map.GetChunkForWorldPos(target);
         if (chunk == null) return false;
 
         foreach (ref var monster in chunk.Monsters)
         {
-            if (monster.IsDead || monster.Position.X != targetX || monster.Position.Y != targetY) continue;
+            if (monster.IsDead || monster.Position != target) continue;
             int baseDamage = Math.Max(1, attacker.CombatStats.Attack - monster.CombatStats.Defense);
             int damage = Math.Max(1, baseDamage * damagePercent / 100);
             monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
@@ -167,7 +170,7 @@ public class SkillSystem
 
         foreach (ref var node in chunk.ResourceNodes)
         {
-            if (node.IsDead || node.Position.X != targetX || node.Position.Y != targetY) continue;
+            if (node.IsDead || node.Position != target) continue;
             int baseDamage = Math.Max(1, attacker.CombatStats.Attack - node.CombatStats.Defense);
             int damage = Math.Max(1, baseDamage * damagePercent / 100);
             node.Health.Current = Math.Max(0, node.Health.Current - damage);

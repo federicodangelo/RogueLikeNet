@@ -95,7 +95,7 @@ public static class PlayerSerializer
     public static ref PlayerEntity RestorePlayer(GameEngine engine, long connectionId, PlayerSaveData data)
     {
         // Spawn shell player (gets default stats)
-        ref var player = ref engine.SpawnPlayer(connectionId, data.PositionX, data.PositionY, data.PositionZ, data.ClassId);
+        ref var player = ref engine.SpawnPlayer(connectionId, Position.FromCoords(data.PositionX, data.PositionY, data.PositionZ), data.ClassId);
 
         // Override with saved state
         player.Health.Current = data.HealthCurrent;

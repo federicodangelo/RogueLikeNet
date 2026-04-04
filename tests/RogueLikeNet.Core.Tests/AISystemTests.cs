@@ -13,7 +13,7 @@ public class AISystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -24,9 +24,9 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster adjacent to the player
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -55,9 +55,9 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster a few tiles away (within detection range)
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -90,9 +90,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 13, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 13, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -117,9 +117,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -142,9 +142,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 5, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 5, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -168,9 +168,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -201,11 +201,11 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Load the Z-1 chunk so both levels exist
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 1);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ - 1));
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 1, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ - 1), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -230,11 +230,11 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Load the Z-2 chunk
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 2);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ - 2));
 
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 2, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ - 2), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ), new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,

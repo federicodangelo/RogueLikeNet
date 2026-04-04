@@ -12,9 +12,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_ReturnsValidData()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
@@ -30,9 +30,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_SkillNames_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
@@ -46,13 +46,13 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_EquippedWeaponName_AfterEquip()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -71,13 +71,13 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_EquippedArmorName_AfterEquip()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -96,13 +96,13 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_InventoryStackCounts_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -117,13 +117,13 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_InventoryRarities_Populated()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(swordTemplate, 2, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 2, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -138,9 +138,9 @@ public class PlayerStateDataTests
     public void GetPlayerStateData_NoEquipment_EmptyNames()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);

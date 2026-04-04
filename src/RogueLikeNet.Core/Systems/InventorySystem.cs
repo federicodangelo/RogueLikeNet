@@ -12,93 +12,100 @@ public class InventorySystem
 {
     public void Update(WorldMap worldMap, GameEngine engine)
     {
-        ProcessPickups(worldMap);
-        ProcessDrops(worldMap, engine);
-        ProcessUseItem(worldMap);
-        ProcessUseQuickSlot(worldMap);
-        ProcessSetQuickSlot(worldMap);
-        ProcessSwapItems(worldMap);
-        ProcessUnequip(worldMap);
-        ProcessEquip(worldMap);
-    }
-
-    private void ProcessPickups(WorldMap map)
-    {
-        foreach (ref var player in map.Players)
+        foreach (ref var player in worldMap.Players)
         {
             if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.PickUp) continue;
-            player.Input.ActionType = ActionTypes.None;
 
-            if (player.Inventory.Items == null || player.Inventory.IsFull) continue;
-
-            var chunk = map.GetChunkForWorldPos(player.Position);
-            if (chunk == null) continue;
-
-            foreach (ref var gi in chunk.GroundItems)
+            switch (player.Input.ActionType)
             {
-                if (gi.IsDestroyed || gi.Position != player.Position) continue;
-
-                if (AddItemToInventory(ref player, gi.Item))
-                    gi.IsDestroyed = true;
+                case ActionTypes.PickUp:
+                    ProcessPickup(ref player, worldMap);
+                    break;
+                case ActionTypes.Drop:
+                    ProcessDrop(ref player, engine);
+                    break;
+                case ActionTypes.UseItem:
+                    ProcessUseItem(ref player);
+                    break;
+                case ActionTypes.UseQuickSlot:
+                    ProcessUseQuickSlot(ref player);
+                    break;
+                case ActionTypes.SetQuickSlot:
+                    ProcessSetQuickSlot(ref player);
+                    break;
+                case ActionTypes.SwapItems:
+                    ProcessSwapItems(ref player);
+                    break;
+                case ActionTypes.Unequip:
+                    ProcessUnequip(ref player);
+                    break;
+                case ActionTypes.Equip:
+                    ProcessEquip(ref player);
+                    break;
             }
         }
     }
 
-    private void ProcessDrops(WorldMap map, GameEngine engine)
+    private static void ProcessPickup(ref PlayerEntity player, WorldMap map)
     {
-        foreach (ref var player in map.Players)
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null || player.Inventory.IsFull) return;
+
+        var chunk = map.GetChunkForWorldPos(player.Position);
+        if (chunk == null) return;
+
+        foreach (ref var gi in chunk.GroundItems)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.Drop) continue;
+            if (gi.IsDestroyed || gi.Position != player.Position) continue;
 
-            int slot = player.Input.ItemSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
-
-            var itemData = player.Inventory.Items[slot];
-            player.Inventory.Items.RemoveAt(slot);
-            player.QuickSlots.OnItemRemoved(slot);
-
-            var drop = engine.FindDropPosition(player.Position);
-
-            var def = ItemDefinitions.Get(itemData.ItemTypeId);
-            int dropGlyph = def.Category == ItemDefinitions.CategoryPlaceable
-                ? TileDefinitions.GlyphDroppedPlaceable
-                : def.GlyphId;
-            engine.SpawnItemOnGround(itemData, drop);
+            if (AddItemToInventory(ref player, gi.Item))
+                gi.IsDestroyed = true;
         }
     }
 
-    private void ProcessUseItem(WorldMap map)
+    private static void ProcessDrop(ref PlayerEntity player, GameEngine engine)
     {
-        foreach (ref var player in map.Players)
+        int slot = player.Input.ItemSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+
+        var itemData = player.Inventory.Items[slot];
+        player.Inventory.Items.RemoveAt(slot);
+        player.QuickSlots.OnItemRemoved(slot);
+
+        var drop = engine.FindDropPosition(player.Position);
+
+        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+        int dropGlyph = def.Category == ItemDefinitions.CategoryPlaceable
+            ? TileDefinitions.GlyphDroppedPlaceable
+            : def.GlyphId;
+        engine.SpawnItemOnGround(itemData, drop);
+    }
+
+    private static void ProcessUseItem(ref PlayerEntity player)
+    {
+        int slot = player.Input.ItemSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+
+        var itemData = player.Inventory.Items[slot];
+        var template = ItemDefinitions.Get(itemData.ItemTypeId);
+
+        switch (template.Category)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.UseItem) continue;
+            case ItemDefinitions.CategoryPotion:
+                ApplyPotion(ref player, itemData);
+                player.Inventory.Items!.RemoveAt(slot);
+                player.QuickSlots.OnItemRemoved(slot);
+                break;
 
-            int slot = player.Input.ItemSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
-
-            var itemData = player.Inventory.Items[slot];
-            var template = ItemDefinitions.Get(itemData.ItemTypeId);
-
-            switch (template.Category)
-            {
-                case ItemDefinitions.CategoryPotion:
-                    ApplyPotion(ref player, itemData);
-                    player.Inventory.Items!.RemoveAt(slot);
-                    player.QuickSlots.OnItemRemoved(slot);
-                    break;
-
-                case ItemDefinitions.CategoryWeapon:
-                case ItemDefinitions.CategoryArmor:
-                    EquipItem(ref player, slot);
-                    break;
-            }
+            case ItemDefinitions.CategoryWeapon:
+            case ItemDefinitions.CategoryArmor:
+                EquipItem(ref player, slot);
+                break;
         }
     }
 
@@ -157,145 +164,115 @@ public class InventorySystem
         ApplyItemStats(ref player, newItem);
     }
 
-    private void ProcessSwapItems(WorldMap map)
+    private static void ProcessSwapItems(ref PlayerEntity player)
     {
-        foreach (ref var player in map.Players)
+        int slotA = player.Input.ItemSlot;
+        int slotB = player.Input.TargetSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null) return;
+        if (slotA < 0 || slotA >= player.Inventory.Items.Count) return;
+        if (slotB < 0 || slotB >= player.Inventory.Items.Count) return;
+        if (slotA == slotB) return;
+
+        (player.Inventory.Items[slotA], player.Inventory.Items[slotB]) = (player.Inventory.Items[slotB], player.Inventory.Items[slotA]);
+
+        for (int i = 0; i < QuickSlots.SlotCount; i++)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.SwapItems) continue;
-
-            int slotA = player.Input.ItemSlot;
-            int slotB = player.Input.TargetSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (player.Inventory.Items == null) continue;
-            if (slotA < 0 || slotA >= player.Inventory.Items.Count) continue;
-            if (slotB < 0 || slotB >= player.Inventory.Items.Count) continue;
-            if (slotA == slotB) continue;
-
-            (player.Inventory.Items[slotA], player.Inventory.Items[slotB]) = (player.Inventory.Items[slotB], player.Inventory.Items[slotA]);
-
-            for (int i = 0; i < QuickSlots.SlotCount; i++)
-            {
-                if (player.QuickSlots[i] == slotA) player.QuickSlots[i] = slotB;
-                else if (player.QuickSlots[i] == slotB) player.QuickSlots[i] = slotA;
-            }
+            if (player.QuickSlots[i] == slotA) player.QuickSlots[i] = slotB;
+            else if (player.QuickSlots[i] == slotB) player.QuickSlots[i] = slotA;
         }
     }
 
-    private void ProcessUnequip(WorldMap map)
+    private static void ProcessUnequip(ref PlayerEntity player)
     {
-        foreach (ref var player in map.Players)
+        int equipSlot = player.Input.ItemSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null || player.Inventory.IsFull) return;
+
+        if (equipSlot == 0 && player.Equipment.HasWeapon)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.Unequip) continue;
-
-            int equipSlot = player.Input.ItemSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (player.Inventory.Items == null || player.Inventory.IsFull) continue;
-
-            if (equipSlot == 0 && player.Equipment.HasWeapon)
-            {
-                var old = player.Equipment.Weapon!.Value;
-                RemoveItemStats(ref player, old);
-                player.Inventory.Items!.Add(old);
-                player.Equipment.Weapon = null;
-            }
-            else if (equipSlot == 1 && player.Equipment.HasArmor)
-            {
-                var old = player.Equipment.Armor!.Value;
-                RemoveItemStats(ref player, old);
-                player.Inventory.Items!.Add(old);
-                player.Equipment.Armor = null;
-            }
+            var old = player.Equipment.Weapon!.Value;
+            RemoveItemStats(ref player, old);
+            player.Inventory.Items!.Add(old);
+            player.Equipment.Weapon = null;
+        }
+        else if (equipSlot == 1 && player.Equipment.HasArmor)
+        {
+            var old = player.Equipment.Armor!.Value;
+            RemoveItemStats(ref player, old);
+            player.Inventory.Items!.Add(old);
+            player.Equipment.Armor = null;
         }
     }
 
-    private void ProcessEquip(WorldMap map)
+    private static void ProcessEquip(ref PlayerEntity player)
     {
-        foreach (ref var player in map.Players)
+        int slot = player.Input.ItemSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) return;
+
+        var itemData = player.Inventory.Items[slot];
+        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+
+        switch (def.Category)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.Equip) continue;
-
-            int slot = player.Input.ItemSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
-
-            var itemData = player.Inventory.Items[slot];
-            var def = ItemDefinitions.Get(itemData.ItemTypeId);
-
-            switch (def.Category)
-            {
-                case ItemDefinitions.CategoryWeapon:
-                case ItemDefinitions.CategoryArmor:
-                    EquipItem(ref player, slot);
-                    break;
-            }
+            case ItemDefinitions.CategoryWeapon:
+            case ItemDefinitions.CategoryArmor:
+                EquipItem(ref player, slot);
+                break;
         }
     }
 
-    private void ProcessSetQuickSlot(WorldMap map)
+    private static void ProcessSetQuickSlot(ref PlayerEntity player)
     {
-        foreach (ref var player in map.Players)
+        int qsNum = player.Input.ItemSlot;
+        int invIndex = player.Input.TargetSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) return;
+
+        if (player.QuickSlots[qsNum] == invIndex)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.SetQuickSlot) continue;
-
-            int qsNum = player.Input.ItemSlot;
-            int invIndex = player.Input.TargetSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
-
-            if (player.QuickSlots[qsNum] == invIndex)
-            {
-                player.QuickSlots[qsNum] = -1;
-            }
-            else
-            {
-                if (player.Inventory.Items == null || invIndex < 0 || invIndex >= player.Inventory.Items.Count) continue;
-                player.QuickSlots.ClearIndex(invIndex);
-                player.QuickSlots[qsNum] = invIndex;
-            }
+            player.QuickSlots[qsNum] = -1;
+        }
+        else
+        {
+            if (player.Inventory.Items == null || invIndex < 0 || invIndex >= player.Inventory.Items.Count) return;
+            player.QuickSlots.ClearIndex(invIndex);
+            player.QuickSlots[qsNum] = invIndex;
         }
     }
 
-    private void ProcessUseQuickSlot(WorldMap map)
+    private static void ProcessUseQuickSlot(ref PlayerEntity player)
     {
-        foreach (ref var player in map.Players)
+        int qsNum = player.Input.ItemSlot;
+        player.Input.ActionType = ActionTypes.None;
+
+        if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) return;
+
+        int invIndex = player.QuickSlots[qsNum];
+        if (invIndex < 0) return;
+
+        if (player.Inventory.Items == null || invIndex >= player.Inventory.Items.Count) return;
+
+        var itemData = player.Inventory.Items[invIndex];
+        var template = ItemDefinitions.Get(itemData.ItemTypeId);
+
+        switch (template.Category)
         {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType != ActionTypes.UseQuickSlot) continue;
+            case ItemDefinitions.CategoryPotion:
+                ApplyPotion(ref player, itemData);
+                player.Inventory.Items!.RemoveAt(invIndex);
+                player.QuickSlots.OnItemRemoved(invIndex);
+                break;
 
-            int qsNum = player.Input.ItemSlot;
-            player.Input.ActionType = ActionTypes.None;
-
-            if (qsNum < 0 || qsNum >= QuickSlots.SlotCount) continue;
-
-            int invIndex = player.QuickSlots[qsNum];
-            if (invIndex < 0) continue;
-
-            if (player.Inventory.Items == null || invIndex >= player.Inventory.Items.Count) continue;
-
-            var itemData = player.Inventory.Items[invIndex];
-            var template = ItemDefinitions.Get(itemData.ItemTypeId);
-
-            switch (template.Category)
-            {
-                case ItemDefinitions.CategoryPotion:
-                    ApplyPotion(ref player, itemData);
-                    player.Inventory.Items!.RemoveAt(invIndex);
-                    player.QuickSlots.OnItemRemoved(invIndex);
-                    break;
-
-                case ItemDefinitions.CategoryWeapon:
-                case ItemDefinitions.CategoryArmor:
-                    EquipItem(ref player, invIndex);
-                    break;
-            }
+            case ItemDefinitions.CategoryWeapon:
+            case ItemDefinitions.CategoryArmor:
+                EquipItem(ref player, invIndex);
+                break;
         }
     }
 

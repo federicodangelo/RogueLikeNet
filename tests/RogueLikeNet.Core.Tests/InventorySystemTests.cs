@@ -12,7 +12,7 @@ public class InventorySystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -21,12 +21,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn item at player's position
         var template = ItemDefinitions.All[0]; // Short Sword
-        var item = engine.SpawnItemOnGround(template, 0, sx, sy, Position.DefaultZ);
+        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Set pickup action
         player.Input.ActionType = ActionTypes.PickUp;
@@ -45,12 +45,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn and pick up an item
         var template = ItemDefinitions.All[0];
-        var item = engine.SpawnItemOnGround(template, 0, sx, sy, Position.DefaultZ);
+        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -63,7 +63,7 @@ public class InventorySystemTests
         Assert.Empty(player.Inventory.Items!);
 
         // Original entity was destroyed on pickup; drop creates a new ground entity
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         int groundCount = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed && gi.Position.X == sx && gi.Position.Y == sy);
         Assert.Equal(1, groundCount);
     }
@@ -73,7 +73,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Damage the player
@@ -81,7 +81,7 @@ public class InventorySystemTests
 
         // Spawn a player.Health potion and pick it up
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -99,14 +99,14 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int baseAttack = player.CombatStats.Attack;
 
         // Spawn a sword and pick it up
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -124,14 +124,14 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int baseDef = player.CombatStats.Defense;
 
         // Spawn armor and pick it up
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -149,7 +149,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Fill inventory to capacity with ItemData
@@ -158,7 +158,7 @@ public class InventorySystemTests
             player.Inventory.Items!.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword });
 
         // Now spawn another item and try to pick it up
-        var extraItem = engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, sx, sy, Position.DefaultZ);
+        var extraItem = engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -172,7 +172,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Drop from an empty inventory slot
@@ -186,7 +186,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.Drop;
@@ -199,7 +199,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.UseItem;
@@ -212,12 +212,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn gold and pick it up
         var goldTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.Gold);
-        engine.SpawnItemOnGround(goldTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(goldTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -238,12 +238,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first weapon
         var sword1Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(sword1Template, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(sword1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -254,7 +254,7 @@ public class InventorySystemTests
 
         // Pick up second weapon
         var sword2Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(sword2Template, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(sword2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -272,12 +272,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first armor
         var armor1Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
-        engine.SpawnItemOnGround(armor1Template, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armor1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -290,7 +290,7 @@ public class InventorySystemTests
 
         // Pick up second armor
         var armor2Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
-        engine.SpawnItemOnGround(armor2Template, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armor2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -311,14 +311,14 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int atkBefore = player.CombatStats.Attack;
 
         // Spawn a strength potion and pick it up
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.StrengthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -335,18 +335,18 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first player.Health potion
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         // Pick up second player.Health potion (should auto-stack)
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -362,17 +362,17 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up two different items
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -394,7 +394,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.SwapItems;
@@ -408,12 +408,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up and equip a weapon
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -444,12 +444,12 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up and equip armor
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -480,14 +480,14 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int baseAtk = player.CombatStats.Attack;
 
         // Pick up a weapon
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -508,14 +508,14 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int baseDef = player.CombatStats.Defense;
 
         // Pick up armor
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
-        engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -536,7 +536,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Manually add a potion at max stack size to inventory
@@ -549,7 +549,7 @@ public class InventorySystemTests
 
         // Pickup another potion — can't merge into full stack, should go to new slot
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -564,7 +564,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
@@ -588,7 +588,7 @@ public class InventorySystemTests
 
         // Pickup another potion — should skip non-matching + full stack, merge into partial
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -604,7 +604,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
@@ -616,7 +616,7 @@ public class InventorySystemTests
 
         // Spawn potion and manually increase its StackCount to 3
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        var _gi = engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
+        var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
         groundItem.Item.StackCount = 3; // Slot 0 absorbs 1 (9→10), leaves 2 → slot 1 absorbs 2 (5→7)
 
@@ -633,7 +633,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Add a Common player.Health potion to inventory
@@ -646,7 +646,7 @@ public class InventorySystemTests
 
         // Spawn a Rare player.Health potion on the ground
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, sx, sy, Position.DefaultZ);
+        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, Position.FromCoords(sx, sy, Position.DefaultZ));
         ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -664,7 +664,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Add a Rare player.Health potion to inventory
@@ -677,7 +677,7 @@ public class InventorySystemTests
 
         // Spawn another Rare player.Health potion on the ground
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, sx, sy, Position.DefaultZ);
+        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, Position.FromCoords(sx, sy, Position.DefaultZ));
         ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -697,7 +697,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Give player an item directly
@@ -708,7 +708,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Item should land at player position since nothing is there
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         var positions = chunk.GroundItems.ToArray().Where(gi => !gi.IsDestroyed).Select(gi => (gi.Position.X, gi.Position.Y)).ToList();
         Assert.Contains((sx, sy), positions);
     }
@@ -718,15 +718,15 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Place an item on the ground at player's position
         var template = ItemDefinitions.All[0];
-        engine.SpawnItemOnGround(template, 0, sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Count ground items before drop
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Give player an item to drop
@@ -749,11 +749,11 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Count items before dropping
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Drop 3 items — each should land at a different position
@@ -786,7 +786,7 @@ public class InventorySystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Get a weapon with BonusHealth (create a custom item)

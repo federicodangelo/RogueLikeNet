@@ -18,9 +18,9 @@ public static class GameStateSerializer
         int total = Chunk.Size * Chunk.Size;
         var msg = new ChunkDataMsg
         {
-            ChunkX = chunk.ChunkX,
-            ChunkY = chunk.ChunkY,
-            ChunkZ = chunk.ChunkZ,
+            ChunkX = chunk.ChunkPosition.X,
+            ChunkY = chunk.ChunkPosition.Y,
+            ChunkZ = chunk.ChunkPosition.Z,
             TileTypes = new byte[total],
             TileGlyphs = new int[total],
             TileFgColors = new int[total],
@@ -47,12 +47,12 @@ public static class GameStateSerializer
 
     public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, int worldX, int worldY, int worldZ)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
         var chunks = new List<ChunkDataMsg>();
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = engine.EnsureChunkLoaded(cx + dx, cy + dy, cz);
+                var chunk = engine.EnsureChunkLoaded(Position.FromCoords(cx + dx, cy + dy, cz));
                 chunks.Add(SerializeChunk(chunk));
             }
         return chunks.ToArray();
@@ -71,7 +71,7 @@ public static class GameStateSerializer
     {
         tracker.UpdateCapacity(visibleChunks);
         var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
         var newChunks = new List<ChunkDataMsg>();
 
         foreach (var z in PointsAtDistance.GetZLevels(1))
@@ -85,7 +85,7 @@ public static class GameStateSerializer
 
                 if (tracker.Touch(key))
                 {
-                    var chunk = engine.EnsureChunkLoadedOrDoesntExist(ccx, ccy, ccz);
+                    var chunk = engine.EnsureChunkLoadedOrDoesntExist(Position.FromCoords(ccx, ccy, ccz));
                     if (chunk != null)
                     {
                         newChunks.Add(SerializeChunk(chunk));
@@ -116,19 +116,19 @@ public static class GameStateSerializer
         var removals = new List<EntityRemovedMsg>();
         var currentIds = new HashSet<long>();
 
-        void ProcessEntity(long id, int ex, int ey, int ez, TileAppearance appearance,
+        void ProcessEntity(long id, Position pos, TileAppearance appearance,
             int hp, int maxHp, int lightRadius, ItemDataMsg? item)
         {
-            if (!debugVisibilityOff && !fov.IsVisible(ex, ey, ez)) return;
+            if (!debugVisibilityOff && !fov.IsVisible(pos)) return;
 
             currentIds.Add(id);
 
             var current = new EntityUpdateMsg
             {
                 Id = id,
-                X = ex,
-                Y = ey,
-                Z = ez,
+                X = pos.X,
+                Y = pos.Y,
+                Z = pos.Z,
                 GlyphId = appearance.GlyphId,
                 FgColor = appearance.FgColor,
                 Health = hp,
@@ -142,7 +142,7 @@ public static class GameStateSerializer
                 if (!current.SameValues(prev))
                 {
                     if (current.HasOnlyPositionHealthChanges(prev))
-                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = ex, Y = ey, Z = ez, Health = hp });
+                        positionHealthUpdates.Add(new EntityPositionHealthMsg { Id = id, X = pos.X, Y = pos.Y, Z = pos.Z, Health = hp });
                     else
                         fullUpdates.Add(current);
                 }
@@ -159,8 +159,7 @@ public static class GameStateSerializer
         foreach (var p in map.Players)
         {
             if (p.IsDead) continue;
-            ProcessEntity((long)p.Id, p.Position.X, p.Position.Y, p.Position.Z, p.Appearance,
-                p.Health.Current, p.Health.Max, 0, null);
+            ProcessEntity((long)p.Id, p.Position, p.Appearance, p.Health.Current, p.Health.Max, 0, null);
         }
 
         // Iterate loaded chunks
@@ -169,8 +168,7 @@ public static class GameStateSerializer
             foreach (var m in chunk.Monsters)
             {
                 if (m.IsDead) continue;
-                ProcessEntity((long)m.Id, m.Position.X, m.Position.Y, m.Position.Z, m.Appearance,
-                    m.Health.Current, m.Health.Max, 0, null);
+                ProcessEntity((long)m.Id, m.Position, m.Appearance, m.Health.Current, m.Health.Max, 0, null);
             }
 
             foreach (var gi in chunk.GroundItems)
@@ -186,29 +184,25 @@ public static class GameStateSerializer
                     BonusDefense = gi.Item.BonusDefense,
                     BonusHealth = gi.Item.BonusHealth,
                 };
-                ProcessEntity((long)gi.Id, gi.Position.X, gi.Position.Y, gi.Position.Z, gi.Appearance,
-                    0, 0, 0, item);
+                ProcessEntity((long)gi.Id, gi.Position, gi.Appearance, 0, 0, 0, item);
             }
 
             foreach (var r in chunk.ResourceNodes)
             {
                 if (r.IsDead) continue;
-                ProcessEntity((long)r.Id, r.Position.X, r.Position.Y, r.Position.Z, r.Appearance,
-                    r.Health.Current, r.Health.Max, 0, null);
+                ProcessEntity((long)r.Id, r.Position, r.Appearance, r.Health.Current, r.Health.Max, 0, null);
             }
 
             foreach (var n in chunk.TownNpcs)
             {
                 if (n.IsDead) continue;
-                ProcessEntity((long)n.Id, n.Position.X, n.Position.Y, n.Position.Z, n.Appearance,
-                    n.Health.Current, n.Health.Max, 0, null);
+                ProcessEntity((long)n.Id, n.Position, n.Appearance, n.Health.Current, n.Health.Max, 0, null);
             }
 
             foreach (var e in chunk.Elements)
             {
                 int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
-                ProcessEntity((long)e.Id, e.Position.X, e.Position.Y, e.Position.Z, e.Appearance,
-                    0, 0, lightRadius, null);
+                ProcessEntity((long)e.Id, e.Position, e.Appearance, 0, 0, lightRadius, null);
             }
         }
 

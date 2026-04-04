@@ -6,9 +6,9 @@ namespace RogueLikeNet.Core.Generation;
 
 public interface IDungeonGenerator
 {
-    bool Exists(int chunkX, int chunkY, int chunkZ);
+    bool Exists(Position chunkPos);
 
-    GenerationResult Generate(int chunkX, int chunkY, int chunkZ);
+    GenerationResult Generate(Position chunkPos);
 }
 
 /// <summary>

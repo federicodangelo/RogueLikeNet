@@ -27,17 +27,19 @@ public class BiomeDungeonGenerator : IDungeonGenerator
         _tunnel = new DirectionalTunnelGenerator(seed);
     }
 
-    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    public bool Exists(Position chunkPos)
     {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
         // Only the spawn chunk has content; all other chunks are empty floors.
         return chunkZ == Position.DefaultZ;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
+    public GenerationResult Generate(Position chunkPos)
     {
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
+        var (chunkX, chunkY, chunkZ) = chunkPos;
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
         var generator = PickGenerator(biome);
-        return generator.Generate(chunkX, chunkY, chunkZ);
+        return generator.Generate(chunkPos);
     }
 
     private IDungeonGenerator PickGenerator(BiomeType biome) => biome switch

@@ -395,7 +395,7 @@ public class GameServerTests
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
         int monsterX = player.Position.X + 1;
         int monsterY = player.Position.Y;
-        loop.Engine.SpawnMonster(monsterX, monsterY, Position.DefaultZ, new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
+        loop.Engine.SpawnMonster(Position.FromCoords(monsterX, monsterY, Position.DefaultZ), new MonsterData { MonsterTypeId = 1, Health = 20, Attack = 5, Defense = 2, Speed = 8 });
 
         // Send an attack input targeting the monster
         var attack = new ClientInputMsg
@@ -611,7 +611,7 @@ public class GameServerTests
         // Place an item at the player's position
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
         var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion); // Health Potion
-        loop.Engine.SpawnItemOnGround(template, 0, player.Position.X, player.Position.Y, Position.DefaultZ);
+        loop.Engine.SpawnItemOnGround(template, 0, Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ));
 
         messages.Clear();
         loop.Start();
@@ -644,7 +644,7 @@ public class GameServerTests
     public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
     {
         using var loop = new TestGameServer(42, _gen);
-        var chunk = loop.Engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var chunk = loop.Engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
 
         var msg = GameStateSerializer.SerializeChunk(chunk);
 

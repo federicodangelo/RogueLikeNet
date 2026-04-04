@@ -13,14 +13,14 @@ public class LootAndDeathTests
     public void MonsterDeath_DropsLoot()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ), new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
         ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
         monster.Health.Current = 0;
 
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         int itemsBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         engine.Tick();
@@ -32,9 +32,9 @@ public class LootAndDeathTests
     public void PlayerDeath_Respawns()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Health.Current = 0;
@@ -49,9 +49,9 @@ public class LootAndDeathTests
     public void PlayerDeath_LosesExperience()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Give some experience
@@ -69,13 +69,13 @@ public class LootAndDeathTests
     public void MonsterDeath_MultipleMonstersDropLoot()
     {
         using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Kill multiple monsters to increase chance of loot drop
         for (int i = 0; i < 10; i++)
         {
-            var _m = engine.SpawnMonster(sx + i + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+            var _m = engine.SpawnMonster(Position.FromCoords(sx + i + 1, sy, Position.DefaultZ), new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
             ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
             monster.Health.Current = 0;
         }
@@ -83,7 +83,7 @@ public class LootAndDeathTests
         engine.Tick();
 
         // With 10 monsters at 60% drop rate, some should drop loot
-        var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
+        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
         int itemCount = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         Assert.True(itemCount > 0, "At least some of 10 dead monsters should drop loot");

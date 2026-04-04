@@ -72,8 +72,9 @@ public class OverworldGenerator : IDungeonGenerator
         _caveNoise = new PerlinNoise(_seed ^ 0x7A3B9E1D4C5F6A8BL);
     }
 
-    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    public bool Exists(Position chunkPos)
     {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
         if (chunkZ == Position.DefaultZ)
             return true;
 
@@ -95,12 +96,13 @@ public class OverworldGenerator : IDungeonGenerator
         return height;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
+    public GenerationResult Generate(Position chunkPos)
     {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
         if (chunkZ == CaveZ)
-            return GenerateCave(chunkX, chunkY, chunkZ);
+            return GenerateCave(chunkPos);
 
-        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
         if (chunkZ != Position.DefaultZ)
@@ -321,9 +323,10 @@ public class OverworldGenerator : IDungeonGenerator
     /// <summary>
     /// Generates a BSP cave dungeon at DefaultZ - 1 with only an up-stair at the entrance position.
     /// </summary>
-    private GenerationResult GenerateCave(int chunkX, int chunkY, int chunkZ)
+    private GenerationResult GenerateCave(Position chunkPos)
     {
-        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var (chunkX, chunkY, chunkZ) = chunkPos;
+        var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
         if (!TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
@@ -332,7 +335,7 @@ public class OverworldGenerator : IDungeonGenerator
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678) + chunkZ * 0x3C6EF35FL);
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
 
         DungeonHelper.FillWalls(chunk);
 

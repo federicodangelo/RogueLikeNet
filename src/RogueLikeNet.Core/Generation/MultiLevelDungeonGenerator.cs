@@ -41,14 +41,16 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         return (x, y);
     }
 
-    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    public bool Exists(Position chunkPos)
     {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
         return chunkZ <= Position.DefaultZ;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
+    public GenerationResult Generate(Position chunkPos)
     {
-        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var (chunkX, chunkY, chunkZ) = chunkPos;
+        var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
         // Only generate below or at the overworld level
@@ -60,7 +62,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
 
         int depth = Position.DefaultZ - chunkZ; // 0 at surface, increases going down
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
 
         DungeonHelper.FillWalls(chunk);
 

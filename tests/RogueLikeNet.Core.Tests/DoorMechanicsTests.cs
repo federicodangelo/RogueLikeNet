@@ -12,7 +12,7 @@ public class DoorMechanicsTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -61,13 +61,13 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 
         // Place a closed door (placeable on a floor tile)
-        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
+        engine.WorldMap.SetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ), MakeClosedDoor());
 
         // Move toward the door
         player.Input.ActionType = ActionTypes.Move;
@@ -76,7 +76,7 @@ public class DoorMechanicsTests
         engine.Tick();
 
         // Door should now be open (PlaceableItemExtra > 0 = ticks remaining)
-        var tile = engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ);
+        var tile = engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ));
         Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
@@ -90,13 +90,13 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 
         // Make sure the tile beyond the door is floor
-        engine.WorldMap.SetTile(doorX + 1, doorY, Position.DefaultZ, new TileInfo
+        engine.WorldMap.SetTile(Position.FromCoords(doorX + 1, doorY, Position.DefaultZ), new TileInfo
         {
             Type = TileType.Floor,
             GlyphId = TileDefinitions.GlyphFloor,
@@ -105,7 +105,7 @@ public class DoorMechanicsTests
         });
 
         // Place a closed door
-        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
+        engine.WorldMap.SetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ), MakeClosedDoor());
 
         // Tick 1: Bump to open
         player.Input.ActionType = ActionTypes.Move;
@@ -113,8 +113,8 @@ public class DoorMechanicsTests
         player.Input.TargetY = 0;
         engine.Tick();
         Assert.True(PlaceableDefinitions.IsDoorOpen(
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra)); // open
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra)); // open
 
         // Tick 2: Walk onto door
         player.MoveDelay.Current = 0;
@@ -134,15 +134,15 @@ public class DoorMechanicsTests
 
         // Door should still be open during grace period
         Assert.True(PlaceableDefinitions.IsDoorOpen(
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
 
         // Tick enough times for grace period to expire (6 ticks grace from open)
         for (int i = 0; i < 30; i++)
             engine.Tick();
 
         // Door should have auto-closed (PlaceableItemExtra = 0)
-        var doorTile = engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ);
+        var doorTile = engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ));
         Assert.Equal(0, doorTile.PlaceableItemExtra);
     }
 
@@ -151,12 +151,12 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 
-        engine.WorldMap.SetTile(doorX, doorY, Position.DefaultZ, MakeClosedDoor());
+        engine.WorldMap.SetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ), MakeClosedDoor());
 
         // Bump to open
         player.Input.ActionType = ActionTypes.Move;
@@ -164,14 +164,14 @@ public class DoorMechanicsTests
         player.Input.TargetY = 0;
         engine.Tick();
         Assert.True(PlaceableDefinitions.IsDoorOpen(
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
 
         // One more tick — door should stay open (grace period active)
         engine.Tick();
         Assert.True(PlaceableDefinitions.IsDoorOpen(
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemId,
-            engine.WorldMap.GetTile(doorX, doorY, Position.DefaultZ).PlaceableItemExtra));
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
+            engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
     }
 
     [Fact]

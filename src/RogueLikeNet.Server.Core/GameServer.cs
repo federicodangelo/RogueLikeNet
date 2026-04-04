@@ -224,7 +224,7 @@ public class GameServer : IDisposable
     private void StartEngine()
     {
         _logWriter.WriteLine($"[Server] Starting game engine...");
-        _engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        _engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
         _engineStarted = true;
     }
 
@@ -448,8 +448,8 @@ public class GameServer : IDisposable
             var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
             if (savedPlayer != null)
             {
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ);
-                _engine.EnsureChunkLoaded(cx, cy, cz);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ));
+                _engine.EnsureChunkLoaded(Position.FromCoords(cx, cy, cz));
 
                 ref var player = ref PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
                 conn.PlayerEntityId = player.Id;
@@ -626,9 +626,9 @@ public class GameServer : IDisposable
                 {
                     chunkEntries.Add(new ChunkSaveEntry
                     {
-                        ChunkX = chunk.ChunkX,
-                        ChunkY = chunk.ChunkY,
-                        ChunkZ = chunk.ChunkZ,
+                        ChunkX = chunk.ChunkPosition.X,
+                        ChunkY = chunk.ChunkPosition.Y,
+                        ChunkZ = chunk.ChunkPosition.Z,
                         TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
                         EntityData = EntitySerializer.SerializeEntities(chunk),
                     });
@@ -695,7 +695,7 @@ public class GameServer : IDisposable
 
         foreach (var (cx, cy, cz, key) in toUnload)
         {
-            var chunk = _engine.WorldMap.TryGetChunk(cx, cy, cz);
+            var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(cx, cy, cz));
             if (chunk == null)
             {
                 _chunkLastViewedTick.Remove(key);
@@ -713,8 +713,8 @@ public class GameServer : IDisposable
             };
             _saveProvider.SaveChunks(_currentSlotId, [entry]);
 
-            _engine.DestroyEntitiesInChunk(cx, cy, cz);
-            _engine.WorldMap.UnloadChunk(cx, cy, cz);
+            _engine.DestroyEntitiesInChunk(Position.FromCoords(cx, cy, cz));
+            _engine.WorldMap.UnloadChunk(Position.FromCoords(cx, cy, cz));
             _chunkLastViewedTick.Remove(key);
 
             _logWriter.WriteLine($"[Server] Unloaded chunk ({cx},{cy},{cz})");
@@ -800,19 +800,22 @@ public class GameServer : IDisposable
         }
     }
 
+    private List<(Position Pos, TileInfo Tile)> _tmpDirtyTiles = new();
+
     private void FlushDirtyTiles()
     {
-        var dirty = _engine.WorldMap.FlushDirtyTiles();
-        if (dirty.Count == 0) return;
-        _pendingTileUpdates = new TileUpdateMsg[dirty.Count];
-        for (int i = 0; i < dirty.Count; i++)
+        _tmpDirtyTiles.Clear();
+        _engine.WorldMap.FlushDirtyTiles(_tmpDirtyTiles);
+        if (_tmpDirtyTiles.Count == 0) return;
+        _pendingTileUpdates = new TileUpdateMsg[_tmpDirtyTiles.Count];
+        for (var i = 0; i < _tmpDirtyTiles.Count; i++)
         {
-            var (wx, wy, wz, tile) = dirty[i];
+            var (pos, tile) = _tmpDirtyTiles[i];
             _pendingTileUpdates[i] = new TileUpdateMsg
             {
-                X = wx,
-                Y = wy,
-                Z = wz,
+                X = pos.X,
+                Y = pos.Y,
+                Z = pos.Z,
                 TileType = (byte)tile.Type,
                 GlyphId = tile.GlyphId,
                 FgColor = tile.FgColor,

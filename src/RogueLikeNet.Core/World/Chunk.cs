@@ -8,9 +8,7 @@ public class Chunk
 {
     public const int Size = 64;
 
-    public int ChunkX { get; }
-    public int ChunkY { get; }
-    public int ChunkZ { get; }
+    public Position ChunkPosition { get; }
     public TileInfo[,] Tiles { get; }
 
     public int[,] LightLevels { get; }
@@ -99,20 +97,16 @@ public class Chunk
     private readonly List<ElementEntity> _elements = [];
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
-    private readonly List<(int WorldX, int WorldY, int WorldZ)> _dirtyTiles = new();
-
-    public IReadOnlyList<(int WorldX, int WorldY, int WorldZ)> DirtyTiles => _dirtyTiles;
+    private readonly List<Position> _dirtyTiles = new();
 
     /// <summary>True if any tile has been modified since the last save.</summary>
     public bool IsModifiedSinceLastSave { get; private set; }
 
-    public void MarkTileDirty(int worldX, int worldY, int worldZ)
+    public void MarkTileDirty(Position pos)
     {
-        _dirtyTiles.Add((worldX, worldY, worldZ));
-        IsModifiedSinceLastSave = true;
+        _dirtyTiles.Add(pos);
+        MarkModified();
     }
-
-    public void ClearDirtyTiles() => _dirtyTiles.Clear();
 
     /// <summary>Marks the chunk as modified (e.g. entity added/removed) without a specific tile.</summary>
     public void MarkModified() => IsModifiedSinceLastSave = true;
@@ -120,16 +114,12 @@ public class Chunk
     /// <summary>Clears the save-dirty flag after persisting.</summary>
     public void ClearSaveFlag() => IsModifiedSinceLastSave = false;
 
-    public Chunk(int chunkX, int chunkY, int chunkZ)
+    public Chunk(Position chunkPos)
     {
-        ChunkX = chunkX;
-        ChunkY = chunkY;
-        ChunkZ = chunkZ;
+        ChunkPosition = chunkPos;
         Tiles = new TileInfo[Size, Size];
         LightLevels = new int[Size, Size];
     }
-
-    public ref TileInfo GetTile(int localX, int localY) => ref Tiles[localX, localY];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool InBounds(int localX, int localY)
@@ -142,9 +132,17 @@ public class Chunk
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool WorldToLocal(int worldX, int worldY, out int localX, out int localY)
     {
-        localX = worldX - ChunkX * Size;
-        localY = worldY - ChunkY * Size;
+        localX = worldX - ChunkPosition.X * Size;
+        localY = worldY - ChunkPosition.Y * Size;
         return InBounds(localX, localY);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Position LocalToWorld(int localX, int localY)
+    {
+        int worldX = ChunkPosition.X * Size + localX;
+        int worldY = ChunkPosition.Y * Size + localY;
+        return Position.FromCoords(worldX, worldY, ChunkPosition.Z);
     }
 
     /// <summary>
@@ -159,9 +157,6 @@ public class Chunk
         int cy = world.Y >= 0 ? world.Y / Size : (world.Y - Size + 1) / Size;
         return Position.FromCoords(cx, cy, world.Z);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Position WorldToChunkCoord(int worldX, int worldY, int worldZ) => WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
 
     public void RemoveEntity(EntityRef entity)
     {
@@ -262,5 +257,19 @@ public class Chunk
         _resourceNodes.Clear();
         _townNpcs.Clear();
         _elements.Clear();
+    }
+
+    internal void FlushDirtyTiles(List<(Position, TileInfo)> result)
+    {
+        if (_dirtyTiles.Count == 0) return;
+        foreach (var pos in _dirtyTiles)
+        {
+            if (WorldToLocal(pos.X, pos.Y, out var localX, out var localY))
+            {
+                var tile = Tiles[localX, localY];
+                result.Add((pos, tile));
+            }
+        }
+        _dirtyTiles.Clear();
     }
 }

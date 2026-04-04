@@ -68,20 +68,20 @@ public class GameEngine : IDisposable
         _worldRng = new SeededRandom(worldSeed);
     }
 
-    public Chunk? EnsureChunkLoadedOrDoesntExist(int chunkX, int chunkY, int chunkZ)
+    public Chunk? EnsureChunkLoadedOrDoesntExist(Position chunkPos)
     {
-        if (!_worldMap.ExistsChunk(chunkX, chunkY, chunkZ, _generator))
+        if (!_worldMap.ExistsChunk(chunkPos, _generator))
             return null;
-        return EnsureChunkLoaded(chunkX, chunkY, chunkZ);
+        return EnsureChunkLoaded(chunkPos);
     }
 
     /// <summary>
     /// Ensures the chunk at the given chunk coords is loaded/generated.
     /// Spawns entities from generation results if newly created.
     /// </summary>
-    public Chunk EnsureChunkLoaded(int chunkX, int chunkY, int chunkZ)
+    public Chunk EnsureChunkLoaded(Position chunkPos)
     {
-        var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkX, chunkY, chunkZ, _generator);
+        var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkPos, _generator);
 
         if (genResult != null)
             ProcessGenerationResult(genResult);
@@ -91,7 +91,7 @@ public class GameEngine : IDisposable
 
     private void ProcessGenerationResult(GenerationResult result)
     {
-        if (result.SpawnPosition.HasValue && result.Chunk.ChunkX == 0 && result.Chunk.ChunkY == 0)
+        if (result.SpawnPosition.HasValue && result.Chunk.ChunkPosition.X == 0 && result.Chunk.ChunkPosition.Y == 0)
             _generatorSpawnHint = result.SpawnPosition;
 
         // Deserialize saved entities first (from persistence layer).
@@ -100,19 +100,19 @@ public class GameEngine : IDisposable
             RawEntityJsonHandler?.Invoke(result.RawEntityJson, this);
 
         foreach (var (pos, monster) in result.Monsters)
-            SpawnMonster(pos.X, pos.Y, pos.Z, monster);
+            SpawnMonster(pos, monster);
 
         foreach (var (pos, item) in result.Items)
-            SpawnItemOnGround(item, pos.X, pos.Y, pos.Z);
+            SpawnItemOnGround(item, pos);
 
         foreach (var element in result.Elements)
             SpawnElement(element);
 
         foreach (var (pos, nodeDef) in result.ResourceNodes)
-            SpawnResourceNode(pos.X, pos.Y, pos.Z, nodeDef);
+            SpawnResourceNode(pos, nodeDef);
 
         foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
-            SpawnTownNpc(pos.X, pos.Y, pos.Z, name, tcx, tcy, radius);
+            SpawnTownNpc(pos, name, tcx, tcy, radius);
     }
 
     // ── Entity creation ──────────────────────────────────────────────
@@ -149,9 +149,6 @@ public class GameEngine : IDisposable
         return ref _worldMap.AddPlayer(player);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref PlayerEntity SpawnPlayer(long connectionId, int x, int y, int z, int classId) => ref SpawnPlayer(connectionId, Position.FromCoords(x, y, z), classId);
-
     /// <summary>
     /// Gives the player 9999 of each resource type. Used for debug mode.
     /// </summary>
@@ -174,13 +171,13 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a monster at the given position using fully-populated MonsterData.
     /// </summary>
-    public ref MonsterEntity SpawnMonster(int x, int y, int z, MonsterData data)
+    public ref MonsterEntity SpawnMonster(Position pos, MonsterData data)
     {
         var def = NpcDefinitions.Get(data.MonsterTypeId);
         int moveInterval = Math.Max(0, 10 - data.Speed);
         var monster = new MonsterEntity(_worldMap.AllocateEntityId())
         {
-            Position = Position.FromCoords(x, y, z),
+            Position = pos,
             MonsterData = data,
             Health = new Health(data.Health),
             CombatStats = new CombatStats(data.Attack, data.Defense, data.Speed),
@@ -190,39 +187,34 @@ public class GameEngine : IDisposable
             AttackDelay = new AttackDelay(moveInterval),
         };
 
-        return ref _worldMap.GetChunk(Chunk.WorldToChunkCoord(x, y, z)).AddEntity(monster);
+        return ref _worldMap.GetChunk(Chunk.WorldToChunkCoord(pos)).AddEntity(monster);
     }
 
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public ref GroundItemEntity SpawnItemOnGround(ItemDefinition def, int rarity, int x, int y, int z)
+    public ref GroundItemEntity SpawnItemOnGround(ItemDefinition def, int rarity, Position pos)
     {
         var itemData = ItemDefinitions.GenerateItemData(def, rarity, _worldRng);
-        return ref SpawnItemOnGround(itemData, x, y, z);
+        return ref SpawnItemOnGround(itemData, pos);
     }
-
-    public ref GroundItemEntity SpawnItemOnGround(ItemDefinition def, int rarity, Position pos) => ref SpawnItemOnGround(def, rarity, pos.X, pos.Y, pos.Z);
 
     /// <summary>
     /// Creates an item entity on the ground from pre-built ItemData.
     /// </summary>
-    public ref GroundItemEntity SpawnItemOnGround(ItemData itemData, int x, int y, int z)
+    public ref GroundItemEntity SpawnItemOnGround(ItemData itemData, Position pos)
     {
         var def = ItemDefinitions.Get(itemData.ItemTypeId);
         var item = new GroundItemEntity(_worldMap.AllocateEntityId())
         {
-            Position = Position.FromCoords(x, y, z),
+            Position = pos,
             Appearance = new TileAppearance(def.GlyphId, def.Color),
             Item = itemData,
         };
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        return ref _worldMap.GetChunk(cx, cy, cz).AddEntity(item);
+        var c = Chunk.WorldToChunkCoord(pos);
+        return ref _worldMap.GetChunk(c).AddEntity(item);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public GroundItemEntity SpawnItemOnGround(ItemData itemData, Position pos) => SpawnItemOnGround(itemData, pos.X, pos.Y, pos.Z);
 
     /// <summary>
     /// Spawns a dungeon element (decoration with optional light).
@@ -231,23 +223,23 @@ public class GameEngine : IDisposable
     {
         var elem = new ElementEntity(_worldMap.AllocateEntityId())
         {
-            Position = Position.FromCoords(element.Position.X, element.Position.Y, element.Position.Z),
+            Position = element.Position,
             Appearance = element.Appearance,
             Light = element.Light,
         };
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(elem.Position.X, elem.Position.Y, elem.Position.Z);
-        return ref _worldMap.GetChunk(cx, cy, cz).AddEntity(elem);
+        var c = Chunk.WorldToChunkCoord(elem.Position);
+        return ref _worldMap.GetChunk(c).AddEntity(elem);
     }
 
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
-    public ref ResourceNodeEntity SpawnResourceNode(int x, int y, int z, ResourceNodeDefinition def)
+    public ref ResourceNodeEntity SpawnResourceNode(Position pos, ResourceNodeDefinition def)
     {
         var node = new ResourceNodeEntity(_worldMap.AllocateEntityId())
         {
-            Position = Position.FromCoords(x, y, z),
+            Position = pos,
             Health = new Health(def.Health),
             CombatStats = new CombatStats(0, def.Defense, 0),
             Appearance = new TileAppearance(def.GlyphId, def.Color),
@@ -261,18 +253,18 @@ public class GameEngine : IDisposable
             AttackDelay = new AttackDelay(0),
         };
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        return ref _worldMap.GetChunk(cx, cy, cz).AddEntity(node);
+        var c = Chunk.WorldToChunkCoord(pos);
+        return ref _worldMap.GetChunk(c).AddEntity(node);
     }
 
     /// <summary>
     /// Spawns a peaceful town NPC that wanders within a radius.
     /// </summary>
-    public ref TownNpcEntity SpawnTownNpc(int x, int y, int z, string name, int townCenterX, int townCenterY, int wanderRadius)
+    public ref TownNpcEntity SpawnTownNpc(Position pos, string name, int townCenterX, int townCenterY, int wanderRadius)
     {
         var npc = new TownNpcEntity(_worldMap.AllocateEntityId())
         {
-            Position = Position.FromCoords(x, y, z),
+            Position = pos,
             Health = new Health(9999),
             CombatStats = new CombatStats(0, 999, 3),
             Appearance = new TileAppearance(TileDefinitions.GlyphTownNpc, TileDefinitions.ColorTownNpcFg),
@@ -290,8 +282,8 @@ public class GameEngine : IDisposable
             },
         };
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        return ref _worldMap.GetChunk(cx, cy, cz).AddEntity(npc);
+        var c = Chunk.WorldToChunkCoord(pos);
+        return ref _worldMap.GetChunk(c).AddEntity(npc);
     }
 
     // ── Tick ──────────────────────────────────────────────────────────
@@ -372,7 +364,7 @@ public class GameEngine : IDisposable
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = _worldMap.TryGetChunk(cx + dx, cy + dy, cz);
+                var chunk = _worldMap.TryGetChunk(Position.FromCoords(cx + dx, cy + dy, cz));
                 if (chunk == null) continue;
                 foreach (var item in chunk.GroundItems)
                     if (!item.IsDestroyed) occupied.Add(Position.PackCoord(item.Position.X, item.Position.Y, item.Position.Z));
@@ -428,7 +420,7 @@ public class GameEngine : IDisposable
     /// </summary>
     public Position FindSpawnPosition()
     {
-        var chunk = EnsureChunkLoaded(0, 0, Position.DefaultZ);
+        var chunk = EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
 
         if (_generatorSpawnHint.HasValue)
         {
@@ -499,9 +491,9 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Clears all entities within the given chunk (used before unloading).
     /// </summary>
-    public void DestroyEntitiesInChunk(int chunkX, int chunkY, int chunkZ)
+    public void DestroyEntitiesInChunk(Position chunkPos)
     {
-        var chunk = _worldMap.TryGetChunk(chunkX, chunkY, chunkZ);
+        var chunk = _worldMap.TryGetChunk(chunkPos);
         chunk?.ClearEntities();
     }
 

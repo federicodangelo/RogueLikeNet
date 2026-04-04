@@ -23,15 +23,17 @@ public class BspDungeonGenerator : IDungeonGenerator
         _seed = seed;
     }
 
-    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    public bool Exists(Position chunkPos)
     {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
         // Only the spawn chunk has content; all other chunks are empty floors.
         return chunkZ == Position.DefaultZ;
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
+    public GenerationResult Generate(Position chunkPos)
     {
-        var chunk = new Chunk(chunkX, chunkY, chunkZ);
+        var (chunkX, chunkY, chunkZ) = chunkPos;
+        var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
         if (chunkZ != Position.DefaultZ)
@@ -40,7 +42,7 @@ public class BspDungeonGenerator : IDungeonGenerator
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkX, chunkY, _seed);
+        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
 
         DungeonHelper.FillWalls(chunk);
 

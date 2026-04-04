@@ -29,7 +29,7 @@ public class LightingSystem
     private static void FloodLight(WorldMap map, Position origin, int radius)
     {
         ShadowCastFov.Compute(origin.X, origin.Y, radius,
-            isOpaque: (x, y) => !map.IsTransparent(x, y, origin.Z),
+            isOpaque: (x, y) => !map.IsTransparent(Position.FromCoords(x, y, origin.Z)),
             markVisible: (x, y) =>
             {
                 int dx = x - origin.X;
@@ -38,15 +38,12 @@ public class LightingSystem
                 int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
                 if (lightAmount <= 0) return;
 
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, origin.Z);
-                var chunk = map.TryGetChunk(cx, cy, cz);
+                var c = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, origin.Z));
+                var chunk = map.TryGetChunk(c);
                 if (chunk == null) return;
 
-                int lx = x - cx * Chunk.Size;
-                int ly = y - cy * Chunk.Size;
-                if (!chunk.InBounds(lx, ly)) return;
-
-                chunk.LightLevels[lx, ly] = (short)Math.Max(chunk.LightLevels[lx, ly], lightAmount);
+                if (chunk.WorldToLocal(x, y, out var lx, out var ly))
+                    chunk.LightLevels[lx, ly] = (short)Math.Max(chunk.LightLevels[lx, ly], lightAmount);
             });
     }
 }

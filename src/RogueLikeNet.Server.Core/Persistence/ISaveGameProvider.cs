@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Components;
+
 namespace RogueLikeNet.Server.Persistence;
 
 /// <summary>
@@ -15,7 +17,7 @@ public interface ISaveGameProvider : IDisposable
     WorldSaveData? LoadWorldMeta(string slotId);
 
     void SaveChunks(string slotId, List<ChunkSaveEntry> chunks);
-    ChunkSaveEntry? LoadChunk(string slotId, int chunkX, int chunkY, int chunkZ);
+    ChunkSaveEntry? LoadChunk(string slotId, Position chunkPos);
 
     void SavePlayers(string slotId, List<PlayerSaveData> players);
     PlayerSaveData? LoadPlayer(string slotId, string playerName);

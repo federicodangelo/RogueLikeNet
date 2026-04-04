@@ -31,10 +31,10 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (chunk, genResult) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
+        var (chunk, genResult) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
         Assert.NotNull(chunk);
-        Assert.Equal(0, chunk.ChunkX);
-        Assert.Equal(0, chunk.ChunkY);
+        Assert.Equal(0, chunk.ChunkPosition.X);
+        Assert.Equal(0, chunk.ChunkPosition.Y);
         Assert.NotNull(genResult);
     }
 
@@ -43,8 +43,8 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (c1, _) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
-        var (c2, genResult2) = map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
+        var (c1, _) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
+        var (c2, genResult2) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
         Assert.Same(c1, c2);
         Assert.Null(genResult2);
     }
@@ -53,7 +53,7 @@ public class WorldMapTests
     public void TryGetChunk_ReturnsNullForMissing()
     {
         var map = new WorldMap(42);
-        Assert.Null(map.TryGetChunk(0, 0, Position.DefaultZ));
+        Assert.Null(map.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ)));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class WorldMapTests
     public void GetTile_ReturnsDefaultForMissingChunk()
     {
         var map = new WorldMap(42);
-        var tile = map.GetTile(0, 0, Position.DefaultZ);
+        var tile = map.GetTile(Position.FromCoords(0, 0, Position.DefaultZ));
         Assert.Equal(TileType.Void, tile.Type);
     }
 
@@ -76,12 +76,12 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        map.GetOrCreateChunk(0, 0, Position.DefaultZ, gen);
+        map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
         bool hasNonVoid = false;
         for (int x = 0; x < Chunk.Size && !hasNonVoid; x++)
             for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
             {
-                var tile = map.GetTile(x, y, Position.DefaultZ);
+                var tile = map.GetTile(Position.FromCoords(x, y, Position.DefaultZ));
                 if (tile.Type != TileType.Void) hasNonVoid = true;
             }
         Assert.True(hasNonVoid);
@@ -91,7 +91,7 @@ public class WorldMapTests
     public void IsWalkable_ReturnsFalseForMissingChunk()
     {
         var map = new WorldMap(42);
-        Assert.False(map.IsWalkable(0, 0, Position.DefaultZ));
+        Assert.False(map.IsWalkable(Position.FromCoords(0, 0, Position.DefaultZ)));
     }
 
     // ──────────────────────────────────────────────
@@ -102,13 +102,13 @@ public class WorldMapTests
     public void OpenDoor_SetsExtraToGraceTicks()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
-        var tile = map.GetTile(5, 5, Position.DefaultZ);
+        var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(WorldMap.DoorGraceTicks, tile.PlaceableItemExtra);
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
     }
@@ -117,54 +117,54 @@ public class WorldMapTests
     public void OpenDoor_TrackedAsDynamicTile()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
-        Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void DoorClosesAfterExactGraceTicks()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
         // Tick (GraceTicks - 1) times: door should still be open
         for (int i = 0; i < WorldMap.DoorGraceTicks - 1; i++)
             map.Update();
 
-        var tile = map.GetTile(5, 5, Position.DefaultZ);
+        var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
         Assert.Equal(1, tile.PlaceableItemExtra); // one tick remaining
-        Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
         // One more tick: door should close
         map.Update();
 
-        tile = map.GetTile(5, 5, Position.DefaultZ);
+        tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(0, tile.PlaceableItemExtra);
         Assert.True(PlaceableDefinitions.IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra));
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void DoorStaysOpenWhenOccupied()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
         // Place a monster on the door tile to keep it occupied
         chunk.AddEntity(new MonsterEntity(map.AllocateEntityId())
@@ -180,20 +180,20 @@ public class WorldMapTests
             map.Update();
 
         // Door should remain open because it's occupied
-        var tile = map.GetTile(5, 5, Position.DefaultZ);
+        var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
-        Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void DoorClosesAfterEntityLeaves()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
         var monster = new MonsterEntity(map.AllocateEntityId())
         {
@@ -210,8 +210,8 @@ public class WorldMapTests
 
         // Door still open
         Assert.True(PlaceableDefinitions.IsDoorOpen(
-            map.GetTile(5, 5, Position.DefaultZ).PlaceableItemId,
-            map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra));
+            map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemId,
+            map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemExtra));
 
         // Move entity away
         ref var monsterRef = ref chunk.GetMonsterRef(monster.Id);
@@ -220,73 +220,73 @@ public class WorldMapTests
         // One tick should close the door (timer is at 1 = minimum open, unoccupied -> close)
         map.Update();
 
-        var tile = map.GetTile(5, 5, Position.DefaultZ);
+        var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(0, tile.PlaceableItemExtra);
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void SaveLoad_OpenDoor_PreservesStateAndAutoCloses()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
         int ticksBeforeSave = 5;
         for (int i = 0; i < ticksBeforeSave; i++)
             map.Update();
 
-        int remainingTicks = map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra;
+        int remainingTicks = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemExtra;
         Assert.Equal(WorldMap.DoorGraceTicks - ticksBeforeSave, remainingTicks);
 
         // Simulate save/load
         var newMap = new WorldMap(42);
-        var newChunk = new Chunk(0, 0, Position.DefaultZ);
+        var newChunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
                 newChunk.Tiles[x, y] = chunk.Tiles[x, y];
         newMap.AddChunk(newChunk);
 
-        var loadedTile = newMap.GetTile(5, 5, Position.DefaultZ);
+        var loadedTile = newMap.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.True(PlaceableDefinitions.IsDoorOpen(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
         Assert.Equal(remainingTicks, loadedTile.PlaceableItemExtra);
-        Assert.True(newMap.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.True(newMap.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
         for (int i = 0; i < remainingTicks; i++)
             newMap.Update();
 
-        loadedTile = newMap.GetTile(5, 5, Position.DefaultZ);
+        loadedTile = newMap.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(0, loadedTile.PlaceableItemExtra);
         Assert.True(PlaceableDefinitions.IsDoorClosed(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
-        Assert.False(newMap.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.False(newMap.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void SetTile_TracksAndUntracksDynamicTiles()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeFloor();
         map.AddChunk(chunk);
 
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
         var openDoor = MakeClosedDoor();
         openDoor.PlaceableItemExtra = WorldMap.DoorGraceTicks;
-        map.SetTile(5, 5, Position.DefaultZ, openDoor);
-        Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        map.SetTile(Position.FromCoords(5, 5, Position.DefaultZ), openDoor);
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
-        map.SetTile(5, 5, Position.DefaultZ, MakeFloor());
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        map.SetTile(Position.FromCoords(5, 5, Position.DefaultZ), MakeFloor());
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void AddChunk_ScansExistingOpenDoors()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
 
         var openDoor = MakeClosedDoor();
         openDoor.PlaceableItemExtra = 10;
@@ -295,53 +295,53 @@ public class WorldMapTests
 
         map.AddChunk(chunk);
 
-        Assert.True(map.IsDynamicTileTracked(3, 7, Position.DefaultZ));
-        Assert.False(map.IsDynamicTileTracked(10, 20, Position.DefaultZ));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(3, 7, Position.DefaultZ)));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(10, 20, Position.DefaultZ)));
     }
 
     [Fact]
     public void UnloadChunk_ClearsDynamicTileTracking()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
-        map.OpenDoor(5, 5, Position.DefaultZ);
-        Assert.True(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
-        map.UnloadChunk(0, 0, Position.DefaultZ);
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
+        map.UnloadChunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void MultipleDoors_IndependentTimers()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         chunk.Tiles[10, 10] = MakeClosedDoor();
         map.AddChunk(chunk);
 
         // Open first door
-        map.OpenDoor(5, 5, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
 
         // Tick 5 times then open second door
         for (int i = 0; i < 5; i++)
             map.Update();
-        map.OpenDoor(10, 10, Position.DefaultZ);
+        map.OpenDoor(Position.FromCoords(10, 10, Position.DefaultZ));
 
-        Assert.Equal(WorldMap.DoorGraceTicks - 5, map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra);
-        Assert.Equal(WorldMap.DoorGraceTicks, map.GetTile(10, 10, Position.DefaultZ).PlaceableItemExtra);
+        Assert.Equal(WorldMap.DoorGraceTicks - 5, map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemExtra);
+        Assert.Equal(WorldMap.DoorGraceTicks, map.GetTile(Position.FromCoords(10, 10, Position.DefaultZ)).PlaceableItemExtra);
 
         // Tick until first door closes
         for (int i = 0; i < WorldMap.DoorGraceTicks - 5; i++)
             map.Update();
 
-        Assert.Equal(0, map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra);
-        Assert.Equal(5, map.GetTile(10, 10, Position.DefaultZ).PlaceableItemExtra);
-        Assert.False(map.IsDynamicTileTracked(5, 5, Position.DefaultZ));
-        Assert.True(map.IsDynamicTileTracked(10, 10, Position.DefaultZ));
+        Assert.Equal(0, map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemExtra);
+        Assert.Equal(5, map.GetTile(Position.FromCoords(10, 10, Position.DefaultZ)).PlaceableItemExtra);
+        Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
+        Assert.True(map.IsDynamicTileTracked(Position.FromCoords(10, 10, Position.DefaultZ)));
     }
 
     // ──────────────────────────────────────────────
@@ -352,8 +352,8 @@ public class WorldMapTests
     public void MigrateMonster_MarksBothChunksDirty()
     {
         var map = new WorldMap(42);
-        var chunkA = new Chunk(0, 0, Position.DefaultZ);
-        var chunkB = new Chunk(1, 0, Position.DefaultZ);
+        var chunkA = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunkB = new Chunk(Position.FromCoords(1, 0, Position.DefaultZ));
         map.AddChunk(chunkA);
         map.AddChunk(chunkB);
 
@@ -388,8 +388,8 @@ public class WorldMapTests
     public void MigrateNpc_MarksBothChunksDirty()
     {
         var map = new WorldMap(42);
-        var chunkA = new Chunk(0, 0, Position.DefaultZ);
-        var chunkB = new Chunk(1, 0, Position.DefaultZ);
+        var chunkA = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunkB = new Chunk(Position.FromCoords(1, 0, Position.DefaultZ));
         map.AddChunk(chunkA);
         map.AddChunk(chunkB);
 
@@ -418,7 +418,7 @@ public class WorldMapTests
     public void MigrateMonster_SameChunk_Dirty()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(0, 0, Position.DefaultZ);
+        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
         map.AddChunk(chunk);
 
         var monster = new MonsterEntity(map.AllocateEntityId())

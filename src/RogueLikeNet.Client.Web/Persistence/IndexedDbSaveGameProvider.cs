@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Client.Web.Persistence;
@@ -70,7 +71,7 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
             }
             foreach (var chunk in chunkList)
             {
-                long key = PackChunkKey(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
+                long key = Position.PackCoord(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
                 dict[key] = chunk;
             }
         }
@@ -159,7 +160,7 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
 
         foreach (var chunk in chunks)
         {
-            long key = PackChunkKey(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
+            long key = Position.PackCoord(chunk.ChunkX, chunk.ChunkY, chunk.ChunkZ);
             dict[key] = chunk;
         }
 
@@ -167,11 +168,11 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
         FireAndForget(JsIndexedDb.SaveChunks(slotId, json));
     }
 
-    public ChunkSaveEntry? LoadChunk(string slotId, int chunkX, int chunkY, int chunkZ)
+    public ChunkSaveEntry? LoadChunk(string slotId, Position chunkPos)
     {
         if (!_chunks.TryGetValue(slotId, out var dict))
             return null;
-        long key = PackChunkKey(chunkX, chunkY, chunkZ);
+        long key = chunkPos.Pack();
         return dict.GetValueOrDefault(key);
     }
 
@@ -205,11 +206,6 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
     }
 
     // ── Helpers ───────────────────────────────────────────────────
-
-    private static long PackChunkKey(int x, int y, int z)
-    {
-        return ((long)(x & 0xFFFFFF) << 32) | ((long)(y & 0xFFFFFF) << 8) | (long)(z & 0xFF);
-    }
 
     private static void PersistSlot(SaveSlotInfo slot)
     {

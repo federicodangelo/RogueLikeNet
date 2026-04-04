@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Components;
+
 namespace RogueLikeNet.Server.Persistence;
 
 /// <summary>
@@ -73,11 +75,11 @@ public class InMemorySaveGameProvider : ISaveGameProvider
         }
     }
 
-    public ChunkSaveEntry? LoadChunk(string slotId, int chunkX, int chunkY, int chunkZ)
+    public ChunkSaveEntry? LoadChunk(string slotId, Position chunkPos)
     {
         if (!_chunks.TryGetValue(slotId, out var dict))
             return null;
-        long key = PackChunkKey(chunkX, chunkY, chunkZ);
+        long key = PackChunkKey(chunkPos.X, chunkPos.Y, chunkPos.Z);
         return dict.GetValueOrDefault(key);
     }
 

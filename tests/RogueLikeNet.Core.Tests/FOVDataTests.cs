@@ -27,15 +27,15 @@ public class FOVDataTests
     {
         var fov = new FOVData(5);
         fov.VisibleTiles!.Add(Position.PackCoord(3, 4, Position.DefaultZ));
-        Assert.True(fov.IsVisible(3, 4, Position.DefaultZ));
-        Assert.False(fov.IsVisible(5, 6, Position.DefaultZ));
+        Assert.True(fov.IsVisible(Position.FromCoords(3, 4, Position.DefaultZ)));
+        Assert.False(fov.IsVisible(Position.FromCoords(5, 6, Position.DefaultZ)));
     }
 
     [Fact]
     public void IsVisible_NullTiles_ReturnsFalse()
     {
         var fov = new FOVData { Radius = 5, VisibleTiles = null };
-        Assert.False(fov.IsVisible(0, 0, Position.DefaultZ));
+        Assert.False(fov.IsVisible(Position.FromCoords(0, 0, Position.DefaultZ)));
     }
 
     [Fact]

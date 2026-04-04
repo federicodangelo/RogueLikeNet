@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 
@@ -21,24 +22,24 @@ public class PersistentDungeonGenerator : IDungeonGenerator
         _slotId = slotId;
     }
 
-    public bool Exists(int chunkX, int chunkY, int chunkZ)
+    public bool Exists(Position chunkPos)
     {
         // If we have a saved chunk, it definitely exists
-        var saved = _provider.LoadChunk(_slotId, chunkX, chunkY, chunkZ);
+        var saved = _provider.LoadChunk(_slotId, chunkPos);
         if (saved != null)
             return true;
 
-        return _baseGenerator.Exists(chunkX, chunkY, chunkZ);
+        return _baseGenerator.Exists(chunkPos);
     }
 
-    public GenerationResult Generate(int chunkX, int chunkY, int chunkZ)
+    public GenerationResult Generate(Position chunkPos)
     {
-        var saved = _provider.LoadChunk(_slotId, chunkX, chunkY, chunkZ);
+        var saved = _provider.LoadChunk(_slotId, chunkPos);
         if (saved != null)
         {
             // Restore tiles from saved data
             var tiles = ChunkSerializer.DeserializeTiles(saved.TileData);
-            var chunk = new Chunk(chunkX, chunkY, chunkZ);
+            var chunk = new Chunk(chunkPos);
             Array.Copy(tiles, chunk.Tiles, tiles.Length);
             var result = new GenerationResult(chunk);
 
@@ -53,6 +54,6 @@ public class PersistentDungeonGenerator : IDungeonGenerator
         }
 
         // Not saved — generate fresh from base
-        return _baseGenerator.Generate(chunkX, chunkY, chunkZ);
+        return _baseGenerator.Generate(chunkPos);
     }
 }

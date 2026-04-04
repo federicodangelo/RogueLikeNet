@@ -80,13 +80,11 @@ public class ClientGameState
         // Update tiles
         foreach (var tileUpdate in delta.TileUpdates)
         {
-            var (cx, cy, cz) = Chunk.WorldToChunkCoord(tileUpdate.X, tileUpdate.Y, tileUpdate.Z);
-            long key = Position.PackCoord(cx, cy, cz);
+            var c = Chunk.WorldToChunkCoord(Position.FromCoords(tileUpdate.X, tileUpdate.Y, tileUpdate.Z));
+            long key = Position.PackCoord(c);
             if (_chunks.TryGetValue(key, out var chunk))
             {
-                int lx = tileUpdate.X - cx * Chunk.Size;
-                int ly = tileUpdate.Y - cy * Chunk.Size;
-                if (chunk.InBounds(lx, ly))
+                if (chunk.WorldToLocal(tileUpdate.X, tileUpdate.Y, out var lx, out var ly))
                 {
                     ref var tile = ref chunk.Tiles[lx, ly];
                     tile.Type = (TileType)tileUpdate.TileType;
@@ -188,7 +186,7 @@ public class ClientGameState
 
     private void ApplyChunkData(ChunkDataMsg msg)
     {
-        var chunk = new Chunk(msg.ChunkX, msg.ChunkY, msg.ChunkZ);
+        var chunk = new Chunk(Position.FromCoords(msg.ChunkX, msg.ChunkY, msg.ChunkZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
@@ -217,7 +215,7 @@ public class ClientGameState
 
     public (TileInfo, int) GetTileAndLightLevel(int worldX, int worldY)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, PlayerZ);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, PlayerZ));
         long key = Position.PackCoord(cx, cy, cz);
         if (!_chunks.TryGetValue(key, out var chunk))
             return (default, 0);
@@ -232,7 +230,7 @@ public class ClientGameState
     {
         if (DebugSeeAll) return true;
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, PlayerZ);
+        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, PlayerZ));
         var chunkKey = Position.PackCoord(cx, cy, cz);
 
         if (_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
@@ -267,8 +265,8 @@ public class ClientGameState
     {
         var debugSeeAll = DebugSeeAll;
 
-        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(minWorldX, minWorldY, worldZ);
-        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(maxWorldX, maxWorldY, worldZ);
+        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(minWorldX, minWorldY, worldZ));
+        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(maxWorldX, maxWorldY, worldZ));
 
         for (int cy = minCy; cy <= maxCy; cy++)
         {
@@ -329,7 +327,7 @@ public class ClientGameState
                     Math.Max(_visibleTilesBounds.x1, x),
                     Math.Max(_visibleTilesBounds.y1, y)
                 );
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, PlayerZ);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, PlayerZ));
                 var chunkKey = Position.PackCoord(cx, cy, cz);
                 if (!_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
                 {
@@ -347,10 +345,10 @@ public class ClientGameState
         using var _ = TimeMeasurer.FromMethodName();
 
         // Reset light only for chunks within FOV range of the player
-        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius, PlayerZ);
-        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius, PlayerZ);
+        var (minCx, minCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius, PlayerZ));
+        var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius, PlayerZ));
         foreach (var chunk in _chunks.Values)
-            if (chunk.ChunkX >= minCx && chunk.ChunkX <= maxCx && chunk.ChunkY >= minCy && chunk.ChunkY <= maxCy)
+            if (chunk.ChunkPosition.X >= minCx && chunk.ChunkPosition.X <= maxCx && chunk.ChunkPosition.Y >= minCy && chunk.ChunkPosition.Y <= maxCy)
                 chunk.ResetLight();
 
         // Player emits light at FOV radius
@@ -374,7 +372,7 @@ public class ClientGameState
                 int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
                 if (lightAmount <= 0) return;
 
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, PlayerZ);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, PlayerZ));
                 long key = Position.PackCoord(cx, cy, cz);
                 if (!_chunks.TryGetValue(key, out var chunk)) return;
 

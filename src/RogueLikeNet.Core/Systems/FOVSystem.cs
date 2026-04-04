@@ -22,7 +22,7 @@ public class FOVSystem
 
             ShadowCastFov.Compute(
                 p.X, p.Y, radius,
-                isOpaque: (x, y) => !map.IsTransparent(x, y, p.Z),
+                isOpaque: (x, y) => !map.IsTransparent(Position.FromCoords(x, y, p.Z)),
                 markVisible: (x, y) =>
                 {
                     visibleTiles.Add(Position.PackCoord(x, y, p.Z));
