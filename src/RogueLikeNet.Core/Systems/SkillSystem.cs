@@ -37,10 +37,10 @@ public class SkillSystem
             var tx = player.Input.TargetX;
             var ty = player.Input.TargetY;
 
-            int skillId = GetSkillId(ref player, skillSlot);
+            int skillId = player.Skills.GetSkillId(skillSlot);
             if (skillId == SkillDefinitions.None) continue;
 
-            int cooldown = GetCooldown(ref player, skillSlot);
+            int cooldown = player.Skills.GetCooldown(skillSlot);
             if (cooldown > 0) continue;
 
             int range = SkillDefinitions.GetRange(skillId);
@@ -61,7 +61,7 @@ public class SkillSystem
             };
 
             if (used)
-                SetCooldown(ref player, skillSlot, SkillDefinitions.GetCooldown(skillId));
+                player.Skills.SetCooldown(skillSlot, SkillDefinitions.GetCooldown(skillId));
         }
     }
 
@@ -175,34 +175,5 @@ public class SkillSystem
         }
 
         return hit;
-    }
-
-    private static int GetSkillId(ref PlayerEntity player, int index) => index switch
-    {
-        0 => player.Skills.Skill0,
-        1 => player.Skills.Skill1,
-        2 => player.Skills.Skill2,
-        3 => player.Skills.Skill3,
-        _ => SkillDefinitions.None,
-    };
-
-    private static int GetCooldown(ref PlayerEntity player, int index) => index switch
-    {
-        0 => player.Skills.Cooldown0,
-        1 => player.Skills.Cooldown1,
-        2 => player.Skills.Cooldown2,
-        3 => player.Skills.Cooldown3,
-        _ => 0,
-    };
-
-    private static void SetCooldown(ref PlayerEntity player, int index, int value)
-    {
-        switch (index)
-        {
-            case 0: player.Skills.Cooldown0 = value; break;
-            case 1: player.Skills.Cooldown1 = value; break;
-            case 2: player.Skills.Cooldown2 = value; break;
-            case 3: player.Skills.Cooldown3 = value; break;
-        }
     }
 }
