@@ -83,7 +83,7 @@ public class ParticleSystemTests
         ps.SpawnHitSparks(5, 5, 6, 5, killed: true);
 
         using var renderer = new NullSpriteRenderer(800, 600);
-        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0);
+        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0, tileW: 16, tileH: 16);
 
         // All particles should still be active (Render doesn't remove them)
         Assert.Equal(7, ps.ActiveCount); // 1 damage number + 6 kill sparks
@@ -94,7 +94,7 @@ public class ParticleSystemTests
     {
         var ps = new ParticleSystem();
         using var renderer = new NullSpriteRenderer(800, 600);
-        ps.Render(renderer, cameraCenterX: 0, cameraCenterY: 0, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0);
+        ps.Render(renderer, cameraCenterX: 0, cameraCenterY: 0, halfW: 10, halfH: 10, shakeX: 0, shakeY: 0, tileW: 16, tileH: 16);
         Assert.Equal(0, ps.ActiveCount);
     }
 
@@ -108,7 +108,7 @@ public class ParticleSystemTests
         Assert.Equal(1, ps.ActiveCount);
 
         using var renderer = new NullSpriteRenderer(800, 600);
-        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 1f, shakeY: 2f);
+        ps.Render(renderer, cameraCenterX: 5, cameraCenterY: 5, halfW: 10, halfH: 10, shakeX: 1f, shakeY: 2f, tileW: 16, tileH: 16);
         Assert.Equal(1, ps.ActiveCount);
     }
 }

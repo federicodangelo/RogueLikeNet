@@ -68,15 +68,15 @@ public sealed class ParticleSystem
 
     /// <summary>Render all active particles.</summary>
     public void Render(ISpriteRenderer r, int cameraCenterX, int cameraCenterY,
-        int halfW, int halfH, float shakeX, float shakeY)
+        int halfW, int halfH, float shakeX, float shakeY, int tileW, int tileH)
     {
         foreach (var p in _particles)
         {
             float sx = p.WorldX - (cameraCenterX - halfW);
             float sy = p.WorldY - (cameraCenterY - halfH);
 
-            float px = sx * AsciiDraw.TileWidth + shakeX;
-            float py = sy * AsciiDraw.TileHeight + shakeY;
+            float px = sx * tileW + shakeX;
+            float py = sy * tileH + shakeY;
 
             byte alpha = (byte)(Math.Clamp(p.Life, 0f, 1f) * 255);
             var color = new Color4(p.Color.R, p.Color.G, p.Color.B, alpha);

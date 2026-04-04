@@ -266,7 +266,7 @@ public sealed class PlayingScreen : IScreen
         int halfW = zoomedGameCols / 2;
         int halfH = zoomedRows / 2;
         _ctx.Particles.Render(renderer, _ctx.GameState.PlayerX, _ctx.GameState.PlayerY,
-            halfW, halfH, shakeX, shakeY);
+            halfW, halfH, shakeX, shakeY, tileW, tileH);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
         _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
