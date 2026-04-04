@@ -67,7 +67,7 @@ public class AISystem
         {
             foreach (ref var monster in chunk.Monsters)
             {
-                if (monster.IsDead || !monster.Health.IsAlive) continue;
+                if (monster.IsDead) continue;
 
                 bool canMove = monster.MoveDelay.Current <= 0;
 
@@ -157,7 +157,7 @@ public class AISystem
         {
             foreach (ref var npc in chunk.TownNpcs)
             {
-                if (npc.IsDead || !npc.Health.IsAlive) continue;
+                if (npc.IsDead) continue;
 
                 if (npc.NpcData.TalkTimer > 0)
                     npc.NpcData.TalkTimer--;

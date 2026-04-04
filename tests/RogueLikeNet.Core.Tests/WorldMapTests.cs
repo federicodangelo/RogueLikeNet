@@ -415,7 +415,7 @@ public class WorldMapTests
     }
 
     [Fact]
-    public void MigrateMonster_SameChunk_DoesNotDirty()
+    public void MigrateMonster_SameChunk_Dirty()
     {
         var map = new WorldMap(42);
         var chunk = new Chunk(0, 0, Position.DefaultZ);
@@ -434,6 +434,6 @@ public class WorldMapTests
         // Move within same chunk
         map.MoveMonsterEntity(monster.Id, monster.Position, Position.FromCoords(6, 5, Position.DefaultZ));
 
-        Assert.False(chunk.IsModifiedSinceLastSave);
+        Assert.True(chunk.IsModifiedSinceLastSave);
     }
 }

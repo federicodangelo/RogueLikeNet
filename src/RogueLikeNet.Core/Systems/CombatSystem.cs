@@ -85,7 +85,6 @@ public class CombatSystem
                 foreach (ref var monster in targetChunk.Monsters)
                 {
                     if (monster.IsDead || monster.Position != targetPosition) continue;
-                    if (!monster.Health.IsAlive) continue;
 
                     int damage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
                     monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
@@ -95,7 +94,7 @@ public class CombatSystem
                         Attacker = player.Position,
                         Target = monster.Position,
                         Damage = damage,
-                        TargetDied = !monster.Health.IsAlive
+                        TargetDied = monster.IsDead
                     });
                 }
 
@@ -103,7 +102,6 @@ public class CombatSystem
                 foreach (ref var node in targetChunk.ResourceNodes)
                 {
                     if (node.IsDead || node.Position != targetPosition) continue;
-                    if (!node.Health.IsAlive) continue;
 
                     int damage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
                     node.Health.Current = Math.Max(0, node.Health.Current - damage);
@@ -113,7 +111,7 @@ public class CombatSystem
                         Attacker = player.Position,
                         Target = node.Position,
                         Damage = damage,
-                        TargetDied = !node.Health.IsAlive
+                        TargetDied = node.IsDead
                     });
                 }
             }
@@ -150,7 +148,7 @@ public class CombatSystem
                         Attacker = monster.Position,
                         Target = player.Position,
                         Damage = damage,
-                        TargetDied = !player.Health.IsAlive
+                        TargetDied = player.IsDead
                     });
 
                     monster.AttackDelay.Current = monster.AttackDelay.Interval;
@@ -171,7 +169,7 @@ public class CombatSystem
         // Check monsters and resource nodes at adjacent positions
         foreach (var monster in chunk.Monsters)
         {
-            if (monster.IsDead || !monster.Health.IsAlive) continue;
+            if (monster.IsDead) continue;
             int dx = monster.Position.X - attacker.Position.X;
             int dy = monster.Position.Y - attacker.Position.Y;
             bool adjacent = false;
@@ -184,7 +182,7 @@ public class CombatSystem
 
         foreach (var node in chunk.ResourceNodes)
         {
-            if (node.IsDead || !node.Health.IsAlive) continue;
+            if (node.IsDead) continue;
             int dx = node.Position.X - attacker.Position.X;
             int dy = node.Position.Y - attacker.Position.Y;
             bool adjacent = false;
