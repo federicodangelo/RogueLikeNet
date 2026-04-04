@@ -13,10 +13,10 @@ public class BuildingSystem
     private static readonly (int DX, int DY)[] AdjacentOffsets =
         [(0, -1), (0, 1), (-1, 0), (1, 0)];
 
-    public void Update(WorldMap map, GameEngine engine)
+    public void Update(WorldMap map)
     {
         ProcessPlacement(map);
-        ProcessPickUpPlaced(map, engine);
+        ProcessPickUpPlaced(map);
     }
 
     private void ProcessPlacement(WorldMap map)
@@ -70,7 +70,7 @@ public class BuildingSystem
         }
     }
 
-    private void ProcessPickUpPlaced(WorldMap map, GameEngine engine)
+    private void ProcessPickUpPlaced(WorldMap map)
     {
         foreach (ref var player in map.Players)
         {

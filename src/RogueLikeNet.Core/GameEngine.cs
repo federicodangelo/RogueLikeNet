@@ -306,7 +306,7 @@ public class GameEngine : IDisposable
         _aiSystem.Update(_worldMap);
         _inventorySystem.Update(_worldMap, this);
         _craftingSystem.Update(_worldMap);
-        _buildingSystem.Update(_worldMap, this);
+        _buildingSystem.Update(_worldMap);
         _skillSystem.Update(_worldMap);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
