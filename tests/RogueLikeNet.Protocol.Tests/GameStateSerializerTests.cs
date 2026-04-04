@@ -37,7 +37,7 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_OnlyReturnsChangedEntities()
     {
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var monster = engine.SpawnMonster(Position.FromCoords(sx, sy, Position.DefaultZ), new MonsterData
         {
@@ -70,7 +70,7 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_PositionOnlyUpdate()
     {
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var monster = engine.SpawnMonster(Position.FromCoords(sx, sy, Position.DefaultZ), new MonsterData
         {
@@ -105,7 +105,7 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_RemovedEntitiesLeavingFOV()
     {
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var monster = engine.SpawnMonster(Position.FromCoords(sx, sy, Position.DefaultZ), new MonsterData
         {
@@ -159,7 +159,7 @@ public class GameStateSerializerTests
     public void FullSnapshot_SerializeDeserialize_RoundTrip()
     {
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         engine.Tick();
@@ -171,7 +171,7 @@ public class GameStateSerializerTests
             FromTick = 0,
             ToTick = engine.CurrentTick,
             IsSnapshot = true,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.Position.X, player.Position.Y, player.Position.Z),
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.Position),
             EntityUpdates = fullUpdates,
             EntityPositionHealthUpdates = posUpdates,
             EntityRemovals = removals,
@@ -198,7 +198,7 @@ public class GameStateSerializerTests
     public void SerializeEntityDelta_PositionHealthOnlyChange_EmitsPositionHealthUpdate()
     {
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var monster = engine.SpawnMonster(Position.FromCoords(sx, sy, Position.DefaultZ), new MonsterData
         {
@@ -237,7 +237,7 @@ public class GameStateSerializerTests
     private static (RogueLikeNet.Core.GameEngine engine, PlayerEntity player) CreateEngineWithPlayer()
     {
         var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
         var player = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         return (engine, player);

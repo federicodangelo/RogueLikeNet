@@ -2,6 +2,7 @@ using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
+using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
 namespace RogueLikeNet.Core.Tests;
@@ -13,7 +14,7 @@ public class AISystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -201,7 +202,7 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Load the Z-1 chunk so both levels exist
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ - 1));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ - 1));
 
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ - 1), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
@@ -230,7 +231,7 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Load the Z-2 chunk
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ - 2));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ - 2));
 
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ - 2), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);

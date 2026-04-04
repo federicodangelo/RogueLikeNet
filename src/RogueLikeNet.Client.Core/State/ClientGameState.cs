@@ -80,8 +80,8 @@ public class ClientGameState
         // Update tiles
         foreach (var tileUpdate in delta.TileUpdates)
         {
-            var c = Chunk.WorldToChunkCoord(Position.FromCoords(tileUpdate.X, tileUpdate.Y, tileUpdate.Z));
-            long key = Position.PackCoord(c);
+            var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(tileUpdate.X, tileUpdate.Y, tileUpdate.Z));
+            long key = chunkPos.Pack();
             if (_chunks.TryGetValue(key, out var chunk))
             {
                 if (chunk.WorldToLocal(tileUpdate.X, tileUpdate.Y, out var lx, out var ly))
@@ -186,7 +186,7 @@ public class ClientGameState
 
     private void ApplyChunkData(ChunkDataMsg msg)
     {
-        var chunk = new Chunk(Position.FromCoords(msg.ChunkX, msg.ChunkY, msg.ChunkZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(msg.ChunkX, msg.ChunkY, msg.ChunkZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
@@ -219,9 +219,7 @@ public class ClientGameState
         long key = Position.PackCoord(cx, cy, cz);
         if (!_chunks.TryGetValue(key, out var chunk))
             return (default, 0);
-        int lx = worldX - cx * Chunk.Size;
-        int ly = worldY - cy * Chunk.Size;
-        if (!chunk.InBounds(lx, ly))
+        if (!chunk.WorldToLocal(worldX, worldY, out var lx, out var ly))
             return (default, 0);
         return (chunk.Tiles[lx, ly], chunk.LightLevels[lx, ly]);
     }
@@ -230,13 +228,12 @@ public class ClientGameState
     {
         if (DebugSeeAll) return true;
 
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, PlayerZ));
-        var chunkKey = Position.PackCoord(cx, cy, cz);
+        var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, PlayerZ));
+        var chunkKey = chunkPos.Pack();
 
         if (_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
         {
-            var lx = worldX - cx * Chunk.Size;
-            var ly = worldY - cy * Chunk.Size;
+            Chunk.WorldToLocal(worldX, worldY, chunkPos.X, chunkPos.Y, out var lx, out var ly);
             return exploredBits.Get(lx + ly * Chunk.Size);
         }
         return false;
@@ -334,8 +331,7 @@ public class ClientGameState
                     exploredBits = new BitArray(Chunk.Size * Chunk.Size);
                     _exploredTilesByChunk[chunkKey] = exploredBits;
                 }
-                var lx = x - cx * Chunk.Size;
-                var ly = y - cy * Chunk.Size;
+                Chunk.WorldToLocal(x, y, cx, cy, out var lx, out var ly);
                 exploredBits.Set(lx + ly * Chunk.Size, true);
             });
     }

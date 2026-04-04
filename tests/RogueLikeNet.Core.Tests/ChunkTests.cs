@@ -9,7 +9,7 @@ public class ChunkTests
     [Fact]
     public void Chunk_HasCorrectSize()
     {
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         Assert.Equal(64, Chunk.Size);
         Assert.Equal(64, chunk.Tiles.GetLength(0));
         Assert.Equal(64, chunk.Tiles.GetLength(1));
@@ -18,7 +18,7 @@ public class ChunkTests
     [Fact]
     public void InBounds_ReturnsTrueForValidCoords()
     {
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         Assert.True(chunk.InBounds(0, 0));
         Assert.True(chunk.InBounds(63, 63));
         Assert.False(chunk.InBounds(-1, 0));
@@ -44,7 +44,7 @@ public class ChunkTests
     [Fact]
     public void WorldToLocal_ConvertsCorrectly()
     {
-        var chunk = new Chunk(Position.FromCoords(1, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(1, 0, Position.DefaultZ));
         Assert.True(chunk.WorldToLocal(64, 0, out int lx, out int ly));
         Assert.Equal(0, lx);
         Assert.Equal(0, ly);

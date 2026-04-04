@@ -1,6 +1,7 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Tests;
 
@@ -11,7 +12,7 @@ public class QuickSlotsTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 

@@ -22,7 +22,7 @@ public class PersistentDungeonGenerator : IDungeonGenerator
         _slotId = slotId;
     }
 
-    public bool Exists(Position chunkPos)
+    public bool Exists(ChunkPosition chunkPos)
     {
         // If we have a saved chunk, it definitely exists
         var saved = _provider.LoadChunk(_slotId, chunkPos);
@@ -32,7 +32,7 @@ public class PersistentDungeonGenerator : IDungeonGenerator
         return _baseGenerator.Exists(chunkPos);
     }
 
-    public GenerationResult Generate(Position chunkPos)
+    public GenerationResult Generate(ChunkPosition chunkPos)
     {
         var saved = _provider.LoadChunk(_slotId, chunkPos);
         if (saved != null)

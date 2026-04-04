@@ -4,11 +4,43 @@ using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.World;
 
+public record struct ChunkPosition(int X, int Y, int Z)
+{
+    public override readonly string ToString() => $"({X}, {Y}, {Z})";
+    public const int DefaultZ = Position.DefaultZ;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ChunkPosition FromCoords(int x, int y, int z) => new(x, y, z);
+
+    public long Pack() => Position.PackCoord(X, Y, Z);
+    public void Unpack(long packed)
+    {
+        var (x, y, z) = UnpackCoord(packed);
+        X = x;
+        Y = y;
+        Z = z;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long PackCoord(int x, int y, int z) => Position.PackCoord(x, y, z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long PackCoord(ChunkPosition pos) => PackCoord(pos.X, pos.Y, pos.Z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ChunkPosition UnpackCoord(long packed)
+    {
+        var p = Position.UnpackCoord(packed);
+        return FromCoords(p.X, p.Y, p.Z);
+    }
+}
+
+
 public class Chunk
 {
     public const int Size = 64;
 
-    public Position ChunkPosition { get; }
+    public ChunkPosition ChunkPosition { get; }
     public TileInfo[,] Tiles { get; }
 
     public int[,] LightLevels { get; }
@@ -114,7 +146,7 @@ public class Chunk
     /// <summary>Clears the save-dirty flag after persisting.</summary>
     public void ClearSaveFlag() => IsModifiedSinceLastSave = false;
 
-    public Chunk(Position chunkPos)
+    public Chunk(ChunkPosition chunkPos)
     {
         ChunkPosition = chunkPos;
         Tiles = new TileInfo[Size, Size];
@@ -132,9 +164,15 @@ public class Chunk
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool WorldToLocal(int worldX, int worldY, out int localX, out int localY)
     {
-        localX = worldX - ChunkPosition.X * Size;
-        localY = worldY - ChunkPosition.Y * Size;
+        WorldToLocal(worldX, worldY, ChunkPosition.X, ChunkPosition.Y, out localX, out localY);
         return InBounds(localX, localY);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WorldToLocal(int worldX, int worldY, int chunkX, int chunkY, out int localX, out int localY)
+    {
+        localX = worldX - chunkX * Size;
+        localY = worldY - chunkY * Size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -150,12 +188,12 @@ public class Chunk
     /// Z maps directly (each Z level = one chunk layer, no subdivision).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Position WorldToChunkCoord(Position world)
+    public static ChunkPosition WorldToChunkCoord(Position world)
     {
         // Use integer division that floors towards negative infinity
         int cx = world.X >= 0 ? world.X / Size : (world.X - Size + 1) / Size;
         int cy = world.Y >= 0 ? world.Y / Size : (world.Y - Size + 1) / Size;
-        return Position.FromCoords(cx, cy, world.Z);
+        return ChunkPosition.FromCoords(cx, cy, world.Z);
     }
 
     public void RemoveEntity(EntityRef entity)

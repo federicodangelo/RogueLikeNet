@@ -16,7 +16,7 @@ public class BiomeDungeonGeneratorTests
         // Generate chunks for all 10 biome types
         for (int cx = 0; cx < 50; cx++)
         {
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
 
             int floorCount = 0;
             for (int x = 0; x < Chunk.Size; x++)
@@ -35,9 +35,9 @@ public class BiomeDungeonGeneratorTests
         Chunk? stoneChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            if (BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, 0, 0), 42) == BiomeType.Stone)
+            if (BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42) == BiomeType.Stone)
             {
-                stoneChunk = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
+                stoneChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
                 break;
             }
         }
@@ -63,10 +63,10 @@ public class BiomeDungeonGeneratorTests
         Chunk? caveChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome is BiomeType.Lava or BiomeType.Forest or BiomeType.Fungal or BiomeType.Infernal)
             {
-                caveChunk = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
+                caveChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
                 break;
             }
         }
@@ -89,10 +89,10 @@ public class BiomeDungeonGeneratorTests
         Chunk? tunnelChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome is BiomeType.Ice or BiomeType.Sewer)
             {
-                tunnelChunk = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
+                tunnelChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
                 break;
             }
         }
@@ -114,8 +114,8 @@ public class BiomeDungeonGeneratorTests
 
         for (int cx = 0; cx < 20; cx++)
         {
-            var r1 = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
-            var r2 = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var r1 = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
+            var r2 = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
 
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)

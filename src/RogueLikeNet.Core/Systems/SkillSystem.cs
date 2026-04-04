@@ -112,7 +112,7 @@ public class SkillSystem
         {
             for (int dcy = -1; dcy <= 1; dcy++)
             {
-                var chunk = map.TryGetChunk(Position.FromCoords(cx + dcx, cy + dcy, cz));
+                var chunk = map.TryGetChunk(ChunkPosition.FromCoords(cx + dcx, cy + dcy, cz));
                 if (chunk == null) continue;
 
                 foreach (ref var monster in chunk.Monsters)

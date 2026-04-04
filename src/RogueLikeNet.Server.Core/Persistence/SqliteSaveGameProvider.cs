@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Server.Persistence;
 
@@ -209,7 +210,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         transaction.Commit();
     }
 
-    public ChunkSaveEntry? LoadChunk(string slotId, Position chunkPos)
+    public ChunkSaveEntry? LoadChunk(string slotId, ChunkPosition chunkPos)
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
         using var cmd = _conn.CreateCommand();

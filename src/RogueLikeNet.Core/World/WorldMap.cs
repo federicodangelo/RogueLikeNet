@@ -229,7 +229,7 @@ public class WorldMap
         Debug.Assert(false, $"NPC entity {entityId} not found in old chunk at {oldC} when moving.");
     }
 
-    public bool ExistsChunk(Position chunkPos, Generation.IDungeonGenerator generator)
+    public bool ExistsChunk(ChunkPosition chunkPos, Generation.IDungeonGenerator generator)
     {
         long key = chunkPos.Pack();
         if (_chunks.ContainsKey(key))
@@ -243,7 +243,7 @@ public class WorldMap
         return exists;
     }
 
-    public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(Position chunkPos, Generation.IDungeonGenerator generator)
+    public (Chunk Chunk, Generation.GenerationResult? NewlyGenerated) GetOrCreateChunk(ChunkPosition chunkPos, Generation.IDungeonGenerator generator)
     {
         long key = chunkPos.Pack();
         if (_chunks.TryGetValue(key, out var chunk))
@@ -256,13 +256,13 @@ public class WorldMap
     }
 
 
-    public Chunk? TryGetChunk(Position chunkPos)
+    public Chunk? TryGetChunk(ChunkPosition chunkPos)
     {
         long key = chunkPos.Pack();
         return _chunks.TryGetValue(key, out var chunk) ? chunk : null;
     }
 
-    public Chunk GetChunk(Position chunkPos)
+    public Chunk GetChunk(ChunkPosition chunkPos)
     {
         long key = chunkPos.Pack();
         if (!_chunks.TryGetValue(key, out var chunk))
@@ -275,8 +275,7 @@ public class WorldMap
         var c = Chunk.WorldToChunkCoord(p);
         var chunk = TryGetChunk(c);
         if (chunk == null) return default;
-        int lx = p.X - c.X * Chunk.Size;
-        int ly = p.Y - c.Y * Chunk.Size;
+        if (!chunk.WorldToLocal(p.X, p.Y, out var lx, out var ly)) return default;
         return chunk.Tiles[lx, ly];
     }
 
@@ -297,8 +296,7 @@ public class WorldMap
         var c = Chunk.WorldToChunkCoord(pos);
         var chunk = TryGetChunk(c);
         if (chunk == null) return;
-        int lx = pos.X - c.X * Chunk.Size;
-        int ly = pos.Y - c.Y * Chunk.Size;
+        if (!chunk.WorldToLocal(pos.X, pos.Y, out var lx, out var ly)) return;
 
         bool wasDynamic = IsDynamicTile(chunk.Tiles[lx, ly]);
         bool isDynamic = IsDynamicTile(tile);
@@ -340,7 +338,7 @@ public class WorldMap
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
 
     /// <summary>Removes a chunk from the loaded set. Does not save — caller should save before calling.</summary>
-    public void UnloadChunk(Position chunkPos)
+    public void UnloadChunk(ChunkPosition chunkPos)
     {
         long key = chunkPos.Pack();
         _chunks.Remove(key);
@@ -390,7 +388,7 @@ public class WorldMap
     public bool IsDynamicTileTracked(Position pos)
     {
         var c = Chunk.WorldToChunkCoord(pos);
-        long chunkKey = Position.PackCoord(c);
+        long chunkKey = c.Pack();
         if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set)) return false;
         return set.Contains(pos.Pack());
     }
@@ -406,7 +404,7 @@ public class WorldMap
     private void TrackDynamicTile(Position pos)
     {
         var c = Chunk.WorldToChunkCoord(pos);
-        long chunkKey = Position.PackCoord(c);
+        long chunkKey = c.Pack();
         if (!_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
         {
             set = new HashSet<long>();
@@ -418,7 +416,7 @@ public class WorldMap
     private void UntrackDynamicTile(Position pos)
     {
         var c = Chunk.WorldToChunkCoord(pos);
-        long chunkKey = Position.PackCoord(c);
+        long chunkKey = c.Pack();
         if (_dynamicTilesByChunk.TryGetValue(chunkKey, out var set))
         {
             set.Remove(pos.Pack());
@@ -466,9 +464,8 @@ public class WorldMap
             var c = Chunk.WorldToChunkCoord(p);
             var chunk = TryGetChunk(c);
             if (chunk == null) { UntrackDynamicTile(p); continue; }
+            if (!chunk.WorldToLocal(p.X, p.Y, out var lx, out var ly)) { UntrackDynamicTile(p); continue; }
 
-            int lx = p.X - c.X * Chunk.Size;
-            int ly = p.Y - c.Y * Chunk.Size;
             ref var tile = ref chunk.Tiles[lx, ly];
 
             if (IsDoor(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0)

@@ -224,7 +224,7 @@ public class GameServer : IDisposable
     private void StartEngine()
     {
         _logWriter.WriteLine($"[Server] Starting game engine...");
-        _engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        _engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         _engineStarted = true;
     }
 
@@ -448,8 +448,8 @@ public class GameServer : IDisposable
             var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
             if (savedPlayer != null)
             {
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ));
-                _engine.EnsureChunkLoaded(Position.FromCoords(cx, cy, cz));
+                var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ));
+                _engine.EnsureChunkLoaded(chunkPos);
 
                 ref var player = ref PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
                 conn.PlayerEntityId = player.Id;
@@ -683,19 +683,19 @@ public class GameServer : IDisposable
 
         UpdateChunkViewTracking(currentTick);
 
-        var toUnload = new List<(int cx, int cy, int cz, long key)>();
+        var toUnload = new List<(ChunkPosition chunkPos, long key)>();
         foreach (var (key, lastViewed) in _chunkLastViewedTick)
         {
             if (currentTick - lastViewed >= ChunkUnloadIdleTicks)
             {
-                var (cx, cy, cz) = Position.UnpackCoord(key);
-                toUnload.Add((cx, cy, cz, key));
+                var chunkPos = ChunkPosition.UnpackCoord(key);
+                toUnload.Add((chunkPos, key));
             }
         }
 
-        foreach (var (cx, cy, cz, key) in toUnload)
+        foreach (var (chunkPos, key) in toUnload)
         {
-            var chunk = _engine.WorldMap.TryGetChunk(Position.FromCoords(cx, cy, cz));
+            var chunk = _engine.WorldMap.TryGetChunk(chunkPos);
             if (chunk == null)
             {
                 _chunkLastViewedTick.Remove(key);
@@ -705,19 +705,19 @@ public class GameServer : IDisposable
             // Save before unloading
             var entry = new ChunkSaveEntry
             {
-                ChunkX = cx,
-                ChunkY = cy,
-                ChunkZ = cz,
+                ChunkX = chunk.ChunkPosition.X,
+                ChunkY = chunk.ChunkPosition.Y,
+                ChunkZ = chunk.ChunkPosition.Z,
                 TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
                 EntityData = EntitySerializer.SerializeEntities(chunk),
             };
             _saveProvider.SaveChunks(_currentSlotId, [entry]);
 
-            _engine.DestroyEntitiesInChunk(Position.FromCoords(cx, cy, cz));
-            _engine.WorldMap.UnloadChunk(Position.FromCoords(cx, cy, cz));
+            _engine.DestroyEntitiesInChunk(chunkPos);
+            _engine.WorldMap.UnloadChunk(chunkPos);
             _chunkLastViewedTick.Remove(key);
 
-            _logWriter.WriteLine($"[Server] Unloaded chunk ({cx},{cy},{cz})");
+            _logWriter.WriteLine($"[Server] Unloaded chunk {chunkPos}");
         }
     }
 
@@ -835,7 +835,7 @@ public class GameServer : IDisposable
 
         var chunkDelta =
             shouldSendChunks ?
-                GameStateSerializer.SerializeChunksDelta(_engine, player.Position.X, player.Position.Y, player.Position.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                GameStateSerializer.SerializeChunksDelta(_engine, player.Position, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
                 new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
 
         if (chunkDelta.NewChunks.Length > 0)

@@ -10,8 +10,8 @@ public class BiomePaletteTests
     public void GetBiomeForChunk_ReturnsDeterministicResult()
     {
         var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(10, 20, Position.DefaultZ));
-        var biome1 = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, cy, 0), 42);
-        var biome2 = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, cy, 0), 42);
+        var biome1 = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
+        var biome2 = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
         Assert.Equal(biome1, biome2);
     }
 
@@ -20,7 +20,7 @@ public class BiomePaletteTests
     {
         string[] validNames = ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
         var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(5, 5, Position.DefaultZ));
-        var biome = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, cy, 0), 42);
+        var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
         string name = BiomeDefinitions.GetBiomeName(biome);
         Assert.Contains(name, validNames);
     }
@@ -33,7 +33,7 @@ public class BiomePaletteTests
             for (int y = 0; y < 500; y += 64)
             {
                 var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, Position.DefaultZ));
-                biomes.Add(BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, cy, 0), 42));
+                biomes.Add(BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42));
             }
 
         Assert.True(biomes.Count >= 2, $"Expected multiple biomes, got: {string.Join(", ", biomes)}");
@@ -47,8 +47,8 @@ public class BiomePaletteTests
         Assert.Equal(cx1, cx2);
         Assert.Equal(cy1, cy2);
         Assert.Equal(
-            BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx1, cy1, 0), 42),
-            BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx2, cy2, 0), 42));
+            BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx1, cy1, 0), 42),
+            BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx2, cy2, 0), 42));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class BiomePaletteTests
     {
         var biomes = new HashSet<BiomeType>();
         for (long seed = 0; seed < 50; seed++)
-            biomes.Add(BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(0, 0, 0), seed));
+            biomes.Add(BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(0, 0, 0), seed));
 
         Assert.True(biomes.Count >= 2, $"Different seeds should produce different biomes, got: {string.Join(", ", biomes)}");
     }

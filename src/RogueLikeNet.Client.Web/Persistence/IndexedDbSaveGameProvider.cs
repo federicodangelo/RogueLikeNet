@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
 using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Client.Web.Persistence;
@@ -168,7 +169,7 @@ public class IndexedDbSaveGameProvider : ISaveGameProvider
         FireAndForget(JsIndexedDb.SaveChunks(slotId, json));
     }
 
-    public ChunkSaveEntry? LoadChunk(string slotId, Position chunkPos)
+    public ChunkSaveEntry? LoadChunk(string slotId, ChunkPosition chunkPos)
     {
         if (!_chunks.TryGetValue(slotId, out var dict))
             return null;

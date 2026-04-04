@@ -12,7 +12,7 @@ public class BspDungeonGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new BspDungeonGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -26,8 +26,8 @@ public class BspDungeonGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new BspDungeonGenerator(42);
-        var result1 = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
-        var result2 = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result1 = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var result2 = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -38,7 +38,7 @@ public class BspDungeonGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new BspDungeonGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -56,10 +56,10 @@ public class BspDungeonGeneratorTests
         Chunk? tintedChunk = null;
         for (int cx = 0; cx < 20; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome != BiomeType.Stone)
             {
-                var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+                var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
                 tintedChunk = result.Chunk;
                 break;
             }
@@ -88,7 +88,7 @@ public class BspDungeonGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
@@ -109,10 +109,10 @@ public class BspDungeonGeneratorTests
         bool foundLiquid = false;
         for (int cx = 0; cx < 50 && !foundLiquid; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(Position.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (BiomeDefinitions.GetLiquid(biome) == null) continue;
 
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size && !foundLiquid; x++)
                 for (int y = 0; y < Chunk.Size && !foundLiquid; y++)
                     if (result.Chunk.Tiles[x, y].Type is TileType.Water or TileType.Lava)
@@ -128,7 +128,7 @@ public class BspDungeonGeneratorTests
         var gen = new BspDungeonGenerator(42);
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {

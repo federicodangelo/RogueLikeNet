@@ -14,7 +14,7 @@ public class MovementSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -107,7 +107,7 @@ public class MovementSystemTests
 
         // Find a non-walkable tile
         int wallX = -1, wallY = -1;
-        var chunk = engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
                 if (chunk.Tiles[x, y].Type == TileType.Blocked)

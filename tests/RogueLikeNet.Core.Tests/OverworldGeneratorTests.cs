@@ -12,7 +12,7 @@ public class OverworldGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -26,7 +26,7 @@ public class OverworldGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -40,8 +40,8 @@ public class OverworldGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new OverworldGenerator(42);
-        var result1 = gen.Generate(Position.FromCoords(3, -2, Position.DefaultZ));
-        var result2 = gen.Generate(Position.FromCoords(3, -2, Position.DefaultZ));
+        var result1 = gen.Generate(ChunkPosition.FromCoords(3, -2, Position.DefaultZ));
+        var result2 = gen.Generate(ChunkPosition.FromCoords(3, -2, Position.DefaultZ));
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -59,7 +59,7 @@ public class OverworldGeneratorTests
         int totalMonsters = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             totalMonsters += result.Monsters.Count;
         }
 
@@ -72,8 +72,8 @@ public class OverworldGeneratorTests
         var gen = new OverworldGenerator(42);
 
         // Generate two horizontally adjacent chunks
-        var left = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ)).Chunk;
-        var right = gen.Generate(Position.FromCoords(1, 0, Position.DefaultZ)).Chunk;
+        var left = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ)).Chunk;
+        var right = gen.Generate(ChunkPosition.FromCoords(1, 0, Position.DefaultZ)).Chunk;
 
         // Check border tiles: the rightmost column of 'left' vs leftmost column of 'right'
         // should not be a solid wall barrier. Count matching floor/wall patterns.
@@ -95,8 +95,8 @@ public class OverworldGeneratorTests
     {
         var gen = new OverworldGenerator(42);
 
-        var top = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ)).Chunk;
-        var bottom = gen.Generate(Position.FromCoords(0, 1, Position.DefaultZ)).Chunk;
+        var top = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ)).Chunk;
+        var bottom = gen.Generate(ChunkPosition.FromCoords(0, 1, Position.DefaultZ)).Chunk;
 
         int topEdgeFloors = 0;
         int bottomEdgeFloors = 0;
@@ -114,7 +114,7 @@ public class OverworldGeneratorTests
     public void Generate_NoVoidTiles()
     {
         var gen = new OverworldGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -128,7 +128,7 @@ public class OverworldGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 5; cx++)
         {
-            var result = gen.Generate(Position.FromCoords(cx, 0, Position.DefaultZ));
+            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
@@ -146,8 +146,8 @@ public class OverworldGeneratorTests
     {
         var gen1 = new OverworldGenerator(42);
         var gen2 = new OverworldGenerator(99999);
-        var result1 = gen1.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
-        var result2 = gen2.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result1 = gen1.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var result2 = gen2.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int differences = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -166,7 +166,7 @@ public class OverworldGeneratorTests
         // Scan a grid of chunks; at least some should have caves
         for (int cx = -10; cx <= 10; cx++)
             for (int cy = -10; cy <= 10; cy++)
-                if (gen.Exists(Position.FromCoords(cx, cy, Position.DefaultZ - 1)))
+                if (gen.Exists(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ - 1)))
                     caveCount++;
 
         Assert.True(caveCount > 0, "Some chunks should have caves at DefaultZ - 1");
@@ -179,7 +179,7 @@ public class OverworldGeneratorTests
         var gen = new OverworldGenerator(42);
         for (int cx = -5; cx <= 5; cx++)
             for (int cy = -5; cy <= 5; cy++)
-                Assert.False(gen.Exists(Position.FromCoords(cx, cy, Position.DefaultZ - 2)));
+                Assert.False(gen.Exists(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ - 2)));
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public class OverworldGeneratorTests
         bool found = false;
         for (int cx = -20; cx <= 20 && !found; cx++)
             for (int cy = -20; cy <= 20 && !found; cy++)
-                if (gen.Exists(Position.FromCoords(cx, cy, Position.DefaultZ - 1)))
+                if (gen.Exists(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ - 1)))
                 {
                     caveChunk = (cx, cy);
                     found = true;
@@ -200,7 +200,7 @@ public class OverworldGeneratorTests
 
         Assert.True(found, "Should find at least one cave chunk in a 41x41 grid");
 
-        var result = gen.Generate(Position.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ - 1));
+        var result = gen.Generate(ChunkPosition.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ - 1));
 
         // Should have an up-stair
         int upStairs = 0;
@@ -230,7 +230,7 @@ public class OverworldGeneratorTests
         bool found = false;
         for (int cx = -20; cx <= 20 && !found; cx++)
             for (int cy = -20; cy <= 20 && !found; cy++)
-                if (gen.Exists(Position.FromCoords(cx, cy, Position.DefaultZ - 1)))
+                if (gen.Exists(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ - 1)))
                 {
                     caveChunk = (cx, cy);
                     found = true;
@@ -238,7 +238,7 @@ public class OverworldGeneratorTests
 
         Assert.True(found);
 
-        var surface = gen.Generate(Position.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ));
+        var surface = gen.Generate(ChunkPosition.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ));
 
         // The surface chunk should have a StairsDown at the entrance
         int downStairs = 0;
@@ -260,7 +260,7 @@ public class OverworldGeneratorTests
         bool found = false;
         for (int cx = -20; cx <= 20 && !found; cx++)
             for (int cy = -20; cy <= 20 && !found; cy++)
-                if (gen.Exists(Position.FromCoords(cx, cy, Position.DefaultZ - 1)))
+                if (gen.Exists(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ - 1)))
                 {
                     caveChunk = (cx, cy);
                     found = true;
@@ -268,8 +268,8 @@ public class OverworldGeneratorTests
 
         Assert.True(found);
 
-        var surface = gen.Generate(Position.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ));
-        var cave = gen.Generate(Position.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ - 1));
+        var surface = gen.Generate(ChunkPosition.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ));
+        var cave = gen.Generate(ChunkPosition.FromCoords(caveChunk.cx, caveChunk.cy, Position.DefaultZ - 1));
 
         // Find StairsDown on surface
         (int x, int y) surfaceStair = default;

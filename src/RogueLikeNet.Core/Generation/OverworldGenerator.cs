@@ -72,7 +72,7 @@ public class OverworldGenerator : IDungeonGenerator
         _caveNoise = new PerlinNoise(_seed ^ 0x7A3B9E1D4C5F6A8BL);
     }
 
-    public bool Exists(Position chunkPos)
+    public bool Exists(ChunkPosition chunkPos)
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
         if (chunkZ == Position.DefaultZ)
@@ -96,7 +96,7 @@ public class OverworldGenerator : IDungeonGenerator
         return height;
     }
 
-    public GenerationResult Generate(Position chunkPos)
+    public GenerationResult Generate(ChunkPosition chunkPos)
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
         if (chunkZ == CaveZ)
@@ -323,7 +323,7 @@ public class OverworldGenerator : IDungeonGenerator
     /// <summary>
     /// Generates a BSP cave dungeon at DefaultZ - 1 with only an up-stair at the entrance position.
     /// </summary>
-    private GenerationResult GenerateCave(Position chunkPos)
+    private GenerationResult GenerateCave(ChunkPosition chunkPos)
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
         var chunk = new Chunk(chunkPos);

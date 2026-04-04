@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.World;
 using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Server.Tests;
@@ -81,7 +82,7 @@ public class SqliteSaveGameProviderTests : IDisposable
 
         Assert.Null(_provider.GetSaveSlot(slot.SlotId));
         Assert.Null(_provider.LoadWorldMeta(slot.SlotId));
-        Assert.Null(_provider.LoadChunk(slot.SlotId, Position.FromCoords(0, 0, 127)));
+        Assert.Null(_provider.LoadChunk(slot.SlotId, ChunkPosition.FromCoords(0, 0, 127)));
         Assert.Null(_provider.LoadPlayer(slot.SlotId, "Hero"));
     }
 
@@ -123,7 +124,7 @@ public class SqliteSaveGameProviderTests : IDisposable
             TileData = [10, 20, 30],
             EntityData = "[{\"Type\":\"Monster\"}]",
         }]);
-        var loaded = _provider.LoadChunk(slot.SlotId, Position.FromCoords(1, 2, Position.DefaultZ));
+        var loaded = _provider.LoadChunk(slot.SlotId, ChunkPosition.FromCoords(1, 2, Position.DefaultZ));
         Assert.NotNull(loaded);
         Assert.Equal([10, 20, 30], loaded.TileData);
         Assert.Contains("Monster", loaded.EntityData);
@@ -135,14 +136,14 @@ public class SqliteSaveGameProviderTests : IDisposable
         var slot = _provider.CreateSaveSlot("Test", 42, "overworld");
         _provider.SaveChunks(slot.SlotId, [new ChunkSaveEntry { ChunkX = 0, ChunkY = 0, ChunkZ = 0, TileData = [1] }]);
         _provider.SaveChunks(slot.SlotId, [new ChunkSaveEntry { ChunkX = 0, ChunkY = 0, ChunkZ = 0, TileData = [2] }]);
-        var loaded = _provider.LoadChunk(slot.SlotId, Position.FromCoords(0, 0, 0));
+        var loaded = _provider.LoadChunk(slot.SlotId, ChunkPosition.FromCoords(0, 0, 0));
         Assert.Equal([2], loaded!.TileData);
     }
 
     [Fact]
     public void LoadChunk_ReturnsNull_WhenMissing()
     {
-        Assert.Null(_provider.LoadChunk("nonexistent", Position.FromCoords(0, 0, 0)));
+        Assert.Null(_provider.LoadChunk("nonexistent", ChunkPosition.FromCoords(0, 0, 0)));
     }
 
     [Fact]

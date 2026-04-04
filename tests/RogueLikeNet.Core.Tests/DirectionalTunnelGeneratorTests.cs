@@ -11,7 +11,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_ProducesFloorTiles()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int floorCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -25,7 +25,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_HasWalls()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int wallCount = 0;
         for (int x = 0; x < Chunk.Size; x++)
@@ -39,8 +39,8 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_IsDeterministic()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result1 = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
-        var result2 = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result1 = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var result2 = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
@@ -51,7 +51,7 @@ public class DirectionalTunnelGeneratorTests
     public void Generate_ProducesMonsters()
     {
         var gen = new DirectionalTunnelGenerator(42);
-        var result = gen.Generate(Position.FromCoords(0, 0, Position.DefaultZ));
+        var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         Assert.True(result.Monsters.Count > 0, "Tunnel should produce monsters");
     }

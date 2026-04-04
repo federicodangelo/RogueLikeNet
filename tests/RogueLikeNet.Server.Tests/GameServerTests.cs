@@ -644,7 +644,7 @@ public class GameServerTests
     public void GameStateSerializer_SerializeChunk_ProducesValidMsg()
     {
         using var loop = new TestGameServer(42, _gen);
-        var chunk = loop.Engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = loop.Engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         var msg = GameStateSerializer.SerializeChunk(chunk);
 

@@ -68,7 +68,7 @@ public class GameEngine : IDisposable
         _worldRng = new SeededRandom(worldSeed);
     }
 
-    public Chunk? EnsureChunkLoadedOrDoesntExist(Position chunkPos)
+    public Chunk? EnsureChunkLoadedOrDoesntExist(ChunkPosition chunkPos)
     {
         if (!_worldMap.ExistsChunk(chunkPos, _generator))
             return null;
@@ -79,7 +79,7 @@ public class GameEngine : IDisposable
     /// Ensures the chunk at the given chunk coords is loaded/generated.
     /// Spawns entities from generation results if newly created.
     /// </summary>
-    public Chunk EnsureChunkLoaded(Position chunkPos)
+    public Chunk EnsureChunkLoaded(ChunkPosition chunkPos)
     {
         var (chunk, genResult) = _worldMap.GetOrCreateChunk(chunkPos, _generator);
 
@@ -364,7 +364,7 @@ public class GameEngine : IDisposable
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = _worldMap.TryGetChunk(Position.FromCoords(cx + dx, cy + dy, cz));
+                var chunk = _worldMap.TryGetChunk(ChunkPosition.FromCoords(cx + dx, cy + dy, cz));
                 if (chunk == null) continue;
                 foreach (var item in chunk.GroundItems)
                     if (!item.IsDestroyed) occupied.Add(Position.PackCoord(item.Position.X, item.Position.Y, item.Position.Z));
@@ -420,7 +420,7 @@ public class GameEngine : IDisposable
     /// </summary>
     public Position FindSpawnPosition()
     {
-        var chunk = EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         if (_generatorSpawnHint.HasValue)
         {
@@ -491,7 +491,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Clears all entities within the given chunk (used before unloading).
     /// </summary>
-    public void DestroyEntitiesInChunk(Position chunkPos)
+    public void DestroyEntitiesInChunk(ChunkPosition chunkPos)
     {
         var chunk = _worldMap.TryGetChunk(chunkPos);
         chunk?.ClearEntities();

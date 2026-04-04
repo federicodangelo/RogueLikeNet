@@ -13,7 +13,7 @@ public class BuildingSystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 

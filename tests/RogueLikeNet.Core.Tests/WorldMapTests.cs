@@ -31,7 +31,7 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (chunk, genResult) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
+        var (chunk, genResult) = map.GetOrCreateChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ), gen);
         Assert.NotNull(chunk);
         Assert.Equal(0, chunk.ChunkPosition.X);
         Assert.Equal(0, chunk.ChunkPosition.Y);
@@ -43,8 +43,8 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        var (c1, _) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
-        var (c2, genResult2) = map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
+        var (c1, _) = map.GetOrCreateChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ), gen);
+        var (c2, genResult2) = map.GetOrCreateChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ), gen);
         Assert.Same(c1, c2);
         Assert.Null(genResult2);
     }
@@ -53,7 +53,7 @@ public class WorldMapTests
     public void TryGetChunk_ReturnsNullForMissing()
     {
         var map = new WorldMap(42);
-        Assert.Null(map.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ)));
+        Assert.Null(map.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ)));
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class WorldMapTests
     {
         var map = new WorldMap(42);
         var gen = new BspDungeonGenerator(42);
-        map.GetOrCreateChunk(Position.FromCoords(0, 0, Position.DefaultZ), gen);
+        map.GetOrCreateChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ), gen);
         bool hasNonVoid = false;
         for (int x = 0; x < Chunk.Size && !hasNonVoid; x++)
             for (int y = 0; y < Chunk.Size && !hasNonVoid; y++)
@@ -102,7 +102,7 @@ public class WorldMapTests
     public void OpenDoor_SetsExtraToGraceTicks()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
@@ -117,7 +117,7 @@ public class WorldMapTests
     public void OpenDoor_TrackedAsDynamicTile()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
@@ -132,7 +132,7 @@ public class WorldMapTests
     public void DoorClosesAfterExactGraceTicks()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
@@ -160,7 +160,7 @@ public class WorldMapTests
     public void DoorStaysOpenWhenOccupied()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
@@ -189,7 +189,7 @@ public class WorldMapTests
     public void DoorClosesAfterEntityLeaves()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
@@ -229,7 +229,7 @@ public class WorldMapTests
     public void SaveLoad_OpenDoor_PreservesStateAndAutoCloses()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
         map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
@@ -243,7 +243,7 @@ public class WorldMapTests
 
         // Simulate save/load
         var newMap = new WorldMap(42);
-        var newChunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var newChunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
                 newChunk.Tiles[x, y] = chunk.Tiles[x, y];
@@ -267,7 +267,7 @@ public class WorldMapTests
     public void SetTile_TracksAndUntracksDynamicTiles()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeFloor();
         map.AddChunk(chunk);
 
@@ -286,7 +286,7 @@ public class WorldMapTests
     public void AddChunk_ScansExistingOpenDoors()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         var openDoor = MakeClosedDoor();
         openDoor.PlaceableItemExtra = 10;
@@ -303,14 +303,14 @@ public class WorldMapTests
     public void UnloadChunk_ClearsDynamicTileTracking()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         map.AddChunk(chunk);
 
         map.OpenDoor(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
-        map.UnloadChunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        map.UnloadChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
@@ -318,7 +318,7 @@ public class WorldMapTests
     public void MultipleDoors_IndependentTimers()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         chunk.Tiles[5, 5] = MakeClosedDoor();
         chunk.Tiles[10, 10] = MakeClosedDoor();
         map.AddChunk(chunk);
@@ -352,8 +352,8 @@ public class WorldMapTests
     public void MigrateMonster_MarksBothChunksDirty()
     {
         var map = new WorldMap(42);
-        var chunkA = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
-        var chunkB = new Chunk(Position.FromCoords(1, 0, Position.DefaultZ));
+        var chunkA = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var chunkB = new Chunk(ChunkPosition.FromCoords(1, 0, Position.DefaultZ));
         map.AddChunk(chunkA);
         map.AddChunk(chunkB);
 
@@ -388,8 +388,8 @@ public class WorldMapTests
     public void MigrateNpc_MarksBothChunksDirty()
     {
         var map = new WorldMap(42);
-        var chunkA = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
-        var chunkB = new Chunk(Position.FromCoords(1, 0, Position.DefaultZ));
+        var chunkA = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var chunkB = new Chunk(ChunkPosition.FromCoords(1, 0, Position.DefaultZ));
         map.AddChunk(chunkA);
         map.AddChunk(chunkB);
 
@@ -418,7 +418,7 @@ public class WorldMapTests
     public void MigrateMonster_SameChunk_Dirty()
     {
         var map = new WorldMap(42);
-        var chunk = new Chunk(Position.FromCoords(0, 0, Position.DefaultZ));
+        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         map.AddChunk(chunk);
 
         var monster = new MonsterEntity(map.AllocateEntityId())

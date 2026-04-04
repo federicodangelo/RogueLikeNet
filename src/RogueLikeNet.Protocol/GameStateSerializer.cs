@@ -45,14 +45,14 @@ public static class GameStateSerializer
         return msg;
     }
 
-    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, int worldX, int worldY, int worldZ)
+    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, Position pos)
     {
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
+        var chunkPos = Chunk.WorldToChunkCoord(pos);
         var chunks = new List<ChunkDataMsg>();
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
             {
-                var chunk = engine.EnsureChunkLoaded(Position.FromCoords(cx + dx, cy + dy, cz));
+                var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(chunkPos.X + dx, chunkPos.Y + dy, chunkPos.Z));
                 chunks.Add(SerializeChunk(chunk));
             }
         return chunks.ToArray();
@@ -66,26 +66,26 @@ public static class GameStateSerializer
     /// the client can discard them.
     /// </summary>
     public static ChunkDeltaResult SerializeChunksDelta(
-        GameEngine engine, int worldX, int worldY, int worldZ, ChunkTracker tracker,
+        GameEngine engine, Position pos, ChunkTracker tracker,
         int visibleChunks, int maxChunksToSerialize = int.MaxValue)
     {
         tracker.UpdateCapacity(visibleChunks);
         var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
+        var chunkPos = Chunk.WorldToChunkCoord(pos);
         var newChunks = new List<ChunkDataMsg>();
 
         foreach (var z in PointsAtDistance.GetZLevels(1))
         {
-            int ccz = cz + z;
+            int ccz = chunkPos.Z + z;
             if (ccz < 0 || ccz > 255) continue;
             foreach (var point in PointsAtDistance.GetPoints(chunkRange))
             {
-                int ccx = cx + point.X, ccy = cy + point.Y;
-                long key = Position.PackCoord(ccx, ccy, ccz);
+                int ccx = chunkPos.X + point.X, ccy = chunkPos.Y + point.Y;
+                long key = ChunkPosition.PackCoord(ccx, ccy, ccz);
 
                 if (tracker.Touch(key))
                 {
-                    var chunk = engine.EnsureChunkLoadedOrDoesntExist(Position.FromCoords(ccx, ccy, ccz));
+                    var chunk = engine.EnsureChunkLoadedOrDoesntExist(ChunkPosition.FromCoords(ccx, ccy, ccz));
                     if (chunk != null)
                     {
                         newChunks.Add(SerializeChunk(chunk));

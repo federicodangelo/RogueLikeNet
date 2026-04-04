@@ -12,7 +12,7 @@ public class InventorySystemTests
     private GameEngine CreateEngine()
     {
         var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(Position.FromCoords(0, 0, Position.DefaultZ));
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         return engine;
     }
 
@@ -63,7 +63,7 @@ public class InventorySystemTests
         Assert.Empty(player.Inventory.Items!);
 
         // Original entity was destroyed on pickup; drop creates a new ground entity
-        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         int groundCount = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed && gi.Position.X == sx && gi.Position.Y == sy);
         Assert.Equal(1, groundCount);
     }
@@ -708,7 +708,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Item should land at player position since nothing is there
-        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         var positions = chunk.GroundItems.ToArray().Where(gi => !gi.IsDestroyed).Select(gi => (gi.Position.X, gi.Position.Y)).ToList();
         Assert.Contains((sx, sy), positions);
     }
@@ -726,7 +726,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Count ground items before drop
-        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Give player an item to drop
@@ -753,7 +753,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Count items before dropping
-        var chunk = engine.WorldMap.TryGetChunk(Position.FromCoords(0, 0, Position.DefaultZ))!;
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Drop 3 items — each should land at a different position
