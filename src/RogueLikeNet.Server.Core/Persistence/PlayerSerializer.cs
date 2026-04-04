@@ -31,9 +31,9 @@ public static class PlayerSerializer
             ClassId = player.ClassData.ClassId,
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
-            PositionX = player.X,
-            PositionY = player.Y,
-            PositionZ = player.Z,
+            PositionX = player.Position.X,
+            PositionY = player.Position.Y,
+            PositionZ = player.Position.Z,
             HealthCurrent = player.Health.Current,
             HealthMax = player.Health.Max,
             Attack = player.CombatStats.Attack,
@@ -92,10 +92,10 @@ public static class PlayerSerializer
     /// Restores a player entity in the game engine from saved data.
     /// Returns the spawned PlayerEntity.
     /// </summary>
-    public static PlayerEntity RestorePlayer(GameEngine engine, long connectionId, PlayerSaveData data)
+    public static ref PlayerEntity RestorePlayer(GameEngine engine, long connectionId, PlayerSaveData data)
     {
         // Spawn shell player (gets default stats)
-        var player = engine.SpawnPlayer(connectionId, data.PositionX, data.PositionY, data.PositionZ, data.ClassId);
+        ref var player = ref engine.SpawnPlayer(connectionId, data.PositionX, data.PositionY, data.PositionZ, data.ClassId);
 
         // Override with saved state
         player.Health.Current = data.HealthCurrent;
@@ -172,7 +172,7 @@ public static class PlayerSerializer
             }
         }
 
-        return player;
+        return ref player;
     }
 
     private static ItemDataJson ToItemJson(ItemData item) => new()

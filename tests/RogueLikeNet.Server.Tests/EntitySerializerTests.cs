@@ -37,13 +37,14 @@ public class EntitySerializerTests : IDisposable
         var monster = _engine.SpawnMonster(1, 2, Z, md);
 
         // Tweak runtime state so we can verify it survives the round-trip
-        monster.Health.Current = 30;
-        monster.AI.StateId = 2;
-        monster.AI.PatrolX = 10;
-        monster.AI.PatrolY = 20;
-        monster.AI.AlertCooldown = 5;
-        monster.MoveDelay.Current = 3;
-        monster.AttackDelay.Current = 7;
+        ref var monsterRef = ref _engine.WorldMap.GetMonsterRef(monster.Id);
+        monsterRef.Health.Current = 30;
+        monsterRef.AI.StateId = 2;
+        monsterRef.AI.PatrolX = 10;
+        monsterRef.AI.PatrolY = 20;
+        monsterRef.AI.AlertCooldown = 5;
+        monsterRef.MoveDelay.Current = 3;
+        monsterRef.AttackDelay.Current = 7;
 
         var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
         var json = EntitySerializer.SerializeEntities(chunk);
@@ -56,8 +57,8 @@ public class EntitySerializerTests : IDisposable
 
         // Find the deserialized monster
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Monsters.FirstOrDefault(m => m.X == 1 && m.Y == 2 && m.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.Monsters.ToArray().FirstOrDefault(m => m.Position.X == 1 && m.Position.Y == 2 && m.Position.Z == Z);
+        Assert.NotEqual(0, found.Id);
 
         Assert.Equal(7, found!.MonsterData.MonsterTypeId);
         Assert.Equal(50, found.MonsterData.Health);
@@ -100,8 +101,8 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.GroundItems.FirstOrDefault(gi => gi.X == 4 && gi.Y == 5 && gi.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.GroundItems.ToArray().FirstOrDefault(gi => gi.Position.X == 4 && gi.Position.Y == 5 && gi.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.Equal(3, found!.Item.ItemTypeId);
         Assert.Equal(2, found.Item.Rarity);
@@ -118,8 +119,9 @@ public class EntitySerializerTests : IDisposable
         var node = _engine.SpawnResourceNode(3, 3, Z, def);
 
         // Damage the node to test HP preservation
-        node.Health.Current = 5;
-        node.AttackDelay.Current = 2;
+        ref var nodeRef = ref _engine.WorldMap.GetResourceNodeRef(node.Id);
+        nodeRef.Health.Current = 5;
+        nodeRef.AttackDelay.Current = 2;
 
         var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
         var json = EntitySerializer.SerializeEntities(chunk);
@@ -130,8 +132,8 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.ResourceNodes.FirstOrDefault(r => r.X == 3 && r.Y == 3 && r.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.ResourceNodes.ToArray().FirstOrDefault(r => r.Position.X == 3 && r.Position.Y == 3 && r.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.Equal(ResourceNodeDefinitions.CopperRock, found!.NodeData.NodeTypeId);
         Assert.Equal(def.ResourceItemTypeId, found.NodeData.ResourceItemTypeId);
@@ -148,7 +150,7 @@ public class EntitySerializerTests : IDisposable
     public void Element_RoundTrip_PreservesData()
     {
         var element = new DungeonElement(
-            new Position(6, 7, Z),
+            Position.FromCoords(6, 7, Z),
             new TileAppearance(99, 0xAABBCC, 0x112233),
             null
         );
@@ -163,8 +165,8 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Elements.FirstOrDefault(e => e.X == 6 && e.Y == 7 && e.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 6 && e.Position.Y == 7 && e.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.Equal(99, found!.Appearance.GlyphId);
         Assert.Equal(0xAABBCC, found.Appearance.FgColor);
@@ -175,7 +177,7 @@ public class EntitySerializerTests : IDisposable
     public void ElementWithLight_RoundTrip_PreservesData()
     {
         var element = new DungeonElement(
-            new Position(8, 9, Z),
+            Position.FromCoords(8, 9, Z),
             new TileAppearance(55, 0xFFCC66, 0x000000),
             new LightSource(5, 0xFFCC66)
         );
@@ -189,8 +191,8 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.Elements.FirstOrDefault(e => e.X == 8 && e.Y == 9 && e.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 8 && e.Position.Y == 9 && e.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.NotNull(found!.Light);
         Assert.Equal(5, found.Light!.Value.Radius);
@@ -202,9 +204,10 @@ public class EntitySerializerTests : IDisposable
     {
         var npc = _engine.SpawnTownNpc(2, 8, Z, "Blacksmith", 5, 10, 3);
 
-        npc.Health.Current = 8000;
-        npc.AI.StateId = 1;
-        npc.MoveDelay.Current = 2;
+        ref var npcRef = ref _engine.WorldMap.GetTownNpcRef(npc.Id);
+        npcRef.Health.Current = 8000;
+        npcRef.AI.StateId = 1;
+        npcRef.MoveDelay.Current = 2;
 
         var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
         var json = EntitySerializer.SerializeEntities(chunk);
@@ -215,8 +218,8 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        var found = chunk2.TownNpcs.FirstOrDefault(n => n.X == 2 && n.Y == 8 && n.Z == Z);
-        Assert.NotNull(found);
+        var found = chunk2.TownNpcs.ToArray().FirstOrDefault(n => n.Position.X == 2 && n.Position.Y == 8 && n.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.Equal("Blacksmith", found!.NpcData.Name);
         Assert.Equal(5, found.NpcData.TownCenterX);
@@ -238,12 +241,12 @@ public class EntitySerializerTests : IDisposable
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, 2, 2, Z);
         _engine.SpawnResourceNode(3, 3, Z, ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
         _engine.SpawnElement(new DungeonElement(
-            new Position(4, 4, Z),
+            Position.FromCoords(4, 4, Z),
             new TileAppearance(20, 0, 0),
             null
         ));
         _engine.SpawnElement(new DungeonElement(
-            new Position(5, 5, Z),
+            Position.FromCoords(5, 5, Z),
             new TileAppearance(30, 0, 0),
             new LightSource(3, 0xFFFFFF)
         ));
@@ -257,11 +260,11 @@ public class EntitySerializerTests : IDisposable
         EntitySerializer.DeserializeEntities(json, engine2);
 
         var chunk2 = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        int monsters = chunk2.Monsters.Count(m => !m.IsDead);
-        int items = chunk2.GroundItems.Count(gi => !gi.IsDead);
-        int nodes = chunk2.ResourceNodes.Count(r => !r.IsDead);
-        int elements = chunk2.Elements.Count();
-        int npcs = chunk2.TownNpcs.Count(n => !n.IsDead);
+        int monsters = chunk2.Monsters.ToArray().Count(m => !m.IsDead);
+        int items = chunk2.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
+        int nodes = chunk2.ResourceNodes.ToArray().Count(r => !r.IsDead);
+        int elements = chunk2.Elements.Length;
+        int npcs = chunk2.TownNpcs.ToArray().Count(n => !n.IsDead);
 
         Assert.True(monsters >= 1, $"Expected >= 1 monster, got {monsters}");
         Assert.True(items >= 1, $"Expected >= 1 item, got {items}");
@@ -301,7 +304,8 @@ public class EntitySerializerTests : IDisposable
     {
         var monster = _engine.SpawnMonster(1, 1, Z, new MonsterData { MonsterTypeId = 9999, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
 
-        monster.IsDead = true;
+        ref var monsterRef = ref _engine.WorldMap.GetMonsterRef(monster.Id);
+        monsterRef.Health.Current = 0;
 
         var chunk = _engine.WorldMap.TryGetChunk(0, 0, Z)!;
         var json = EntitySerializer.SerializeEntities(chunk);
@@ -359,10 +363,10 @@ public class EntitySerializerTests : IDisposable
 
         // 4. Verify all entity types were restored
         var loaded = engine2.WorldMap.TryGetChunk(0, 0, Z)!;
-        Assert.True(loaded.Monsters.Any(m => m.X == 1 && m.Y == 1), "Monster should be restored");
-        Assert.True(loaded.GroundItems.Any(gi => gi.X == 2 && gi.Y == 2), "Ground item should be restored");
-        Assert.True(loaded.ResourceNodes.Any(r => r.X == 3 && r.Y == 3), "Resource node should be restored");
-        Assert.True(loaded.TownNpcs.Any(n => n.X == 4 && n.Y == 4 && n.NpcData.Name == "Blacksmith"),
+        Assert.True(loaded.Monsters.ToArray().Any(m => m.Position.X == 1 && m.Position.Y == 1), "Monster should be restored");
+        Assert.True(loaded.GroundItems.ToArray().Any(gi => gi.Position.X == 2 && gi.Position.Y == 2), "Ground item should be restored");
+        Assert.True(loaded.ResourceNodes.ToArray().Any(r => r.Position.X == 3 && r.Position.Y == 3), "Resource node should be restored");
+        Assert.True(loaded.TownNpcs.ToArray().Any(n => n.Position.X == 4 && n.Position.Y == 4 && n.NpcData.Name == "Blacksmith"),
             "Town NPC should be restored");
     }
 }

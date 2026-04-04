@@ -56,9 +56,9 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
 
         // Spawn point: just inside the room entrance at the top
-        result.SpawnPosition = (worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ);
+        result.SpawnPosition = Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ);
         result.Elements.Add(new DungeonElement(
-            new Position(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ),
+            Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(20, TileDefinitions.ColorTorchFg)));
 
@@ -87,7 +87,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                 _ => TileDefinitions.ColorWhite,
             };
             result.Elements.Add(new DungeonElement(
-                new Position(wx, wy, chunkZ),
+                Position.FromCoords(wx, wy, chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, color),
                 new LightSource(4, color)));
         }
@@ -106,7 +106,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                     continue;
 
                 int rarityMult = 100 + rarity * 50;
-                result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
+                result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
                 {
                     ItemTypeId = def.TypeId,
                     Rarity = ItemDefinitions.CapRarity(def.Category, rarity),

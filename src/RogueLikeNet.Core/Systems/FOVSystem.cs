@@ -11,20 +11,21 @@ public class FOVSystem
 {
     public void Update(WorldMap map)
     {
-        foreach (var player in map.Players.Values)
+        foreach (ref var player in map.Players)
         {
             player.FOV.VisibleTiles ??= new HashSet<long>();
             player.FOV.VisibleTiles.Clear();
 
             var visibleTiles = player.FOV.VisibleTiles;
-            int px = player.X, py = player.Y, pz = player.Z, radius = player.FOV.Radius;
+            var p = player.Position;
+            var radius = player.FOV.Radius;
 
             ShadowCastFov.Compute(
-                px, py, radius,
-                isOpaque: (x, y) => !map.IsTransparent(x, y, pz),
+                p.X, p.Y, radius,
+                isOpaque: (x, y) => !map.IsTransparent(x, y, p.Z),
                 markVisible: (x, y) =>
                 {
-                    visibleTiles.Add(Position.PackCoord(x, y, pz));
+                    visibleTiles.Add(Position.PackCoord(x, y, p.Z));
                 });
         }
     }

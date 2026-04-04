@@ -30,7 +30,7 @@ public class GenerationResult
     /// Null means the engine should use its default floor-scan fallback.
     /// Only meaningful for chunk (0,0,OverworldZ) — other chunks are ignored.
     /// </summary>
-    public (int X, int Y, int Z)? SpawnPosition { get; set; }
+    public Position? SpawnPosition { get; set; }
 
     /// <summary>
     /// Raw JSON entity data from a saved chunk, to be deserialized after the chunk

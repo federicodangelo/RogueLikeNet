@@ -61,7 +61,8 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 
@@ -80,8 +81,8 @@ public class DoorMechanicsTests
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
-        Assert.Equal(sx, player.X);
-        Assert.Equal(sy, player.Y);
+        Assert.Equal(sx, player.Position.X);
+        Assert.Equal(sy, player.Position.Y);
     }
 
     [Fact]
@@ -89,7 +90,8 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 
@@ -120,7 +122,7 @@ public class DoorMechanicsTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(doorX, player.X);
+        Assert.Equal(doorX, player.Position.X);
 
         // Tick 3: Move past door
         player.MoveDelay.Current = 0;
@@ -128,7 +130,7 @@ public class DoorMechanicsTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(doorX + 1, player.X);
+        Assert.Equal(doorX + 1, player.Position.X);
 
         // Door should still be open during grace period
         Assert.True(PlaceableDefinitions.IsDoorOpen(
@@ -149,7 +151,8 @@ public class DoorMechanicsTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int doorX = sx + 1, doorY = sy;
 

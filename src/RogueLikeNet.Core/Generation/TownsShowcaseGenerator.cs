@@ -58,10 +58,10 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         // Spawn point for origin chunk
         if (chunkX == 0 && chunkY == 0)
         {
-            result.SpawnPosition = (worldOffsetX + 2, worldOffsetY + 2, chunkZ);
+            result.SpawnPosition = Position.FromCoords(worldOffsetX + 2, worldOffsetY + 2, chunkZ);
 
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + 2, worldOffsetY + 2, chunkZ),
+                Position.FromCoords(worldOffsetX + 2, worldOffsetY + 2, chunkZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(10, TileDefinitions.ColorTorchFg)));
         }

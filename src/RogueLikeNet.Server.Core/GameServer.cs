@@ -363,9 +363,9 @@ public class GameServer : IDisposable
                 if (_saveProvider != null && _currentSlotId != null && conn.PlayerEntityId.HasValue)
                 {
                     var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-                    if (player != null)
+                    if (player.HasValue)
                     {
-                        var playerData = PlayerSerializer.SerializePlayer(player, conn.PlayerName);
+                        var playerData = PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName);
                         _saveProvider.SavePlayers(_currentSlotId, [playerData]);
                     }
                 }
@@ -451,11 +451,11 @@ public class GameServer : IDisposable
                 var (cx, cy, cz) = Chunk.WorldToChunkCoord(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ);
                 _engine.EnsureChunkLoaded(cx, cy, cz);
 
-                var player = PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
+                ref var player = ref PlayerSerializer.RestorePlayer(_engine, connectionId, savedPlayer);
                 conn.PlayerEntityId = player.Id;
 
                 if (DebugGiveResources)
-                    _engine.GiveDebugResources(player);
+                    _engine.GiveDebugResources(ref player);
 
                 _engine.Tick();
                 ResetConnectionTracking(conn);
@@ -465,12 +465,12 @@ public class GameServer : IDisposable
         }
 
         // No saved player — spawn fresh
-        var (spawnX, spawnY, spawnZ) = _engine.FindSpawnPosition();
-        var newPlayer = _engine.SpawnPlayer(connectionId, spawnX, spawnY, spawnZ, classId);
+        var spawn = _engine.FindSpawnPosition();
+        ref var newPlayer = ref _engine.SpawnPlayer(connectionId, spawn, classId);
         conn.PlayerEntityId = newPlayer.Id;
 
         if (DebugGiveResources)
-            _engine.GiveDebugResources(newPlayer);
+            _engine.GiveDebugResources(ref newPlayer);
 
         _engine.Tick();
         ResetConnectionTracking(conn);
@@ -643,9 +643,9 @@ public class GameServer : IDisposable
             {
                 if (!conn.PlayerEntityId.HasValue) continue;
                 var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-                if (player != null)
+                if (player.HasValue)
                 {
-                    playerEntries.Add(PlayerSerializer.SerializePlayer(player, conn.PlayerName));
+                    playerEntries.Add(PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName));
                 }
             }
             if (playerEntries.Count > 0)
@@ -727,16 +727,16 @@ public class GameServer : IDisposable
         {
             if (!conn.PlayerEntityId.HasValue) continue;
             var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-            if (player == null || player.IsDead) continue;
+            if (!player.HasValue || player.Value.IsDead) continue;
 
-            var (pcx, pcy, pcz) = Chunk.WorldToChunkCoord(player.X, player.Y, player.Z);
+            var pc = Chunk.WorldToChunkCoord(player.Value.Position);
             int radius = conn.VisibleChunks;
 
             for (int dx = -radius; dx <= radius; dx++)
             {
                 for (int dy = -radius; dy <= radius; dy++)
                 {
-                    var key = Position.PackCoord(pcx + dx, pcy + dy, pcz);
+                    var key = Position.PackCoord(pc.X + dx, pc.Y + dy, pc.Z);
                     _chunkLastViewedTick[key] = currentTick;
                 }
             }
@@ -752,22 +752,27 @@ public class GameServer : IDisposable
         foreach (var conn in _connections.Values)
         {
             if (!conn.PlayerEntityId.HasValue) continue;
-            var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-            if (player == null || player.IsDead) continue;
 
             // Drain all queued inputs; keep only the latest one
             ClientInputMsg? latestInput = null;
             while (conn.InputQueue.TryDequeue(out var queued))
                 latestInput = queued;
 
-            if (latestInput != null)
+            if (latestInput == null) continue;
+
+            var entityId = conn.PlayerEntityId.Value;
+            foreach (ref var player in _engine.WorldMap.Players)
             {
+                if (player.Id != entityId) continue;
+                if (player.IsDead) break;
+
                 var input = latestInput;
                 player.Input.ActionType = input.ActionType;
                 player.Input.TargetX = input.TargetX;
                 player.Input.TargetY = input.TargetY;
                 player.Input.ItemSlot = input.ItemSlot;
                 player.Input.TargetSlot = input.TargetSlot;
+                break;
             }
         }
     }
@@ -778,7 +783,7 @@ public class GameServer : IDisposable
         {
             if (!conn.PlayerEntityId.HasValue) continue;
             var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-            if (player == null || player.IsDead) continue;
+            if (!player.HasValue || player.Value.IsDead) continue;
 
             try
             {
@@ -820,14 +825,14 @@ public class GameServer : IDisposable
 
     private WorldDeltaMsg BuildDelta(PlayerConnection conn, bool isSnapshot = false)
     {
-        var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!;
+        var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
 
         var ticksSinceLastSentChunks = _engine.CurrentTick - conn.LastSentChunksTick;
         var shouldSendChunks = isSnapshot || ticksSinceLastSentChunks >= MinTicksBetweenChunkResend;
 
         var chunkDelta =
             shouldSendChunks ?
-                GameStateSerializer.SerializeChunksDelta(_engine, player.X, player.Y, player.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                GameStateSerializer.SerializeChunksDelta(_engine, player.Position.X, player.Position.Y, player.Position.Z, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
                 new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
 
         if (chunkDelta.NewChunks.Length > 0)

@@ -17,25 +17,27 @@ public class BuildingSystemTests
         return engine;
     }
 
-    private PlayerEntity SpawnPlayerWithItem(GameEngine engine, int itemTypeId, int count = 1)
+    private int SpawnPlayerWithItem(GameEngine engine, int itemTypeId, int count = 1)
     {
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         player.Inventory.Items!.Add(new ItemData
         {
             ItemTypeId = itemTypeId,
             Rarity = ItemDefinitions.RarityCommon,
             StackCount = count,
         });
-        return player;
+        return _p.Id;
     }
 
     [Fact]
     public void PlaceItem_PlacesDoorClosed()
     {
         using var engine = CreateEngine();
-        var player = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenDoor);
-        int targetX = player.X + 1, targetY = player.Y;
+        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenDoor);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
+        int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
         // Ensure target is floor
         engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
@@ -63,8 +65,9 @@ public class BuildingSystemTests
     public void PlaceItem_PlacesWall()
     {
         using var engine = CreateEngine();
-        var player = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
-        int targetX = player.X + 1, targetY = player.Y;
+        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
+        int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
         engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
@@ -90,8 +93,9 @@ public class BuildingSystemTests
     public void PickUpPlaced_ReturnsItemToInventory()
     {
         using var engine = CreateEngine();
-        var player = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
-        int targetX = player.X + 1, targetY = player.Y;
+        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
+        int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
         // Place a wall
         engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
@@ -108,6 +112,7 @@ public class BuildingSystemTests
         player.Input.TargetY = 0;
         engine.Tick();
 
+        player = ref engine.WorldMap.GetPlayerRef(_pid);
         // Verify wall was placed and item removed
         var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
@@ -119,6 +124,7 @@ public class BuildingSystemTests
         player.Input.TargetY = 0;
         engine.Tick();
 
+        player = ref engine.WorldMap.GetPlayerRef(_pid);
         // Tile should be floor again (placeable removed)
         tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type);
@@ -133,8 +139,9 @@ public class BuildingSystemTests
     public void PickUpPlaced_DoorClosed_ReturnsItem()
     {
         using var engine = CreateEngine();
-        var player = SpawnPlayerWithItem(engine, ItemDefinitions.CopperDoor);
-        int targetX = player.X + 1, targetY = player.Y;
+        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.CopperDoor);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
+        int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
         engine.WorldMap.SetTile(targetX, targetY, Position.DefaultZ, new TileInfo
         {
@@ -150,6 +157,7 @@ public class BuildingSystemTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(_pid);
 
         var tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(ItemDefinitions.CopperDoor, tile.PlaceableItemId);
@@ -160,6 +168,7 @@ public class BuildingSystemTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(_pid);
 
         tile = engine.WorldMap.GetTile(targetX, targetY, Position.DefaultZ);
         Assert.Equal(TileType.Floor, tile.Type);
@@ -172,7 +181,8 @@ public class BuildingSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         int targetX = sx + 1, targetY = sy;
 
         // Place a natural wall (not player-placed — Blocked terrain type)

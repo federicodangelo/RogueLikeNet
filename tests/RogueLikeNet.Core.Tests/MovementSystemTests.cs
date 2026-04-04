@@ -23,7 +23,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Find a walkable adjacent tile
         int dx = 1, dy = 0;
@@ -38,8 +39,8 @@ public class MovementSystemTests
 
         engine.Tick();
 
-        Assert.Equal(sx + dx, player.X);
-        Assert.Equal(sy + dy, player.Y);
+        Assert.Equal(sx + dx, player.Position.X);
+        Assert.Equal(sy + dy, player.Position.Y);
     }
 
     [Fact]
@@ -47,7 +48,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.None;
         player.Input.TargetX = 1;
@@ -55,8 +57,8 @@ public class MovementSystemTests
 
         engine.Tick();
 
-        Assert.Equal(sx, player.X);
-        Assert.Equal(sy, player.Y);
+        Assert.Equal(sx, player.Position.X);
+        Assert.Equal(sy, player.Position.Y);
     }
 
     [Fact]
@@ -64,7 +66,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.Wait;
         player.Input.TargetX = 1;
@@ -72,8 +75,8 @@ public class MovementSystemTests
 
         engine.Tick();
 
-        Assert.Equal(sx, player.X);
-        Assert.Equal(sy, player.Y);
+        Assert.Equal(sx, player.Position.X);
+        Assert.Equal(sy, player.Position.Y);
     }
 
     [Fact]
@@ -83,14 +86,15 @@ public class MovementSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn a monster with high move delay (slow)
-        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 2 });
+        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 2 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Set a high cooldown — AI should skip movement
         monster.MoveDelay.Current = 5;
 
         engine.Tick();
 
-        Assert.Equal(sx + 3, monster.X); // Should not have moved
+        Assert.Equal(sx + 3, monster.Position.X); // Should not have moved
     }
 
     [Fact]
@@ -98,7 +102,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Find a non-walkable tile
         int wallX = -1, wallY = -1;
@@ -119,8 +124,8 @@ public class MovementSystemTests
             int adjY = wallY;
             if (adjX >= 0 && chunk.Tiles[adjX, adjY].Type == TileType.Floor)
             {
-                player.X = adjX;
-                player.Y = adjY;
+                player.Position.X = adjX;
+                player.Position.Y = adjY;
 
                 player.Input.ActionType = ActionTypes.Move;
                 player.Input.TargetX = 1;
@@ -128,7 +133,7 @@ public class MovementSystemTests
 
                 engine.Tick();
 
-                Assert.Equal(adjX, player.X); // Should not have moved
+                Assert.Equal(adjX, player.Position.X); // Should not have moved
             }
         }
     }
@@ -138,7 +143,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
 
         player.Input.ActionType = ActionTypes.Move;
@@ -148,7 +154,7 @@ public class MovementSystemTests
         engine.Tick();
 
         // Player should not have moved to the monster's tile
-        Assert.Equal(sx, player.X);
+        Assert.Equal(sx, player.Position.X);
         // The move system converts move into attack, and combat should produce events
         Assert.True(engine.Combat.LastTickEvents.Count > 0);
     }
@@ -158,7 +164,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Input.ActionType = ActionTypes.Move;
         player.Input.TargetX = 1;
@@ -179,7 +186,8 @@ public class MovementSystemTests
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Set up a move action with a high cooldown
         player.Input.ActionType = ActionTypes.Move;
@@ -190,8 +198,8 @@ public class MovementSystemTests
         engine.Tick();
 
         // Player should not have moved
-        Assert.Equal(sx, player.X);
-        Assert.Equal(sy, player.Y);
+        Assert.Equal(sx, player.Position.X);
+        Assert.Equal(sy, player.Position.Y);
 
         // ActionType should still be Move (preserved for next tick)
         Assert.Equal(ActionTypes.Move, player.Input.ActionType);

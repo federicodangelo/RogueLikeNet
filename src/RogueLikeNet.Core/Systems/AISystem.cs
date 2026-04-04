@@ -24,169 +24,175 @@ public class AISystem
         _rng = new SeededRandom(seed ^ 0xA15EED);
     }
 
-    private List<MonsterEntity> _monsters = new();
-    private List<TownNpcEntity> _townNpcs = new();
+    private readonly List<(int Id, Position From, Position To)> _pendingMonsterMoves = new();
+    private readonly List<(int Id, Position From, Position To)> _pendingNpcMoves = new();
 
     public void Update(WorldMap map)
     {
         // Collect player positions
-        var playerPositions = new List<(int X, int Y, int Z)>();
-        foreach (var p in map.Players.Values)
-            if (!p.IsDead) playerPositions.Add((p.X, p.Y, p.Z));
+        var playerPositions = new List<Position>();
+        foreach (ref var p in map.Players)
+            if (!p.IsDead) playerPositions.Add(p.Position);
 
         if (playerPositions.Count == 0) return;
-
-        // Collect all monsters and town npcs before processing (to avoid issues with monsters being added/removed during processing)
-        _monsters.Clear();
-        _townNpcs.Clear();
-        foreach (var chunk in map.LoadedChunks)
-        {
-            foreach (var m in chunk.Monsters)
-                if (!m.IsDead) _monsters.Add(m);
-            foreach (var n in chunk.TownNpcs)
-                if (!n.IsDead) _townNpcs.Add(n);
-        }
 
         // Collect all actor positions (alive) for collision
         var actorPositions = map.CollectEntitiesPositions();
 
-        // Tick down all move and attack delays
-        foreach (var m in _monsters)
+        // Tick down all move and attack delays directly on chunk entities
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (m.MoveDelay.Current > 0) m.MoveDelay.Current--;
-            if (m.AttackDelay.Current > 0) m.AttackDelay.Current--;
-        }
-        foreach (var n in _townNpcs)
-        {
-            if (n.MoveDelay.Current > 0) n.MoveDelay.Current--;
-            if (n.AttackDelay.Current > 0) n.AttackDelay.Current--;
+            foreach (ref var m in chunk.Monsters)
+            {
+                if (m.MoveDelay.Current > 0) m.MoveDelay.Current--;
+                if (m.AttackDelay.Current > 0) m.AttackDelay.Current--;
+            }
+            foreach (ref var n in chunk.TownNpcs)
+            {
+                if (n.MoveDelay.Current > 0) n.MoveDelay.Current--;
+                if (n.AttackDelay.Current > 0) n.AttackDelay.Current--;
+            }
         }
 
         // Tick down player delays too
-        foreach (var p in map.Players.Values)
+        foreach (ref var p in map.Players)
         {
             if (p.MoveDelay.Current > 0) p.MoveDelay.Current--;
             if (p.AttackDelay.Current > 0) p.AttackDelay.Current--;
         }
 
-        // Process monster AI (exclude town NPCs)
-        foreach (var monster in _monsters)
+        // Process monster AI directly on chunk entities, defer moves
+        _pendingMonsterMoves.Clear();
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (monster.IsDead || !monster.Health.IsAlive) continue;
-
-            bool canMove = monster.MoveDelay.Current <= 0;
-
-            // Find nearest player (same Z or ±1 Z)
-            int nearestDist = int.MaxValue;
-            int nearestPx = 0, nearestPy = 0, nearestPz = 0;
-            int nearestDistAboveOrBelow = int.MaxValue;
-            int nearestAboveOrBelowPx = 0, nearestAboveOrBelowPy = 0, nearestAboveOrBelowPz = 0;
-
-            foreach (var (px, py, pz) in playerPositions)
+            foreach (ref var monster in chunk.Monsters)
             {
-                int zDiff = Math.Abs(pz - monster.Z);
-                if (zDiff > 1) continue;
-                int dist = Math.Abs(monster.X - px) + Math.Abs(monster.Y - py) + zDiff;
-                if (zDiff == 0 && dist < nearestDist)
+                if (monster.IsDead || !monster.Health.IsAlive) continue;
+
+                bool canMove = monster.MoveDelay.Current <= 0;
+
+                // Find nearest player (same Z or ±1 Z)
+                var nearestDist = int.MaxValue;
+                var nearest = Position.Zero;
+                var nearestDistAboveOrBelow = int.MaxValue;
+                var nearestAboveOrBelow = Position.Zero;
+
+                foreach (var p in playerPositions)
                 {
-                    nearestDist = dist;
-                    nearestPx = px; nearestPy = py; nearestPz = pz;
+                    int zDiff = Math.Abs(p.Z - monster.Position.Z);
+                    if (zDiff > 1) continue;
+                    int dist = Math.Abs(monster.Position.X - p.X) + Math.Abs(monster.Position.Y - p.Y) + zDiff;
+                    if (zDiff == 0 && dist < nearestDist)
+                    {
+                        nearestDist = dist;
+                        nearest = p;
+                    }
+                    if (dist < nearestDistAboveOrBelow)
+                    {
+                        nearestDistAboveOrBelow = dist;
+                        nearestAboveOrBelow = p;
+                    }
                 }
-                if (dist < nearestDistAboveOrBelow)
+
+                switch (monster.AI.StateId)
                 {
-                    nearestDistAboveOrBelow = dist;
-                    nearestAboveOrBelowPx = px; nearestAboveOrBelowPy = py; nearestAboveOrBelowPz = pz;
-                }
-            }
-
-            switch (monster.AI.StateId)
-            {
-                case AIStates.Idle:
-                    if (nearestDist <= DetectionRange)
-                        monster.AI.StateId = AIStates.Chase;
-                    break;
-
-                case AIStates.Chase:
-                    if (nearestDistAboveOrBelow > ChaseRange)
-                    {
-                        monster.AI.StateId = AIStates.Idle;
+                    case AIStates.Idle:
+                        if (nearestDist <= DetectionRange)
+                            monster.AI.StateId = AIStates.Chase;
                         break;
-                    }
-                    if (nearestDist <= 1)
-                    {
-                        monster.AI.StateId = AIStates.Attack;
-                        break;
-                    }
-                    if (!canMove) break;
 
-                    var path = AStarPathfinder.FindPath(
-                        monster.X, monster.Y, monster.Z, nearestAboveOrBelowPx, nearestAboveOrBelowPy, nearestAboveOrBelowPz,
-                        (x, y, z) =>
+                    case AIStates.Chase:
+                        if (nearestDistAboveOrBelow > ChaseRange)
                         {
-                            var tile = map.GetTile(x, y, z);
-                            if (!tile.IsWalkable) return TileWalkability.None;
-                            if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
-                            if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
-                            return TileWalkability.Walkable;
-                        },
-                        maxSteps: 200);
-                    if (path != null && path.Count >= 2)
-                    {
-                        var next = path[1];
-                        long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
-                        if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
-                        {
-                            actorPositions.Remove(Position.PackCoord(monster.X, monster.Y, monster.Z));
-                            int oldX = monster.X, oldY = monster.Y, oldZ = monster.Z;
-                            actorPositions.Add(nextKey);
-                            monster.MoveDelay.Current = monster.MoveDelay.Interval;
-                            map.MoveMonsterEntity(monster, next.X, next.Y, next.Z);
+                            monster.AI.StateId = AIStates.Idle;
+                            break;
                         }
-                    }
-                    break;
+                        if (nearestDist <= 1)
+                        {
+                            monster.AI.StateId = AIStates.Attack;
+                            break;
+                        }
+                        if (!canMove) break;
 
-                case AIStates.Attack:
-                    if (nearestDist > 1)
-                        monster.AI.StateId = AIStates.Chase;
-                    break;
+                        var path = AStarPathfinder.FindPath(
+                            monster.Position, nearestAboveOrBelow,
+                            p =>
+                            {
+                                var tile = map.GetTile(p);
+                                if (!tile.IsWalkable) return TileWalkability.None;
+                                if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
+                                if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
+                                return TileWalkability.Walkable;
+                            },
+                            maxSteps: 200);
+                        if (path != null && path.Count >= 2)
+                        {
+                            var next = path[1];
+                            long nextKey = Position.PackCoord(next.X, next.Y, next.Z);
+                            if (map.IsWalkable(next.X, next.Y, next.Z) && !actorPositions.Contains(nextKey))
+                            {
+                                actorPositions.Remove(Position.PackCoord(monster.Position.X, monster.Position.Y, monster.Position.Z));
+                                actorPositions.Add(nextKey);
+                                monster.MoveDelay.Current = monster.MoveDelay.Interval;
+                                _pendingMonsterMoves.Add((monster.Id, monster.Position, next));
+                            }
+                        }
+                        break;
+
+                    case AIStates.Attack:
+                        if (nearestDist > 1)
+                            monster.AI.StateId = AIStates.Chase;
+                        break;
+                }
             }
         }
 
-        // Process town NPC wandering
-        foreach (var npc in _townNpcs)
+        // Apply deferred monster moves
+        foreach (var (id, from, to) in _pendingMonsterMoves)
+            map.MoveMonsterEntity(id, from, to);
+
+        // Process town NPC wandering directly on chunk entities, defer moves
+        _pendingNpcMoves.Clear();
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (npc.IsDead || !npc.Health.IsAlive) continue;
-
-            if (npc.NpcData.TalkTimer > 0)
-                npc.NpcData.TalkTimer--;
-
-            if (npc.MoveDelay.Current > 0) continue;
-
-            int dir = _rng.Next(4);
-            int nx = npc.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
-            int ny = npc.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
-
-            if (Math.Abs(nx - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
-                Math.Abs(ny - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
-                continue;
-
-            var targetTile = map.GetTile(nx, ny, npc.Z);
-            if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+            foreach (ref var npc in chunk.TownNpcs)
             {
-                map.OpenDoor(nx, ny, npc.Z);
+                if (npc.IsDead || !npc.Health.IsAlive) continue;
+
+                if (npc.NpcData.TalkTimer > 0)
+                    npc.NpcData.TalkTimer--;
+
+                if (npc.MoveDelay.Current > 0) continue;
+
+                int dir = _rng.Next(4);
+                int nx = npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0);
+                int ny = npc.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0);
+
+                if (Math.Abs(nx - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
+                    Math.Abs(ny - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
+                    continue;
+
+                var targetTile = map.GetTile(nx, ny, npc.Position.Z);
+                if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+                {
+                    map.OpenDoor(nx, ny, npc.Position.Z);
+                    npc.MoveDelay.Current = npc.MoveDelay.Interval;
+                    continue;
+                }
+
+                if (!map.IsWalkable(nx, ny, npc.Position.Z)) continue;
+                long nextKey = Position.PackCoord(nx, ny, npc.Position.Z);
+                if (actorPositions.Contains(nextKey)) continue;
+
+                actorPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
+                actorPositions.Add(nextKey);
                 npc.MoveDelay.Current = npc.MoveDelay.Interval;
-                continue;
+                _pendingNpcMoves.Add((npc.Id, npc.Position, Position.FromCoords(nx, ny, npc.Position.Z)));
             }
-
-            if (!map.IsWalkable(nx, ny, npc.Z)) continue;
-            long nextKey = Position.PackCoord(nx, ny, npc.Z);
-            if (actorPositions.Contains(nextKey)) continue;
-
-            actorPositions.Remove(Position.PackCoord(npc.X, npc.Y, npc.Z));
-            int oldNpcX = npc.X, oldNpcY = npc.Y, oldNpcZ = npc.Z;
-            actorPositions.Add(nextKey);
-            npc.MoveDelay.Current = npc.MoveDelay.Interval;
-            map.MoveNpcEntity(npc, nx, ny, npc.Z);
         }
+
+        // Apply deferred NPC moves
+        foreach (var (id, from, to) in _pendingNpcMoves)
+            map.MoveNpcEntity(id, from, to);
     }
 }

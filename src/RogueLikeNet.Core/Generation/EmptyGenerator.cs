@@ -36,7 +36,7 @@ public class EmptyGenerator : IDungeonGenerator
 
         // Spawn point: center of the chunk
         if (chunkX == 0 && chunkY == 0)
-            result.SpawnPosition = (Chunk.Size / 2, Chunk.Size / 2, chunkZ);
+            result.SpawnPosition = Position.FromCoords(Chunk.Size / 2, Chunk.Size / 2, chunkZ);
 
         return result;
     }

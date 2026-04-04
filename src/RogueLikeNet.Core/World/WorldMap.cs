@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
 using static RogueLikeNet.Core.Definitions.PlaceableDefinitions;
@@ -21,11 +24,11 @@ public class WorldMap
     private readonly long _seed;
 
     // ── Player storage (global, not per-chunk) ────────────────────────
-    private readonly Dictionary<int, PlayerEntity> _players = new();
+    private readonly List<PlayerEntity> _players = new();
     private readonly Dictionary<long, int> _playersByConnection = new();
     private int _nextEntityId = 1;
 
-    public IReadOnlyDictionary<int, PlayerEntity> Players => _players;
+    public Span<PlayerEntity> Players => CollectionsMarshal.AsSpan(_players);
 
     /// <summary>
     /// Tracks world coordinates of tiles that need per-tick processing, grouped by chunk key.
@@ -49,26 +52,88 @@ public class WorldMap
 
     // ── Player management ────────────────────────────────────────────
 
-    public void AddPlayer(PlayerEntity player)
+    public ref PlayerEntity AddPlayer(PlayerEntity player)
     {
-        _players[player.Id] = player;
+        var index = _players.FindIndex(p => p.Id == player.Id);
+        if (index >= 0)
+        {
+            _players[index] = player;
+        }
+        else
+        {
+            _players.Add(player);
+            index = _players.Count - 1;
+        }
         _playersByConnection[player.ConnectionId] = player.Id;
+        return ref Players[index];
     }
 
     public void RemovePlayer(int entityId)
     {
-        if (_players.TryGetValue(entityId, out var player))
+        var connectionId = _players.Exists(p => p.Id == entityId) ? _players.First(p => p.Id == entityId).ConnectionId : (long?)null;
+
+        if (connectionId.HasValue)
         {
-            _playersByConnection.Remove(player.ConnectionId);
-            _players.Remove(entityId);
+            _playersByConnection.Remove(connectionId.Value);
+            _players.RemoveAll(p => p.Id == entityId);
         }
     }
 
-    public PlayerEntity? GetPlayer(int entityId)
-        => _players.TryGetValue(entityId, out var p) ? p : null;
+    public PlayerEntity? GetPlayer(int entityId) => _players.Exists(p => p.Id == entityId) ? _players.First(p => p.Id == entityId) : null;
+
+    public ref PlayerEntity GetPlayerRef(int entityId)
+    {
+        var index = _players.FindIndex(p => p.Id == entityId);
+        if (index == -1) throw new KeyNotFoundException($"Player with entity ID {entityId} not found.");
+        return ref Players[index];
+    }
 
     public PlayerEntity? GetPlayerByConnection(long connectionId)
-        => _playersByConnection.TryGetValue(connectionId, out var id) && _players.TryGetValue(id, out var p) ? p : null;
+        => _playersByConnection.TryGetValue(connectionId, out var id) ? GetPlayer(id) : null;
+
+    public ref MonsterEntity GetMonsterRef(int entityId)
+    {
+        foreach (var chunk in _chunks.Values)
+        {
+            var span = chunk.Monsters;
+            for (int i = 0; i < span.Length; i++)
+                if (span[i].Id == entityId) return ref span[i];
+        }
+        throw new KeyNotFoundException($"Monster entity {entityId} not found.");
+    }
+
+    public ref GroundItemEntity GetGroundItemRef(int entityId)
+    {
+        foreach (var chunk in _chunks.Values)
+        {
+            var span = chunk.GroundItems;
+            for (int i = 0; i < span.Length; i++)
+                if (span[i].Id == entityId) return ref span[i];
+        }
+        throw new KeyNotFoundException($"Ground item entity {entityId} not found.");
+    }
+
+    public ref ResourceNodeEntity GetResourceNodeRef(int entityId)
+    {
+        foreach (var chunk in _chunks.Values)
+        {
+            var span = chunk.ResourceNodes;
+            for (int i = 0; i < span.Length; i++)
+                if (span[i].Id == entityId) return ref span[i];
+        }
+        throw new KeyNotFoundException($"Resource node entity {entityId} not found.");
+    }
+
+    public ref TownNpcEntity GetTownNpcRef(int entityId)
+    {
+        foreach (var chunk in _chunks.Values)
+        {
+            var span = chunk.TownNpcs;
+            for (int i = 0; i < span.Length; i++)
+                if (span[i].Id == entityId) return ref span[i];
+        }
+        throw new KeyNotFoundException($"Town NPC entity {entityId} not found.");
+    }
 
     // ── Spatial queries ──────────────────────────────────────────────
 
@@ -76,24 +141,24 @@ public class WorldMap
     public HashSet<long> CollectEntitiesPositions()
     {
         var set = new HashSet<long>();
-        foreach (var p in _players.Values)
-            if (!p.IsDead) set.Add(Position.PackCoord(p.X, p.Y, p.Z));
+        foreach (var p in _players)
+            if (!p.IsDead) set.Add(Position.PackCoord(p.Position.X, p.Position.Y, p.Position.Z));
         foreach (var chunk in _chunks.Values)
             foreach (var m in chunk.AllSolidEntitiesWithHealth)
-                if (!m.IsDead) set.Add(Position.PackCoord(m.X, m.Y, m.Z));
+                if (!m.IsDead) set.Add(Position.PackCoord(m.Position.X, m.Position.Y, m.Position.Z));
         return set;
     }
 
     /// <summary>Checks if any alive actor (player, monster, NPC) occupies the given position.</summary>
-    public bool IsPositionOccupiedByEntity(int x, int y, int z)
+    public bool IsPositionOccupiedByEntity(Position pos)
     {
-        foreach (var p in _players.Values)
-            if (!p.IsDead && p.X == x && p.Y == y && p.Z == z) return true;
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
-        var chunk = TryGetChunk(cx, cy, cz);
+        foreach (var p in _players)
+            if (!p.IsDead && p.Position == pos) return true;
+        var c = Chunk.WorldToChunkCoord(pos);
+        var chunk = TryGetChunk(c);
         if (chunk == null) return false;
         foreach (var m in chunk.AllSolidEntitiesWithHealth)
-            if (!m.IsDead && m.X == x && m.Y == y && m.Z == z) return true;
+            if (!m.IsDead && m.Position == pos) return true;
         return false;
     }
 
@@ -104,36 +169,69 @@ public class WorldMap
         return TryGetChunk(cx, cy, cz);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Chunk? GetChunkForWorldPos(Position pos) => GetChunkForWorldPos(pos.X, pos.Y, pos.Z);
+
     // ── Chunk migration (for moving entities) ────────────────────────
 
-    /// <summary>Moves a monster to the correct chunk if it crossed a boundary.</summary>
-    public void MoveMonsterEntity(MonsterEntity monster, int newX, int newY, int newZ)
+    /// <summary>Moves a monster to a new position, migrating between chunks if needed.</summary>
+    public void MoveMonsterEntity(int entityId, Position from, Position to)
     {
-        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(monster.X, monster.Y, monster.Z);
-        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(newX, newY, newZ);
-        monster.X = newX;
-        monster.Y = newY;
-        monster.Z = newZ;
-        if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
-        var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
-        var newChunk = TryGetChunk(newCx, newCy, newCz);
-        oldChunk?.RemoveEntity(monster);
-        newChunk?.AddEntity(monster);
+        var oldC = Chunk.WorldToChunkCoord(from);
+        var newC = Chunk.WorldToChunkCoord(to);
+
+        var oldChunk = TryGetChunk(oldC);
+        var newChunk = TryGetChunk(newC);
+
+        Debug.Assert(oldChunk != null, $"Old chunk at {oldC} not found when moving monster entity {entityId}.");
+
+        foreach (ref var monster in oldChunk.Monsters)
+        {
+            if (monster.Id == entityId)
+            {
+                monster.Position = to;
+                if (oldChunk != newChunk)
+                {
+                    newChunk?.AddEntity(monster);
+                    oldChunk.RemoveEntity(monster);
+                }
+                else
+                {
+                    oldChunk.MarkTileDirty(from.X, from.Y, from.Z);
+                }
+                return;
+            }
+        }
+
+        Debug.Assert(false, $"Monster entity {entityId} not found in old chunk at {oldC} when moving.");
     }
 
-    /// <summary>Moves a town NPC to the correct chunk if it crossed a boundary.</summary>
-    public void MoveNpcEntity(TownNpcEntity npc, int newX, int newY, int newZ)
+    /// <summary>Moves a town NPC to a new position, migrating between chunks if needed.</summary>
+    public void MoveNpcEntity(int entityId, Position from, Position to)
     {
-        var (oldCx, oldCy, oldCz) = Chunk.WorldToChunkCoord(npc.X, npc.Y, npc.Z);
-        var (newCx, newCy, newCz) = Chunk.WorldToChunkCoord(newX, newY, newZ);
-        npc.X = newX;
-        npc.Y = newY;
-        npc.Z = newZ;
-        if (oldCx == newCx && oldCy == newCy && oldCz == newCz) return;
-        var oldChunk = TryGetChunk(oldCx, oldCy, oldCz);
-        var newChunk = TryGetChunk(newCx, newCy, newCz);
-        oldChunk?.RemoveEntity(npc);
-        newChunk?.AddEntity(npc);
+        var oldC = Chunk.WorldToChunkCoord(from);
+        var newC = Chunk.WorldToChunkCoord(to);
+
+        var oldChunk = TryGetChunk(oldC);
+        var newChunk = TryGetChunk(newC);
+
+        Debug.Assert(oldChunk != null, $"Old chunk at {oldC} not found when moving NPC entity {entityId}.");
+
+        foreach (ref var npc in oldChunk.TownNpcs)
+        {
+            if (npc.Id == entityId)
+            {
+                npc.Position = to;
+                if (oldChunk != newChunk)
+                {
+                    newChunk?.AddEntity(npc);
+                    oldChunk.RemoveEntity(npc);
+                }
+                return;
+            }
+        }
+
+        Debug.Assert(false, $"NPC entity {entityId} not found in old chunk at {oldC} when moving.");
     }
 
     public bool ExistsChunk(int chunkX, int chunkY, int chunkZ, Generation.IDungeonGenerator generator)
@@ -162,12 +260,27 @@ public class WorldMap
         return (result.Chunk, result);
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Chunk? TryGetChunk(Position pos) => TryGetChunk(pos.X, pos.Y, pos.Z);
     public Chunk? TryGetChunk(int chunkX, int chunkY, int chunkZ)
     {
         long key = Position.PackCoord(chunkX, chunkY, chunkZ);
         return _chunks.TryGetValue(key, out var chunk) ? chunk : null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Chunk GetChunk(Position pos) => GetChunk(pos.X, pos.Y, pos.Z);
+    public Chunk GetChunk(int chunkX, int chunkY, int chunkZ)
+    {
+        long key = Position.PackCoord(chunkX, chunkY, chunkZ);
+        if (!_chunks.TryGetValue(key, out var chunk))
+            throw new KeyNotFoundException($"Chunk at ({chunkX}, {chunkY}, {chunkZ}) not found.");
+        return chunk;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TileInfo GetTile(Position p) => GetTile(p.X, p.Y, p.Z);
     public TileInfo GetTile(int worldX, int worldY, int worldZ)
     {
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldX, worldY, worldZ);
@@ -178,11 +291,13 @@ public class WorldMap
         return chunk.Tiles[lx, ly];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsWalkable(int worldX, int worldY, int worldZ)
     {
         return GetTile(worldX, worldY, worldZ).IsWalkable;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsTransparent(int worldX, int worldY, int worldZ)
     {
         return GetTile(worldX, worldY, worldZ).IsTransparent;
@@ -208,6 +323,10 @@ public class WorldMap
             UntrackDynamicTile(worldX, worldY, worldZ);
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetPlaceable(Position world, int placeableId, int extraData = 0) => SetPlaceable(world.X, world.Y, world.Z, placeableId, extraData);
+
     public void SetPlaceable(int worldX, int worldY, int worldZ, int placeableId, int extraData = 0)
     {
         var tile = GetTile(worldX, worldY, worldZ);
@@ -216,6 +335,7 @@ public class WorldMap
         SetTile(worldX, worldY, worldZ, tile);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetTileChunkDirty(int x, int y, int z)
     {
         var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, z);
@@ -242,9 +362,6 @@ public class WorldMap
     }
 
     public IEnumerable<Chunk> LoadedChunks => _chunks.Values;
-
-    /// <summary>Exposes loaded chunks with their packed coordinate keys.</summary>
-    public IReadOnlyDictionary<long, Chunk> LoadedChunksDict => _chunks;
 
     /// <summary>Removes a chunk from the loaded set. Does not save — caller should save before calling.</summary>
     public void UnloadChunk(int chunkX, int chunkY, int chunkZ)
@@ -359,14 +476,14 @@ public class WorldMap
 
         // Build set of occupied positions for door blocking checks
         _tmpOccupiedPositions.Clear();
-        foreach (var p in _players.Values)
-            if (!p.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(p.X, p.Y, p.Z));
+        foreach (var p in _players)
+            if (!p.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(p.Position.X, p.Position.Y, p.Position.Z));
         foreach (var chunk in _chunks.Values)
         {
             foreach (var m in chunk.Monsters)
-                if (!m.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(m.X, m.Y, m.Z));
+                if (!m.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(m.Position.X, m.Position.Y, m.Position.Z));
             foreach (var n in chunk.TownNpcs)
-                if (!n.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(n.X, n.Y, n.Z));
+                if (!n.IsDead) _tmpOccupiedPositions.Add(Position.PackCoord(n.Position.X, n.Position.Y, n.Position.Z));
         }
 
         // Snapshot all tile keys to avoid modifying collections during iteration

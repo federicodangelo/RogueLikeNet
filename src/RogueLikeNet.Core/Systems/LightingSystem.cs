@@ -19,26 +19,26 @@ public class LightingSystem
         foreach (var chunk in map.LoadedChunks)
             foreach (var elem in chunk.Elements)
                 if (elem.Light.HasValue)
-                    FloodLight(map, elem.X, elem.Y, elem.Z, elem.Light.Value.Radius);
+                    FloodLight(map, elem.Position, elem.Light.Value.Radius);
 
         // Players emit ambient light matching their FOV
-        foreach (var player in map.Players.Values)
-            FloodLight(map, player.X, player.Y, player.Z, player.FOV.Radius);
+        foreach (var player in map.Players)
+            FloodLight(map, player.Position, player.FOV.Radius);
     }
 
-    private static void FloodLight(WorldMap map, int originX, int originY, int originZ, int radius)
+    private static void FloodLight(WorldMap map, Position origin, int radius)
     {
-        ShadowCastFov.Compute(originX, originY, radius,
-            isOpaque: (x, y) => !map.IsTransparent(x, y, originZ),
+        ShadowCastFov.Compute(origin.X, origin.Y, radius,
+            isOpaque: (x, y) => !map.IsTransparent(x, y, origin.Z),
             markVisible: (x, y) =>
             {
-                int dx = x - originX;
-                int dy = y - originY;
+                int dx = x - origin.X;
+                int dy = y - origin.Y;
                 int dist = Math.Max(Math.Abs(dx), Math.Abs(dy));
                 int lightAmount = (radius - dist + 1) * 10 / (radius + 1);
                 if (lightAmount <= 0) return;
 
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, originZ);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(x, y, origin.Z);
                 var chunk = map.TryGetChunk(cx, cy, cz);
                 if (chunk == null) return;
 

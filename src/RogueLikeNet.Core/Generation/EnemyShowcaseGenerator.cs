@@ -62,11 +62,11 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
 
         // Spawn: center column, 2 tiles above the first row of rooms
         int spawnX = startX + 3 * strideX + roomSize / 2; // column 3 (middle of 7)
-        result.SpawnPosition = (worldOffsetX + spawnX, worldOffsetY + 1, chunkZ);
+        result.SpawnPosition = Position.FromCoords(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ);
 
         // Broad torch at spawn for initial visibility
         result.Elements.Add(new DungeonElement(
-            new Position(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ),
+            Position.FromCoords(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(30, TileDefinitions.ColorTorchFg)));
 
@@ -88,7 +88,7 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
 
                 // Torch inside room so player can see through the doorway
                 result.Elements.Add(new DungeonElement(
-                    new Position(worldOffsetX + rx + roomSize / 2, worldOffsetY + ry + roomSize / 2, chunkZ),
+                    Position.FromCoords(worldOffsetX + rx + roomSize / 2, worldOffsetY + ry + roomSize / 2, chunkZ),
                     new TileAppearance(TileDefinitions.GlyphTorch, def.Color),
                     new LightSource(5, def.Color)));
 
@@ -96,7 +96,7 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
                 int cx = rx + roomSize / 2;
                 int cy = ry + roomSize / 2;
                 var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
-                result.Monsters.Add((new Position(worldOffsetX + cx, worldOffsetY + cy, chunkZ), monsterData));
+                result.Monsters.Add((Position.FromCoords(worldOffsetX + cx, worldOffsetY + cy, chunkZ), monsterData));
             }
         }
 

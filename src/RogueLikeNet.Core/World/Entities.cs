@@ -2,75 +2,88 @@ using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.World;
 
-public class Entity
+public struct EntityRef
 {
+    public const int NullId = 0;
+
     public readonly int Id;
     public readonly EntityType Type;
-    public int X, Y, Z;
 
-    public Entity(int id, EntityType type)
+    public EntityRef(int id, EntityType type)
     {
         Id = id;
         Type = type;
     }
 }
 
-public class EntityWithHealth : Entity
+public struct MonsterEntity
 {
-    public EntityWithHealth(int id, EntityType type) : base(id, type) { }
+    public MonsterEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
     public Health Health;
-    public bool IsDead;
-}
-
-public class MonsterEntity : EntityWithHealth
-{
-    public MonsterEntity(int id) : base(id, EntityType.Monster) { }
     public MonsterData MonsterData;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public AIState AI;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
+    public bool IsDead => !Health.IsAlive;
 }
 
-public class GroundItemEntity : Entity
+public struct GroundItemEntity
 {
-    public GroundItemEntity(int id) : base(id, EntityType.GroundItem) { }
+    public GroundItemEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
     public TileAppearance Appearance;
     public ItemData Item;
-    public bool IsDead;
+    public bool IsDestroyed;
 }
 
-public class ResourceNodeEntity : EntityWithHealth
+public struct ResourceNodeEntity
 {
-    public ResourceNodeEntity(int id) : base(id, EntityType.ResourceNode) { }
+    public ResourceNodeEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
+    public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public ResourceNodeData NodeData;
     public AttackDelay AttackDelay;
+    public bool IsDead => !Health.IsAlive;
 }
 
-public class TownNpcEntity : EntityWithHealth
+public struct TownNpcEntity
 {
-    public TownNpcEntity(int id) : base(id, EntityType.TownNpc) { }
+    public TownNpcEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
+    public Health Health;
     public CombatStats CombatStats;
     public TileAppearance Appearance;
     public AIState AI;
     public TownNpcTag NpcData;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
+    public bool IsDead => !Health.IsAlive;
 }
 
-public class ElementEntity : Entity
+public struct ElementEntity
 {
-    public ElementEntity(int id) : base(id, EntityType.Element) { }
+    public ElementEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
     public TileAppearance Appearance;
     public LightSource? Light;
 }
 
-public class PlayerEntity : EntityWithHealth
+public struct PlayerEntity
 {
-    public PlayerEntity(int id) : base(id, EntityType.Player) { }
+    public PlayerEntity(int id) { Id = id; }
+    public readonly int Id;
+    public Position Position;
+    public Health Health;
     public long ConnectionId;
     public CombatStats CombatStats;
     public FOVData FOV;
@@ -83,4 +96,5 @@ public class PlayerEntity : EntityWithHealth
     public QuickSlots QuickSlots;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
+    public bool IsDead => !Health.IsAlive;
 }

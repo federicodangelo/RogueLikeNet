@@ -171,7 +171,7 @@ public class OverworldGenerator : IDungeonGenerator
                         tile.GlyphId = TileDefinitions.GlyphFloor;
                         tile.FgColor = TileDefinitions.ColorFloorFg;
                         tile.BgColor = TileDefinitions.ColorBlack;
-                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), ResourceNodeDefinitions.PickRock(rng, biome)));
+                        result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), ResourceNodeDefinitions.PickRock(rng, biome)));
                         addedResourceNode = true;
                     }
                     else
@@ -195,7 +195,7 @@ public class OverworldGenerator : IDungeonGenerator
                     // Trees spawn where resource noise overlaps with floors
                     if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
                     {
-                        result.ResourceNodes.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
+                        result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
                             ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
                     }
                     else
@@ -218,18 +218,18 @@ public class OverworldGenerator : IDungeonGenerator
                         {
                             var def = BiomeDefinitions.PickEnemy(biome, rng, difficulty);
                             var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
-                            result.Monsters.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
+                            result.Monsters.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
                         }
                         else if (rng.Next(1000) < ItemChance1000)
                         {
                             var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
                             var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
-                            result.Items.Add((new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ), itemData));
+                            result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), itemData));
                         }
                         else if (rng.Next(1000) < TorchChance1000)
                         {
                             result.Elements.Add(new DungeonElement(
-                                new Position(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
+                                Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
                                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                                 new LightSource(6, TileDefinitions.ColorTorchFg)));
                         }
@@ -255,7 +255,7 @@ public class OverworldGenerator : IDungeonGenerator
             var spawnPoint = DungeonHelper.FindSpawnPoint(chunk);
             if (spawnPoint != null)
             {
-                result.SpawnPosition = (spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ);
+                result.SpawnPosition = Position.FromCoords(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ);
 
                 const int ClearRadius = 7;
                 DungeonHelper.RemoveEnemiesInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
@@ -263,7 +263,7 @@ public class OverworldGenerator : IDungeonGenerator
 
                 // Add torch
                 result.Elements.Add(new DungeonElement(
-                    new Position(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ),
+                    Position.FromCoords(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ),
                     new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                     new LightSource(6, TileDefinitions.ColorTorchFg))
                 );

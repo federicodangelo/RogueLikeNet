@@ -16,24 +16,24 @@ public enum TileWalkability
 /// </summary>
 public static class AStarPathfinder
 {
-    public static List<(int X, int Y, int Z)>? FindPath(
-        int startX, int startY, int startZ,
-        int goalX, int goalY, int goalZ,
-        Func<int, int, int, TileWalkability> getWalkability,
+    public static List<Position>? FindPath(
+        Position start,
+        Position goal,
+        Func<Position, TileWalkability> getWalkability,
         int maxSteps = 1000)
     {
-        if (startX == goalX && startY == goalY && startZ == goalZ)
-            return [(startX, startY, startZ)];
+        if (start == goal)
+            return [start];
 
-        var openSet = new PriorityQueue<(int X, int Y, int Z), int>();
+        var openSet = new PriorityQueue<Position, int>();
         var cameFrom = new Dictionary<long, long>();
         var gScore = new Dictionary<long, int>();
 
-        long startKey = Position.PackCoord(startX, startY, startZ);
-        long goalKey = Position.PackCoord(goalX, goalY, goalZ);
+        long startKey = start.Pack();
+        long goalKey = goal.Pack();
 
         gScore[startKey] = 0;
-        openSet.Enqueue((startX, startY, startZ), Heuristic(startX, startY, startZ, goalX, goalY, goalZ));
+        openSet.Enqueue(start, Heuristic(start, goal));
 
         int steps = 0;
 
@@ -43,8 +43,8 @@ public static class AStarPathfinder
 
         while (openSet.Count > 0 && steps++ < maxSteps)
         {
-            var (cx, cy, cz) = openSet.Dequeue();
-            long currentKey = Position.PackCoord(cx, cy, cz);
+            var c = openSet.Dequeue();
+            long currentKey = c.Pack();
 
             if (currentKey == goalKey)
                 return ReconstructPath(cameFrom, goalKey, startKey);
@@ -54,34 +54,32 @@ public static class AStarPathfinder
             // Try 4-directional movement on the same Z level
             for (int i = 0; i < 4; i++)
             {
-                int nx = cx + dx[i];
-                int ny = cy + dy[i];
+                var n = Position.FromCoords(c.X + dx[i], c.Y + dy[i], c.Z);
 
-                var walkability = getWalkability(nx, ny, cz);
+                var walkability = getWalkability(n);
                 if (walkability == TileWalkability.None) continue;
 
-                long neighborKey = Position.PackCoord(nx, ny, cz);
+                long neighborKey = n.Pack();
                 int tentativeG = currentG + 1;
 
                 if (!gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
                 {
                     cameFrom[neighborKey] = currentKey;
                     gScore[neighborKey] = tentativeG;
-                    int f = tentativeG + Heuristic(nx, ny, cz, goalX, goalY, goalZ);
-                    openSet.Enqueue((nx, ny, cz), f);
+                    openSet.Enqueue(n, tentativeG + Heuristic(n, goal));
                 }
             }
 
             // Try stair transitions from the current tile
-            var currentWalkability = getWalkability(cx, cy, cz);
-            if (currentWalkability == TileWalkability.StairsUp && cz < 255)
+            var currentWalkability = getWalkability(c);
+            if (currentWalkability == TileWalkability.StairsUp && c.Z < 255)
             {
-                TryAddNeighbor(cx, cy, cz + 1, currentG + 1, goalX, goalY, goalZ,
+                TryAddNeighbor(Position.FromCoords(c.X, c.Y, c.Z + 1), currentG + 1, goal,
                     currentKey, openSet, cameFrom, gScore, getWalkability);
             }
-            else if (currentWalkability == TileWalkability.StairsDown && cz > 0)
+            else if (currentWalkability == TileWalkability.StairsDown && c.Z > 0)
             {
-                TryAddNeighbor(cx, cy, cz - 1, currentG + 1, goalX, goalY, goalZ,
+                TryAddNeighbor(Position.FromCoords(c.X, c.Y, c.Z - 1), currentG + 1, goal,
                     currentKey, openSet, cameFrom, gScore, getWalkability);
             }
         }
@@ -90,41 +88,38 @@ public static class AStarPathfinder
     }
 
     private static void TryAddNeighbor(
-        int nx, int ny, int nz, int tentativeG,
-        int goalX, int goalY, int goalZ,
+        Position n, int tentativeG,
+        Position goal,
         long currentKey,
-        PriorityQueue<(int X, int Y, int Z), int> openSet,
+        PriorityQueue<Position, int> openSet,
         Dictionary<long, long> cameFrom,
         Dictionary<long, int> gScore,
-        Func<int, int, int, TileWalkability> getWalkability)
+        Func<Position, TileWalkability> getWalkability)
     {
-        if (getWalkability(nx, ny, nz) == TileWalkability.None) return;
+        if (getWalkability(n) == TileWalkability.None) return;
 
-        long neighborKey = Position.PackCoord(nx, ny, nz);
+        long neighborKey = n.Pack();
         if (!gScore.TryGetValue(neighborKey, out int existingG) || tentativeG < existingG)
         {
             cameFrom[neighborKey] = currentKey;
             gScore[neighborKey] = tentativeG;
-            int f = tentativeG + Heuristic(nx, ny, nz, goalX, goalY, goalZ);
-            openSet.Enqueue((nx, ny, nz), f);
+            int f = tentativeG + Heuristic(n, goal);
+            openSet.Enqueue(n, f);
         }
     }
 
-    private static List<(int X, int Y, int Z)> ReconstructPath(Dictionary<long, long> cameFrom, long current, long start)
+    private static List<Position> ReconstructPath(Dictionary<long, long> cameFrom, long current, long start)
     {
-        var path = new List<(int X, int Y, int Z)>();
+        var path = new List<Position>();
         while (current != start)
         {
-            var (x, y, z) = Position.UnpackCoord(current);
-            path.Add((x, y, z));
+            path.Add(Position.UnpackCoord(current));
             current = cameFrom[current];
         }
-        var (sx, sy, sz) = Position.UnpackCoord(start);
-        path.Add((sx, sy, sz));
+        path.Add(Position.UnpackCoord(start));
         path.Reverse();
         return path;
     }
 
-    private static int Heuristic(int x0, int y0, int z0, int x1, int y1, int z1)
-        => Math.Abs(x0 - x1) + Math.Abs(y0 - y1) + Math.Abs(z0 - z1);
+    private static int Heuristic(Position a, Position b) => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
 }

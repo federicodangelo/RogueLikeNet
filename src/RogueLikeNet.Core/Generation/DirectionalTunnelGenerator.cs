@@ -78,7 +78,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
 
         // Spawn point: center of the first room/chamber
         if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
-            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
+            result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
 
         return result;
     }

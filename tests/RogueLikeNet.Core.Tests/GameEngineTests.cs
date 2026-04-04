@@ -15,10 +15,11 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-        var player = engine.SpawnPlayer(1, 10, 10, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, 10, 10, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         Assert.False(player.IsDead);
-        Assert.Equal(10, player.X);
-        Assert.Equal(10, player.Y);
+        Assert.Equal(10, player.Position.X);
+        Assert.Equal(10, player.Position.Y);
     }
 
     [Fact]
@@ -88,7 +89,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up an item
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
@@ -110,16 +112,17 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 5, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Kill monster
         monster.Health.Current = 0;
         engine.Tick(); // This marks dead and destroys monster
 
         // GetPlayerStateData only works with PlayerEntity, so test null for a dead player instead
-        var player = engine.SpawnPlayer(2, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(2, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         player.Health.Current = 0;
-        player.IsDead = true;
         var hud = engine.GetPlayerStateData(player);
         Assert.Null(hud);
     }
@@ -130,7 +133,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -145,7 +149,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -159,8 +164,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         var chunk = engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
 
-        int entityCount = chunk.Monsters.Count() + chunk.GroundItems.Count() +
-                          chunk.ResourceNodes.Count() + chunk.TownNpcs.Count() + chunk.Elements.Count();
+        int entityCount = chunk.Monsters.Length + chunk.GroundItems.Length +
+                          chunk.ResourceNodes.Length + chunk.TownNpcs.Length + chunk.Elements.Length;
         Assert.True(entityCount > 0, "Chunk loading should spawn entities");
     }
 
@@ -173,7 +178,7 @@ public class GameEngineTests
         var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
         var item = engine.SpawnItemOnGround(template, 3, 10, 10, Position.DefaultZ);
 
-        Assert.False(item.IsDead);
+        Assert.False(item.IsDestroyed);
         Assert.Equal(3, item.Item.Rarity);
         // Rarity 3 = 250% multiplier, LongSword base attack = 5
         Assert.Equal(5 * 250 / 100, item.Item.BonusAttack);
@@ -208,14 +213,15 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
 
         // Verify entity exists with ItemData at the expected position
         var chunk = engine.WorldMap.TryGetChunk(0, 0, Position.DefaultZ)!;
-        int count = chunk.GroundItems.Count(gi => gi.X == sx && gi.Y == sy && gi.Item.ItemTypeId == ItemDefinitions.ShortSword);
+        int count = chunk.GroundItems.ToArray().Count(gi => gi.Position.X == sx && gi.Position.Y == sy && gi.Item.ItemTypeId == ItemDefinitions.ShortSword);
         Assert.Equal(1, count);
     }
 
@@ -225,7 +231,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Mage);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -240,7 +247,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Equip weapon
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
@@ -274,7 +282,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 1, sx, sy, Position.DefaultZ);
@@ -294,11 +303,11 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         int maxHp = player.Health.Max;
         player.Health.Current = 0;
-        player.IsDead = true;
 
         engine.Tick();
 
@@ -312,11 +321,11 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.ClassData.Experience = 100;
         player.Health.Current = 0;
-        player.IsDead = true;
 
         engine.Tick();
 
@@ -329,10 +338,10 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         player.Health.Current = 0;
-        player.IsDead = true;
 
         engine.Tick();
 
@@ -344,7 +353,8 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-        var player = engine.SpawnPlayer(1, 10, 10, Position.DefaultZ, ClassDefinitions.Rogue);
+        var _p = engine.SpawnPlayer(1, 10, 10, Position.DefaultZ, ClassDefinitions.Rogue);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         Assert.Equal(0, player.MoveDelay.Interval);
     }
 
@@ -353,10 +363,10 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
-        var (x, y, z) = engine.FindDropPosition(10, 10, Position.DefaultZ);
-        Assert.Equal(10, x);
-        Assert.Equal(10, y);
-        Assert.Equal(Position.DefaultZ, z);
+        var drop = engine.FindDropPosition(Position.FromCoords(10, 10, Position.DefaultZ));
+        Assert.Equal(10, drop.X);
+        Assert.Equal(10, drop.Y);
+        Assert.Equal(Position.DefaultZ, drop.Z);
     }
 
     [Fact]
@@ -369,8 +379,8 @@ public class GameEngineTests
         var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
         engine.SpawnItemOnGround(template, 0, sx, sy, Position.DefaultZ);
 
-        var (x, y, _) = engine.FindDropPosition(sx, sy, Position.DefaultZ);
-        Assert.True(x != sx || y != sy, "Should find a different position when origin is occupied");
+        var drop = engine.FindDropPosition(Position.FromCoords(sx, sy, Position.DefaultZ));
+        Assert.True(drop.X != sx || drop.Y != sy, "Should find a different position when origin is occupied");
     }
 
     [Fact]
@@ -381,7 +391,7 @@ public class GameEngineTests
 
         var element = new DungeonElement
         {
-            Position = new Position(10, 10, Position.DefaultZ),
+            Position = Position.FromCoords(10, 10, Position.DefaultZ),
             Appearance = new TileAppearance('*', 0xFFAA00),
             Light = new LightSource { Radius = 5 }
         };
@@ -399,7 +409,7 @@ public class GameEngineTests
 
         var element = new DungeonElement
         {
-            Position = new Position(10, 10, Position.DefaultZ),
+            Position = Position.FromCoords(10, 10, Position.DefaultZ),
             Appearance = new TileAppearance('#', 0x888888),
             Light = null
         };
@@ -414,7 +424,8 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         Assert.NotNull(player.Inventory.Items);
         player.Inventory.Items.Add(new ItemData
@@ -438,16 +449,18 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        engine.GiveDebugResources(player);
+        ref var playerRef = ref engine.WorldMap.GetPlayerRef(player.Id);
+        engine.GiveDebugResources(ref playerRef);
 
-        Assert.NotNull(player.Inventory.Items);
+        Assert.NotNull(playerRef.Inventory.Items);
 
         int[] expectedResources = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
         foreach (int resId in expectedResources)
         {
-            var item = player.Inventory.Items!.Find(i => i.ItemTypeId == resId);
+            var item = playerRef.Inventory.Items!.Find(i => i.ItemTypeId == resId);
             Assert.Equal(9999, item.StackCount);
         }
     }
@@ -516,7 +529,7 @@ public class GameEngineTests
 
         engine.SpawnElement(new DungeonElement
         {
-            Position = new Position(5, 5, Position.DefaultZ),
+            Position = Position.FromCoords(5, 5, Position.DefaultZ),
             Appearance = new TileAppearance('#', 0x888888),
         });
 

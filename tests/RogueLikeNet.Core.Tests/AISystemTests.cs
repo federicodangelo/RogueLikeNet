@@ -24,8 +24,9 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster adjacent to the player
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -33,12 +34,13 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Set the monster's AI state to Attack
         monster.AI.StateId = AIStates.Attack;
 
         // Move the player far away so nearestDist > 1
-        player.X = sx + 10;
+        player.Position.X = sx + 10;
 
         engine.Tick();
 
@@ -53,8 +55,9 @@ public class AISystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         // Spawn player and a monster a few tiles away (within detection range)
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -62,19 +65,20 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Set the monster's AI state to Chase with no move delay
         monster.AI.StateId = AIStates.Chase;
         monster.MoveDelay.Current = 0;
 
-        int originalX = monster.X;
+        int originalX = monster.Position.X;
 
         engine.Tick();
 
         // Check that move monster.MoveDelay was reset (monster moved)
 
         // If monster moved, monster.MoveDelay should have been reset
-        if (monster.X != originalX || monster.Y != sy)
+        if (monster.Position.X != originalX || monster.Position.Y != sy)
         {
             Assert.True(monster.MoveDelay.Current > 0, "Move monster.MoveDelay should be reset after movement");
         }
@@ -86,8 +90,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 13, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 13, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -95,6 +100,7 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Set to Chase state
         monster.AI.StateId = AIStates.Chase;
@@ -111,8 +117,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 1, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -120,6 +127,7 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         monster.AI.StateId = AIStates.Chase;
 
@@ -134,8 +142,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 5, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 5, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -143,6 +152,7 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Start in Idle
         monster.AI.StateId = AIStates.Idle;
@@ -158,8 +168,9 @@ public class AISystemTests
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -167,19 +178,20 @@ public class AISystemTests
             Defense = 0,
             Speed = 2
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         monster.AI.StateId = AIStates.Chase;
         // Set very high cooldown
         monster.MoveDelay.Current = 100;
 
-        int origX = monster.X;
-        int origY = monster.Y;
+        int origX = monster.Position.X;
+        int origY = monster.Position.Y;
 
         engine.Tick();
 
         // Tick decrements monster.MoveDelay by 1, but 99 >> 0, so monster stays put
-        Assert.Equal(origX, monster.X);
-        Assert.Equal(origY, monster.Y);
+        Assert.Equal(origX, monster.Position.X);
+        Assert.Equal(origY, monster.Position.Y);
     }
 
     [Fact]
@@ -191,8 +203,9 @@ public class AISystemTests
         // Load the Z-1 chunk so both levels exist
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 1);
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 1, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 1, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -200,6 +213,7 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Start in Idle — player is 3 XY + 1 Z = 4 Manhattan, within DetectionRange(8)
         monster.AI.StateId = AIStates.Idle;
@@ -218,8 +232,9 @@ public class AISystemTests
         // Load the Z-2 chunk
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ - 2);
 
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 2, ClassDefinitions.Warrior);
-        var monster = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ - 2, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(sx + 3, sy, Position.DefaultZ, new MonsterData
         {
             MonsterTypeId = 1,
             Health = 100,
@@ -227,6 +242,7 @@ public class AISystemTests
             Defense = 0,
             Speed = 8
         });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
 
         // Start in Idle — player is 2 Z levels away, zDiff > 1, should NOT detect
         monster.AI.StateId = AIStates.Idle;

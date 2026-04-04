@@ -169,9 +169,7 @@ public class WorldMapTests
         // Place a monster on the door tile to keep it occupied
         chunk.AddEntity(new MonsterEntity(map.AllocateEntityId())
         {
-            X = 5,
-            Y = 5,
-            Z = Position.DefaultZ,
+            Position = Position.FromCoords(5, 5, Position.DefaultZ),
             Health = new Health(10),
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 }
@@ -199,9 +197,7 @@ public class WorldMapTests
 
         var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            X = 5,
-            Y = 5,
-            Z = Position.DefaultZ,
+            Position = Position.FromCoords(5, 5, Position.DefaultZ),
             Health = new Health(10),
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 }
@@ -218,7 +214,8 @@ public class WorldMapTests
             map.GetTile(5, 5, Position.DefaultZ).PlaceableItemExtra));
 
         // Move entity away
-        monster.X = 10;
+        ref var monsterRef = ref chunk.GetMonsterRef(monster.Id);
+        monsterRef.Position = Position.FromCoords(10, monsterRef.Position.Y, monsterRef.Position.Z);
 
         // One tick should close the door (timer is at 1 = minimum open, unoccupied -> close)
         map.Update();
@@ -364,9 +361,7 @@ public class WorldMapTests
         int xA = 5;
         var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            X = xA,
-            Y = 5,
-            Z = Position.DefaultZ,
+            Position = Position.FromCoords(xA, 5, Position.DefaultZ),
             Health = new Health(10),
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 },
@@ -380,12 +375,13 @@ public class WorldMapTests
         Assert.False(chunkB.IsModifiedSinceLastSave);
 
         // Move monster across chunk boundary
-        map.MoveMonsterEntity(monster, Chunk.Size + 3, 5, Position.DefaultZ);
+        map.MoveMonsterEntity(monster.Id, monster.Position, Position.FromCoords(Chunk.Size + 3, 5, Position.DefaultZ));
 
         Assert.True(chunkA.IsModifiedSinceLastSave);
         Assert.True(chunkB.IsModifiedSinceLastSave);
-        Assert.DoesNotContain(monster, chunkA.Monsters);
-        Assert.Contains(monster, chunkB.Monsters);
+        Assert.Empty(chunkA.Monsters.ToArray());
+        Assert.Single(chunkB.Monsters.ToArray());
+        Assert.Equal(monster.Id, chunkB.Monsters[0].Id);
     }
 
     [Fact]
@@ -399,9 +395,7 @@ public class WorldMapTests
 
         var npc = new TownNpcEntity(map.AllocateEntityId())
         {
-            X = 5,
-            Y = 5,
-            Z = Position.DefaultZ,
+            Position = Position.FromCoords(5, 5, Position.DefaultZ),
             Health = new Health(100),
             CombatStats = default,
             NpcData = new TownNpcTag { Name = "Test" },
@@ -411,12 +405,13 @@ public class WorldMapTests
         chunkA.ClearSaveFlag();
         chunkB.ClearSaveFlag();
 
-        map.MoveNpcEntity(npc, Chunk.Size + 3, 5, Position.DefaultZ);
+        map.MoveNpcEntity(npc.Id, npc.Position, Position.FromCoords(Chunk.Size + 3, 5, Position.DefaultZ));
 
         Assert.True(chunkA.IsModifiedSinceLastSave);
         Assert.True(chunkB.IsModifiedSinceLastSave);
-        Assert.DoesNotContain(npc, chunkA.TownNpcs);
-        Assert.Contains(npc, chunkB.TownNpcs);
+        Assert.Empty(chunkA.TownNpcs.ToArray());
+        Assert.Single(chunkB.TownNpcs.ToArray());
+        Assert.Equal(npc.Id, chunkB.TownNpcs[0].Id);
     }
 
     [Fact]
@@ -428,9 +423,7 @@ public class WorldMapTests
 
         var monster = new MonsterEntity(map.AllocateEntityId())
         {
-            X = 5,
-            Y = 5,
-            Z = Position.DefaultZ,
+            Position = Position.FromCoords(5, 5, Position.DefaultZ),
             Health = new Health(10),
             CombatStats = default,
             MonsterData = new MonsterData { MonsterTypeId = 1 },
@@ -439,7 +432,7 @@ public class WorldMapTests
         chunk.ClearSaveFlag();
 
         // Move within same chunk
-        map.MoveMonsterEntity(monster, 6, 5, Position.DefaultZ);
+        map.MoveMonsterEntity(monster.Id, monster.Position, Position.FromCoords(6, 5, Position.DefaultZ));
 
         Assert.False(chunk.IsModifiedSinceLastSave);
     }

@@ -14,7 +14,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -31,7 +32,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
@@ -46,7 +48,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
         engine.SpawnItemOnGround(swordTemplate, 0, sx, sy, Position.DefaultZ);
@@ -70,7 +73,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
         engine.SpawnItemOnGround(armorTemplate, 0, sx, sy, Position.DefaultZ);
@@ -94,7 +98,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
         engine.SpawnItemOnGround(potionTemplate, 0, sx, sy, Position.DefaultZ);
@@ -114,7 +119,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
         engine.SpawnItemOnGround(swordTemplate, 2, sx, sy, Position.DefaultZ);
@@ -134,7 +140,8 @@ public class PlayerStateDataTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(0, 0, Position.DefaultZ);
         var (sx, sy, _) = engine.FindSpawnPosition();
-        var player = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        var _p = engine.SpawnPlayer(1, sx, sy, Position.DefaultZ, ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);

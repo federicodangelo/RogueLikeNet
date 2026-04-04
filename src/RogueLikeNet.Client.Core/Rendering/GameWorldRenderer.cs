@@ -72,7 +72,7 @@ public sealed class GameWorldRenderer
                     if ((tile.GlyphId == TileDefinitions.GlyphTorch || tile.Type == TileType.Lava)
                         && visible && lightLevel >= 5)
                     {
-                        _tilesWithGlow.Add((new Position(col, row, 0), tile));
+                        _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
                     }
 
                     var bgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.BgColor), brightness);

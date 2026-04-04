@@ -25,42 +25,48 @@ public class CombatSystem
         _events.Clear();
         _dialogueEvents.Clear();
 
-        foreach (var player in map.Players.Values)
+        // Player attacks
+        ProcessPlayerAttacks(map);
+
+        // Monster attacks
+        ProcessMonsterAttacks(map, debugInvulnerable);
+    }
+
+    private void ProcessPlayerAttacks(WorldMap map)
+    {
+        foreach (ref var player in map.Players)
         {
             if (player.IsDead) continue;
             if (player.Input.ActionType != ActionTypes.Attack) continue;
             if (player.AttackDelay.Current > 0) continue;
 
             int attackerAttack = player.CombatStats.Attack;
-            int attackerX = player.X;
-            int attackerY = player.Y;
 
-            int targetX, targetY;
+            var targetPosition = player.Position;
             if (player.Input.TargetX == 0 && player.Input.TargetY == 0)
             {
-                var best = FindClosestAdjacentTarget(map, player, attackerX, attackerY);
+                var best = FindClosestAdjacentTarget(map, player);
                 if (best == null)
                 {
                     player.Input.ActionType = ActionTypes.None;
                     continue;
                 }
-                targetX = best.Value.X;
-                targetY = best.Value.Y;
+                targetPosition = best.Value;
             }
             else
             {
-                targetX = attackerX + player.Input.TargetX;
-                targetY = attackerY + player.Input.TargetY;
+                targetPosition.X += player.Input.TargetX;
+                targetPosition.Y += player.Input.TargetY;
             }
 
             // Check monsters and resource nodes at target position
-            var chunk = map.GetChunkForWorldPos(targetX, targetY, player.Z);
-            if (chunk != null)
+            var targetChunk = map.GetChunkForWorldPos(targetPosition);
+            if (targetChunk != null)
             {
                 // Check Town NPCs first (dialogue instead of damage)
-                foreach (var npc in chunk.TownNpcs)
+                foreach (ref var npc in targetChunk.TownNpcs)
                 {
-                    if (npc.IsDead || npc.X != targetX || npc.Y != targetY) continue;
+                    if (npc.IsDead || npc.Position != targetPosition) continue;
                     if (npc.NpcData.TalkTimer <= 0)
                     {
                         npc.NpcData.TalkTimer = 60;
@@ -68,8 +74,7 @@ public class CombatSystem
                         npc.NpcData.DialogueIndex = (npc.NpcData.DialogueIndex + 1) % TownNpcDefinitions.Dialogues.Length;
                         _dialogueEvents.Add(new NpcDialogueEvent
                         {
-                            NpcX = npc.X,
-                            NpcY = npc.Y,
+                            Npc = npc.Position,
                             NpcName = npc.NpcData.Name,
                             Text = dialogue,
                         });
@@ -77,9 +82,9 @@ public class CombatSystem
                 }
 
                 // Monsters
-                foreach (var monster in chunk.Monsters)
+                foreach (ref var monster in targetChunk.Monsters)
                 {
-                    if (monster.IsDead || monster.X != targetX || monster.Y != targetY) continue;
+                    if (monster.IsDead || monster.Position != targetPosition) continue;
                     if (!monster.Health.IsAlive) continue;
 
                     int damage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
@@ -87,22 +92,17 @@ public class CombatSystem
 
                     _events.Add(new CombatEvent
                     {
-                        AttackerX = attackerX,
-                        AttackerY = attackerY,
-                        TargetX = monster.X,
-                        TargetY = monster.Y,
+                        Attacker = player.Position,
+                        Target = monster.Position,
                         Damage = damage,
                         TargetDied = !monster.Health.IsAlive
                     });
-
-                    if (!monster.Health.IsAlive)
-                        monster.IsDead = true;
                 }
 
                 // Resource nodes
-                foreach (var node in chunk.ResourceNodes)
+                foreach (ref var node in targetChunk.ResourceNodes)
                 {
-                    if (node.IsDead || node.X != targetX || node.Y != targetY) continue;
+                    if (node.IsDead || node.Position != targetPosition) continue;
                     if (!node.Health.IsAlive) continue;
 
                     int damage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
@@ -110,74 +110,49 @@ public class CombatSystem
 
                     _events.Add(new CombatEvent
                     {
-                        AttackerX = attackerX,
-                        AttackerY = attackerY,
-                        TargetX = node.X,
-                        TargetY = node.Y,
+                        Attacker = player.Position,
+                        Target = node.Position,
                         Damage = damage,
                         TargetDied = !node.Health.IsAlive
                     });
-
-                    if (!node.Health.IsAlive)
-                        node.IsDead = true;
                 }
             }
 
             player.Input.ActionType = ActionTypes.None;
             player.AttackDelay.Current = player.AttackDelay.Interval;
         }
-
-        // Monster attacks
-        ProcessMonsterAttacks(map, debugInvulnerable);
-
-        // Mark dead entities
-        foreach (var chunk in map.LoadedChunks)
-        {
-            foreach (var m in chunk.Monsters)
-                if (!m.IsDead && !m.Health.IsAlive) m.IsDead = true;
-            foreach (var r in chunk.ResourceNodes)
-                if (!r.IsDead && !r.Health.IsAlive) r.IsDead = true;
-        }
-
-        foreach (var p in map.Players.Values)
-            if (!p.IsDead && !p.Health.IsAlive) p.IsDead = true;
     }
 
     private void ProcessMonsterAttacks(WorldMap map, bool debugInvulnerable)
     {
-        var players = new List<PlayerEntity>();
-        foreach (var p in map.Players.Values)
-            if (!p.IsDead && p.Health.IsAlive)
-                players.Add(p);
-
-        if (players.Count == 0 || debugInvulnerable) return;
+        if (debugInvulnerable) return;
 
         foreach (var chunk in map.LoadedChunks)
         {
-            foreach (var monster in chunk.Monsters)
+            foreach (ref var monster in chunk.Monsters)
             {
-                if (monster.IsDead || !monster.Health.IsAlive || monster.AI.StateId != AIStates.Attack) continue;
+                if (monster.IsDead || monster.AI.StateId != AIStates.Attack) continue;
                 if (monster.AttackDelay.Current > 0) continue;
 
-                foreach (var player in players)
+                foreach (ref var player in map.Players)
                 {
-                    int dx = Math.Abs(monster.X - player.X);
-                    int dy = Math.Abs(monster.Y - player.Y);
+                    if (player.IsDead) continue;
+
+                    int dx = Math.Abs(monster.Position.X - player.Position.X);
+                    int dy = Math.Abs(monster.Position.Y - player.Position.Y);
                     if (dx + dy > 1) continue;
-                    if (!player.Health.IsAlive) continue;
 
                     int damage = Math.Max(1, monster.CombatStats.Attack - player.CombatStats.Defense);
                     player.Health.Current = Math.Max(0, player.Health.Current - damage);
 
                     _events.Add(new CombatEvent
                     {
-                        AttackerX = monster.X,
-                        AttackerY = monster.Y,
-                        TargetX = player.X,
-                        TargetY = player.Y,
+                        Attacker = monster.Position,
+                        Target = player.Position,
                         Damage = damage,
                         TargetDied = !player.Health.IsAlive
                     });
+
                     monster.AttackDelay.Current = monster.AttackDelay.Interval;
                     break;
                 }
@@ -185,40 +160,39 @@ public class CombatSystem
         }
     }
 
-    private static (int X, int Y)? FindClosestAdjacentTarget(
-        WorldMap map, PlayerEntity attacker, int ax, int ay)
+    private static Position? FindClosestAdjacentTarget(WorldMap map, PlayerEntity attacker)
     {
-        (int X, int Y)? best = null;
+        Position? best = null;
         int bestDist = int.MaxValue;
 
-        var chunk = map.GetChunkForWorldPos(ax, ay, attacker.Z);
+        var chunk = map.GetChunkForWorldPos(attacker.Position);
         if (chunk == null) return null;
 
         // Check monsters and resource nodes at adjacent positions
         foreach (var monster in chunk.Monsters)
         {
             if (monster.IsDead || !monster.Health.IsAlive) continue;
-            int dx = monster.X - ax;
-            int dy = monster.Y - ay;
+            int dx = monster.Position.X - attacker.Position.X;
+            int dy = monster.Position.Y - attacker.Position.Y;
             bool adjacent = false;
             foreach (var (ox, oy) in MeleeOffsets)
                 if (dx == ox && dy == oy) { adjacent = true; break; }
             if (!adjacent) continue;
             int dist = Math.Abs(dx) + Math.Abs(dy);
-            if (dist < bestDist) { bestDist = dist; best = (monster.X, monster.Y); }
+            if (dist < bestDist) { bestDist = dist; best = monster.Position; }
         }
 
         foreach (var node in chunk.ResourceNodes)
         {
             if (node.IsDead || !node.Health.IsAlive) continue;
-            int dx = node.X - ax;
-            int dy = node.Y - ay;
+            int dx = node.Position.X - attacker.Position.X;
+            int dy = node.Position.Y - attacker.Position.Y;
             bool adjacent = false;
             foreach (var (ox, oy) in MeleeOffsets)
                 if (dx == ox && dy == oy) { adjacent = true; break; }
             if (!adjacent) continue;
             int dist = Math.Abs(dx) + Math.Abs(dy);
-            if (dist < bestDist) { bestDist = dist; best = (node.X, node.Y); }
+            if (dist < bestDist) { bestDist = dist; best = node.Position; }
         }
 
         return best;
@@ -227,15 +201,15 @@ public class CombatSystem
 
 public struct CombatEvent
 {
-    public int AttackerX, AttackerY;
-    public int TargetX, TargetY;
+    public Position Attacker;
+    public Position Target;
     public int Damage;
     public bool TargetDied;
 }
 
 public struct NpcDialogueEvent
 {
-    public int NpcX, NpcY;
+    public Position Npc;
     public string NpcName;
     public string Text;
 }

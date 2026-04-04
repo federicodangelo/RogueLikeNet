@@ -156,10 +156,10 @@ public static class GameStateSerializer
         }
 
         // Players
-        foreach (var p in map.Players.Values)
+        foreach (var p in map.Players)
         {
             if (p.IsDead) continue;
-            ProcessEntity((long)p.Id, p.X, p.Y, p.Z, p.Appearance,
+            ProcessEntity((long)p.Id, p.Position.X, p.Position.Y, p.Position.Z, p.Appearance,
                 p.Health.Current, p.Health.Max, 0, null);
         }
 
@@ -169,13 +169,13 @@ public static class GameStateSerializer
             foreach (var m in chunk.Monsters)
             {
                 if (m.IsDead) continue;
-                ProcessEntity((long)m.Id, m.X, m.Y, m.Z, m.Appearance,
+                ProcessEntity((long)m.Id, m.Position.X, m.Position.Y, m.Position.Z, m.Appearance,
                     m.Health.Current, m.Health.Max, 0, null);
             }
 
             foreach (var gi in chunk.GroundItems)
             {
-                if (gi.IsDead) continue;
+                if (gi.IsDestroyed) continue;
                 var item = new ItemDataMsg
                 {
                     ItemTypeId = gi.Item.ItemTypeId,
@@ -186,28 +186,28 @@ public static class GameStateSerializer
                     BonusDefense = gi.Item.BonusDefense,
                     BonusHealth = gi.Item.BonusHealth,
                 };
-                ProcessEntity((long)gi.Id, gi.X, gi.Y, gi.Z, gi.Appearance,
+                ProcessEntity((long)gi.Id, gi.Position.X, gi.Position.Y, gi.Position.Z, gi.Appearance,
                     0, 0, 0, item);
             }
 
             foreach (var r in chunk.ResourceNodes)
             {
                 if (r.IsDead) continue;
-                ProcessEntity((long)r.Id, r.X, r.Y, r.Z, r.Appearance,
+                ProcessEntity((long)r.Id, r.Position.X, r.Position.Y, r.Position.Z, r.Appearance,
                     r.Health.Current, r.Health.Max, 0, null);
             }
 
             foreach (var n in chunk.TownNpcs)
             {
                 if (n.IsDead) continue;
-                ProcessEntity((long)n.Id, n.X, n.Y, n.Z, n.Appearance,
+                ProcessEntity((long)n.Id, n.Position.X, n.Position.Y, n.Position.Z, n.Appearance,
                     n.Health.Current, n.Health.Max, 0, null);
             }
 
             foreach (var e in chunk.Elements)
             {
                 int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
-                ProcessEntity((long)e.Id, e.X, e.Y, e.Z, e.Appearance,
+                ProcessEntity((long)e.Id, e.Position.X, e.Position.Y, e.Position.Z, e.Appearance,
                     0, 0, lightRadius, null);
             }
         }
@@ -229,10 +229,10 @@ public static class GameStateSerializer
         if (combatEvents.Count == 0) return [];
         return combatEvents.Select(e => new CombatEventMsg
         {
-            AttackerX = e.AttackerX,
-            AttackerY = e.AttackerY,
-            TargetX = e.TargetX,
-            TargetY = e.TargetY,
+            AttackerX = e.Attacker.X,
+            AttackerY = e.Attacker.Y,
+            TargetX = e.Target.X,
+            TargetY = e.Target.Y,
             Damage = e.Damage,
             TargetDied = e.TargetDied,
         }).ToArray();
@@ -244,8 +244,8 @@ public static class GameStateSerializer
         if (events.Count == 0) return [];
         return events.Select(e => new NpcDialogueMsg
         {
-            NpcX = e.NpcX,
-            NpcY = e.NpcY,
+            NpcX = e.Npc.X,
+            NpcY = e.Npc.Y,
             NpcName = e.NpcName,
             Text = e.Text,
         }).ToArray();

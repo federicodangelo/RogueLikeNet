@@ -11,7 +11,7 @@ public class CraftingSystem
 {
     public void Update(WorldMap map)
     {
-        foreach (var player in map.Players.Values)
+        foreach (ref var player in map.Players)
         {
             if (player.IsDead) continue;
             if (player.Input.ActionType != ActionTypes.Craft) continue;

@@ -122,7 +122,7 @@ internal static class TownGenerator
 
         // Place a torch in the town center
         result.Elements.Add(new DungeonElement(
-            new Position(townCenterX, townCenterY, worldZ),
+            Position.FromCoords(townCenterX, townCenterY, worldZ),
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(8, TileDefinitions.ColorTorchFg)));
 
@@ -138,7 +138,7 @@ internal static class TownGenerator
                 if (chunk.Tiles[nx, ny].Type != TileType.Floor) continue;
 
                 result.TownNpcs.Add((
-                    new Position(worldOffsetX + nx, worldOffsetY + ny, worldZ),
+                    Position.FromCoords(worldOffsetX + nx, worldOffsetY + ny, worldZ),
                     TownNpcDefinitions.PickName(rng),
                     townCenterX, townCenterY, townSize / 2
                 ));
@@ -275,7 +275,7 @@ internal static class TownGenerator
             chunk.Tiles[torchX, torchY].Type == TileType.Floor)
         {
             result.Elements.Add(new DungeonElement(
-                new Position(worldOffsetX + torchX, worldOffsetY + torchY, worldZ),
+                Position.FromCoords(worldOffsetX + torchX, worldOffsetY + torchY, worldZ),
                 new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                 new LightSource(5, TileDefinitions.ColorTorchFg)));
         }

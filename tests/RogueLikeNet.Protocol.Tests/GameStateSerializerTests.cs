@@ -91,7 +91,8 @@ public class GameStateSerializerTests
         GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
 
         // Move entity — only position changed
-        monster.X = sx + 1;
+        ref var monsterRef = ref engine.WorldMap.GetMonsterRef(monster.Id);
+        monsterRef.Position = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
 
         var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
         Assert.Empty(full);
@@ -170,7 +171,7 @@ public class GameStateSerializerTests
             FromTick = 0,
             ToTick = engine.CurrentTick,
             IsSnapshot = true,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.X, player.Y, player.Z),
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.Position.X, player.Position.Y, player.Position.Z),
             EntityUpdates = fullUpdates,
             EntityPositionHealthUpdates = posUpdates,
             EntityRemovals = removals,
@@ -218,8 +219,9 @@ public class GameStateSerializerTests
         GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
 
         // Change only position and health — glyph and color stay the same
-        monster.X = sx + 2;
-        monster.Health.Current = 15;
+        ref var monsterRef = ref engine.WorldMap.GetMonsterRef(monster.Id);
+        monsterRef.Position = Position.FromCoords(sx + 2, sy, Position.DefaultZ);
+        monsterRef.Health.Current = 15;
 
         var (full, pos, rem) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
         Assert.Empty(full); // Not a full update

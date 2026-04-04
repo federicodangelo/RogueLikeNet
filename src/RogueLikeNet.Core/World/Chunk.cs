@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
 
 namespace RogueLikeNet.Core.World;
@@ -15,23 +16,81 @@ public class Chunk
     public int[,] LightLevels { get; }
 
     // ── Entity storage ────────────────────────────────────────────────
-    public IEnumerable<MonsterEntity> Monsters => _monsters;
-    public IEnumerable<GroundItemEntity> GroundItems => _groundItems;
-    public IEnumerable<ResourceNodeEntity> ResourceNodes => _resourceNodes;
-    public IEnumerable<TownNpcEntity> TownNpcs => _townNpcs;
-    public IEnumerable<ElementEntity> Elements => _elements;
+    public Span<MonsterEntity> Monsters => CollectionsMarshal.AsSpan(_monsters);
+    public Span<GroundItemEntity> GroundItems => CollectionsMarshal.AsSpan(_groundItems);
+    public Span<ResourceNodeEntity> ResourceNodes => CollectionsMarshal.AsSpan(_resourceNodes);
+    public Span<TownNpcEntity> TownNpcs => CollectionsMarshal.AsSpan(_townNpcs);
+    public Span<ElementEntity> Elements => CollectionsMarshal.AsSpan(_elements);
 
-    public IEnumerable<Entity> AllEntities =>
-        _monsters.Cast<Entity>()
-        .Concat(_groundItems)
-        .Concat(_resourceNodes)
-        .Concat(_townNpcs)
-        .Concat(_elements);
+    public ref struct SolidEntityWithHealth
+    {
+        public readonly EntityRef Entity;
+        public readonly ref Position Position;
+        public readonly ref Health Health;
+        public readonly bool IsDead => !Health.IsAlive;
 
-    public IEnumerable<EntityWithHealth> AllSolidEntitiesWithHealth =>
-        _monsters.Cast<EntityWithHealth>()
-        .Concat(_resourceNodes)
-        .Concat(_townNpcs);
+        public SolidEntityWithHealth(EntityRef entityRef, ref Position position, ref Health health)
+        {
+            Entity = entityRef;
+            Position = ref position;
+            Health = ref health;
+        }
+    }
+
+    public ref struct SolidEntitiesWithHealthEnumerator
+    {
+        private readonly Chunk _chunk;
+        private int _phase; // 0 = monsters, 1 = resourceNodes, 2 = townNpcs
+        private int _index;
+
+        public SolidEntitiesWithHealthEnumerator(Chunk chunk)
+        {
+            _chunk = chunk;
+            _phase = 0;
+            _index = -1;
+        }
+
+        public SolidEntitiesWithHealthEnumerator GetEnumerator() => this;
+
+        public bool MoveNext()
+        {
+            _index++;
+            while (_phase <= 2)
+            {
+                int count = _phase switch
+                {
+                    0 => _chunk._monsters.Count,
+                    1 => _chunk._resourceNodes.Count,
+                    2 => _chunk._townNpcs.Count,
+                    _ => 0
+                };
+                if (_index < count) return true;
+                _phase++;
+                _index = 0;
+            }
+            return false;
+        }
+
+        public SolidEntityWithHealth Current => _phase switch
+        {
+            0 => new SolidEntityWithHealth(
+                new EntityRef(_chunk._monsters[_index].Id, EntityType.Monster),
+                ref _chunk.Monsters[_index].Position,
+                ref _chunk.Monsters[_index].Health),
+            1 => new SolidEntityWithHealth(
+                new EntityRef(_chunk._resourceNodes[_index].Id, EntityType.ResourceNode),
+                ref _chunk.ResourceNodes[_index].Position,
+                ref _chunk.ResourceNodes[_index].Health),
+            2 => new SolidEntityWithHealth(
+                new EntityRef(_chunk._townNpcs[_index].Id, EntityType.TownNpc),
+                ref _chunk.TownNpcs[_index].Position,
+                ref _chunk.TownNpcs[_index].Health),
+            _ => throw new InvalidOperationException()
+        };
+    }
+
+    public SolidEntitiesWithHealthEnumerator AllSolidEntitiesWithHealth =>
+        new SolidEntitiesWithHealthEnumerator(this);
 
     private readonly List<MonsterEntity> _monsters = [];
     private readonly List<GroundItemEntity> _groundItems = [];
@@ -93,58 +152,92 @@ public class Chunk
     /// Z maps directly (each Z level = one chunk layer, no subdivision).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static (int ChunkX, int ChunkY, int ChunkZ) WorldToChunkCoord(int worldX, int worldY, int worldZ)
+    public static Position WorldToChunkCoord(Position world)
     {
         // Use integer division that floors towards negative infinity
-        int cx = worldX >= 0 ? worldX / Size : (worldX - Size + 1) / Size;
-        int cy = worldY >= 0 ? worldY / Size : (worldY - Size + 1) / Size;
-        return (cx, cy, worldZ);
+        int cx = world.X >= 0 ? world.X / Size : (world.X - Size + 1) / Size;
+        int cy = world.Y >= 0 ? world.Y / Size : (world.Y - Size + 1) / Size;
+        return Position.FromCoords(cx, cy, world.Z);
     }
 
-    public void RemoveEntity(Entity entity)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Position WorldToChunkCoord(int worldX, int worldY, int worldZ) => WorldToChunkCoord(Position.FromCoords(worldX, worldY, worldZ));
+
+    public void RemoveEntity(EntityRef entity)
     {
-        switch (entity)
+        switch (entity.Type)
         {
-            case MonsterEntity m:
-                _monsters.Remove(m);
+            case EntityType.Monster:
+                _monsters.RemoveAll(m => m.Id == entity.Id);
                 break;
-            case GroundItemEntity i:
-                _groundItems.Remove(i);
+            case EntityType.GroundItem:
+                _groundItems.RemoveAll(i => i.Id == entity.Id);
                 break;
-            case ResourceNodeEntity r:
-                _resourceNodes.Remove(r);
+            case EntityType.ResourceNode:
+                _resourceNodes.RemoveAll(r => r.Id == entity.Id);
                 break;
-            case TownNpcEntity n:
-                _townNpcs.Remove(n);
+            case EntityType.TownNpc:
+                _townNpcs.RemoveAll(n => n.Id == entity.Id);
                 break;
-            case ElementEntity e:
-                _elements.Remove(e);
+            case EntityType.Element:
+                _elements.RemoveAll(e => e.Id == entity.Id);
                 break;
         }
         MarkModified();
     }
 
-    public void AddEntity(Entity entity)
+    public void RemoveEntity(MonsterEntity entity) { _monsters.RemoveAll(m => m.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(GroundItemEntity entity) { _groundItems.RemoveAll(i => i.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(ResourceNodeEntity entity) { _resourceNodes.RemoveAll(r => r.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(TownNpcEntity entity) { _townNpcs.RemoveAll(n => n.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(ElementEntity entity) { _elements.RemoveAll(e => e.Id == entity.Id); MarkModified(); }
+
+    public ref MonsterEntity AddEntity(MonsterEntity entity) { _monsters.Add(entity); MarkModified(); return ref Monsters[^1]; }
+    public ref GroundItemEntity AddEntity(GroundItemEntity entity) { _groundItems.Add(entity); MarkModified(); return ref GroundItems[^1]; }
+    public ref ResourceNodeEntity AddEntity(ResourceNodeEntity entity) { _resourceNodes.Add(entity); MarkModified(); return ref ResourceNodes[^1]; }
+    public ref TownNpcEntity AddEntity(TownNpcEntity entity) { _townNpcs.Add(entity); MarkModified(); return ref TownNpcs[^1]; }
+    public ref ElementEntity AddEntity(ElementEntity entity) { _elements.Add(entity); MarkModified(); return ref Elements[^1]; }
+
+    // ── Ref getters for in-place mutation ─────────────────────────────
+
+    public ref MonsterEntity GetMonsterRef(int entityId)
     {
-        switch (entity)
-        {
-            case MonsterEntity m:
-                _monsters.Add(m);
-                break;
-            case GroundItemEntity i:
-                _groundItems.Add(i);
-                break;
-            case ResourceNodeEntity r:
-                _resourceNodes.Add(r);
-                break;
-            case TownNpcEntity n:
-                _townNpcs.Add(n);
-                break;
-            case ElementEntity e:
-                _elements.Add(e);
-                break;
-        }
-        MarkModified();
+        var span = Monsters;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Monster entity {entityId} not found in chunk.");
+    }
+
+    public ref GroundItemEntity GetGroundItemRef(int entityId)
+    {
+        var span = GroundItems;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Ground item entity {entityId} not found in chunk.");
+    }
+
+    public ref ResourceNodeEntity GetResourceNodeRef(int entityId)
+    {
+        var span = ResourceNodes;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Resource node entity {entityId} not found in chunk.");
+    }
+
+    public ref TownNpcEntity GetTownNpcRef(int entityId)
+    {
+        var span = TownNpcs;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Town NPC entity {entityId} not found in chunk.");
+    }
+
+    public ref ElementEntity GetElementRef(int entityId)
+    {
+        var span = Elements;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Element entity {entityId} not found in chunk.");
     }
 
     public void ResetLight()
@@ -153,12 +246,12 @@ public class Chunk
     }
 
     /// <summary>Removes dead entities from all lists (compacts in-place).</summary>
-    public void RemoveDeadEntities()
+    public void RemoveDeadOrDestroyedEntities()
     {
-        _monsters.RemoveAll(m => m.IsDead);
-        _groundItems.RemoveAll(i => i.IsDead);
-        _resourceNodes.RemoveAll(r => r.IsDead);
-        _townNpcs.RemoveAll(n => n.IsDead);
+        if (_monsters.RemoveAll(m => m.IsDead) != 0) MarkModified();
+        if (_groundItems.RemoveAll(i => i.IsDestroyed) != 0) MarkModified();
+        if (_resourceNodes.RemoveAll(r => r.IsDead) != 0) MarkModified();
+        if (_townNpcs.RemoveAll(n => n.IsDead) != 0) MarkModified();
     }
 
     /// <summary>Clears all entity lists (used when unloading a chunk).</summary>

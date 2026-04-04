@@ -1,27 +1,24 @@
 using System.Runtime.CompilerServices;
 namespace RogueLikeNet.Core.Components;
 
-public struct Position
+public record struct Position(int X, int Y, int Z)
 {
+    public override readonly string ToString() => $"({X}, {Y}, {Z})";
+
     public const int DefaultZ = 127;
+    public static readonly Position Zero = new(0, 0, 0);
 
-    public int X;
-    public int Y;
-    public int Z;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Position FromCoords(int x, int y, int z) => new(x, y, z);
 
-    public Position(int x, int y, int z)
+    public long Pack() => PackCoord(X, Y, Z);
+    public void Unpack(long packed)
     {
+        var (x, y, z) = UnpackCoord(packed);
         X = x;
         Y = y;
         Z = z;
     }
-
-    public override string ToString() => $"({X}, {Y}, {Z})";
-
-    public static bool operator ==(Position a, Position b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-    public static bool operator !=(Position a, Position b) => !(a == b);
-    public override bool Equals(object? obj) => obj is Position p && this == p;
-    public override int GetHashCode() => HashCode.Combine(X, Y, Z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ManhattanDistance(Position a, Position b) => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
@@ -45,14 +42,19 @@ public struct Position
         return ((long)(x & 0xFFFFFF) << 32) | ((long)(y & 0xFFFFFF) << 8) | (long)(z & 0xFF);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long PackCoord(Position pos)
+    {
+        return ((long)(pos.X & 0xFFFFFF) << 32) | ((long)(pos.Y & 0xFFFFFF) << 8) | (long)(pos.Z & 0xFF);
+    }
+
     /// <summary>
     /// Unpacks a 64-bit long into X (24-bit sign-extended), Y (24-bit sign-extended), Z (8-bit unsigned).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static (int X, int Y,
-    int Z) UnpackCoord(long packed)
+    public static Position UnpackCoord(long packed)
     {
-        return (
+        return FromCoords(
                 (int)(((packed >> 32) & 0xFFFFFF) << 8) >> 8,
                 (int)(((packed >> 8) & 0xFFFFFF) << 8) >> 8,
                 (int)(packed & 0xFF)

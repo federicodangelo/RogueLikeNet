@@ -21,29 +21,25 @@ public class BuildingSystem
 
     private void ProcessPlacement(WorldMap map)
     {
-        var actions = new List<(PlayerEntity Player, int Slot, int TargetX, int TargetY, int TargetZ)>();
-
-        foreach (var player in map.Players.Values)
+        foreach (ref var player in map.Players)
         {
             if (player.IsDead) continue;
             if (player.Input.ActionType != ActionTypes.PlaceItem) continue;
 
-            int targetX = player.X + player.Input.TargetX;
-            int targetY = player.Y + player.Input.TargetY;
-            actions.Add((player, player.Input.ItemSlot, targetX, targetY, player.Z));
+            int slot = player.Input.ItemSlot;
+            int targetX = player.Position.X + player.Input.TargetX;
+            int targetY = player.Position.Y + player.Input.TargetY;
+            var target = Position.FromCoords(targetX, targetY, player.Position.Z);
             player.Input.ActionType = ActionTypes.None;
-        }
 
-        foreach (var (player, slot, targetX, targetY, targetZ) in actions)
-        {
             if (player.Inventory.Items == null || slot < 0 || slot >= player.Inventory.Items.Count) continue;
 
             var itemData = player.Inventory.Items[slot];
             var def = ItemDefinitions.Get(itemData.ItemTypeId);
             if (def.Category != ItemDefinitions.CategoryPlaceable) continue;
 
-            int dx = targetX - player.X;
-            int dy = targetY - player.Y;
+            int dx = target.X - player.Position.X;
+            int dy = target.Y - player.Position.Y;
             bool adjacent = false;
             foreach (var (ox, oy) in AdjacentOffsets)
             {
@@ -51,14 +47,14 @@ public class BuildingSystem
             }
             if (!adjacent) continue;
 
-            var tile = map.GetTile(targetX, targetY, targetZ);
+            var tile = map.GetTile(target);
             if (tile.Type != TileType.Floor) continue;
             if (tile.PlaceableItemId != 0) continue;
 
             // Check no entity occupies the target position
-            if (map.IsPositionOccupiedByEntity(targetX, targetY, targetZ)) continue;
+            if (map.IsPositionOccupiedByEntity(target)) continue;
 
-            map.SetPlaceable(targetX, targetY, targetZ, itemData.ItemTypeId, 0);
+            map.SetPlaceable(target, itemData.ItemTypeId, 0);
 
             var item = player.Inventory.Items[slot];
             item.StackCount--;
@@ -76,35 +72,30 @@ public class BuildingSystem
 
     private void ProcessPickUpPlaced(WorldMap map, GameEngine engine)
     {
-        var actions = new List<(PlayerEntity Player, int TargetX, int TargetY, int TargetZ)>();
-
-        foreach (var player in map.Players.Values)
+        foreach (ref var player in map.Players)
         {
             if (player.IsDead) continue;
             if (player.Input.ActionType != ActionTypes.PickUpPlaced) continue;
 
-            int targetX = player.X + player.Input.TargetX;
-            int targetY = player.Y + player.Input.TargetY;
-            actions.Add((player, targetX, targetY, player.Z));
+            int targetX = player.Position.X + player.Input.TargetX;
+            int targetY = player.Position.Y + player.Input.TargetY;
+            var target = Position.FromCoords(targetX, targetY, player.Position.Z);
             player.Input.ActionType = ActionTypes.None;
-        }
 
-        foreach (var (player, targetX, targetY, targetZ) in actions)
-        {
             if (player.Inventory.Items == null || player.Inventory.IsFull) continue;
 
-            var tile = map.GetTile(targetX, targetY, targetZ);
+            var tile = map.GetTile(target);
             if (tile.PlaceableItemId == ItemDefinitions.None)
             {
                 // Maybe there's an item on the floor
-                var chunk = map.GetChunkForWorldPos(targetX, targetY, targetZ);
+                var chunk = map.GetChunkForWorldPos(target);
                 if (chunk != null)
                 {
-                    foreach (var gi in chunk.GroundItems)
+                    foreach (ref var gi in chunk.GroundItems)
                     {
-                        if (gi.IsDead || gi.X != targetX || gi.Y != targetY || gi.Z != targetZ) continue;
-                        if (InventorySystem.AddItemToInventory(player, gi.Item))
-                            gi.IsDead = true;
+                        if (gi.IsDestroyed || gi.Position != target) continue;
+                        if (InventorySystem.AddItemToInventory(ref player, gi.Item))
+                            gi.IsDestroyed = true;
                     }
                 }
                 continue;
@@ -117,10 +108,10 @@ public class BuildingSystem
                 StackCount = 1,
             };
 
-            if (!InventorySystem.AddItemToInventory(player, placeableItemData))
+            if (!InventorySystem.AddItemToInventory(ref player, placeableItemData))
                 continue;
 
-            map.SetPlaceable(targetX, targetY, targetZ, 0, 0);
+            map.SetPlaceable(target, 0, 0);
         }
     }
 }

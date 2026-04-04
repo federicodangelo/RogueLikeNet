@@ -176,7 +176,7 @@ internal static class DungeonHelper
                 var def = NpcDefinitions.Pick(rng, difficulty);
                 var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
                 int hpScale = 1 + difficulty / 2;
-                result.Monsters.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), monsterData));
+                result.Monsters.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), monsterData));
             }
         }
 
@@ -186,7 +186,7 @@ internal static class DungeonHelper
             {
                 var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
                 int rarityMult = 100 + loot.Rarity * 50;
-                result.Items.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), new ItemData
+                result.Items.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), new ItemData
                 {
                     ItemTypeId = loot.Definition.TypeId,
                     Rarity = loot.Rarity,
@@ -205,7 +205,7 @@ internal static class DungeonHelper
             if (IsChunkCoordinateWalkable(room.CenterX, room.CenterY))
             {
                 result.Elements.Add(new DungeonElement(
-                    new Position(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY, worldZ),
+                    Position.FromCoords(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY, worldZ),
                     new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
                     new LightSource(6, TileDefinitions.ColorTorchFg)));
             }
@@ -234,7 +234,7 @@ internal static class DungeonHelper
                     if (result.Chunk.Tiles[x, y].Type != TileType.Floor) continue;
 
                     var def = ResourceNodeDefinitions.Pick(rng, biome);
-                    result.ResourceNodes.Add((new Position(worldOffsetX + x, worldOffsetY + y, worldZ), def));
+                    result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), def));
                     break;
                 }
             }

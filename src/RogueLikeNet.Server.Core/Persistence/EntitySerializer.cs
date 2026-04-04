@@ -31,11 +31,11 @@ public static class EntitySerializer
 
     // ── Serialization helpers ──────────────────────────────────────────
 
-    private static void SerializePosition(Dictionary<string, object> dict, int x, int y, int z)
+    private static void SerializePosition(Dictionary<string, object> dict, Position pos)
     {
-        dict["X"] = x;
-        dict["Y"] = y;
-        dict["Z"] = z;
+        dict["X"] = pos.X;
+        dict["Y"] = pos.Y;
+        dict["Z"] = pos.Z;
     }
 
     private static void SerializeHealth(Dictionary<string, object> dict, Health hp)
@@ -121,7 +121,7 @@ public static class EntitySerializer
         {
             if (m.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeMonster };
-            SerializePosition(dict, m.X, m.Y, m.Z);
+            SerializePosition(dict, m.Position);
             SerializeMonsterData(dict, m.MonsterData);
             SerializeHealth(dict, m.Health);
             SerializeAIState(dict, m.AI);
@@ -133,9 +133,9 @@ public static class EntitySerializer
         // Ground items
         foreach (var gi in chunk.GroundItems)
         {
-            if (gi.IsDead) continue;
+            if (gi.IsDestroyed) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeGroundItem };
-            SerializePosition(dict, gi.X, gi.Y, gi.Z);
+            SerializePosition(dict, gi.Position);
             SerializeItemData(dict, gi.Item);
             entities.Add(dict);
         }
@@ -145,7 +145,7 @@ public static class EntitySerializer
         {
             if (r.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeResourceNode };
-            SerializePosition(dict, r.X, r.Y, r.Z);
+            SerializePosition(dict, r.Position);
             SerializeResourceNodeData(dict, r.NodeData);
             SerializeHealth(dict, r.Health);
             SerializeAttackDelay(dict, r.AttackDelay);
@@ -156,7 +156,7 @@ public static class EntitySerializer
         foreach (var e in chunk.Elements)
         {
             var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
-            SerializePosition(dict, e.X, e.Y, e.Z);
+            SerializePosition(dict, e.Position);
             SerializeTileAppearance(dict, e.Appearance);
             if (e.Light.HasValue)
                 SerializeLightSource(dict, e.Light.Value);
@@ -168,7 +168,7 @@ public static class EntitySerializer
         {
             if (n.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeTownNpc };
-            SerializePosition(dict, n.X, n.Y, n.Z);
+            SerializePosition(dict, n.Position);
             SerializeTownNpcTag(dict, n.NpcData);
             SerializeHealth(dict, n.Health);
             SerializeAIState(dict, n.AI);
@@ -243,7 +243,7 @@ public static class EntitySerializer
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        var monster = engine.SpawnMonster(x, y, z, monsterData);
+        ref var monster = ref engine.SpawnMonster(x, y, z, monsterData);
 
         // Restore runtime state
         monster.Health.Current = GetInt(dict, "HealthCurrent", monster.Health.Current);
@@ -276,7 +276,7 @@ public static class EntitySerializer
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         int nodeTypeId = GetInt(dict, "NodeTypeId");
         var def = ResourceNodeDefinitions.Get(nodeTypeId);
-        var node = engine.SpawnResourceNode(x, y, z, def);
+        ref var node = ref engine.SpawnResourceNode(x, y, z, def);
 
         // Restore runtime state
         node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);
@@ -286,7 +286,7 @@ public static class EntitySerializer
     private static void DeserializeElement(Dictionary<string, JsonElement> dict, GameEngine engine)
     {
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        var pos = new Position(x, y, z);
+        var pos = Position.FromCoords(x, y, z);
         var ta = new TileAppearance(GetInt(dict, "GlyphId"), GetInt(dict, "FgColor"), GetInt(dict, "BgColor"));
 
         LightSource? light = dict.ContainsKey("LightRadius")
@@ -301,7 +301,7 @@ public static class EntitySerializer
         string name = GetString(dict, "Name", "NPC");
         int tcx = GetInt(dict, "TownCenterX"), tcy = GetInt(dict, "TownCenterY"), radius = GetInt(dict, "WanderRadius");
 
-        var npc = engine.SpawnTownNpc(x, y, z, name, tcx, tcy, radius);
+        ref var npc = ref engine.SpawnTownNpc(x, y, z, name, tcx, tcy, radius);
 
         // Restore runtime state
         npc.Health.Current = GetInt(dict, "HealthCurrent", npc.Health.Current);

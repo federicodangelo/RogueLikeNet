@@ -119,7 +119,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
 
         // Spawn point at overworld level only
         if (chunkX == 0 && chunkY == 0 && chunkZ == Position.DefaultZ && rooms.Count > 0)
-            result.SpawnPosition = (worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
+            result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
 
         return result;
     }
