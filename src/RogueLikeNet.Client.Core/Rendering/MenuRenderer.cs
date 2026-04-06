@@ -294,14 +294,14 @@ public sealed class MenuRenderer
     // ── Save Slot Screen ────────────────────────────────────
 
     public void RenderSaveSlotScreen(ISpriteRenderer r, int totalCols, int totalRows,
-        SaveSlotInfoMsg[] slots, int selectedIndex, string? statusMessage, bool isError,
+        SaveSlotInfoMsg[] slots, int selectedIndex, int scrollOffset, string? statusMessage, bool isError,
         bool confirmingDelete, bool creatingNew, string newSlotName, bool waiting)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
         int boxW = 52;
-        int slotLines = slots.Length * 4; // 3 lines per slot + 1 gap
-        int boxH = Math.Max(14, slotLines + 12);
+        int maxBoxH = Math.Min(totalRows - 2, 26);
+        int boxH = Math.Max(14, Math.Min(slots.Length * 4 + 12, maxBoxH));
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -337,9 +337,32 @@ public sealed class MenuRenderer
             return;
         }
 
-        int row = sepY + 2;
-        for (int i = 0; i < slots.Length; i++)
+        // Content area: rows from (sepY + 2) to (by + boxH - 5) inclusive = boxH - 8 rows
+        int contentStart = sepY + 2;
+        int contentRows = boxH - 8;
+
+        bool showTopIndicator = scrollOffset > 0;
+        int topRows = showTopIndicator ? 1 : 0;
+
+        // Count rows needed for all items from scrollOffset
+        int rowsNeeded = 0;
+        for (int i = scrollOffset; i < slots.Length; i++) rowsNeeded += 4;
+        if (scrollOffset <= slots.Length) rowsNeeded += 1; // "New Game" entry
+        bool showBottomIndicator = rowsNeeded > contentRows - topRows;
+        int effectiveRows = contentRows - topRows - (showBottomIndicator ? 1 : 0);
+
+        int row = contentStart;
+        if (showTopIndicator)
         {
+            AsciiDraw.DrawCentered(r, totalCols, row, "\u2191 more above", RenderingTheme.Dim);
+            row++;
+        }
+
+        int rowsRendered = 0;
+        for (int i = scrollOffset; i < slots.Length; i++)
+        {
+            if (rowsRendered + 4 > effectiveRows) break;
+
             bool sel = i == selectedIndex;
             var slot = slots[i];
             string prefix = sel ? " \u25ba " : "   ";
@@ -355,13 +378,21 @@ public sealed class MenuRenderer
             AsciiDraw.DrawString(r, bx + 4, row + 2, Truncate(details2, boxW - 6), RenderingTheme.SlotDate);
 
             row += 4;
+            rowsRendered += 4;
         }
 
-        // "New Game" action item
+        // "New Game" action item — only if it's in the viewport and there's room
+        if (scrollOffset <= slots.Length && rowsRendered + 1 <= effectiveRows)
         {
             bool sel = selectedIndex == slots.Length;
             string prefix = sel ? " \u25ba " : "   ";
             AsciiDraw.DrawString(r, bx + 4, row, prefix + "+ New Game", sel ? RenderingTheme.Selected : RenderingTheme.Normal);
+            rowsRendered += 1;
+        }
+
+        if (showBottomIndicator)
+        {
+            AsciiDraw.DrawCentered(r, totalCols, contentStart + topRows + effectiveRows, "\u2193 more below", RenderingTheme.Dim);
         }
 
         // Status message

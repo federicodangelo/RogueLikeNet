@@ -14,6 +14,8 @@ public sealed class SaveSlotScreen : IScreen
 
     private SaveSlotInfoMsg[] _slots = [];
     private int _selectedIndex;
+    private int _scrollOffset;
+    private int _lastTotalRows = 24;
     private string? _statusMessage;
     private bool _isError;
     private bool _confirmingDelete;
@@ -38,6 +40,7 @@ public sealed class SaveSlotScreen : IScreen
     public void OnEnter()
     {
         _selectedIndex = 0;
+        _scrollOffset = 0;
         _statusMessage = null;
         _isError = false;
         _confirmingDelete = false;
@@ -53,6 +56,8 @@ public sealed class SaveSlotScreen : IScreen
         _waitingForResponse = false;
         if (_selectedIndex >= TotalItemCount)
             _selectedIndex = Math.Max(0, TotalItemCount - 1);
+        _scrollOffset = Math.Min(_scrollOffset, Math.Max(0, _selectedIndex));
+        EnsureSelectionVisible();
     }
 
     public void SetStatus(string message, bool isError)
@@ -93,9 +98,15 @@ public sealed class SaveSlotScreen : IScreen
 
         int count = TotalItemCount;
         if (input.IsActionPressed(InputAction.MenuUp))
+        {
             _selectedIndex = (_selectedIndex + count - 1) % count;
+            EnsureSelectionVisible();
+        }
         else if (input.IsActionPressed(InputAction.MenuDown))
+        {
             _selectedIndex = (_selectedIndex + 1) % count;
+            EnsureSelectionVisible();
+        }
 
         if (input.IsActionPressed(InputAction.MenuConfirm))
         {
@@ -126,8 +137,9 @@ public sealed class SaveSlotScreen : IScreen
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
+        _lastTotalRows = totalRows;
         _menuRenderer.RenderSaveSlotScreen(renderer, totalCols, totalRows,
-            _slots, _selectedIndex, _statusMessage, _isError,
+            _slots, _selectedIndex, _scrollOffset, _statusMessage, _isError,
             _confirmingDelete, _creatingNew, _newSlotName, _waitingForResponse);
     }
 
@@ -190,5 +202,42 @@ public sealed class SaveSlotScreen : IScreen
         {
             Action = SaveGameAction.List,
         });
+    }
+
+    private const int SlotScreenMaxBoxHeight = 26;
+
+    private int ContentRowsAvailable()
+    {
+        int maxBoxH = Math.Min(_lastTotalRows - 2, SlotScreenMaxBoxHeight);
+        int boxH = Math.Max(14, Math.Min(_slots.Length * 4 + 12, maxBoxH));
+        return boxH - 8; // header (4 rows) + footer (4 rows)
+    }
+
+    /// <summary>
+    /// Adjusts <see cref="_scrollOffset"/> so that <see cref="_selectedIndex"/> falls
+    /// within the visible item window.
+    /// </summary>
+    private void EnsureSelectionVisible()
+    {
+        if (_selectedIndex < _scrollOffset)
+        {
+            _scrollOffset = _selectedIndex;
+            return;
+        }
+        int availRows = ContentRowsAvailable();
+        int total = TotalItemCount;
+        int rowsUsed = 0;
+        for (int i = _scrollOffset; i < total; i++)
+        {
+            int h = i < _slots.Length ? 4 : 1;
+            if (rowsUsed + h > availRows)
+            {
+                _scrollOffset++;
+                EnsureSelectionVisible();
+                return;
+            }
+            rowsUsed += h;
+            if (i == _selectedIndex) return;
+        }
     }
 }
