@@ -92,6 +92,34 @@ public class WorldMap
     public PlayerEntity? GetPlayerByConnection(long connectionId)
         => _playersByConnection.TryGetValue(connectionId, out var id) ? GetPlayer(id) : null;
 
+    public EntityRef GetEntityRefAt(Position pos)
+    {
+        foreach (var p in _players)
+            if (!p.IsDead && p.Position == pos)
+                return new EntityRef(p.Id, EntityType.Player);
+
+        var chunk = GetChunkForWorldPos(pos);
+        if (chunk == null) return default;
+
+        foreach (var m in chunk.Monsters)
+            if (!m.IsDead && m.Position == pos)
+                return new EntityRef(m.Id, EntityType.Monster);
+
+        foreach (var n in chunk.TownNpcs)
+            if (!n.IsDead && n.Position == pos)
+                return new EntityRef(n.Id, EntityType.TownNpc);
+
+        foreach (var r in chunk.ResourceNodes)
+            if (!r.IsDead && r.Position == pos)
+                return new EntityRef(r.Id, EntityType.ResourceNode);
+
+        foreach (var g in chunk.GroundItems)
+            if (!g.IsDestroyed && g.Position == pos)
+                return new EntityRef(g.Id, EntityType.GroundItem);
+
+        return default;
+    }
+
     public ref MonsterEntity GetMonsterRef(int entityId)
     {
         foreach (var chunk in _chunks.Values)

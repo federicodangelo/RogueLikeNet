@@ -1,6 +1,7 @@
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -27,7 +28,7 @@ public class AISystem
     private readonly List<(int Id, Position From, Position To)> _pendingMonsterMoves = new();
     private readonly List<(int Id, Position From, Position To)> _pendingNpcMoves = new();
     private readonly List<Position> _playerPositions = new();
-    private readonly HashSet<long> _actorPositions = new();
+    private readonly HashSet<long> _entitiesPositions = new();
     private readonly AStarPathfinder _pathfinder = new();
     private readonly List<Position> _pathfinderTargetPositions = new();
 
@@ -41,8 +42,8 @@ public class AISystem
         if (_playerPositions.Count == 0) return;
 
         // Collect all actor positions (alive) for collision
-        _actorPositions.Clear();
-        map.CollectEntitiesPositions(_actorPositions);
+        _entitiesPositions.Clear();
+        map.CollectEntitiesPositions(_entitiesPositions);
 
         // Tick down all move and attack delays directly on chunk entities
         foreach (var chunk in map.LoadedChunks)
@@ -73,6 +74,7 @@ public class AISystem
             foreach (ref var monster in chunk.Monsters)
             {
                 if (monster.IsDead) continue;
+                var monsterId = monster.Id;
 
                 bool canMove = monster.MoveDelay.Current <= 0;
 
@@ -128,6 +130,18 @@ public class AISystem
                                 if (!tile.IsWalkable) return TileWalkability.None;
                                 if (tile.Type == TileType.StairsUp) return TileWalkability.StairsUp;
                                 if (tile.Type == TileType.StairsDown) return TileWalkability.StairsDown;
+                                var entityRef = map.GetEntityRefAt(p);
+                                if (entityRef.Type != EntityType.None)
+                                {
+                                    if (entityRef.Type == EntityType.Monster && entityRef.Id == monsterId)
+                                        return TileWalkability.Walkable;
+
+                                    if (entityRef.Type == EntityType.Player)
+                                        return TileWalkability.Walkable;
+
+                                    return TileWalkability.None;
+                                }
+
                                 return TileWalkability.Walkable;
                             },
                             maxSteps: 200,
@@ -137,10 +151,10 @@ public class AISystem
                         {
                             var next = path[1];
                             long nextKey = next.Pack();
-                            if (map.IsWalkable(next) && !_actorPositions.Contains(nextKey))
+                            if (map.IsWalkable(next) && !_entitiesPositions.Contains(nextKey))
                             {
-                                _actorPositions.Remove(Position.PackCoord(monster.Position.X, monster.Position.Y, monster.Position.Z));
-                                _actorPositions.Add(nextKey);
+                                _entitiesPositions.Remove(Position.PackCoord(monster.Position.X, monster.Position.Y, monster.Position.Z));
+                                _entitiesPositions.Add(nextKey);
                                 monster.MoveDelay.Current = monster.MoveDelay.Interval;
                                 _pendingMonsterMoves.Add((monster.Id, monster.Position, next));
                             }
@@ -193,10 +207,10 @@ public class AISystem
 
                 if (!map.IsWalkable(nextPosition)) continue;
                 long nextKey = nextPosition.Pack();
-                if (_actorPositions.Contains(nextKey)) continue;
+                if (_entitiesPositions.Contains(nextKey)) continue;
 
-                _actorPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
-                _actorPositions.Add(nextKey);
+                _entitiesPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
+                _entitiesPositions.Add(nextKey);
                 npc.MoveDelay.Current = npc.MoveDelay.Interval;
                 _pendingNpcMoves.Add((npc.Id, npc.Position, nextPosition));
             }
