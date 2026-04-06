@@ -198,7 +198,7 @@ public class OverworldGenerator : IDungeonGenerator
                     if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
                     {
                         result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
-                            ResourceNodeDefinitions.All[ResourceNodeDefinitions.Tree]));
+                            ResourceNodeDefinitions.Get(ResourceNodeDefinitions.Tree)));
                     }
                     else
                     {

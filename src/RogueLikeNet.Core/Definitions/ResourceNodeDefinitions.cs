@@ -11,46 +11,58 @@ public readonly record struct ResourceNodeDefinition(
 
 public static class ResourceNodeDefinitions
 {
-    public const int Tree = 0;
+    public const int None = 0;
     public const int CopperRock = 1;
     public const int IronRock = 2;
     public const int GoldRock = 3;
+    public const int Tree = 4;
 
     public static readonly ResourceNodeDefinition[] All =
     [
-        new(Tree,       "Tree",        TileDefinitions.GlyphTree, TileDefinitions.ColorTreeFg,   5, 0, ItemDefinitions.Wood,      2, 4),
         new(CopperRock, "Copper Rock", TileDefinitions.GlyphRock, TileDefinitions.ColorCopperFg, 8, 2, ItemDefinitions.CopperOre, 1, 3),
         new(IronRock,   "Iron Rock",   TileDefinitions.GlyphRock, TileDefinitions.ColorIronFg,  12, 4, ItemDefinitions.IronOre,   1, 3),
         new(GoldRock,   "Gold Rock",   TileDefinitions.GlyphRock, TileDefinitions.ColorGoldFg,  15, 6, ItemDefinitions.GoldOre,   1, 2),
+        new(Tree,       "Tree",        TileDefinitions.GlyphTree, TileDefinitions.ColorTreeFg,   5, 0, ItemDefinitions.Wood,      2, 4),
     ];
 
     public static ResourceNodeDefinition Get(int nodeTypeId) =>
-        nodeTypeId >= 0 && nodeTypeId < All.Length ? All[nodeTypeId] : default;
+        nodeTypeId > 0 && nodeTypeId < _byId.Length ? _byId[nodeTypeId] : default;
 
     /// <summary>
     /// Returns an array of (NodeDefinition, Weight) pairs for the given biome.
     /// </summary>
     public static (ResourceNodeDefinition Def, int Weight)[] GetForBiome(BiomeType biome) => biome switch
     {
-        BiomeType.Forest => [(All[Tree], 60), (All[CopperRock], 20), (All[IronRock], 10), (All[GoldRock], 5)],
-        BiomeType.Fungal => [(All[Tree], 40), (All[CopperRock], 25), (All[IronRock], 15), (All[GoldRock], 5)],
-        BiomeType.Stone => [(All[CopperRock], 50), (All[IronRock], 25), (All[Tree], 10), (All[GoldRock], 5)],
-        BiomeType.Arcane => [(All[CopperRock], 30), (All[IronRock], 30), (All[GoldRock], 15), (All[Tree], 10)],
-        BiomeType.Ice => [(All[IronRock], 50), (All[CopperRock], 20), (All[GoldRock], 10)],
-        BiomeType.Lava => [(All[GoldRock], 40), (All[IronRock], 30), (All[CopperRock], 15)],
-        BiomeType.Infernal => [(All[GoldRock], 35), (All[IronRock], 35), (All[CopperRock], 15)],
-        BiomeType.Crypt => [(All[IronRock], 35), (All[CopperRock], 25), (All[GoldRock], 10)],
-        BiomeType.Sewer => [(All[CopperRock], 40), (All[IronRock], 20), (All[Tree], 10)],
-        BiomeType.Ruined => [(All[CopperRock], 30), (All[IronRock], 30), (All[GoldRock], 10), (All[Tree], 10)],
-        _ => [(All[CopperRock], 30), (All[IronRock], 20), (All[Tree], 20), (All[GoldRock], 10)],
+        BiomeType.Forest => [(Get(Tree), 60), (Get(CopperRock), 20), (Get(IronRock), 10), (Get(GoldRock), 5)],
+        BiomeType.Fungal => [(Get(Tree), 40), (Get(CopperRock), 25), (Get(IronRock), 15), (Get(GoldRock), 5)],
+        BiomeType.Stone => [(Get(CopperRock), 50), (Get(IronRock), 25), (Get(Tree), 10), (Get(GoldRock), 5)],
+        BiomeType.Arcane => [(Get(CopperRock), 30), (Get(IronRock), 30), (Get(GoldRock), 15), (Get(Tree), 10)],
+        BiomeType.Ice => [(Get(IronRock), 50), (Get(CopperRock), 20), (Get(GoldRock), 10)],
+        BiomeType.Lava => [(Get(GoldRock), 40), (Get(IronRock), 30), (Get(CopperRock), 15)],
+        BiomeType.Infernal => [(Get(GoldRock), 35), (Get(IronRock), 35), (Get(CopperRock), 15)],
+        BiomeType.Crypt => [(Get(IronRock), 35), (Get(CopperRock), 25), (Get(GoldRock), 10)],
+        BiomeType.Sewer => [(Get(CopperRock), 40), (Get(IronRock), 20), (Get(Tree), 10)],
+        BiomeType.Ruined => [(Get(CopperRock), 30), (Get(IronRock), 30), (Get(GoldRock), 10), (Get(Tree), 10)],
+        _ => [(Get(CopperRock), 30), (Get(IronRock), 20), (Get(Tree), 20), (Get(GoldRock), 10)],
     };
 
-    private static int[] BiomeTreeChances;
+    private static readonly int[] _biomeTreeChances;
+    private static readonly ResourceNodeDefinition[] _byId;
 
     static ResourceNodeDefinitions()
     {
-        BiomeTreeChances = new int[Enum.GetValues<BiomeType>().Length];
-        for (int i = 0; i < BiomeTreeChances.Length; i++)
+
+        int maxId = All.Max(t => t.NodeTypeId);
+
+        // Validate that all IDs are correct
+        _byId = new ResourceNodeDefinition[maxId + 1];
+        foreach (var def in All)
+        {
+            _byId[def.NodeTypeId] = def;
+        }
+
+        _biomeTreeChances = new int[Enum.GetValues<BiomeType>().Length];
+        for (int i = 0; i < _biomeTreeChances.Length; i++)
         {
             var biome = (BiomeType)i;
             int chance = 0;
@@ -58,13 +70,14 @@ public static class ResourceNodeDefinitions
                 if (def.NodeTypeId == Tree)
                     chance = w;
 
-            BiomeTreeChances[i] = chance;
+            _biomeTreeChances[i] = chance;
         }
+
     }
 
     public static int BiomeTreeChance(BiomeType biome)
     {
-        return BiomeTreeChances[(int)biome];
+        return _biomeTreeChances[(int)biome];
     }
 
     /// <summary>
@@ -95,7 +108,7 @@ public static class ResourceNodeDefinitions
                 totalWeight += w;
 
         if (totalWeight == 0)
-            return All[CopperRock];
+            return Get(CopperRock);
 
         int roll = rng.Next(totalWeight);
         int cumulative = 0;
@@ -105,7 +118,7 @@ public static class ResourceNodeDefinitions
             cumulative += w;
             if (roll < cumulative) return def;
         }
-        return All[CopperRock];
+        return Get(CopperRock);
     }
 
 }

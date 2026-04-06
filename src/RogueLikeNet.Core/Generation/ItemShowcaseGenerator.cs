@@ -68,8 +68,8 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         // Start at (4, 5) with 4-tile spacing
         int startX = 4;
         int startY = 6;
-        int spacingX = 4;
-        int spacingY = 3;
+        int spacingX = 2;
+        int spacingY = 2;
 
         string[] rarityNames = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
 
@@ -96,9 +96,16 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
         var rng = new SeededRandom(_seed);
 
-        for (int itemIdx = 0; itemIdx < ItemDefinitions.All.Length; itemIdx++)
+        // Items
+
+        var simpleItems = ItemDefinitions.All
+            .Where(d => d.Category != ItemDefinitions.CategoryPlaceable && d.Category != ItemDefinitions.CategoryResource)
+            .ToArray();
+
+        for (int itemIdx = 0; itemIdx < simpleItems.Length; itemIdx++)
         {
-            var def = ItemDefinitions.All[itemIdx];
+            var def = simpleItems[itemIdx];
+
             for (int rarity = 0; rarity <= 4; rarity++)
             {
                 int lx = startX + rarity * spacingX;
@@ -121,6 +128,69 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                 }));
             }
         }
+
+        startX += 6 * spacingX; // Shift right for placeables and resource nodes
+
+        // Placeables
+
+        for (int placeableIdx = 0; placeableIdx < PlaceableDefinitions.All.Length; placeableIdx++)
+        {
+            var def = PlaceableDefinitions.All[placeableIdx];
+            if (def.ItemTypeId == 0)
+                continue;
+
+            int lx = startX + placeableIdx % 5 * spacingX;
+            int ly = startY + placeableIdx / 5 * spacingY;
+
+            if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
+                continue;
+
+            chunk.Tiles[lx, ly].PlaceableItemId = def.ItemTypeId;
+        }
+
+        startX += 6 * spacingX; // Shift right for resource nodes
+
+        // Resource nodes
+        for (int nodeIdx = 0; nodeIdx < ResourceNodeDefinitions.All.Length; nodeIdx++)
+        {
+            var def = ResourceNodeDefinitions.All[nodeIdx];
+            if (def.NodeTypeId == 0)
+                continue;
+
+            int lx = startX + nodeIdx % 5 * spacingX;
+            int ly = startY + nodeIdx / 5 * spacingY;
+
+            if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
+                continue;
+
+            result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), def));
+        }
+
+        // Resources
+        startY += spacingY * ((ResourceNodeDefinitions.All.Length / 5) + 1);
+        var resouceItems = ItemDefinitions.All.Where(d => d.Category == ItemDefinitions.CategoryResource).ToArray();
+        for (int resourceIdx = 0; resourceIdx < resouceItems.Length; resourceIdx++)
+        {
+            var def = resouceItems[resourceIdx];
+
+            int lx = startX + resourceIdx % 5 * spacingX;
+            int ly = startY + resourceIdx / 5 * spacingY;
+
+            if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
+                continue;
+
+            int stackCount = 10 + rng.Next(50);
+            result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
+            {
+                ItemTypeId = def.TypeId,
+                Rarity = ItemDefinitions.CapRarity(def.Category, 0),
+                BonusAttack = 0,
+                BonusDefense = 0,
+                BonusHealth = 0,
+                StackCount = stackCount,
+            }));
+        }
+
 
         return result;
     }

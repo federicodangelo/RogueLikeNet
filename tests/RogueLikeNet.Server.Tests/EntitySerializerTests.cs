@@ -116,7 +116,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void ResourceNode_RoundTrip_PreservesData()
     {
-        var def = ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock];
+        var def = ResourceNodeDefinitions.Get(ResourceNodeDefinitions.CopperRock);
         var node = _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), def);
 
         // Damage the node to test HP preservation
@@ -240,7 +240,7 @@ public class EntitySerializerTests : IDisposable
     {
         _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
-        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.Get(ResourceNodeDefinitions.CopperRock));
         _engine.SpawnElement(new DungeonElement(
             Position.FromCoords(4, 4, Z),
             new TileAppearance(20, 0, 0),
@@ -339,7 +339,7 @@ public class EntitySerializerTests : IDisposable
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
         _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
-        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.All[ResourceNodeDefinitions.CopperRock]);
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.Get(ResourceNodeDefinitions.CopperRock));
         _engine.SpawnTownNpc(Position.FromCoords(4, 4, Z), "Blacksmith", 4, 4, 3);
 
         var entityJson = EntitySerializer.SerializeEntities(chunk);

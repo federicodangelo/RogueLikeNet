@@ -12,7 +12,7 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["Play Offline", "Play Online", "Admin Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["New Game/Load Game", "Play Online", "Admin Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
     public const int MainMenuPlayOfflineIndex = 0;
     public const int MainMenuPlayOnlineIndex = 1;
     public const int MainMenuAdminOnlineIndex = 2;
