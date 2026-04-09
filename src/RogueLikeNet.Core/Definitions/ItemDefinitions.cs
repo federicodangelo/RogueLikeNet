@@ -181,19 +181,21 @@ public static class ItemDefinitions
 
     /// <summary>
     /// Generates a random item with optional rarity bonus.
+    /// When GameData is loaded, includes new items from the registry.
     /// </summary>
     public static Loot GenerateLoot(SeededRandom rng, int difficulty)
     {
-        // Pick category weighted: 80% gold, 10% potion, 5% weapon, 5% armor
+        // Pick category weighted: 70% gold, 10% resource, 10% potion, 5% armor, 5% weapon
         int roll = rng.Next(100);
         int category;
-        if (roll < 80) category = CategoryGold;
+        if (roll < 70) category = CategoryGold;
+        else if (roll < 80) category = CategoryResource;
         else if (roll < 90) category = CategoryPotion;
         else if (roll < 95) category = CategoryArmor;
         else category = CategoryWeapon;
 
-        // Filter by category
-        var candidates = All.Where(t => t.Category == category).ToArray();
+        // Filter by category from combined item pool
+        var candidates = GetItemsByCategory(category);
         var def = candidates[rng.Next(candidates.Length)];
 
         // Rarity roll: 0=Common(60%), 1=Uncommon(25%), 2=Rare(10%), 3=Epic(4%), 4=Legendary(1%)
@@ -210,6 +212,19 @@ public static class ItemDefinitions
         rarity = CapRarity(def.Category, rarity);
 
         return new Loot(def, rarity);
+    }
+
+    private static ItemDefinition[] GetItemsByCategory(int category)
+    {
+        var reg = GameData.Instance.Items;
+        if (reg.Count == 0)
+            return All.Where(t => t.Category == category).ToArray();
+
+        // Build from registry — includes all JSON items
+        return reg.All
+            .Where(d => CategoryFromData(d) == category)
+            .Select(d => ConvertFromData(d.NumericId, d))
+            .ToArray();
     }
 
     public static int CapRarity(int itemCategory, int rarity)
