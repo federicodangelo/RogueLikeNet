@@ -20,6 +20,19 @@ public static class ItemDefinitions
     public const int CategoryTool = 6;
     public const int CategoryFood = 7;
 
+    public static string CategoryName(int category) => category switch
+    {
+        CategoryWeapon => "Weapons",
+        CategoryArmor => "Armor",
+        CategoryPotion => "Potions",
+        CategoryGold => "Gold",
+        CategoryResource => "Resources",
+        CategoryPlaceable => "Building",
+        CategoryTool => "Tools",
+        CategoryFood => "Food",
+        _ => "Other",
+    };
+
     // Item rarities
     public const int RarityCommon = 0;
     public const int RarityUncommon = 1;

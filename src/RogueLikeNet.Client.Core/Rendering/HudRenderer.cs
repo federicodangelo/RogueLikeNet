@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
@@ -36,7 +37,7 @@ public sealed class HudRenderer
         layout.AddSection(new HudSection { Name = "Hunger", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Skills", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
-        layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
+        layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
         layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 5 });
@@ -140,15 +141,34 @@ public sealed class HudRenderer
                     Ds(r, col, row, "Equipment", RenderingTheme.Title); row++;
                     if (row >= maxRow) break;
                     Sep(r, col, row, innerW); row++;
-                    if (row >= maxRow) break;
                     {
-                        var wpnItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Weapon);
-                        var armItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Chest);
-                        string wpn = wpnItem != null ? AsciiDraw.ItemDisplayName(wpnItem.ItemTypeId, 0) : "---";
-                        string arm = armItem != null ? AsciiDraw.ItemDisplayName(armItem.ItemTypeId, 0) : "---";
-                        Ds(r, col, row, $"W: {wpn}", RenderingTheme.Item); row++;
-                        if (row >= maxRow) break;
-                        Ds(r, col, row, $"A: {arm}", RenderingTheme.Item);
+                        // Compact view: show all equipped items in a single summary line
+                        var parts = new System.Text.StringBuilder();
+                        foreach (var eq in hud.EquippedItems)
+                        {
+                            if (parts.Length > 0) parts.Append(' ');
+                            string slotPrefix = ((EquipSlot)eq.EquipSlot) switch
+                            {
+                                EquipSlot.Weapon => "W",
+                                EquipSlot.Chest => "A",
+                                EquipSlot.Head => "H",
+                                EquipSlot.Legs => "L",
+                                EquipSlot.Boots => "B",
+                                EquipSlot.Gloves => "G",
+                                EquipSlot.Offhand => "O",
+                                EquipSlot.Ring => "R",
+                                EquipSlot.Necklace => "N",
+                                EquipSlot.Belt => "T",
+                                _ => "?"
+                            };
+                            parts.Append($"{slotPrefix}:{AsciiDraw.ItemDisplayName(eq.ItemTypeId, 0)}");
+                        }
+                        if (row < maxRow)
+                        {
+                            string equipText = parts.Length > 0 ? parts.ToString() : "---";
+                            if (equipText.Length > innerW) equipText = equipText[..innerW];
+                            Ds(r, col, row, equipText, RenderingTheme.Item);
+                        }
                     }
                     break;
 

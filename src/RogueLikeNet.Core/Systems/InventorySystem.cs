@@ -127,7 +127,7 @@ public class InventorySystem
             player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + healthRestore);
         int hungerRestore = newDef?.Food?.HungerRestore ?? 0;
         if (hungerRestore > 0)
-            player.Survival.Hunger = Math.Min(Components.Survival.MaxHunger, player.Survival.Hunger + hungerRestore);
+            player.Survival.Hunger = Math.Min(player.Survival.MaxHunger, player.Survival.Hunger + hungerRestore);
     }
 
     private static void ApplyPotion(ref PlayerEntity player, Definitions.ItemDefinition def)

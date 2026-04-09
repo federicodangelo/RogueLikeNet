@@ -75,11 +75,28 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 InventoryJson TEXT NOT NULL DEFAULT '[]',
                 EquipmentJson TEXT NOT NULL DEFAULT '{}',
                 SkillsJson TEXT NOT NULL DEFAULT '{}',
-                QuickSlotsJson TEXT NOT NULL DEFAULT '{}'
+                QuickSlotsJson TEXT NOT NULL DEFAULT '{}',
+                Hunger INTEGER NOT NULL DEFAULT 100,
+                MaxHunger INTEGER NOT NULL DEFAULT 100
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_Players_Slot_Name ON Players(SlotId, PlayerName);
             """;
         cmd.ExecuteNonQuery();
+
+        // Migrate: add Hunger column to older databases
+        MigrateAddColumn("Players", "Hunger", "INTEGER NOT NULL DEFAULT 100");
+        MigrateAddColumn("Players", "MaxHunger", "INTEGER NOT NULL DEFAULT 100");
+    }
+
+    private void MigrateAddColumn(string table, string column, string columnDef)
+    {
+        try
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {columnDef}";
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqliteException) { /* Column already exists */ }
     }
 
     public List<SaveSlotInfo> ListSaveSlots()
@@ -238,14 +255,15 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson)
-                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots)
+                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson, Hunger, MaxHunger)
+                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots, $hunger, $maxHunger)
                 ON CONFLICT(SlotId, PlayerName) DO UPDATE SET
                     ClassId=$classId, Level=$level, Experience=$exp,
                     PositionX=$px, PositionY=$py, PositionZ=$pz,
                     HealthCurrent=$hpCur, HealthMax=$hpMax,
                     Attack=$atk, Defense=$def, Speed=$spd,
-                    InventoryJson=$inv, EquipmentJson=$equip, SkillsJson=$skills, QuickSlotsJson=$quickSlots
+                    InventoryJson=$inv, EquipmentJson=$equip, SkillsJson=$skills, QuickSlotsJson=$quickSlots,
+                    Hunger=$hunger, MaxHunger=$maxHunger
                 """;
             cmd.Parameters.AddWithValue("$slotId", slotId);
             cmd.Parameters.AddWithValue("$name", p.PlayerName);
@@ -264,6 +282,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             cmd.Parameters.AddWithValue("$equip", p.EquipmentJson);
             cmd.Parameters.AddWithValue("$skills", p.SkillsJson);
             cmd.Parameters.AddWithValue("$quickSlots", p.QuickSlotsJson);
+            cmd.Parameters.AddWithValue("$hunger", p.Hunger);
+            cmd.Parameters.AddWithValue("$maxHunger", p.MaxHunger);
             cmd.ExecuteNonQuery();
         }
         transaction.Commit();
@@ -292,25 +312,37 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         return list;
     }
 
-    private static PlayerSaveData ReadPlayer(SqliteDataReader reader) => new()
+    private static PlayerSaveData ReadPlayer(SqliteDataReader reader)
     {
-        PlayerName = reader.GetString(reader.GetOrdinal("PlayerName")),
-        ClassId = reader.GetInt32(reader.GetOrdinal("ClassId")),
-        Level = reader.GetInt32(reader.GetOrdinal("Level")),
-        Experience = reader.GetInt32(reader.GetOrdinal("Experience")),
-        PositionX = reader.GetInt32(reader.GetOrdinal("PositionX")),
-        PositionY = reader.GetInt32(reader.GetOrdinal("PositionY")),
-        PositionZ = reader.GetInt32(reader.GetOrdinal("PositionZ")),
-        HealthCurrent = reader.GetInt32(reader.GetOrdinal("HealthCurrent")),
-        HealthMax = reader.GetInt32(reader.GetOrdinal("HealthMax")),
-        Attack = reader.GetInt32(reader.GetOrdinal("Attack")),
-        Defense = reader.GetInt32(reader.GetOrdinal("Defense")),
-        Speed = reader.GetInt32(reader.GetOrdinal("Speed")),
-        InventoryJson = reader.GetString(reader.GetOrdinal("InventoryJson")),
-        EquipmentJson = reader.GetString(reader.GetOrdinal("EquipmentJson")),
-        SkillsJson = reader.GetString(reader.GetOrdinal("SkillsJson")),
-        QuickSlotsJson = reader.GetString(reader.GetOrdinal("QuickSlotsJson")),
-    };
+        var data = new PlayerSaveData
+        {
+            PlayerName = reader.GetString(reader.GetOrdinal("PlayerName")),
+            ClassId = reader.GetInt32(reader.GetOrdinal("ClassId")),
+            Level = reader.GetInt32(reader.GetOrdinal("Level")),
+            Experience = reader.GetInt32(reader.GetOrdinal("Experience")),
+            PositionX = reader.GetInt32(reader.GetOrdinal("PositionX")),
+            PositionY = reader.GetInt32(reader.GetOrdinal("PositionY")),
+            PositionZ = reader.GetInt32(reader.GetOrdinal("PositionZ")),
+            HealthCurrent = reader.GetInt32(reader.GetOrdinal("HealthCurrent")),
+            HealthMax = reader.GetInt32(reader.GetOrdinal("HealthMax")),
+            Attack = reader.GetInt32(reader.GetOrdinal("Attack")),
+            Defense = reader.GetInt32(reader.GetOrdinal("Defense")),
+            Speed = reader.GetInt32(reader.GetOrdinal("Speed")),
+            InventoryJson = reader.GetString(reader.GetOrdinal("InventoryJson")),
+            EquipmentJson = reader.GetString(reader.GetOrdinal("EquipmentJson")),
+            SkillsJson = reader.GetString(reader.GetOrdinal("SkillsJson")),
+            QuickSlotsJson = reader.GetString(reader.GetOrdinal("QuickSlotsJson")),
+        };
+        // Hunger / MaxHunger column may not exist in older save files
+        try
+        {
+            data.Hunger = reader.GetInt32(reader.GetOrdinal("Hunger"));
+            data.MaxHunger = reader.GetInt32(reader.GetOrdinal("MaxHunger"));
+        }
+        catch { }
+        return data;
+
+    }
 
     private void Execute(string sql, params (string name, object value)[] parameters)
     {

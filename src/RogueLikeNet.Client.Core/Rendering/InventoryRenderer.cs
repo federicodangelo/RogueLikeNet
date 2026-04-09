@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
@@ -20,7 +21,7 @@ public sealed class InventoryRenderer
         layout.AddSection(new HudSection { Name = "InvHeader", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "InvItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true });
         layout.AddSection(new HudSection { Name = "InvPreview", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
-        layout.AddSection(new HudSection { Name = "InvEquipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5, AcceptsInput = true });
+        layout.AddSection(new HudSection { Name = "InvEquipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 13, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "InvActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 10 });
         layout.SetFocus(1);
         return layout;
@@ -249,6 +250,9 @@ public sealed class InventoryRenderer
         }
     }
 
+    private static readonly string[] SlotLabels =
+        ["Head", "Chest", "Legs", "Boots", "Gloves", "Weapon", "Offhand", "Ring", "Neck", "Belt"];
+
     private static void RenderEquipmentSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         PlayerStateMsg hud, HudSection section, bool focused)
     {
@@ -257,29 +261,18 @@ public sealed class InventoryRenderer
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
-        var wpnItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Weapon);
-        var armItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Chest);
-
-        if (row < maxRow)
+        for (int i = 0; i < Equipment.SlotCount && row < maxRow; i++)
         {
-            bool sel = focused && section.SelectedIndex == 0;
+            bool sel = focused && section.SelectedIndex == i;
             string prefix = sel ? "\u25ba" : " ";
-            string wpn = wpnItem != null ? AsciiDraw.ItemDisplayName(wpnItem.ItemTypeId, 0) : "---";
-            string text = $"{prefix}[W][Wpn]{wpn}";
+            var eqItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == i);
+            string name = eqItem != null ? AsciiDraw.ItemDisplayName(eqItem.ItemTypeId, 0) : "---";
+            string label = i < SlotLabels.Length ? SlotLabels[i] : "?";
+            string text = $"{prefix}{label}: {name}";
             if (text.Length > innerW) text = text[..innerW];
-            var wpnColor = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
-            AsciiDraw.DrawString(r, col, row, text, wpnColor);
+            var color = sel ? RenderingTheme.InvSel : eqItem != null ? RenderingTheme.Item : RenderingTheme.Dim;
+            AsciiDraw.DrawString(r, col, row, text, color);
             row++;
-        }
-        if (row < maxRow)
-        {
-            bool sel = focused && section.SelectedIndex == 1;
-            string prefix = sel ? "\u25ba" : " ";
-            string arm = armItem != null ? AsciiDraw.ItemDisplayName(armItem.ItemTypeId, 0) : "---";
-            string text = $"{prefix}[A][Arm]{arm}";
-            if (text.Length > innerW) text = text[..innerW];
-            var armColor = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
-            AsciiDraw.DrawString(r, col, row, text, armColor);
         }
     }
 }

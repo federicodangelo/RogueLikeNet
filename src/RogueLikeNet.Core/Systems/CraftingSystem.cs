@@ -19,9 +19,8 @@ public class CraftingSystem
             int recipeId = player.Input.ItemSlot;
             player.Input.ActionType = ActionTypes.None;
 
-            if (recipeId < 0 || recipeId >= CraftingDefinitions.All.Length) continue;
-
-            var recipe = CraftingDefinitions.All[recipeId];
+            var recipe = CraftingDefinitions.Get(recipeId);
+            if (recipe.Name == null) continue;
             if (!CraftingDefinitions.CanCraft(recipe, player.Inventory.Items)) continue;
 
             // Remove ingredients

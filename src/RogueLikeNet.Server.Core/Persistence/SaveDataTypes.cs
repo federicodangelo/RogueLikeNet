@@ -44,4 +44,6 @@ public class PlayerSaveData
     public string EquipmentJson { get; set; } = "{}";
     public string SkillsJson { get; set; } = "{}";
     public string QuickSlotsJson { get; set; } = "{}";
+    public int Hunger { get; set; } = 100;
+    public int MaxHunger { get; set; } = 100;
 }

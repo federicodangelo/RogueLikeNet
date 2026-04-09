@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
@@ -7,7 +8,7 @@ using RogueLikeNet.Protocol.Messages;
 namespace RogueLikeNet.Client.Core.Screens;
 
 /// <summary>
-/// Crafting screen — displays available recipes, ingredient requirements, and allows crafting buildable items.
+/// Crafting screen — category selection first, then recipe list, with recent recipes, key repeat, and smart sorting.
 /// </summary>
 public sealed class CraftingScreen : IScreen
 {
@@ -16,7 +17,22 @@ public sealed class CraftingScreen : IScreen
     private readonly OverlayRenderer _overlayRenderer;
 
     private readonly HudLayout _layout;
-    private readonly HudSection _recipesSection;
+    private readonly HudSection _listSection;
+
+    // Navigation state
+    private bool _inCategoryMode = true;
+    private int[] _categoryOrder = []; // sorted category ids
+    private CraftingRecipe[] _filteredRecipes = [];
+    private int _selectedCategory;
+
+    // Recent crafted recipes (last 3)
+    private readonly List<int> _recentRecipeIds = [];
+    private const int MaxRecent = 3;
+
+    // Key repeat
+    private static readonly long RepeatDelayTicks = Stopwatch.Frequency / 4; // 250ms
+    private InputAction? _heldAction;
+    private long _heldSinceTicks;
 
     public ScreenState ScreenState => ScreenState.Crafting;
 
@@ -28,8 +44,8 @@ public sealed class CraftingScreen : IScreen
 
         _layout = new HudLayout();
         _layout.AddSection(new HudSection { Name = "CraftHeader", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
-        _recipesSection = new HudSection { Name = "CraftRecipes", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true };
-        _layout.AddSection(_recipesSection);
+        _listSection = new HudSection { Name = "CraftList", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true, AcceptsInput = true, UseScrollIndicators = true };
+        _layout.AddSection(_listSection);
         _layout.AddSection(new HudSection { Name = "CraftDetail", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 14 });
         _layout.AddSection(new HudSection { Name = "CraftActions", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 5 });
         _layout.SetFocus(1);
@@ -37,26 +53,83 @@ public sealed class CraftingScreen : IScreen
 
     public void OnEnter()
     {
-        _recipesSection.SelectedIndex = 0;
-        _recipesSection.ScrollOffset = 0;
+        _inCategoryMode = true;
+        _listSection.SelectedIndex = 0;
+        _listSection.ScrollOffset = 0;
+        RebuildCategoryOrder();
     }
 
     public void HandleInput(IInputManager input)
     {
         if (input.IsActionPressed(InputAction.MenuBack))
         {
+            if (!_inCategoryMode)
+            {
+                _inCategoryMode = true;
+                _listSection.SelectedIndex = 0;
+                _listSection.ScrollOffset = 0;
+                RebuildCategoryOrder();
+                return;
+            }
             _ctx.RequestTransition(ScreenState.Playing);
             return;
         }
 
-        int recipeCount = CraftingDefinitions.All.Length;
+        // Key repeat for up/down
+        bool up = false, down = false;
+        InputAction? activeNav = null;
+        if (input.IsActionDown(InputAction.MenuUp)) activeNav = InputAction.MenuUp;
+        else if (input.IsActionDown(InputAction.MenuDown)) activeNav = InputAction.MenuDown;
 
-        if (input.IsActionPressed(InputAction.MenuUp))
-            _recipesSection.ScrollUp();
-        else if (input.IsActionPressed(InputAction.MenuDown))
-            _recipesSection.ScrollDown(recipeCount);
-        else if (input.IsActionPressed(InputAction.MenuConfirm))
-            TryCraft();
+        if (activeNav != null)
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (_heldAction != activeNav)
+            {
+                _heldAction = activeNav;
+                _heldSinceTicks = now;
+            }
+            if (input.IsActionPressed(activeNav.Value))
+            {
+                if (activeNav == InputAction.MenuUp) up = true; else down = true;
+            }
+            else if (now - _heldSinceTicks >= RepeatDelayTicks)
+            {
+                _heldSinceTicks = now;
+                if (activeNav == InputAction.MenuUp) up = true; else down = true;
+            }
+        }
+        else
+        {
+            _heldAction = null;
+        }
+
+        if (_inCategoryMode)
+        {
+            int count = _categoryOrder.Length;
+            if (up) _listSection.ScrollUp();
+            else if (down) _listSection.ScrollDown(count);
+            else if (input.IsActionPressed(InputAction.MenuConfirm))
+            {
+                int idx = _listSection.SelectedIndex;
+                if (idx >= 0 && idx < _categoryOrder.Length)
+                {
+                    _selectedCategory = _categoryOrder[idx];
+                    _inCategoryMode = false;
+                    RebuildFilteredRecipes();
+                    _listSection.SelectedIndex = 0;
+                    _listSection.ScrollOffset = 0;
+                }
+            }
+        }
+        else
+        {
+            int count = _filteredRecipes.Length;
+            if (up) _listSection.ScrollUp();
+            else if (down) _listSection.ScrollDown(count);
+            else if (input.IsActionPressed(InputAction.MenuConfirm))
+                TryCraft();
+        }
     }
 
     public void Update(float deltaTime)
@@ -85,7 +158,6 @@ public sealed class CraftingScreen : IScreen
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
 
-        // Render crafting HUD panel
         RenderCraftingPanel(renderer, gameCols, totalRows);
 
         int halfW = zoomedGameCols / 2;
@@ -102,7 +174,6 @@ public sealed class CraftingScreen : IScreen
         float hx = hudStartCol * AsciiDraw.TileWidth;
         r.DrawRectScreen(hx, 0, AsciiDraw.HudColumns * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.HudBg);
 
-        // Vertical separator
         AsciiDraw.DrawChar(r, hudStartCol, 0, '\u252C', RenderingTheme.Border);
         for (int y = 1; y < totalRows - 1; y++)
             AsciiDraw.DrawChar(r, hudStartCol, y, '\u2502', RenderingTheme.Border);
@@ -129,38 +200,90 @@ public sealed class CraftingScreen : IScreen
             {
                 case "CraftHeader":
                     if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "CRAFTING", RenderingTheme.Title); row++;
+                    string title = _inCategoryMode ? "CRAFTING" : $"CRAFTING > {ItemDefinitions.CategoryName(_selectedCategory)}";
+                    if (title.Length > innerW) title = title[..innerW];
+                    AsciiDraw.DrawString(r, col, row, title, RenderingTheme.Title); row++;
                     if (row >= maxRow) break;
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW);
                     break;
 
-                case "CraftRecipes":
-                    RenderRecipesSection(r, col, innerW, row, maxRow, hud, section);
+                case "CraftList":
+                    if (_inCategoryMode)
+                        RenderCategoryList(r, col, innerW, row, maxRow, hud, section);
+                    else
+                        RenderRecipesSection(r, col, innerW, row, maxRow, hud, section);
                     break;
 
                 case "CraftDetail":
-                    RenderDetailSection(r, col, innerW, row, maxRow, hud);
+                    if (!_inCategoryMode)
+                        RenderDetailSection(r, col, innerW, row, maxRow, hud);
+                    else
+                        RenderRecentRecipes(r, col, innerW, row, maxRow, hud);
                     break;
 
                 case "CraftActions":
                     if (row >= maxRow) break;
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Enter] Craft", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[\u2191\u2193] Select recipe", RenderingTheme.Dim); row++;
-                    if (row >= maxRow) break;
-                    AsciiDraw.DrawString(r, col, row, "[Esc] Close", RenderingTheme.Dim);
+                    if (_inCategoryMode)
+                    {
+                        if (row < maxRow) { AsciiDraw.DrawString(r, col, row, "[Enter] Open category", RenderingTheme.Dim); row++; }
+                        if (row < maxRow) { AsciiDraw.DrawString(r, col, row, "[\u2191\u2193] Select category", RenderingTheme.Dim); row++; }
+                        if (row < maxRow) AsciiDraw.DrawString(r, col, row, "[Esc] Close", RenderingTheme.Dim);
+                    }
+                    else
+                    {
+                        if (row < maxRow) { AsciiDraw.DrawString(r, col, row, "[Enter] Craft", RenderingTheme.Dim); row++; }
+                        if (row < maxRow) { AsciiDraw.DrawString(r, col, row, "[\u2191\u2193] Select recipe", RenderingTheme.Dim); row++; }
+                        if (row < maxRow) AsciiDraw.DrawString(r, col, row, "[Esc] Back", RenderingTheme.Dim);
+                    }
                     break;
             }
         }
     }
 
+    private void RenderCategoryList(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        PlayerStateMsg hud, HudSection section)
+    {
+        int count = _categoryOrder.Length;
+        int scrollOffset = section.ScrollOffset;
+        int selectedIndex = section.SelectedIndex;
+        int visibleRows = section.RowCount;
+
+        if (scrollOffset > 0 && row < maxRow)
+        {
+            AsciiDraw.DrawString(r, col, row, "  \u2191 more above", RenderingTheme.Dim);
+            row++; visibleRows--;
+        }
+
+        bool needsBottom = scrollOffset + visibleRows < count;
+        int renderRows = needsBottom ? visibleRows - 1 : visibleRows;
+        int visibleEnd = Math.Min(scrollOffset + renderRows, count);
+
+        for (int i = scrollOffset; i < visibleEnd && row < maxRow; i++)
+        {
+            int cat = _categoryOrder[i];
+            bool hasCraftable = CategoryHasCraftable(cat, hud);
+            bool sel = i == selectedIndex;
+
+            string prefix = sel ? "\u25ba" : " ";
+            int recipeCount = CountRecipesInCategory(cat);
+            string text = $"{prefix}{ItemDefinitions.CategoryName(cat)} ({recipeCount})";
+            if (hasCraftable) text += " \u2605";
+            if (text.Length > innerW) text = text[..innerW];
+
+            var color = sel ? RenderingTheme.InvSel : hasCraftable ? RenderingTheme.Item : RenderingTheme.Dim;
+            AsciiDraw.DrawString(r, col, row, text, color);
+            row++;
+        }
+
+        if (needsBottom && row < maxRow)
+            AsciiDraw.DrawString(r, col, row, "  \u2193 more below", RenderingTheme.Dim);
+    }
+
     private void RenderRecipesSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
         PlayerStateMsg hud, HudSection section)
     {
-        var recipes = CraftingDefinitions.All;
-        int recipeCount = recipes.Length;
+        int recipeCount = _filteredRecipes.Length;
         int scrollOffset = section.ScrollOffset;
         int selectedIndex = section.SelectedIndex;
         int visibleRows = section.RowCount;
@@ -173,16 +296,18 @@ public sealed class CraftingScreen : IScreen
 
         bool needsBottom = scrollOffset + visibleRows < recipeCount;
         int renderRows = needsBottom ? visibleRows - 1 : visibleRows;
-
         int visibleEnd = Math.Min(scrollOffset + renderRows, recipeCount);
+
         for (int i = scrollOffset; i < visibleEnd && row < maxRow; i++)
         {
-            var recipe = recipes[i];
+            var recipe = _filteredRecipes[i];
             bool canCraft = CanCraftRecipe(recipe, hud);
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
-            string text = $"{prefix}[Bld]{recipe.Name}";
+            var def = ItemDefinitions.Get(recipe.ResultItemTypeId);
+            string tag = AsciiDraw.CategoryTag(def.Category);
+            string text = $"{prefix}{tag}{recipe.Name}";
             if (text.Length > innerW) text = text[..innerW];
 
             var color = sel ? RenderingTheme.InvSel : canCraft ? RenderingTheme.Item : RenderingTheme.Dim;
@@ -191,8 +316,31 @@ public sealed class CraftingScreen : IScreen
         }
 
         if (needsBottom && row < maxRow)
-        {
             AsciiDraw.DrawString(r, col, row, "  \u2193 more below", RenderingTheme.Dim);
+    }
+
+    private void RenderRecentRecipes(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
+        PlayerStateMsg hud)
+    {
+        if (_recentRecipeIds.Count == 0 || row >= maxRow) return;
+
+        AsciiDraw.DrawString(r, col, row, "Recent:", RenderingTheme.Dim); row++;
+        if (row >= maxRow) return;
+        AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
+
+        var recipes = CraftingDefinitions.All;
+        foreach (var recipeId in _recentRecipeIds)
+        {
+            if (row >= maxRow) break;
+            var recipe = CraftingDefinitions.Get(recipeId);
+            if (recipe.Name == null) continue;
+            bool canCraft = CanCraftRecipe(recipe, hud);
+            var def = ItemDefinitions.Get(recipe.ResultItemTypeId);
+            string tag = AsciiDraw.CategoryTag(def.Category);
+            string text = $"  {tag}{recipe.Name}";
+            if (text.Length > innerW) text = text[..innerW];
+            AsciiDraw.DrawString(r, col, row, text, canCraft ? RenderingTheme.Item : RenderingTheme.Dim);
+            row++;
         }
     }
 
@@ -204,11 +352,10 @@ public sealed class CraftingScreen : IScreen
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
-        var recipes = CraftingDefinitions.All;
-        int selIdx = _recipesSection.SelectedIndex;
-        if (selIdx < 0 || selIdx >= recipes.Length) return;
+        int selIdx = _listSection.SelectedIndex;
+        if (selIdx < 0 || selIdx >= _filteredRecipes.Length) return;
 
-        var recipe = recipes[selIdx];
+        var recipe = _filteredRecipes[selIdx];
         foreach (var ingredient in recipe.Ingredients)
         {
             if (row >= maxRow) break;
@@ -222,7 +369,6 @@ public sealed class CraftingScreen : IScreen
             row++;
         }
 
-        // Show how many of the crafted item the player already owns
         if (row < maxRow) { AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++; }
         if (row < maxRow)
         {
@@ -244,22 +390,99 @@ public sealed class CraftingScreen : IScreen
     private void TryCraft()
     {
         if (_ctx.Connection == null) return;
-        var recipes = CraftingDefinitions.All;
-        int selIdx = _recipesSection.SelectedIndex;
-        if (selIdx < 0 || selIdx >= recipes.Length) return;
+        int selIdx = _listSection.SelectedIndex;
+        if (selIdx < 0 || selIdx >= _filteredRecipes.Length) return;
 
         var hud = _ctx.GameState.PlayerState;
         if (hud == null) return;
 
-        if (!CanCraftRecipe(recipes[selIdx], hud)) return;
+        var recipe = _filteredRecipes[selIdx];
+        if (!CanCraftRecipe(recipe, hud)) return;
+
+        // Track recent recipe
+        _recentRecipeIds.Remove(recipe.RecipeId);
+        _recentRecipeIds.Insert(0, recipe.RecipeId);
+        if (_recentRecipeIds.Count > MaxRecent)
+            _recentRecipeIds.RemoveAt(_recentRecipeIds.Count - 1);
 
         var msg = new ClientInputMsg
         {
             ActionType = ActionTypes.Craft,
-            ItemSlot = selIdx,
+            ItemSlot = recipe.RecipeId,
             Tick = _ctx.GameState.WorldTick
         };
         _ = _ctx.Connection.SendInputAsync(msg);
+    }
+
+    private void RebuildCategoryOrder()
+    {
+        var hud = _ctx.GameState.PlayerState;
+        var recipes = CraftingDefinitions.All;
+
+        // Collect unique categories
+        var categories = new HashSet<int>();
+        foreach (var r in recipes)
+        {
+            var def = ItemDefinitions.Get(r.ResultItemTypeId);
+            categories.Add(def.Category);
+        }
+
+        // Sort: categories with craftable recipes first, then by category id
+        var sorted = categories.ToList();
+        sorted.Sort((a, b) =>
+        {
+            bool aCraft = hud != null && CategoryHasCraftable(a, hud);
+            bool bCraft = hud != null && CategoryHasCraftable(b, hud);
+            if (aCraft != bCraft) return aCraft ? -1 : 1;
+            return a.CompareTo(b);
+        });
+        _categoryOrder = sorted.ToArray();
+    }
+
+    private void RebuildFilteredRecipes()
+    {
+        var hud = _ctx.GameState.PlayerState;
+        var recipes = CraftingDefinitions.All;
+        var filtered = new List<CraftingRecipe>();
+
+        foreach (var r in recipes)
+        {
+            var def = ItemDefinitions.Get(r.ResultItemTypeId);
+            if (def.Category == _selectedCategory)
+                filtered.Add(r);
+        }
+
+        // Sort: craftable first, then by name
+        filtered.Sort((a, b) =>
+        {
+            bool aCraft = hud != null && CanCraftRecipe(a, hud);
+            bool bCraft = hud != null && CanCraftRecipe(b, hud);
+            if (aCraft != bCraft) return aCraft ? -1 : 1;
+            return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+        });
+        _filteredRecipes = filtered.ToArray();
+    }
+
+    private bool CategoryHasCraftable(int category, PlayerStateMsg hud)
+    {
+        foreach (var r in CraftingDefinitions.All)
+        {
+            var def = ItemDefinitions.Get(r.ResultItemTypeId);
+            if (def.Category == category && CanCraftRecipe(r, hud))
+                return true;
+        }
+        return false;
+    }
+
+    private static int CountRecipesInCategory(int category)
+    {
+        int count = 0;
+        foreach (var r in CraftingDefinitions.All)
+        {
+            var def = ItemDefinitions.Get(r.ResultItemTypeId);
+            if (def.Category == category) count++;
+        }
+        return count;
     }
 
     private static bool CanCraftRecipe(CraftingRecipe recipe, PlayerStateMsg hud)

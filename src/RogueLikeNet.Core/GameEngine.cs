@@ -322,7 +322,7 @@ public class GameEngine : IDisposable
         _inventorySystem.Update(_worldMap, this);
         _craftingSystem.Update(_worldMap);
         _buildingSystem.Update(_worldMap);
-        _survivalSystem.Update(_worldMap);
+        _survivalSystem.Update(_worldMap, DebugInvulnerable);
         _skillSystem.Update(_worldMap);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
@@ -541,7 +541,7 @@ public class GameEngine : IDisposable
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
             Hunger = player.Survival.Hunger,
-            MaxHunger = Components.Survival.MaxHunger,
+            MaxHunger = player.Survival.MaxHunger,
             InventoryCount = player.Inventory.Items.Count,
             InventoryCapacity = player.Inventory.Capacity
         };

@@ -20,7 +20,7 @@ public class SurvivalSystemTests
     public void Survival_InitializesAtMaxHunger()
     {
         var s = Survival.Default();
-        Assert.Equal(Survival.MaxHunger, s.Hunger);
+        Assert.Equal(s.MaxHunger, s.Hunger);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class SurvivalSystemTests
 
         var state = engine.GetPlayerStateData(player);
         Assert.NotNull(state);
-        Assert.Equal(Survival.MaxHunger, state.Hunger);
-        Assert.Equal(Survival.MaxHunger, state.MaxHunger);
+        Assert.Equal(player.Survival.MaxHunger, state.Hunger);
+        Assert.Equal(player.Survival.MaxHunger, state.MaxHunger);
     }
 }

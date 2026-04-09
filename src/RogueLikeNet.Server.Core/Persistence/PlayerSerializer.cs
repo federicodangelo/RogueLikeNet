@@ -41,6 +41,8 @@ public static class PlayerSerializer
             Attack = player.CombatStats.Attack,
             Defense = player.CombatStats.Defense,
             Speed = player.CombatStats.Speed,
+            Hunger = player.Survival.Hunger,
+            MaxHunger = player.Survival.MaxHunger,
         };
 
         // Inventory
@@ -108,6 +110,10 @@ public static class PlayerSerializer
 
         player.ClassData.Level = data.Level;
         player.ClassData.Experience = data.Experience;
+
+        // Restore survival
+        player.Survival.Hunger = data.Hunger;
+        player.Survival.MaxHunger = data.MaxHunger;
 
         // Restore inventory
         if (!string.IsNullOrEmpty(data.InventoryJson) && data.InventoryJson != "[]")

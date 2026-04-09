@@ -10,8 +10,10 @@ public class SurvivalSystem
 {
     public const int StarvationDamage = 1;
 
-    public void Update(WorldMap worldMap)
+    public void Update(WorldMap worldMap, bool debugInvulnerable = false)
     {
+        if (debugInvulnerable) return;
+
         foreach (ref var player in worldMap.Players)
         {
             if (player.IsDead) continue;

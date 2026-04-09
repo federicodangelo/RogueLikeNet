@@ -195,7 +195,7 @@ public sealed class InventoryScreen : IScreen
 
     private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
     {
-        const int EquipmentSlots = 2;
+        int EquipmentSlots = Equipment.SlotCount;
         if (input.IsActionPressed(InputAction.MenuUp))
         {
             if (section.SelectedIndex > 0)
@@ -277,7 +277,7 @@ public sealed class InventoryScreen : IScreen
     private static int GetInvSectionItemCount(HudSection section, int cap) => section.Name switch
     {
         "InvItems" => cap,
-        "InvEquipment" => 2,
+        "InvEquipment" => Equipment.SlotCount,
         _ => 0
     };
 }
