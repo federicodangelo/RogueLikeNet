@@ -1,282 +1,282 @@
 [
-  {
-    "id": "wood",
-    "name": "Wood",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 9136404,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "wood"
-  },
-  {
-    "id": "stone",
-    "name": "Stone",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 8947848,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "stone"
-  },
-  {
-    "id": "copper_ore",
-    "name": "Copper Ore",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 12092211,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "copper"
-  },
-  {
-    "id": "iron_ore",
-    "name": "Iron Ore",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 11053176,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "iron"
-  },
-  {
-    "id": "gold_ore",
-    "name": "Gold Ore",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 16766720,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "gold"
-  },
-  {
-    "id": "copper_ingot",
-    "name": "Copper Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 12092211,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "copper"
-  },
-  {
-    "id": "iron_ingot",
-    "name": "Iron Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 11053176,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "iron"
-  },
-  {
-    "id": "gold_ingot",
-    "name": "Gold Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 16766720,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "gold"
-  },
-  {
-    "id": "steel_ingot",
-    "name": "Steel Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 12632256,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "steel"
-  },
-  {
-    "id": "mithril_ore",
-    "name": "Mithril Ore",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 6737151,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "mithril"
-  },
-  {
-    "id": "mithril_ingot",
-    "name": "Mithril Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 6737151,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "mithril"
-  },
-  {
-    "id": "adamantite_ore",
-    "name": "Adamantite Ore",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 8388736,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "adamantite"
-  },
-  {
-    "id": "adamantite_ingot",
-    "name": "Adamantite Ingot",
-    "category": "material",
-    "glyphId": 22,
-    "fgColor": 8388736,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "adamantite"
-  },
-  {
-    "id": "fiber",
-    "name": "Plant Fiber",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 5416721,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "leather",
-    "name": "Leather",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 9136404,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "cloth",
-    "name": "Cloth",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 15790320,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "rope",
-    "name": "Rope",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 9136404,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "glass",
-    "name": "Glass",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 11599871,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "sand",
-    "name": "Sand",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 15329769,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "clay",
-    "name": "Clay",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 11173350,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "coal",
-    "name": "Coal",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 3355443,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "gem_ruby",
-    "name": "Ruby",
-    "category": "material",
-    "glyphId": 4,
-    "fgColor": 16711680,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "gem_sapphire",
-    "name": "Sapphire",
-    "category": "material",
-    "glyphId": 4,
-    "fgColor": 255,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "gem_emerald",
-    "name": "Emerald",
-    "category": "material",
-    "glyphId": 4,
-    "fgColor": 65280,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "bone",
-    "name": "Bone",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 15790320,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "feather",
-    "name": "Feather",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 15790320,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "slime_gel",
-    "name": "Slime Gel",
-    "category": "material",
-    "glyphId": 35,
-    "fgColor": 65280,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  },
-  {
-    "id": "torch_material",
-    "name": "Torch",
-    "category": "material",
-    "glyphId": 33,
-    "fgColor": 16766720,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "none"
-  }
+    {
+        "id": "wood",
+        "name": "Wood",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood"
+    },
+    {
+        "id": "stone",
+        "name": "Stone",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 8947848,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "stone"
+    },
+    {
+        "id": "copper_ore",
+        "name": "Copper Ore",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 12092211,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "copper"
+    },
+    {
+        "id": "iron_ore",
+        "name": "Iron Ore",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 11053176,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron"
+    },
+    {
+        "id": "gold_ore",
+        "name": "Gold Ore",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "gold"
+    },
+    {
+        "id": "copper_ingot",
+        "name": "Copper Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 12092211,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "copper"
+    },
+    {
+        "id": "iron_ingot",
+        "name": "Iron Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 11053176,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron"
+    },
+    {
+        "id": "gold_ingot",
+        "name": "Gold Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "gold"
+    },
+    {
+        "id": "steel_ingot",
+        "name": "Steel Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 12632256,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "steel"
+    },
+    {
+        "id": "mithril_ore",
+        "name": "Mithril Ore",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "mithril"
+    },
+    {
+        "id": "mithril_ingot",
+        "name": "Mithril Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "mithril"
+    },
+    {
+        "id": "adamantite_ore",
+        "name": "Adamantite Ore",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 8388736,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "adamantite"
+    },
+    {
+        "id": "adamantite_ingot",
+        "name": "Adamantite Ingot",
+        "category": "material",
+        "glyphId": 22,
+        "fgColor": 8388736,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "adamantite"
+    },
+    {
+        "id": "fiber",
+        "name": "Plant Fiber",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 5416721,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "leather",
+        "name": "Leather",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "cloth",
+        "name": "Cloth",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 15790320,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "rope",
+        "name": "Rope",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "glass",
+        "name": "Glass",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 11599871,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "sand",
+        "name": "Sand",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 15329769,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "clay",
+        "name": "Clay",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 11173350,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "coal",
+        "name": "Coal",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 3355443,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "gem_ruby",
+        "name": "Ruby",
+        "category": "material",
+        "glyphId": 4,
+        "fgColor": 16711680,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "gem_sapphire",
+        "name": "Sapphire",
+        "category": "material",
+        "glyphId": 4,
+        "fgColor": 255,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "gem_emerald",
+        "name": "Emerald",
+        "category": "material",
+        "glyphId": 4,
+        "fgColor": 65280,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "bone",
+        "name": "Bone",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 15790320,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "feather",
+        "name": "Feather",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 15790320,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "slime_gel",
+        "name": "Slime Gel",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 65280,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "torch_material",
+        "name": "Torch",
+        "category": "material",
+        "glyphId": 33,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    }
 ]

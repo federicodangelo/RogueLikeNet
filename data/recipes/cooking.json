@@ -1,123 +1,234 @@
 [
-  {
-    "id": "cook_meat",
-    "name": "Cooked Meat",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "raw_meat", "count": 1 }
-    ],
-    "result": { "itemId": "cooked_meat", "count": 1 }
-  },
-  {
-    "id": "cook_fish",
-    "name": "Cooked Fish",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "raw_fish", "count": 1 }
-    ],
-    "result": { "itemId": "cooked_fish", "count": 1 }
-  },
-  {
-    "id": "bake_bread",
-    "name": "Bread",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "wheat", "count": 3 }
-    ],
-    "result": { "itemId": "bread", "count": 1 }
-  },
-  {
-    "id": "bake_potato",
-    "name": "Baked Potato",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "potato", "count": 1 }
-    ],
-    "result": { "itemId": "baked_potato", "count": 1 }
-  },
-  {
-    "id": "cook_stew",
-    "name": "Stew",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "raw_meat", "count": 1 },
-      { "itemId": "potato", "count": 1 },
-      { "itemId": "carrot", "count": 1 }
-    ],
-    "result": { "itemId": "stew", "count": 1 }
-  },
-  {
-    "id": "cook_pie",
-    "name": "Pie",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "wheat", "count": 2 },
-      { "itemId": "berry", "count": 3 }
-    ],
-    "result": { "itemId": "pie", "count": 1 }
-  },
-  {
-    "id": "brew_juice",
-    "name": "Berry Juice",
-    "station": "cookingPot",
-    "ingredients": [
-      { "itemId": "berry", "count": 5 },
-      { "itemId": "water_flask", "count": 1 }
-    ],
-    "result": { "itemId": "juice", "count": 1 }
-  },
-  {
-    "id": "brew_health_small",
-    "name": "Small Health Potion",
-    "station": "alchemy",
-    "ingredients": [
-      { "itemId": "berry", "count": 3 },
-      { "itemId": "glass", "count": 1 }
-    ],
-    "result": { "itemId": "health_potion_small", "count": 1 }
-  },
-  {
-    "id": "brew_health_medium",
-    "name": "Medium Health Potion",
-    "station": "alchemy",
-    "ingredients": [
-      { "itemId": "mushroom", "count": 3 },
-      { "itemId": "berry", "count": 2 },
-      { "itemId": "glass", "count": 1 }
-    ],
-    "result": { "itemId": "health_potion_medium", "count": 1 }
-  },
-  {
-    "id": "brew_strength",
-    "name": "Strength Potion",
-    "station": "alchemy",
-    "ingredients": [
-      { "itemId": "raw_meat", "count": 2 },
-      { "itemId": "bone", "count": 1 },
-      { "itemId": "glass", "count": 1 }
-    ],
-    "result": { "itemId": "strength_potion", "count": 1 }
-  },
-  {
-    "id": "brew_defense",
-    "name": "Defense Potion",
-    "station": "alchemy",
-    "ingredients": [
-      { "itemId": "slime_gel", "count": 2 },
-      { "itemId": "iron_ingot", "count": 1 },
-      { "itemId": "glass", "count": 1 }
-    ],
-    "result": { "itemId": "defense_potion", "count": 1 }
-  },
-  {
-    "id": "brew_speed",
-    "name": "Speed Potion",
-    "station": "alchemy",
-    "ingredients": [
-      { "itemId": "feather", "count": 2 },
-      { "itemId": "berry", "count": 2 },
-      { "itemId": "glass", "count": 1 }
-    ],
-    "result": { "itemId": "speed_potion", "count": 1 }
-  }
+    {
+        "id": "cook_meat",
+        "name": "Cooked Meat",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_meat",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "cooked_meat",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_fish",
+        "name": "Cooked Fish",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_fish",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "cooked_fish",
+            "count": 1
+        }
+    },
+    {
+        "id": "bake_bread",
+        "name": "Bread",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "wheat",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "bread",
+            "count": 1
+        }
+    },
+    {
+        "id": "bake_potato",
+        "name": "Baked Potato",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "potato",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "baked_potato",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_stew",
+        "name": "Stew",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_meat",
+                "count": 1
+            },
+            {
+                "itemId": "potato",
+                "count": 1
+            },
+            {
+                "itemId": "carrot",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "stew",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_pie",
+        "name": "Pie",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "wheat",
+                "count": 2
+            },
+            {
+                "itemId": "berry",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "pie",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_juice",
+        "name": "Berry Juice",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "berry",
+                "count": 5
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "juice",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_health_small",
+        "name": "Small Health Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "berry",
+                "count": 3
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "health_potion_small",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_health_medium",
+        "name": "Medium Health Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 3
+            },
+            {
+                "itemId": "berry",
+                "count": 2
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "health_potion_medium",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_strength",
+        "name": "Strength Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "raw_meat",
+                "count": 2
+            },
+            {
+                "itemId": "bone",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "strength_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_defense",
+        "name": "Defense Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "slime_gel",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "defense_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_speed",
+        "name": "Speed Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "feather",
+                "count": 2
+            },
+            {
+                "itemId": "berry",
+                "count": 2
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "speed_potion",
+            "count": 1
+        }
+    }
 ]

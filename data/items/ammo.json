@@ -1,68 +1,86 @@
 [
-  {
-    "id": "wooden_arrow",
-    "name": "Wooden Arrow",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "wood",
-    "ammo": { "damage": 2, "damageType": "physical" }
-  },
-  {
-    "id": "iron_arrow",
-    "name": "Iron Arrow",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "iron",
-    "ammo": { "damage": 5, "damageType": "physical" }
-  },
-  {
-    "id": "steel_arrow",
-    "name": "Steel Arrow",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 12632256,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "steel",
-    "ammo": { "damage": 8, "damageType": "physical" }
-  },
-  {
-    "id": "bolt",
-    "name": "Crossbow Bolt",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": true,
-    "maxStackSize": 99,
-    "materialTier": "iron",
-    "ammo": { "damage": 7, "damageType": "physical" }
-  },
-  {
-    "id": "fire_arrow",
-    "name": "Fire Arrow",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 16744448,
-    "stackable": true,
-    "maxStackSize": 50,
-    "materialTier": "iron",
-    "ammo": { "damage": 6, "damageType": "fire" }
-  },
-  {
-    "id": "ice_arrow",
-    "name": "Ice Arrow",
-    "category": "ammo",
-    "glyphId": 47,
-    "fgColor": 11206655,
-    "stackable": true,
-    "maxStackSize": 50,
-    "materialTier": "iron",
-    "ammo": { "damage": 6, "damageType": "ice" }
-  }
+    {
+        "id": "wooden_arrow",
+        "name": "Wooden Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood",
+        "ammo": {
+            "damage": 2,
+            "damageType": "physical"
+        }
+    },
+    {
+        "id": "iron_arrow",
+        "name": "Iron Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron",
+        "ammo": {
+            "damage": 5,
+            "damageType": "physical"
+        }
+    },
+    {
+        "id": "steel_arrow",
+        "name": "Steel Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "steel",
+        "ammo": {
+            "damage": 8,
+            "damageType": "physical"
+        }
+    },
+    {
+        "id": "bolt",
+        "name": "Crossbow Bolt",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron",
+        "ammo": {
+            "damage": 7,
+            "damageType": "physical"
+        }
+    },
+    {
+        "id": "fire_arrow",
+        "name": "Fire Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 50,
+        "materialTier": "iron",
+        "ammo": {
+            "damage": 6,
+            "damageType": "fire"
+        }
+    },
+    {
+        "id": "ice_arrow",
+        "name": "Ice Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 11206655,
+        "stackable": true,
+        "maxStackSize": 50,
+        "materialTier": "iron",
+        "ammo": {
+            "damage": 6,
+            "damageType": "ice"
+        }
+    }
 ]

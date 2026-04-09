@@ -1,90 +1,138 @@
 [
-  {
-    "id": "health_potion_small",
-    "name": "Small Health Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 16711680,
-    "stackable": true,
-    "maxStackSize": 10,
-    "materialTier": "none",
-    "potion": { "healthRestore": 25, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
-  },
-  {
-    "id": "health_potion_medium",
-    "name": "Medium Health Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 16711680,
-    "stackable": true,
-    "maxStackSize": 10,
-    "materialTier": "none",
-    "potion": { "healthRestore": 50, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
-  },
-  {
-    "id": "health_potion_large",
-    "name": "Large Health Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 16711680,
-    "stackable": true,
-    "maxStackSize": 5,
-    "materialTier": "none",
-    "potion": { "healthRestore": 100, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
-  },
-  {
-    "id": "strength_potion",
-    "name": "Strength Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 16744448,
-    "stackable": true,
-    "maxStackSize": 5,
-    "materialTier": "none",
-    "potion": { "healthRestore": 0, "attackBoost": 5, "defenseBoost": 0, "speedBoost": 0, "duration": 300 }
-  },
-  {
-    "id": "defense_potion",
-    "name": "Defense Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 6737151,
-    "stackable": true,
-    "maxStackSize": 5,
-    "materialTier": "none",
-    "potion": { "healthRestore": 0, "attackBoost": 0, "defenseBoost": 5, "speedBoost": 0, "duration": 300 }
-  },
-  {
-    "id": "speed_potion",
-    "name": "Speed Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 65535,
-    "stackable": true,
-    "maxStackSize": 5,
-    "materialTier": "none",
-    "potion": { "healthRestore": 0, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 2, "duration": 300 }
-  },
-  {
-    "id": "antidote",
-    "name": "Antidote",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 65280,
-    "stackable": true,
-    "maxStackSize": 10,
-    "materialTier": "none",
-    "potion": { "healthRestore": 5, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
-  },
-  {
-    "id": "mana_potion",
-    "name": "Mana Potion",
-    "category": "potion",
-    "glyphId": 173,
-    "fgColor": 255,
-    "stackable": true,
-    "maxStackSize": 10,
-    "materialTier": "none",
-    "potion": { "healthRestore": 0, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
-  }
+    {
+        "id": "health_potion_small",
+        "name": "Small Health Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16711680,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 25,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 0
+        }
+    },
+    {
+        "id": "health_potion_medium",
+        "name": "Medium Health Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16711680,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 50,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 0
+        }
+    },
+    {
+        "id": "health_potion_large",
+        "name": "Large Health Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16711680,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 100,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 0
+        }
+    },
+    {
+        "id": "strength_potion",
+        "name": "Strength Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 5,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 300
+        }
+    },
+    {
+        "id": "defense_potion",
+        "name": "Defense Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 0,
+            "defenseBoost": 5,
+            "speedBoost": 0,
+            "duration": 300
+        }
+    },
+    {
+        "id": "speed_potion",
+        "name": "Speed Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 65535,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 2,
+            "duration": 300
+        }
+    },
+    {
+        "id": "antidote",
+        "name": "Antidote",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 65280,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 5,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 0
+        }
+    },
+    {
+        "id": "mana_potion",
+        "name": "Mana Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 255,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 0
+        }
+    }
 ]

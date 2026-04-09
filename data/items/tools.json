@@ -1,189 +1,257 @@
 [
-  {
-    "id": "wooden_pickaxe",
-    "name": "Wooden Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "pickaxe", "miningPower": 1, "durability": 60 }
-  },
-  {
-    "id": "stone_pickaxe",
-    "name": "Stone Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 8947848,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "stone",
-    "tool": { "toolType": "pickaxe", "miningPower": 2, "durability": 120 }
-  },
-  {
-    "id": "copper_pickaxe",
-    "name": "Copper Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 12092211,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "copper",
-    "tool": { "toolType": "pickaxe", "miningPower": 3, "durability": 180 }
-  },
-  {
-    "id": "iron_pickaxe",
-    "name": "Iron Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "pickaxe", "miningPower": 4, "durability": 250 }
-  },
-  {
-    "id": "steel_pickaxe",
-    "name": "Steel Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 12632256,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "steel",
-    "tool": { "toolType": "pickaxe", "miningPower": 5, "durability": 400 }
-  },
-  {
-    "id": "gold_pickaxe",
-    "name": "Gold Pickaxe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 16766720,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "gold",
-    "tool": { "toolType": "pickaxe", "miningPower": 3, "durability": 50 }
-  },
-  {
-    "id": "wooden_axe",
-    "name": "Wooden Axe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "axe", "miningPower": 1, "durability": 60 }
-  },
-  {
-    "id": "stone_axe",
-    "name": "Stone Axe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 8947848,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "stone",
-    "tool": { "toolType": "axe", "miningPower": 2, "durability": 120 }
-  },
-  {
-    "id": "iron_axe",
-    "name": "Iron Axe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "axe", "miningPower": 4, "durability": 250 }
-  },
-  {
-    "id": "wooden_shovel",
-    "name": "Wooden Shovel",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "shovel", "miningPower": 1, "durability": 60 }
-  },
-  {
-    "id": "iron_shovel",
-    "name": "Iron Shovel",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "shovel", "miningPower": 4, "durability": 250 }
-  },
-  {
-    "id": "wooden_hoe",
-    "name": "Wooden Hoe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "hoe", "miningPower": 1, "durability": 60 }
-  },
-  {
-    "id": "iron_hoe",
-    "name": "Iron Hoe",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "hoe", "miningPower": 4, "durability": 250 }
-  },
-  {
-    "id": "hammer",
-    "name": "Hammer",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "hammer", "miningPower": 1, "durability": 80 }
-  },
-  {
-    "id": "iron_hammer",
-    "name": "Iron Hammer",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "hammer", "miningPower": 4, "durability": 250 }
-  },
-  {
-    "id": "knife",
-    "name": "Knife",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "tool": { "toolType": "knife", "miningPower": 1, "durability": 150 }
-  },
-  {
-    "id": "fishing_rod",
-    "name": "Fishing Rod",
-    "category": "tool",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "tool": { "toolType": "fishingRod", "miningPower": 0, "durability": 100 }
-  }
+    {
+        "id": "wooden_pickaxe",
+        "name": "Wooden Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 1,
+            "durability": 60
+        }
+    },
+    {
+        "id": "stone_pickaxe",
+        "name": "Stone Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8947848,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "stone",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 2,
+            "durability": 120
+        }
+    },
+    {
+        "id": "copper_pickaxe",
+        "name": "Copper Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 3,
+            "durability": 180
+        }
+    },
+    {
+        "id": "iron_pickaxe",
+        "name": "Iron Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 4,
+            "durability": 250
+        }
+    },
+    {
+        "id": "steel_pickaxe",
+        "name": "Steel Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 5,
+            "durability": 400
+        }
+    },
+    {
+        "id": "gold_pickaxe",
+        "name": "Gold Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 3,
+            "durability": 50
+        }
+    },
+    {
+        "id": "wooden_axe",
+        "name": "Wooden Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 1,
+            "durability": 60
+        }
+    },
+    {
+        "id": "stone_axe",
+        "name": "Stone Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8947848,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "stone",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 2,
+            "durability": 120
+        }
+    },
+    {
+        "id": "iron_axe",
+        "name": "Iron Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 4,
+            "durability": 250
+        }
+    },
+    {
+        "id": "wooden_shovel",
+        "name": "Wooden Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 1,
+            "durability": 60
+        }
+    },
+    {
+        "id": "iron_shovel",
+        "name": "Iron Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 4,
+            "durability": 250
+        }
+    },
+    {
+        "id": "wooden_hoe",
+        "name": "Wooden Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 1,
+            "durability": 60
+        }
+    },
+    {
+        "id": "iron_hoe",
+        "name": "Iron Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 4,
+            "durability": 250
+        }
+    },
+    {
+        "id": "hammer",
+        "name": "Hammer",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "hammer",
+            "miningPower": 1,
+            "durability": 80
+        }
+    },
+    {
+        "id": "iron_hammer",
+        "name": "Iron Hammer",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "hammer",
+            "miningPower": 4,
+            "durability": 250
+        }
+    },
+    {
+        "id": "knife",
+        "name": "Knife",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "tool": {
+            "toolType": "knife",
+            "miningPower": 1,
+            "durability": 150
+        }
+    },
+    {
+        "id": "fishing_rod",
+        "name": "Fishing Rod",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "tool": {
+            "toolType": "fishingRod",
+            "miningPower": 0,
+            "durability": 100
+        }
+    }
 ]

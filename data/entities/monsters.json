@@ -1,130 +1,210 @@
 [
-  {
-    "id": "goblin",
-    "numericId": 0,
-    "name": "Goblin",
-    "glyphId": 103,
-    "fgColor": 65280,
-    "health": 15,
-    "attack": 4,
-    "defense": 1,
-    "speed": 3,
-    "xpReward": 10,
-    "lootTable": [
-      { "itemId": "gold_coin", "minCount": 1, "maxCount": 5, "chance": 0.5 },
-      { "itemId": "dagger", "minCount": 1, "maxCount": 1, "chance": 0.1 }
-    ]
-  },
-  {
-    "id": "orc",
-    "numericId": 1,
-    "name": "Orc",
-    "glyphId": 111,
-    "fgColor": 16711680,
-    "health": 30,
-    "attack": 7,
-    "defense": 3,
-    "speed": 2,
-    "xpReward": 25,
-    "lootTable": [
-      { "itemId": "gold_coin", "minCount": 3, "maxCount": 10, "chance": 0.6 },
-      { "itemId": "leather", "minCount": 1, "maxCount": 2, "chance": 0.3 },
-      { "itemId": "iron_ore", "minCount": 1, "maxCount": 1, "chance": 0.15 }
-    ]
-  },
-  {
-    "id": "skeleton",
-    "numericId": 2,
-    "name": "Skeleton",
-    "glyphId": 115,
-    "fgColor": 16777215,
-    "health": 20,
-    "attack": 5,
-    "defense": 2,
-    "speed": 3,
-    "xpReward": 15,
-    "lootTable": [
-      { "itemId": "bone", "minCount": 1, "maxCount": 3, "chance": 0.7 },
-      { "itemId": "gold_coin", "minCount": 1, "maxCount": 3, "chance": 0.4 }
-    ]
-  },
-  {
-    "id": "dragon",
-    "numericId": 3,
-    "name": "Dragon",
-    "glyphId": 68,
-    "fgColor": 16744448,
-    "health": 100,
-    "attack": 15,
-    "defense": 8,
-    "speed": 1,
-    "xpReward": 100,
-    "lootTable": [
-      { "itemId": "gold_coin", "minCount": 20, "maxCount": 50, "chance": 1.0 },
-      { "itemId": "gem_ruby", "minCount": 1, "maxCount": 2, "chance": 0.3 },
-      { "itemId": "mithril_ore", "minCount": 1, "maxCount": 3, "chance": 0.2 }
-    ]
-  },
-  {
-    "id": "slime",
-    "numericId": 4,
-    "name": "Slime",
-    "glyphId": 111,
-    "fgColor": 65280,
-    "health": 10,
-    "attack": 2,
-    "defense": 0,
-    "speed": 2,
-    "xpReward": 5,
-    "lootTable": [
-      { "itemId": "slime_gel", "minCount": 1, "maxCount": 2, "chance": 0.8 }
-    ]
-  },
-  {
-    "id": "wolf",
-    "numericId": 5,
-    "name": "Wolf",
-    "glyphId": 119,
-    "fgColor": 8947848,
-    "health": 18,
-    "attack": 6,
-    "defense": 1,
-    "speed": 4,
-    "xpReward": 12,
-    "lootTable": [
-      { "itemId": "leather", "minCount": 1, "maxCount": 2, "chance": 0.5 },
-      { "itemId": "raw_meat", "minCount": 1, "maxCount": 1, "chance": 0.6 }
-    ]
-  },
-  {
-    "id": "spider",
-    "numericId": 6,
-    "name": "Spider",
-    "glyphId": 120,
-    "fgColor": 3355443,
-    "health": 12,
-    "attack": 4,
-    "defense": 1,
-    "speed": 3,
-    "xpReward": 8,
-    "lootTable": [
-      { "itemId": "fiber", "minCount": 1, "maxCount": 3, "chance": 0.6 }
-    ]
-  },
-  {
-    "id": "zombie",
-    "numericId": 7,
-    "name": "Zombie",
-    "glyphId": 122,
-    "fgColor": 5416721,
-    "health": 25,
-    "attack": 5,
-    "defense": 2,
-    "speed": 1,
-    "xpReward": 12,
-    "lootTable": [
-      { "itemId": "bone", "minCount": 1, "maxCount": 2, "chance": 0.4 },
-      { "itemId": "cloth", "minCount": 1, "maxCount": 1, "chance": 0.3 }
-    ]
-  }
+    {
+        "id": "goblin",
+        "numericId": 0,
+        "name": "Goblin",
+        "glyphId": 103,
+        "fgColor": 65280,
+        "health": 15,
+        "attack": 4,
+        "defense": 1,
+        "speed": 3,
+        "xpReward": 10,
+        "lootTable": [
+            {
+                "itemId": "gold_coin",
+                "minCount": 1,
+                "maxCount": 5,
+                "chance": 0.5
+            },
+            {
+                "itemId": "dagger",
+                "minCount": 1,
+                "maxCount": 1,
+                "chance": 0.1
+            }
+        ]
+    },
+    {
+        "id": "orc",
+        "numericId": 1,
+        "name": "Orc",
+        "glyphId": 111,
+        "fgColor": 16711680,
+        "health": 30,
+        "attack": 7,
+        "defense": 3,
+        "speed": 2,
+        "xpReward": 25,
+        "lootTable": [
+            {
+                "itemId": "gold_coin",
+                "minCount": 3,
+                "maxCount": 10,
+                "chance": 0.6
+            },
+            {
+                "itemId": "leather",
+                "minCount": 1,
+                "maxCount": 2,
+                "chance": 0.3
+            },
+            {
+                "itemId": "iron_ore",
+                "minCount": 1,
+                "maxCount": 1,
+                "chance": 0.15
+            }
+        ]
+    },
+    {
+        "id": "skeleton",
+        "numericId": 2,
+        "name": "Skeleton",
+        "glyphId": 115,
+        "fgColor": 16777215,
+        "health": 20,
+        "attack": 5,
+        "defense": 2,
+        "speed": 3,
+        "xpReward": 15,
+        "lootTable": [
+            {
+                "itemId": "bone",
+                "minCount": 1,
+                "maxCount": 3,
+                "chance": 0.7
+            },
+            {
+                "itemId": "gold_coin",
+                "minCount": 1,
+                "maxCount": 3,
+                "chance": 0.4
+            }
+        ]
+    },
+    {
+        "id": "dragon",
+        "numericId": 3,
+        "name": "Dragon",
+        "glyphId": 68,
+        "fgColor": 16744448,
+        "health": 100,
+        "attack": 15,
+        "defense": 8,
+        "speed": 1,
+        "xpReward": 100,
+        "lootTable": [
+            {
+                "itemId": "gold_coin",
+                "minCount": 20,
+                "maxCount": 50,
+                "chance": 1.0
+            },
+            {
+                "itemId": "gem_ruby",
+                "minCount": 1,
+                "maxCount": 2,
+                "chance": 0.3
+            },
+            {
+                "itemId": "mithril_ore",
+                "minCount": 1,
+                "maxCount": 3,
+                "chance": 0.2
+            }
+        ]
+    },
+    {
+        "id": "slime",
+        "numericId": 4,
+        "name": "Slime",
+        "glyphId": 111,
+        "fgColor": 65280,
+        "health": 10,
+        "attack": 2,
+        "defense": 0,
+        "speed": 2,
+        "xpReward": 5,
+        "lootTable": [
+            {
+                "itemId": "slime_gel",
+                "minCount": 1,
+                "maxCount": 2,
+                "chance": 0.8
+            }
+        ]
+    },
+    {
+        "id": "wolf",
+        "numericId": 5,
+        "name": "Wolf",
+        "glyphId": 119,
+        "fgColor": 8947848,
+        "health": 18,
+        "attack": 6,
+        "defense": 1,
+        "speed": 4,
+        "xpReward": 12,
+        "lootTable": [
+            {
+                "itemId": "leather",
+                "minCount": 1,
+                "maxCount": 2,
+                "chance": 0.5
+            },
+            {
+                "itemId": "raw_meat",
+                "minCount": 1,
+                "maxCount": 1,
+                "chance": 0.6
+            }
+        ]
+    },
+    {
+        "id": "spider",
+        "numericId": 6,
+        "name": "Spider",
+        "glyphId": 120,
+        "fgColor": 3355443,
+        "health": 12,
+        "attack": 4,
+        "defense": 1,
+        "speed": 3,
+        "xpReward": 8,
+        "lootTable": [
+            {
+                "itemId": "fiber",
+                "minCount": 1,
+                "maxCount": 3,
+                "chance": 0.6
+            }
+        ]
+    },
+    {
+        "id": "zombie",
+        "numericId": 7,
+        "name": "Zombie",
+        "glyphId": 122,
+        "fgColor": 5416721,
+        "health": 25,
+        "attack": 5,
+        "defense": 2,
+        "speed": 1,
+        "xpReward": 12,
+        "lootTable": [
+            {
+                "itemId": "bone",
+                "minCount": 1,
+                "maxCount": 2,
+                "chance": 0.4
+            },
+            {
+                "itemId": "cloth",
+                "minCount": 1,
+                "maxCount": 1,
+                "chance": 0.3
+            }
+        ]
+    }
 ]

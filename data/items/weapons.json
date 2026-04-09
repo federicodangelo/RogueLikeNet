@@ -1,266 +1,398 @@
 [
-  {
-    "id": "short_sword",
-    "name": "Short Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 16777215,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 3, "attackSpeed": 5, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "long_sword",
-    "name": "Long Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 65535,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 5, "attackSpeed": 4, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "battle_axe",
-    "name": "Battle Axe",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 16711680,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 8, "attackSpeed": 3, "damageType": "physical", "range": 1, "twoHanded": true }
-  },
-  {
-    "id": "dagger",
-    "name": "Dagger",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 8421504,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 2, "attackSpeed": 7, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "wooden_sword",
-    "name": "Wooden Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 2, "attackSpeed": 5, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "stone_sword",
-    "name": "Stone Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 8947848,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "stone",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 3, "attackSpeed": 4, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "copper_sword",
-    "name": "Copper Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 12092211,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "copper",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 4, "attackSpeed": 5, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "steel_sword",
-    "name": "Steel Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 12632256,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "steel",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 7, "attackSpeed": 5, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "gold_sword",
-    "name": "Gold Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 16766720,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "gold",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 4, "attackSpeed": 6, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "mithril_sword",
-    "name": "Mithril Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 8900331,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "mithril",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 8, "attackSpeed": 6, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "adamantite_sword",
-    "name": "Adamantite Sword",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 6750105,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "adamantite",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 10, "attackSpeed": 5, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "wooden_bow",
-    "name": "Wooden Bow",
-    "category": "weapon",
-    "glyphId": 41,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 3, "attackSpeed": 4, "damageType": "physical", "range": 5, "twoHanded": true }
-  },
-  {
-    "id": "iron_bow",
-    "name": "Iron Bow",
-    "category": "weapon",
-    "glyphId": 41,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 5, "attackSpeed": 4, "damageType": "physical", "range": 6, "twoHanded": true }
-  },
-  {
-    "id": "crossbow",
-    "name": "Crossbow",
-    "category": "weapon",
-    "glyphId": 41,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 8, "attackSpeed": 2, "damageType": "physical", "range": 7, "twoHanded": true }
-  },
-  {
-    "id": "spear",
-    "name": "Spear",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 9136404,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 4, "attackSpeed": 4, "damageType": "physical", "range": 2, "twoHanded": true }
-  },
-  {
-    "id": "iron_spear",
-    "name": "Iron Spear",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 6, "attackSpeed": 4, "damageType": "physical", "range": 2, "twoHanded": true }
-  },
-  {
-    "id": "mace",
-    "name": "Mace",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "iron",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 6, "attackSpeed": 3, "damageType": "physical", "range": 1, "twoHanded": false }
-  },
-  {
-    "id": "war_hammer",
-    "name": "War Hammer",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 11053176,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "steel",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 10, "attackSpeed": 2, "damageType": "physical", "range": 1, "twoHanded": true }
-  },
-  {
-    "id": "magic_staff",
-    "name": "Magic Staff",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 13395711,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 4, "attackSpeed": 4, "damageType": "magic", "range": 4, "twoHanded": true }
-  },
-  {
-    "id": "fire_staff",
-    "name": "Fire Staff",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 16711680,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 6, "attackSpeed": 3, "damageType": "fire", "range": 4, "twoHanded": true }
-  },
-  {
-    "id": "ice_staff",
-    "name": "Ice Staff",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 11206655,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 5, "attackSpeed": 3, "damageType": "ice", "range": 4, "twoHanded": true }
-  },
-  {
-    "id": "wand",
-    "name": "Wand",
-    "category": "weapon",
-    "glyphId": 47,
-    "fgColor": 13395711,
-    "stackable": false,
-    "maxStackSize": 1,
-    "materialTier": "wood",
-    "equipSlot": "weapon",
-    "weapon": { "baseDamage": 3, "attackSpeed": 6, "damageType": "magic", "range": 3, "twoHanded": false }
-  }
+    {
+        "id": "short_sword",
+        "name": "Short Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 16777215,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 3,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "long_sword",
+        "name": "Long Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 65535,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 5,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "battle_axe",
+        "name": "Battle Axe",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 16711680,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 8,
+            "attackSpeed": 3,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "dagger",
+        "name": "Dagger",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 8421504,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 2,
+            "attackSpeed": 7,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "wooden_sword",
+        "name": "Wooden Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 2,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "stone_sword",
+        "name": "Stone Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 8947848,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "stone",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 3,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "copper_sword",
+        "name": "Copper Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "steel_sword",
+        "name": "Steel Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 7,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "gold_sword",
+        "name": "Gold Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 6,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "mithril_sword",
+        "name": "Mithril Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 8900331,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 8,
+            "attackSpeed": 6,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "adamantite_sword",
+        "name": "Adamantite Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 6750105,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 10,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "wooden_bow",
+        "name": "Wooden Bow",
+        "category": "weapon",
+        "glyphId": 41,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 3,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 5,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "iron_bow",
+        "name": "Iron Bow",
+        "category": "weapon",
+        "glyphId": 41,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 5,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 6,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "crossbow",
+        "name": "Crossbow",
+        "category": "weapon",
+        "glyphId": 41,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 8,
+            "attackSpeed": 2,
+            "damageType": "physical",
+            "range": 7,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "spear",
+        "name": "Spear",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 9136404,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 2,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "iron_spear",
+        "name": "Iron Spear",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 2,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "mace",
+        "name": "Mace",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 3,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "war_hammer",
+        "name": "War Hammer",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 11053176,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 10,
+            "attackSpeed": 2,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "magic_staff",
+        "name": "Magic Staff",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 13395711,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 4,
+            "damageType": "magic",
+            "range": 4,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "fire_staff",
+        "name": "Fire Staff",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 16711680,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 3,
+            "damageType": "fire",
+            "range": 4,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "ice_staff",
+        "name": "Ice Staff",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 11206655,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 5,
+            "attackSpeed": 3,
+            "damageType": "ice",
+            "range": 4,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "wand",
+        "name": "Wand",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 13395711,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 3,
+            "attackSpeed": 6,
+            "damageType": "magic",
+            "range": 3,
+            "twoHanded": false
+        }
+    }
 ]
