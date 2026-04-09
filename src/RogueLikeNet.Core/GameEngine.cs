@@ -163,7 +163,6 @@ public class GameEngine : IDisposable
             player.Inventory.Items.Add(new ItemData
             {
                 ItemTypeId = resId,
-                Rarity = ItemDefinitions.RarityCommon,
                 StackCount = 9999,
             });
         }
@@ -329,9 +328,9 @@ public class GameEngine : IDisposable
             if (_worldRng.Next(100) < 60)
             {
                 int difficulty = typeId;
-                var (template, rarity) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                var (template, _) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
                 var drop = FindDropPosition(pos);
-                SpawnItemOnGround(template, rarity, drop);
+                SpawnItemOnGround(template, 0, drop);
             }
         }
 
@@ -348,7 +347,6 @@ public class GameEngine : IDisposable
             SpawnItemOnGround(new ItemData
             {
                 ItemTypeId = node.ResourceItemTypeId,
-                Rarity = ItemDefinitions.RarityCommon,
                 StackCount = dropCount,
             }, drop);
         }
@@ -530,45 +528,28 @@ public class GameEngine : IDisposable
             {
                 ItemTypeId = item.ItemTypeId,
                 StackCount = item.StackCount,
-                Rarity = item.Rarity,
                 Category = def.Category,
-                BonusAttack = item.BonusAttack,
-                BonusDefense = item.BonusDefense,
-                BonusHealth = item.BonusHealth,
             });
         }
         state.InventoryItems = items.ToArray();
 
-        if (player.Equipment.HasWeapon)
+        var equippedItems = new List<InventoryItemData>();
+        for (int i = 0; i < Equipment.SlotCount; i++)
         {
-            var w = player.Equipment.Weapon;
-            var wDef = ItemDefinitions.Get(w.ItemTypeId);
-            state.EquippedWeapon = new InventoryItemData
+            if (player.Equipment.HasItem(i))
             {
-                ItemTypeId = w.ItemTypeId,
-                StackCount = w.StackCount,
-                Rarity = w.Rarity,
-                Category = wDef.Category,
-                BonusAttack = w.BonusAttack,
-                BonusDefense = w.BonusDefense,
-                BonusHealth = w.BonusHealth,
-            };
+                var eq = player.Equipment[i];
+                var eqDef = ItemDefinitions.Get(eq.ItemTypeId);
+                equippedItems.Add(new InventoryItemData
+                {
+                    ItemTypeId = eq.ItemTypeId,
+                    StackCount = eq.StackCount,
+                    Category = eqDef.Category,
+                    EquipSlot = i,
+                });
+            }
         }
-        if (player.Equipment.HasArmor)
-        {
-            var a = player.Equipment.Armor;
-            var aDef = ItemDefinitions.Get(a.ItemTypeId);
-            state.EquippedArmor = new InventoryItemData
-            {
-                ItemTypeId = a.ItemTypeId,
-                StackCount = a.StackCount,
-                Rarity = a.Rarity,
-                Category = aDef.Category,
-                BonusAttack = a.BonusAttack,
-                BonusDefense = a.BonusDefense,
-                BonusHealth = a.BonusHealth,
-            };
-        }
+        state.EquippedItems = equippedItems.ToArray();
 
         state.QuickSlotIndices = [player.QuickSlots.Slot0, player.QuickSlots.Slot1, player.QuickSlots.Slot2, player.QuickSlots.Slot3];
 

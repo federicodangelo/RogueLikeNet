@@ -9,6 +9,8 @@ namespace RogueLikeNet.Server.Persistence;
 // Source-generated JSON context for AOT-compatible serialization of player data.
 [JsonSerializable(typeof(List<PlayerSerializer.ItemDataJson>))]
 [JsonSerializable(typeof(PlayerSerializer.EquipmentJson))]
+[JsonSerializable(typeof(PlayerSerializer.EquipSlotJson))]
+[JsonSerializable(typeof(List<PlayerSerializer.EquipSlotJson>))]
 [JsonSerializable(typeof(PlayerSerializer.SkillSlotsJson))]
 [JsonSerializable(typeof(PlayerSerializer.QuickSlotsJson))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
@@ -45,20 +47,19 @@ public static class PlayerSerializer
         var items = player.Inventory.Items?.Select(i => new ItemDataJson
         {
             ItemTypeId = i.ItemTypeId,
-            Rarity = i.Rarity,
-            BonusAttack = i.BonusAttack,
-            BonusDefense = i.BonusDefense,
-            BonusHealth = i.BonusHealth,
             StackCount = i.StackCount,
+            Durability = i.Durability,
         }).ToList() ?? [];
         data.InventoryJson = JsonSerializer.Serialize(items, PlayerJsonContext.Default.ListItemDataJson);
 
         // Equipment
-        var equipData = new EquipmentJson
+        var equipSlots = new List<EquipSlotJson>();
+        for (int slot = 0; slot < Equipment.SlotCount; slot++)
         {
-            Weapon = player.Equipment.HasWeapon ? ToItemJson(player.Equipment.Weapon) : null,
-            Armor = player.Equipment.HasArmor ? ToItemJson(player.Equipment.Armor) : null,
-        };
+            if (player.Equipment.HasItem(slot))
+                equipSlots.Add(new EquipSlotJson { Slot = slot, Item = ToItemJson(player.Equipment[slot]) });
+        }
+        var equipData = new EquipmentJson { Slots = equipSlots };
         data.EquipmentJson = JsonSerializer.Serialize(equipData, PlayerJsonContext.Default.EquipmentJson);
 
         // Skills
@@ -121,11 +122,8 @@ public static class PlayerSerializer
                     player.Inventory.Items.Add(new ItemData
                     {
                         ItemTypeId = item.ItemTypeId,
-                        Rarity = item.Rarity,
-                        BonusAttack = item.BonusAttack,
-                        BonusDefense = item.BonusDefense,
-                        BonusHealth = item.BonusHealth,
                         StackCount = item.StackCount,
+                        Durability = item.Durability,
                     });
                 }
             }
@@ -135,10 +133,13 @@ public static class PlayerSerializer
         if (!string.IsNullOrEmpty(data.EquipmentJson) && data.EquipmentJson != "{}")
         {
             var equipData = JsonSerializer.Deserialize(data.EquipmentJson, PlayerJsonContext.Default.EquipmentJson);
-            if (equipData != null)
+            if (equipData?.Slots != null)
             {
-                player.Equipment.Weapon = equipData.Weapon != null ? FromItemJson(equipData.Weapon) : ItemData.None;
-                player.Equipment.Armor = equipData.Armor != null ? FromItemJson(equipData.Armor) : ItemData.None;
+                foreach (var slotData in equipData.Slots)
+                {
+                    if (slotData.Item != null && slotData.Slot >= 0 && slotData.Slot < Equipment.SlotCount)
+                        player.Equipment[slotData.Slot] = FromItemJson(slotData.Item);
+                }
             }
         }
 
@@ -178,38 +179,34 @@ public static class PlayerSerializer
     private static ItemDataJson ToItemJson(ItemData item) => new()
     {
         ItemTypeId = item.ItemTypeId,
-        Rarity = item.Rarity,
-        BonusAttack = item.BonusAttack,
-        BonusDefense = item.BonusDefense,
-        BonusHealth = item.BonusHealth,
         StackCount = item.StackCount,
+        Durability = item.Durability,
     };
 
     private static ItemData FromItemJson(ItemDataJson j) => new()
     {
         ItemTypeId = j.ItemTypeId,
-        Rarity = j.Rarity,
-        BonusAttack = j.BonusAttack,
-        BonusDefense = j.BonusDefense,
-        BonusHealth = j.BonusHealth,
         StackCount = j.StackCount,
+        Durability = j.Durability,
     };
 
     // JSON DTOs — must be public for source-generated serialization
     public class ItemDataJson
     {
         public int ItemTypeId { get; set; }
-        public int Rarity { get; set; }
-        public int BonusAttack { get; set; }
-        public int BonusDefense { get; set; }
-        public int BonusHealth { get; set; }
         public int StackCount { get; set; }
+        public int Durability { get; set; }
+    }
+
+    public class EquipSlotJson
+    {
+        public int Slot { get; set; }
+        public ItemDataJson? Item { get; set; }
     }
 
     public class EquipmentJson
     {
-        public ItemDataJson? Weapon { get; set; }
-        public ItemDataJson? Armor { get; set; }
+        public List<EquipSlotJson>? Slots { get; set; }
     }
 
     public class SkillSlotsJson

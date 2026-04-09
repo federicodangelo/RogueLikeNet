@@ -25,7 +25,6 @@ public class BuildingSystemTests
         player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = itemTypeId,
-            Rarity = ItemDefinitions.RarityCommon,
             StackCount = count,
         });
         return _p.Id;

@@ -492,14 +492,14 @@ public class ClientGameStateTests
                 FgColor = 0x00FF00,
                 Health = 0,
                 MaxHealth = 0,
-                Item = new ItemDataMsg { ItemTypeId = 5, Rarity = 1 }
+                Item = new ItemDataMsg { ItemTypeId = 5 }
             }],
         });
 
         var items = state.GetFloorItems();
         Assert.Single(items);
         Assert.Equal(5, items[0].ItemTypeId);
-        Assert.Equal(1, items[0].Rarity);
+        Assert.Equal(0, items[0].Rarity);
     }
 
     [Fact]
@@ -525,7 +525,7 @@ public class ClientGameStateTests
                 FgColor = 0x00FF00,
                 Health = 0,
                 MaxHealth = 0,
-                Item = new ItemDataMsg { ItemTypeId = 5, Rarity = 0 }
+                Item = new ItemDataMsg { ItemTypeId = 5 }
             }],
         });
 

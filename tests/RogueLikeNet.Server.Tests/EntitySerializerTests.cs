@@ -85,10 +85,6 @@ public class EntitySerializerTests : IDisposable
         var itemData = new ItemData
         {
             ItemTypeId = 3,
-            Rarity = 2,
-            BonusAttack = 5,
-            BonusDefense = 3,
-            BonusHealth = 10,
             StackCount = 4,
         };
         _engine.SpawnItemOnGround(itemData, Position.FromCoords(4, 5, Z));
@@ -106,10 +102,6 @@ public class EntitySerializerTests : IDisposable
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
         Assert.Equal(3, found!.Item.ItemTypeId);
-        Assert.Equal(2, found.Item.Rarity);
-        Assert.Equal(5, found.Item.BonusAttack);
-        Assert.Equal(3, found.Item.BonusDefense);
-        Assert.Equal(10, found.Item.BonusHealth);
         Assert.Equal(4, found.Item.StackCount);
     }
 

@@ -87,7 +87,7 @@ public class BuildingSystem
         if (player.Inventory.IsFull) return;
 
         var tile = map.GetTile(target);
-        if (tile.PlaceableItemId == ItemDefinitions.None)
+        if (tile.PlaceableItemId == 0)
         {
             // Maybe there's an item on the floor
             var chunk = map.GetChunkForWorldPos(target);
@@ -106,7 +106,6 @@ public class BuildingSystem
         var placeableItemData = new ItemData
         {
             ItemTypeId = tile.PlaceableItemId,
-            Rarity = ItemDefinitions.RarityCommon,
             StackCount = 1,
         };
 

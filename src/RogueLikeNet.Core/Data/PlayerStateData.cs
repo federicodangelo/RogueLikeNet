@@ -12,7 +12,6 @@ public class PlayerStateData
     public int InventoryCapacity;
     public SkillSlotData[] Skills = [];
     public InventoryItemData[] InventoryItems = [];
-    public InventoryItemData? EquippedWeapon;
-    public InventoryItemData? EquippedArmor;
+    public InventoryItemData[] EquippedItems = [];
     public int[] QuickSlotIndices = [];
 }

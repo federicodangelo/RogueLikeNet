@@ -170,18 +170,17 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void SpawnItemOnGround_CreatesItemWithRarity()
+    public void SpawnItemOnGround_CreatesItemWithCorrectType()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
-        var item = engine.SpawnItemOnGround(template, 3, Position.FromCoords(10, 10, Position.DefaultZ));
+        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(10, 10, Position.DefaultZ));
 
         Assert.False(item.IsDestroyed);
-        Assert.Equal(3, item.Item.Rarity);
-        // Rarity 3 = 250% multiplier, LongSword base attack = 5
-        Assert.Equal(5 * 250 / 100, item.Item.BonusAttack);
+        Assert.Equal(ItemDefinitions.LongSword, item.Item.ItemTypeId);
+        Assert.Equal(1, item.Item.StackCount);
     }
 
     [Fact]
@@ -270,14 +269,13 @@ public class GameEngineTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.NotNull(hud!.EquippedWeapon);
-        Assert.Equal(ItemDefinitions.ShortSword, hud.EquippedWeapon!.Value.ItemTypeId);
-        Assert.NotNull(hud.EquippedArmor);
-        Assert.Equal(ItemDefinitions.LeatherArmor, hud.EquippedArmor!.Value.ItemTypeId);
+        Assert.Equal(2, hud!.EquippedItems.Length);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.ShortSword);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.LeatherArmor);
     }
 
     [Fact]
-    public void GetPlayerStateData_InventoryStackCountsAndRarities()
+    public void GetPlayerStateData_InventoryStackCounts()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -286,7 +284,7 @@ public class GameEngineTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(swordTemplate, 1, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -294,7 +292,6 @@ public class GameEngineTests
         Assert.NotNull(hud);
         Assert.Single(hud!.InventoryItems);
         Assert.Equal(1, hud.InventoryItems[0].StackCount);
-        Assert.Equal(1, hud.InventoryItems[0].Rarity);
     }
 
     [Fact]
@@ -419,7 +416,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerStateData_InventoryItemWithBonusHealth()
+    public void GetPlayerStateData_InventoryItemCategory()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -432,15 +429,12 @@ public class GameEngineTests
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
             StackCount = 1,
-            BonusHealth = 25,
-            BonusAttack = 0,
-            BonusDefense = 0,
         });
 
         var state = engine.GetPlayerStateData(player);
         Assert.NotNull(state);
         Assert.Single(state!.InventoryItems);
-        Assert.Equal(25, state.InventoryItems[0].BonusHealth);
+        Assert.Equal(ItemDefinitions.CategoryPotion, state.InventoryItems[0].Category);
     }
 
     [Fact]

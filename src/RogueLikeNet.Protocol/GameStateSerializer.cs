@@ -178,12 +178,8 @@ public static class GameStateSerializer
                 var item = new ItemDataMsg
                 {
                     ItemTypeId = gi.Item.ItemTypeId,
-                    Rarity = gi.Item.Rarity,
                     Category = ItemDefinitions.Get(gi.Item.ItemTypeId).Category,
                     StackCount = gi.Item.StackCount,
-                    BonusAttack = gi.Item.BonusAttack,
-                    BonusDefense = gi.Item.BonusDefense,
-                    BonusHealth = gi.Item.BonusHealth,
                 };
                 ProcessEntity((long)gi.Id, gi.Position, gi.Appearance, 0, 0, 0, item);
             }
@@ -261,9 +257,8 @@ public static class GameStateSerializer
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
             Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),
-            InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Rarity = i.Rarity, Category = i.Category, BonusAttack = i.BonusAttack, BonusDefense = i.BonusDefense, BonusHealth = i.BonusHealth }).ToArray(),
-            EquippedWeapon = stateData.EquippedWeapon.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedWeapon.Value.ItemTypeId, StackCount = stateData.EquippedWeapon.Value.StackCount, Rarity = stateData.EquippedWeapon.Value.Rarity, Category = stateData.EquippedWeapon.Value.Category, BonusAttack = stateData.EquippedWeapon.Value.BonusAttack, BonusDefense = stateData.EquippedWeapon.Value.BonusDefense, BonusHealth = stateData.EquippedWeapon.Value.BonusHealth } : null,
-            EquippedArmor = stateData.EquippedArmor.HasValue ? new ItemDataMsg { ItemTypeId = stateData.EquippedArmor.Value.ItemTypeId, StackCount = stateData.EquippedArmor.Value.StackCount, Rarity = stateData.EquippedArmor.Value.Rarity, Category = stateData.EquippedArmor.Value.Category, BonusAttack = stateData.EquippedArmor.Value.BonusAttack, BonusDefense = stateData.EquippedArmor.Value.BonusDefense, BonusHealth = stateData.EquippedArmor.Value.BonusHealth } : null,
+            InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category }).ToArray(),
+            EquippedItems = stateData.EquippedItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category, EquipSlot = i.EquipSlot }).ToArray(),
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = (long)player.Id,
         };

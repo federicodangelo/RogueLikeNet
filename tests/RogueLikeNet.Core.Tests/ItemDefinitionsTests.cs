@@ -107,13 +107,13 @@ public class ItemDefinitionsTests
     }
 
     [Fact]
-    public void GenerateItemData_Gold_AlwaysCommonRarity()
+    public void GenerateItemData_Gold_CorrectStackCount()
     {
         var goldDef = ItemDefinitions.Get(ItemDefinitions.Gold);
         var rng = new SeededRandom(123);
 
-        // Even when requesting Legendary rarity, gold should always be Common
-        var itemData = ItemDefinitions.GenerateItemData(goldDef, ItemDefinitions.RarityLegendary, rng);
-        Assert.Equal(ItemDefinitions.RarityCommon, itemData.Rarity);
+        var itemData = ItemDefinitions.GenerateItemData(goldDef, 0, rng);
+        Assert.Equal(ItemDefinitions.Gold, itemData.ItemTypeId);
+        Assert.True(itemData.StackCount >= 10);
     }
 }

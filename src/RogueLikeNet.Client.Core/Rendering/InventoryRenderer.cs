@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
@@ -155,12 +156,10 @@ public sealed class InventoryRenderer
             string catTag = i < hud.InventoryItems.Length
                 ? AsciiDraw.CategoryTag(hud.InventoryItems[i].Category) : "     ";
             string name;
-            int rarity = 0;
             if (i < hud.InventoryItems.Length)
             {
                 var item = hud.InventoryItems[i];
-                rarity = item.Rarity;
-                name = AsciiDraw.ItemDisplayName(item.ItemTypeId, item.Rarity);
+                name = AsciiDraw.ItemDisplayName(item.ItemTypeId, 0);
             }
             else
             {
@@ -171,7 +170,7 @@ public sealed class InventoryRenderer
             string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
             if (text.Length > innerW) text = text[..innerW];
             bool isQuickSlot = slotTag != "   ";
-            var color = sel ? RenderingTheme.InvSel : isQuickSlot ? AsciiDraw.RarityColor(rarity) : AsciiDraw.RarityColor(rarity);
+            var color = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, color);
             row++;
         }
@@ -206,16 +205,18 @@ public sealed class InventoryRenderer
             return;
 
         // Find the currently equipped item in the same slot
-        ItemDataMsg? equipped = def.Category == ItemDefinitions.CategoryWeapon
-            ? hud.EquippedWeapon : hud.EquippedArmor;
+        int targetSlot = def.Category == ItemDefinitions.CategoryWeapon
+            ? (int)EquipSlot.Weapon : (int)EquipSlot.Chest;
+        var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
 
-        int eqAtk = equipped?.BonusAttack ?? 0;
-        int eqDef = equipped?.BonusDefense ?? 0;
-        int eqHp = equipped?.BonusHealth ?? 0;
+        var eqDef = equipped != null ? ItemDefinitions.Get(equipped.ItemTypeId) : default;
+        int eqAtk = equipped != null ? eqDef.BaseAttack : 0;
+        int eqDefVal = equipped != null ? eqDef.BaseDefense : 0;
+        int eqHp = equipped != null ? eqDef.BaseHealth : 0;
 
-        int diffAtk = item.BonusAttack - eqAtk;
-        int diffDef = item.BonusDefense - eqDef;
-        int diffHp = item.BonusHealth - eqHp;
+        int diffAtk = def.BaseAttack - eqAtk;
+        int diffDef = def.BaseDefense - eqDefVal;
+        int diffHp = def.BaseHealth - eqHp;
 
 
         if (row < maxRow && diffAtk != 0)
@@ -248,14 +249,17 @@ public sealed class InventoryRenderer
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
+        var wpnItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Weapon);
+        var armItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Chest);
+
         if (row < maxRow)
         {
             bool sel = focused && section.SelectedIndex == 0;
             string prefix = sel ? "\u25ba" : " ";
-            string wpn = hud.EquippedWeapon != null ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.ItemTypeId, hud.EquippedWeapon.Rarity) : "---";
+            string wpn = wpnItem != null ? AsciiDraw.ItemDisplayName(wpnItem.ItemTypeId, 0) : "---";
             string text = $"{prefix}[W][Wpn]{wpn}";
             if (text.Length > innerW) text = text[..innerW];
-            var wpnColor = sel ? RenderingTheme.InvSel : hud.EquippedWeapon != null ? AsciiDraw.RarityColor(hud.EquippedWeapon.Rarity) : RenderingTheme.Item;
+            var wpnColor = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, wpnColor);
             row++;
         }
@@ -263,10 +267,10 @@ public sealed class InventoryRenderer
         {
             bool sel = focused && section.SelectedIndex == 1;
             string prefix = sel ? "\u25ba" : " ";
-            string arm = hud.EquippedArmor != null ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.ItemTypeId, hud.EquippedArmor.Rarity) : "---";
+            string arm = armItem != null ? AsciiDraw.ItemDisplayName(armItem.ItemTypeId, 0) : "---";
             string text = $"{prefix}[A][Arm]{arm}";
             if (text.Length > innerW) text = text[..innerW];
-            var armColor = sel ? RenderingTheme.InvSel : hud.EquippedArmor != null ? AsciiDraw.RarityColor(hud.EquippedArmor.Rarity) : RenderingTheme.Item;
+            var armColor = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, armColor);
         }
     }

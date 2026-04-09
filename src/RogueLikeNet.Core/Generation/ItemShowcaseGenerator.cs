@@ -114,14 +114,9 @@ public class ItemShowcaseGenerator : IDungeonGenerator
                 if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
                     continue;
 
-                int rarityMult = 100 + rarity * 50;
                 result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
                 {
                     ItemTypeId = def.TypeId,
-                    Rarity = ItemDefinitions.CapRarity(def.Category, rarity),
-                    BonusAttack = def.BaseAttack * rarityMult / 100,
-                    BonusDefense = def.BaseDefense * rarityMult / 100,
-                    BonusHealth = def.BaseHealth * rarityMult / 100,
                     StackCount = def.Stackable
                         ? (def.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
                         : 1,
@@ -183,10 +178,6 @@ public class ItemShowcaseGenerator : IDungeonGenerator
             result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
             {
                 ItemTypeId = def.TypeId,
-                Rarity = ItemDefinitions.CapRarity(def.Category, 0),
-                BonusAttack = 0,
-                BonusDefense = 0,
-                BonusHealth = 0,
                 StackCount = stackCount,
             }));
         }

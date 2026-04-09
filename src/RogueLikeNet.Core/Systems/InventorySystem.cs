@@ -98,7 +98,7 @@ public class InventorySystem
         switch (template.Category)
         {
             case ItemDefinitions.CategoryPotion:
-                ApplyPotion(ref player, itemData);
+                ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
                 break;
@@ -110,29 +110,31 @@ public class InventorySystem
         }
     }
 
-    private static void ApplyPotion(ref PlayerEntity player, ItemData itemData)
+    private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
     {
-        if (itemData.BonusHealth > 0)
-            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + itemData.BonusHealth);
-        if (itemData.BonusAttack > 0)
-            player.CombatStats.Attack += itemData.BonusAttack;
-        if (itemData.BonusDefense > 0)
-            player.CombatStats.Defense += itemData.BonusDefense;
+        if (def.BaseHealth > 0)
+            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.BaseHealth);
+        if (def.BaseAttack > 0)
+            player.CombatStats.Attack += def.BaseAttack;
+        if (def.BaseDefense > 0)
+            player.CombatStats.Defense += def.BaseDefense;
     }
 
     private static void ApplyItemStats(ref PlayerEntity player, ItemData item)
     {
-        player.CombatStats.Attack += item.BonusAttack;
-        player.CombatStats.Defense += item.BonusDefense;
-        player.Health.Max += item.BonusHealth;
+        var def = ItemDefinitions.Get(item.ItemTypeId);
+        player.CombatStats.Attack += def.BaseAttack;
+        player.CombatStats.Defense += def.BaseDefense;
+        player.Health.Max += def.BaseHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
     private static void RemoveItemStats(ref PlayerEntity player, ItemData item)
     {
-        player.CombatStats.Attack -= item.BonusAttack;
-        player.CombatStats.Defense -= item.BonusDefense;
-        player.Health.Max -= item.BonusHealth;
+        var def = ItemDefinitions.Get(item.ItemTypeId);
+        player.CombatStats.Attack -= def.BaseAttack;
+        player.CombatStats.Defense -= def.BaseDefense;
+        player.Health.Max -= def.BaseHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
@@ -143,24 +145,16 @@ public class InventorySystem
         player.Inventory.Items.RemoveAt(slot);
         player.QuickSlots.OnItemRemoved(slot);
 
-        if (def.Category == ItemDefinitions.CategoryWeapon)
+        int equipSlot = def.Category == ItemDefinitions.CategoryWeapon
+            ? (int)Data.EquipSlot.Weapon
+            : (int)Data.EquipSlot.Chest;
+
+        if (player.Equipment.HasItem(equipSlot))
         {
-            if (player.Equipment.HasWeapon)
-            {
-                RemoveItemStats(ref player, player.Equipment.Weapon);
-                player.Inventory.Items.Add(player.Equipment.Weapon);
-            }
-            player.Equipment.Weapon = newItem;
+            RemoveItemStats(ref player, player.Equipment[equipSlot]);
+            player.Inventory.Items.Add(player.Equipment[equipSlot]);
         }
-        else
-        {
-            if (player.Equipment.HasArmor)
-            {
-                RemoveItemStats(ref player, player.Equipment.Armor);
-                player.Inventory.Items.Add(player.Equipment.Armor);
-            }
-            player.Equipment.Armor = newItem;
-        }
+        player.Equipment[equipSlot] = newItem;
 
         ApplyItemStats(ref player, newItem);
     }
@@ -190,20 +184,14 @@ public class InventorySystem
         player.Input.ActionType = ActionTypes.None;
 
         if (player.Inventory.IsFull) return;
+        if (equipSlot < 0 || equipSlot >= Equipment.SlotCount) return;
 
-        if (equipSlot == 0 && player.Equipment.HasWeapon)
+        if (player.Equipment.HasItem(equipSlot))
         {
-            var old = player.Equipment.Weapon;
+            var old = player.Equipment[equipSlot];
             RemoveItemStats(ref player, old);
             player.Inventory.Items.Add(old);
-            player.Equipment.Weapon = ItemData.None;
-        }
-        else if (equipSlot == 1 && player.Equipment.HasArmor)
-        {
-            var old = player.Equipment.Armor;
-            RemoveItemStats(ref player, old);
-            player.Inventory.Items.Add(old);
-            player.Equipment.Armor = ItemData.None;
+            player.Equipment[equipSlot] = ItemData.None;
         }
     }
 
@@ -264,7 +252,7 @@ public class InventorySystem
         switch (template.Category)
         {
             case ItemDefinitions.CategoryPotion:
-                ApplyPotion(ref player, itemData);
+                ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
                 break;
@@ -289,7 +277,6 @@ public class InventorySystem
             for (int i = 0; i < player.Inventory.Items.Count; i++)
             {
                 if (player.Inventory.Items[i].ItemTypeId == itemData.ItemTypeId &&
-                    player.Inventory.Items[i].Rarity == itemData.Rarity &&
                     player.Inventory.Items[i].StackCount < def.MaxStackSize)
                 {
                     var existing = player.Inventory.Items[i];

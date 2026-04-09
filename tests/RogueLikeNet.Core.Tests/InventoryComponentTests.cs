@@ -37,21 +37,21 @@ public class InventoryComponentTests
     [Fact]
     public void Equipment_HasArmor_ReturnsFalseWhenNull()
     {
-        var equip = new Equipment { Armor = ItemData.None };
+        var equip = new Equipment { Chest = ItemData.None };
         Assert.False(equip.HasArmor);
     }
 
     [Fact]
     public void Equipment_HasWeapon_ReturnsTrueWhenSet()
     {
-        var equip = new Equipment { Weapon = new ItemData { ItemTypeId = 1, BonusAttack = 5 } };
+        var equip = new Equipment { Weapon = new ItemData { ItemTypeId = 1, StackCount = 1 } };
         Assert.True(equip.HasWeapon);
     }
 
     [Fact]
     public void Equipment_HasArmor_ReturnsTrueWhenSet()
     {
-        var equip = new Equipment { Armor = new ItemData { ItemTypeId = 2, BonusDefense = 3 } };
+        var equip = new Equipment { Chest = new ItemData { ItemTypeId = 2, StackCount = 1 } };
         Assert.True(equip.HasArmor);
     }
 }

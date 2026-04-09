@@ -185,14 +185,9 @@ internal static class DungeonHelper
             if (FindRandomRoomWalkableCoordinate(out var x, out var y))
             {
                 var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-                int rarityMult = 100 + loot.Rarity * 50;
                 result.Items.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), new ItemData
                 {
                     ItemTypeId = loot.Definition.TypeId,
-                    Rarity = loot.Rarity,
-                    BonusAttack = loot.Definition.BaseAttack * rarityMult / 100,
-                    BonusDefense = loot.Definition.BaseDefense * rarityMult / 100,
-                    BonusHealth = loot.Definition.BaseHealth * rarityMult / 100,
                     StackCount = loot.Definition.Stackable
                         ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
                         : 1,

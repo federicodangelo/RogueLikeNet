@@ -179,7 +179,7 @@ public class ClientGameState
         foreach (var entity in _entities.Values)
         {
             if (entity.Item != null && entity.X == PlayerX && entity.Y == PlayerY && entity.Z == PlayerZ)
-                items.Add((entity.Item.ItemTypeId, entity.Item.Rarity));
+                items.Add((entity.Item.ItemTypeId, 0));
         }
         return items.ToArray();
     }

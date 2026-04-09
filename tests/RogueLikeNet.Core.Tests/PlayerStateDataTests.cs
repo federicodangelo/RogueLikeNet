@@ -64,8 +64,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.NotNull(hud!.EquippedWeapon);
-        Assert.Equal(ItemDefinitions.LongSword, hud.EquippedWeapon!.Value.ItemTypeId);
+        Assert.NotEmpty(hud!.EquippedItems);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.LongSword);
     }
 
     [Fact]
@@ -89,8 +89,8 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.NotNull(hud!.EquippedArmor);
-        Assert.Equal(ItemDefinitions.ChainMail, hud.EquippedArmor!.Value.ItemTypeId);
+        Assert.NotEmpty(hud!.EquippedItems);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.ChainMail);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class PlayerStateDataTests
     }
 
     [Fact]
-    public void GetPlayerStateData_InventoryRarities_Populated()
+    public void GetPlayerStateData_InventoryCategories_Populated()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -124,7 +124,7 @@ public class PlayerStateDataTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
-        engine.SpawnItemOnGround(swordTemplate, 2, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -132,11 +132,11 @@ public class PlayerStateDataTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Single(hud!.InventoryItems);
-        Assert.Equal(2, hud.InventoryItems[0].Rarity);
+        Assert.Equal(ItemDefinitions.CategoryWeapon, hud.InventoryItems[0].Category);
     }
 
     [Fact]
-    public void GetPlayerStateData_NoEquipment_EmptyNames()
+    public void GetPlayerStateData_NoEquipment_EmptyItems()
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -146,7 +146,6 @@ public class PlayerStateDataTests
 
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
-        Assert.Null(hud!.EquippedWeapon);
-        Assert.Null(hud.EquippedArmor);
+        Assert.Empty(hud!.EquippedItems);
     }
 }

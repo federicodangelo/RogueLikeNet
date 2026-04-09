@@ -73,11 +73,8 @@ public static class EntitySerializer
     private static void SerializeItemData(Dictionary<string, object> dict, ItemData id)
     {
         dict["ItemTypeId"] = id.ItemTypeId;
-        dict["Rarity"] = id.Rarity;
-        dict["BonusAttack"] = id.BonusAttack;
-        dict["BonusDefense"] = id.BonusDefense;
-        dict["BonusHealth"] = id.BonusHealth;
         dict["StackCount"] = id.StackCount;
+        dict["Durability"] = id.Durability;
     }
 
     private static void SerializeResourceNodeData(Dictionary<string, object> dict, ResourceNodeData rnd)
@@ -260,11 +257,8 @@ public static class EntitySerializer
         var itemData = new ItemData
         {
             ItemTypeId = GetInt(dict, "ItemTypeId"),
-            Rarity = GetInt(dict, "Rarity"),
-            BonusAttack = GetInt(dict, "BonusAttack"),
-            BonusDefense = GetInt(dict, "BonusDefense"),
-            BonusHealth = GetInt(dict, "BonusHealth"),
             StackCount = GetInt(dict, "StackCount", 1),
+            Durability = GetInt(dict, "Durability"),
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");

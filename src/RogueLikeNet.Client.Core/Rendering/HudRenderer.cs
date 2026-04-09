@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -126,13 +127,13 @@ public sealed class HudRenderer
                     Sep(r, col, row, innerW); row++;
                     if (row >= maxRow) break;
                     {
-                        string wpn = hud.EquippedWeapon != null ? AsciiDraw.ItemDisplayName(hud.EquippedWeapon.ItemTypeId, hud.EquippedWeapon.Rarity) : "---";
-                        string arm = hud.EquippedArmor != null ? AsciiDraw.ItemDisplayName(hud.EquippedArmor.ItemTypeId, hud.EquippedArmor.Rarity) : "---";
-                        var wpnColor = hud.EquippedWeapon != null ? AsciiDraw.RarityColor(hud.EquippedWeapon.Rarity) : RenderingTheme.Item;
-                        var armColor = hud.EquippedArmor != null ? AsciiDraw.RarityColor(hud.EquippedArmor.Rarity) : RenderingTheme.Item;
-                        Ds(r, col, row, $"W: {wpn}", wpnColor); row++;
+                        var wpnItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Weapon);
+                        var armItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == (int)EquipSlot.Chest);
+                        string wpn = wpnItem != null ? AsciiDraw.ItemDisplayName(wpnItem.ItemTypeId, 0) : "---";
+                        string arm = armItem != null ? AsciiDraw.ItemDisplayName(armItem.ItemTypeId, 0) : "---";
+                        Ds(r, col, row, $"W: {wpn}", RenderingTheme.Item); row++;
                         if (row >= maxRow) break;
-                        Ds(r, col, row, $"A: {arm}", armColor);
+                        Ds(r, col, row, $"A: {arm}", RenderingTheme.Item);
                     }
                     break;
 
@@ -170,10 +171,10 @@ public sealed class HudRenderer
             if (invIdx >= 0 && invIdx < hud.InventoryItems.Length)
             {
                 var item = hud.InventoryItems[invIdx];
-                string name = AsciiDraw.ItemDisplayName(item.ItemTypeId, item.Rarity);
+                string name = AsciiDraw.ItemDisplayName(item.ItemTypeId, 0);
                 int stack = item.StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
-                Ds(r, col, row, $"[{i + 1}]{name}{stackStr}", AsciiDraw.RarityColor(item.Rarity));
+                Ds(r, col, row, $"[{i + 1}]{name}{stackStr}", RenderingTheme.Item);
             }
             else
             {

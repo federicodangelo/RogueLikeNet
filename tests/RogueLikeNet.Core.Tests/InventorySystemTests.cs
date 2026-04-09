@@ -425,9 +425,9 @@ public class InventorySystemTests
 
         int atkWithWeapon = player.CombatStats.Attack;
 
-        // Unequip weapon (slot 0 = weapon)
+        // Unequip weapon (slot 5 = EquipSlot.Weapon)
         player.Input.ActionType = ActionTypes.Unequip;
-        player.Input.ItemSlot = 0;
+        player.Input.ItemSlot = 5;
         engine.Tick();
 
         Assert.False(player.Equipment.HasWeapon);
@@ -461,7 +461,7 @@ public class InventorySystemTests
 
         int defWithArmor = player.CombatStats.Defense;
 
-        // Unequip armor (slot 1 = armor)
+        // Unequip armor (slot 1 = EquipSlot.Chest)
         player.Input.ActionType = ActionTypes.Unequip;
         player.Input.ItemSlot = 1;
         engine.Tick();
@@ -629,65 +629,58 @@ public class InventorySystemTests
     }
 
     [Fact]
-    public void PickUp_StackableItem_DifferentRarity_DoesNotStack()
+    public void PickUp_StackableItem_SameType_Stacks()
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        // Add a Common player.Health potion to inventory
+        // Add a health potion to inventory
         player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
-            Rarity = ItemDefinitions.RarityCommon,
             StackCount = 3
         });
 
-        // Spawn a Rare player.Health potion on the ground
+        // Spawn another health potion on the ground
         var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, Position.FromCoords(sx, sy, Position.DefaultZ));
-        ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
+        var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        // Should be two separate slots because rarities differ
-        Assert.Equal(2, player.Inventory.Items.Count);
-        Assert.Equal(ItemDefinitions.RarityCommon, player.Inventory.Items[0].Rarity);
-        Assert.Equal(3, player.Inventory.Items[0].StackCount);
-        Assert.Equal(ItemDefinitions.RarityRare, player.Inventory.Items[1].Rarity);
+        // Should merge into one slot because same type
+        Assert.NotNull(player.Inventory.Items);
+        Assert.Single(player.Inventory.Items);
+        Assert.Equal(4, player.Inventory.Items[0].StackCount);
     }
 
     [Fact]
-    public void PickUp_StackableItem_SameRarity_Stacks()
+    public void PickUp_StackableItem_DifferentType_DoesNotStack()
     {
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        // Add a Rare player.Health potion to inventory
+        // Add a health potion to inventory
         player.Inventory.Items.Add(new ItemData
         {
             ItemTypeId = ItemDefinitions.HealthPotion,
-            Rarity = ItemDefinitions.RarityRare,
             StackCount = 3
         });
 
-        // Spawn another Rare player.Health potion on the ground
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
-        var _gi = engine.SpawnItemOnGround(potionTemplate, ItemDefinitions.RarityRare, Position.FromCoords(sx, sy, Position.DefaultZ));
-        ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
+        // Spawn a strength potion on the ground (different type)
+        var strPotionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.StrengthPotion);
+        var _gi = engine.SpawnItemOnGround(strPotionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        // Should merge into one slot because same type + same rarity
-        Assert.NotNull(player.Inventory.Items);
-        Assert.Single(player.Inventory.Items);
-        Assert.Equal(ItemDefinitions.RarityRare, player.Inventory.Items[0].Rarity);
-        Assert.Equal(4, player.Inventory.Items[0].StackCount);
+        // Should be two separate slots because different types
+        Assert.Equal(2, player.Inventory.Items.Count);
+        Assert.Equal(3, player.Inventory.Items[0].StackCount);
     }
 
     // === Drop Position Spreading Tests ===
@@ -789,35 +782,31 @@ public class InventorySystemTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        // Get a weapon with BonusHealth (create a custom item)
-        var healthArmor = new ItemData
+        // LeatherArmor definition: BaseAttack=0, BaseDefense=2, BaseHealth=0
+        var armor = new ItemData
         {
             ItemTypeId = ItemDefinitions.LeatherArmor,
             StackCount = 1,
-            BonusHealth = 50,
-            BonusAttack = 0,
-            BonusDefense = 5,
-            Rarity = 0,
         };
         Assert.NotNull(player.Inventory.Items);
-        player.Inventory.Items.Add(healthArmor);
+        player.Inventory.Items.Add(armor);
 
-        // Equip it manually
+        int defBefore = player.CombatStats.Defense;
+
+        // Equip it
         player.Input.ActionType = ActionTypes.Equip;
         player.Input.ItemSlot = 0; // First inventory slot
         engine.Tick();
 
-        // Player now has +50 max player.Health from armor; heal to full
-        player.Health.Current = player.Health.Max;
-        int maxWithArmor = player.Health.Max;
+        // Player now has +2 defense from LeatherArmor definition
+        Assert.Equal(defBefore + 2, player.CombatStats.Defense);
 
         // Unequip the armor
         player.Input.ActionType = ActionTypes.Unequip;
-        player.Input.ItemSlot = 1; // Armor slot
+        player.Input.ItemSlot = 1; // Chest slot
         engine.Tick();
 
-        // After unequip, player.Health.Max is reduced by 50, and player.Health.Current should be clamped
-        Assert.Equal(maxWithArmor - 50, player.Health.Max);
-        Assert.True(player.Health.Current <= player.Health.Max);
+        // After unequip, defense is restored
+        Assert.Equal(defBefore, player.CombatStats.Defense);
     }
 }

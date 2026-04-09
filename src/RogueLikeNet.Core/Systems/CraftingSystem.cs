@@ -52,7 +52,6 @@ public class CraftingSystem
             var resultItem = new ItemData
             {
                 ItemTypeId = recipe.ResultItemTypeId,
-                Rarity = ItemDefinitions.RarityCommon,
                 StackCount = recipe.ResultCount,
             };
 
