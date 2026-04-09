@@ -18,6 +18,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(10)] public ItemDataMsg[] EquippedItems { get; set; } = [];
     [Key(11)] public int[] QuickSlotIndices { get; set; } = [];
     [Key(12)] public long PlayerEntityId { get; set; }
+    [Key(13)] public int Hunger { get; set; }
+    [Key(14)] public int MaxHunger { get; set; }
 
     public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
     {
@@ -36,6 +38,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (!a.EquippedItems.SequenceEqual(b.EquippedItems)) return false;
         if (!a.QuickSlotIndices.SequenceEqual(b.QuickSlotIndices)) return false;
         if (a.PlayerEntityId != b.PlayerEntityId) return false;
+        if (a.Hunger != b.Hunger) return false;
+        if (a.MaxHunger != b.MaxHunger) return false;
 
         return true;
     }

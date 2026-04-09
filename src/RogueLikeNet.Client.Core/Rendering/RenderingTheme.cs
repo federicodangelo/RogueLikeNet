@@ -22,6 +22,11 @@ public static class RenderingTheme
     public static readonly Color4 HpFill = new(0, 200, 0, 255);
     public static readonly Color4 HpText = new(255, 80, 80, 255);
 
+    // Hunger bar
+    public static readonly Color4 HungerFill = new(200, 150, 50, 255);
+    public static readonly Color4 HungerWarn = new(220, 180, 50, 255);
+    public static readonly Color4 HungerCritical = new(255, 60, 60, 255);
+
     // Stats / Level
     public static readonly Color4 Stats = new(200, 200, 200, 255);
     public static readonly Color4 Level = new(255, 255, 100, 255);

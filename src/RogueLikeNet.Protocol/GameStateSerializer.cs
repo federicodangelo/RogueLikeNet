@@ -254,6 +254,8 @@ public static class GameStateSerializer
             Defense = stateData.Defense,
             Level = stateData.Level,
             Experience = stateData.Experience,
+            Hunger = stateData.Hunger,
+            MaxHunger = stateData.MaxHunger,
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
             Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),

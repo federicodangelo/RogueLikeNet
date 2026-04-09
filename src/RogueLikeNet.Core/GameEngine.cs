@@ -32,6 +32,7 @@ public class GameEngine : IDisposable
     private readonly SkillSystem _skillSystem;
     private readonly CraftingSystem _craftingSystem;
     private readonly BuildingSystem _buildingSystem;
+    private readonly SurvivalSystem _survivalSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private Position? _generatorSpawnHint;
@@ -71,6 +72,7 @@ public class GameEngine : IDisposable
         _skillSystem = new SkillSystem();
         _craftingSystem = new CraftingSystem();
         _buildingSystem = new BuildingSystem();
+        _survivalSystem = new SurvivalSystem();
         _worldRng = new SeededRandom(worldSeed);
     }
 
@@ -151,6 +153,7 @@ public class GameEngine : IDisposable
             QuickSlots = new QuickSlots(),
             MoveDelay = new MoveDelay(moveDelay),
             AttackDelay = new AttackDelay(attackDelay),
+            Survival = Components.Survival.Default(),
         };
         return ref _worldMap.AddPlayer(player);
     }
@@ -319,6 +322,7 @@ public class GameEngine : IDisposable
         _inventorySystem.Update(_worldMap, this);
         _craftingSystem.Update(_worldMap);
         _buildingSystem.Update(_worldMap);
+        _survivalSystem.Update(_worldMap);
         _skillSystem.Update(_worldMap);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
@@ -536,6 +540,8 @@ public class GameEngine : IDisposable
             Defense = player.CombatStats.Defense,
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
+            Hunger = player.Survival.Hunger,
+            MaxHunger = Components.Survival.MaxHunger,
             InventoryCount = player.Inventory.Items.Count,
             InventoryCapacity = player.Inventory.Capacity
         };

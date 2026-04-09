@@ -20,10 +20,12 @@ public struct PlayerEntity
     public QuickSlots QuickSlots;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
+    public Survival Survival;
     public bool IsDead => !Health.IsAlive;
 
     public PlayerEntity()
     {
         Inventory = new Inventory();
+        Survival = Survival.Default();
     }
 }

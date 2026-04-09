@@ -33,6 +33,7 @@ public sealed class HudRenderer
     {
         var layout = new HudLayout();
         layout.AddSection(new HudSection { Name = "HP", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "Hunger", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Skills", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
@@ -91,6 +92,20 @@ public sealed class HudRenderer
                     if (row >= maxRow) break;
                     string hpText = $"{hud.Health}/{hud.MaxHealth}";
                     Ds(r, col, row, hpText, RenderingTheme.HpText);
+                    break;
+
+                case "Hunger":
+                    if (row >= maxRow) break;
+                    int hungerBarW = innerW;
+                    float hungerRatio = hud.MaxHunger > 0 ? (float)hud.Hunger / hud.MaxHunger : 0;
+                    int hungerFilled = (int)(hungerBarW * hungerRatio);
+                    var hungerFillColor = hungerRatio > 0.5f ? RenderingTheme.HungerFill
+                        : hungerRatio > 0.2f ? RenderingTheme.HungerWarn : RenderingTheme.HungerCritical;
+                    for (int i = 0; i < hungerBarW; i++)
+                        Dc(r, col + i, row, i < hungerFilled ? '\u2588' : '\u2591', i < hungerFilled ? hungerFillColor : RenderingTheme.HpBar);
+                    row++;
+                    if (row >= maxRow) break;
+                    Ds(r, col, row, $"Food {hud.Hunger}/{hud.MaxHunger}", hungerFillColor);
                     break;
 
                 case "Stats":
