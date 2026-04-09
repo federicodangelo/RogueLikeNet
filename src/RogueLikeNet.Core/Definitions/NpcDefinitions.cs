@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
@@ -21,9 +22,26 @@ public static class NpcDefinitions
         new(Dragon,   "Dragon",   TileDefinitions.GlyphDragon,   TileDefinitions.ColorOrange, 100, 15, 8, 1),
     ];
 
-    /// <summary>Lookup by TypeId.</summary>
-    public static NpcDefinition Get(int typeId) =>
-        Array.Find(All, d => d.TypeId == typeId);
+    // Maps old numeric TypeId → new string ID for JSON lookup
+    private static readonly string[] OldToNewNpcId = ["goblin", "orc", "skeleton", "dragon"];
+
+    /// <summary>
+    /// Lookup by TypeId. When GameData is loaded, returns data from the JSON registry.
+    /// Otherwise falls back to the hardcoded array.
+    /// </summary>
+    public static NpcDefinition Get(int typeId)
+    {
+        var npcReg = GameData.Instance.Npcs;
+        if (npcReg.Count > 0 && typeId >= 0 && typeId < OldToNewNpcId.Length)
+        {
+            var d = npcReg.Get(OldToNewNpcId[typeId]);
+            if (d != null)
+                return new NpcDefinition(typeId, d.Name, d.GlyphId, d.FgColor,
+                    d.Health, d.Attack, d.Defense, d.Speed);
+        }
+
+        return Array.Find(All, d => d.TypeId == typeId);
+    }
 
     /// <summary>
     /// Picks a random monster type suitable for the given difficulty tier (0-based).

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
@@ -113,9 +114,43 @@ public static class ItemDefinitions
         new(GoldFloorTile,   CategoryPlaceable, "Gold Floor",    TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      0, 0, 0, true, 99),
     ];
 
-    /// <summary>Lookup by TypeId. Returns definition or default if not found.</summary>
-    public static ItemDefinition Get(int typeId) =>
-        typeId > 0 && typeId < _byId.Length ? _byId[typeId] : default;
+    /// <summary>
+    /// Lookup by TypeId. When GameData is loaded, returns data from the JSON registry
+    /// via LegacyItemBridge. Otherwise falls back to the hardcoded array.
+    /// </summary>
+    public static ItemDefinition Get(int typeId)
+    {
+        var newDef = LegacyItemBridge.GetNewDefinition(typeId);
+        if (newDef != null)
+            return ConvertFromData(typeId, newDef);
+
+        return typeId > 0 && typeId < _byId.Length ? _byId[typeId] : default;
+    }
+
+    private static ItemDefinition ConvertFromData(int typeId, Data.ItemDefinition d) => new(
+        typeId,
+        CategoryFromData(d),
+        d.Name,
+        d.GlyphId,
+        d.FgColor,
+        d.Weapon?.BaseDamage ?? d.Potion?.AttackBoost ?? 0,
+        d.Armor?.BaseDefense ?? d.Potion?.DefenseBoost ?? 0,
+        d.Potion?.HealthRestore ?? 0,
+        d.Stackable,
+        d.MaxStackSize
+    );
+
+    private static int CategoryFromData(Data.ItemDefinition d) => d.Category switch
+    {
+        ItemCategory.Weapon => CategoryWeapon,
+        ItemCategory.Armor or ItemCategory.Accessory => CategoryArmor,
+        ItemCategory.Potion => CategoryPotion,
+        ItemCategory.Material => CategoryResource,
+        ItemCategory.Furniture or ItemCategory.Block => CategoryPlaceable,
+        // gold_coin is Misc in JSON but CategoryGold in old system
+        ItemCategory.Misc when d.Id == "gold_coin" => CategoryGold,
+        _ => CategoryResource, // Tools, Food, Seeds, etc. default to resource (stackable)
+    };
 
     private static readonly ItemDefinition[] _byId;
 

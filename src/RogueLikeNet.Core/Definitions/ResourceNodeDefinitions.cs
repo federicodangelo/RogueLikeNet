@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
@@ -25,8 +26,31 @@ public static class ResourceNodeDefinitions
         new(Tree,       "Tree",        TileDefinitions.GlyphTree, TileDefinitions.ColorTreeFg,   5, 0, ItemDefinitions.Wood,      2, 4),
     ];
 
-    public static ResourceNodeDefinition Get(int nodeTypeId) =>
-        nodeTypeId > 0 && nodeTypeId < _byId.Length ? _byId[nodeTypeId] : default;
+    // Maps old numeric NodeTypeId → new string ID for JSON lookup
+    // Index 0 = None (null)
+    private static readonly string?[] OldToNewNodeId = [null, "copper_rock", "iron_rock", "gold_rock", "tree"];
+
+    public static ResourceNodeDefinition Get(int nodeTypeId)
+    {
+        var reg = GameData.Instance.ResourceNodes;
+        if (reg.Count > 0 && nodeTypeId > 0 && nodeTypeId < OldToNewNodeId.Length)
+        {
+            var newId = OldToNewNodeId[nodeTypeId];
+            if (newId != null)
+            {
+                var d = reg.Get(newId);
+                if (d != null)
+                {
+                    // Convert dropItemId string to legacy int via LegacyItemBridge
+                    int resItemId = LegacyItemBridge.GetLegacyId(d.DropItemId);
+                    return new ResourceNodeDefinition(nodeTypeId, d.Name, d.GlyphId, d.FgColor,
+                        d.Health, d.Defense, resItemId, d.MinDrop, d.MaxDrop);
+                }
+            }
+        }
+
+        return nodeTypeId > 0 && nodeTypeId < _byId.Length ? _byId[nodeTypeId] : default;
+    }
 
     /// <summary>
     /// Returns an array of (NodeDefinition, Weight) pairs for the given biome.

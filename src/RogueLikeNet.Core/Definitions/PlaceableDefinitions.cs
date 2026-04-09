@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Data;
+
 namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
@@ -68,8 +70,37 @@ public static class PlaceableDefinitions
         new(ItemDefinitions.GoldFloorTile,   CategoryFloorTile, TileDefinitions.GlyphFloorTile, TileDefinitions.ColorGoldFg,      true, true, false, 0, false, false),
     ];
 
-    public static PlaceableDefinition Get(int itemTypeId) =>
-        itemTypeId > 0 && itemTypeId < _byId.Length ? _byId[itemTypeId] : default;
+    public static PlaceableDefinition Get(int itemTypeId)
+    {
+        // Try new registry via LegacyItemBridge
+        var newDef = LegacyItemBridge.GetNewDefinition(itemTypeId);
+        if (newDef?.Furniture != null)
+        {
+            var f = newDef.Furniture;
+            return new PlaceableDefinition(
+                itemTypeId,
+                FurnitureCategoryFromData(f.FurnitureType),
+                f.PlacedGlyphId,
+                f.PlacedFgColor,
+                f.Walkable,
+                f.Transparent,
+                f.StateType != PlaceableStateType.None,
+                f.AlternateGlyphId,
+                f.AlternateWalkable,
+                f.AlternateTransparent
+            );
+        }
+
+        return itemTypeId > 0 && itemTypeId < _byId.Length ? _byId[itemTypeId] : default;
+    }
+
+    private static int FurnitureCategoryFromData(FurnitureType t) => t switch
+    {
+        FurnitureType.Door => CategoryDoor,
+        FurnitureType.Wall or FurnitureType.Window => CategoryWall,
+        FurnitureType.FloorTile => CategoryFloorTile,
+        _ => CategoryDecoration,
+    };
 
     public static bool IsWalkable(int itemTypeId, int extra)
     {
