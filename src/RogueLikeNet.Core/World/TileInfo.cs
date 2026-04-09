@@ -34,11 +34,11 @@ public struct TileInfo
     /// </summary>
     public int PlaceableItemExtra;
 
-    public bool IsWalkable
+    public readonly bool IsWalkable
     {
         get
         {
-            bool baseWalkable = Type is TileType.Floor or TileType.StairsDown or TileType.StairsUp;
+            var baseWalkable = Type is TileType.Floor or TileType.StairsDown or TileType.StairsUp;
             if (!baseWalkable) return false;
             if (PlaceableItemId != 0)
                 return PlaceableDefinitions.IsWalkable(PlaceableItemId, PlaceableItemExtra);
@@ -46,15 +46,17 @@ public struct TileInfo
         }
     }
 
-    public bool IsTransparent
+    public readonly bool IsTransparent
     {
         get
         {
-            bool baseTransparent = Type is not TileType.Blocked;
+            var baseTransparent = Type is not TileType.Blocked;
             if (!baseTransparent) return false;
             if (PlaceableItemId != 0)
                 return PlaceableDefinitions.IsTransparent(PlaceableItemId, PlaceableItemExtra);
             return true;
         }
     }
+
+    public readonly bool HasPlaceable => PlaceableItemId != 0;
 }

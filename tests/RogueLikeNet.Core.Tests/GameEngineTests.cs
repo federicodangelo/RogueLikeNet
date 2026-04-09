@@ -360,6 +360,7 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!.Tiles[10, 10].Type = TileType.Floor;
         var drop = engine.FindDropPosition(Position.FromCoords(10, 10, Position.DefaultZ));
         Assert.Equal(10, drop.X);
         Assert.Equal(10, drop.Y);

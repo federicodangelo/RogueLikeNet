@@ -10,6 +10,7 @@ using Chunk = RogueLikeNet.Core.World.Chunk;
 using PlayerStateData = RogueLikeNet.Core.Data.PlayerStateData;
 using InventoryItemData = RogueLikeNet.Core.Data.InventoryItemData;
 using SkillSlotData = RogueLikeNet.Core.Data.SkillSlotData;
+using RogueLikeNet.Core.Utilities;
 
 namespace RogueLikeNet.Core;
 
@@ -382,31 +383,17 @@ public class GameEngine : IDisposable
     /// </summary>
     public Position FindDropPosition(Position origin)
     {
-        var occupied = new HashSet<long>();
-        var (cx, cy, cz) = Chunk.WorldToChunkCoord(origin);
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                var chunk = _worldMap.TryGetChunk(ChunkPosition.FromCoords(cx + dx, cy + dy, cz));
-                if (chunk == null) continue;
-                foreach (var item in chunk.GroundItems)
-                    if (!item.IsDestroyed) occupied.Add(Position.PackCoord(item.Position.X, item.Position.Y, item.Position.Z));
-            }
-
-        if (!occupied.Contains(origin.Pack()))
-            return origin;
-
-        for (int r = 1; r <= 5; r++)
+        foreach (var p in PointsAtDistance.GetPoints(5))
         {
-            for (int ddx = -r; ddx <= r; ddx++)
-                for (int ddy = -r; ddy <= r; ddy++)
-                {
-                    if (Math.Abs(ddx) != r && Math.Abs(ddy) != r) continue;
-                    int x = origin.X + ddx;
-                    int y = origin.Y + ddy;
-                    if (!occupied.Contains(Position.PackCoord(x, y, origin.Z)))
-                        return Position.FromCoords(x, y, origin.Z);
-                }
+            var pos = Position.FromCoords(origin.X + p.X, origin.Y + p.Y, origin.Z);
+            var tile = _worldMap.GetTile(pos);
+            var entities = _worldMap.GetAllEntityRefsAt(pos);
+            if (tile.IsWalkable &&
+                !tile.HasPlaceable &&
+                !entities.Any(e => e.Type == EntityType.GroundItem || e.Type == EntityType.ResourceNode))
+            {
+                return pos;
+            }
         }
 
         return origin;

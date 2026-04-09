@@ -120,6 +120,39 @@ public class WorldMap
         return default;
     }
 
+    private List<EntityRef> _tmpRefs = [];
+
+    public EntityRef[] GetAllEntityRefsAt(Position pos)
+    {
+        _tmpRefs.Clear();
+        var refs = _tmpRefs;
+
+        foreach (var p in _players)
+            if (!p.IsDead && p.Position == pos)
+                refs.Add(new EntityRef(p.Id, EntityType.Player));
+
+        var chunk = GetChunkForWorldPos(pos);
+        if (chunk == null) return refs.Count > 0 ? refs.ToArray() : null;
+
+        foreach (var m in chunk.Monsters)
+            if (!m.IsDead && m.Position == pos)
+                refs.Add(new EntityRef(m.Id, EntityType.Monster));
+
+        foreach (var n in chunk.TownNpcs)
+            if (!n.IsDead && n.Position == pos)
+                refs.Add(new EntityRef(n.Id, EntityType.TownNpc));
+
+        foreach (var r in chunk.ResourceNodes)
+            if (!r.IsDead && r.Position == pos)
+                refs.Add(new EntityRef(r.Id, EntityType.ResourceNode));
+
+        foreach (var g in chunk.GroundItems)
+            if (!g.IsDestroyed && g.Position == pos)
+                refs.Add(new EntityRef(g.Id, EntityType.GroundItem));
+
+        return refs.Count > 0 ? refs.ToArray() : [];
+    }
+
     public ref MonsterEntity GetMonsterRef(int entityId)
     {
         foreach (var chunk in _chunks.Values)
