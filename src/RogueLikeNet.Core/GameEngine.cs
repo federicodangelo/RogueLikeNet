@@ -1,12 +1,14 @@
 using System.Runtime.CompilerServices;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
+using PlayerStateData = RogueLikeNet.Core.Data.PlayerStateData;
+using InventoryItemData = RogueLikeNet.Core.Data.InventoryItemData;
+using SkillSlotData = RogueLikeNet.Core.Data.SkillSlotData;
 
 namespace RogueLikeNet.Core;
 

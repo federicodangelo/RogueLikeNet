@@ -1,0 +1,439 @@
+[
+  {
+    "id": "craft_wooden_pickaxe",
+    "name": "Wooden Pickaxe",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 },
+      { "itemId": "fiber", "count": 2 }
+    ],
+    "result": { "itemId": "wooden_pickaxe", "count": 1 }
+  },
+  {
+    "id": "craft_stone_pickaxe",
+    "name": "Stone Pickaxe",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "stone", "count": 5 }
+    ],
+    "result": { "itemId": "stone_pickaxe", "count": 1 }
+  },
+  {
+    "id": "craft_copper_pickaxe",
+    "name": "Copper Pickaxe",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "copper_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "copper_pickaxe", "count": 1 }
+  },
+  {
+    "id": "craft_iron_pickaxe",
+    "name": "Iron Pickaxe",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "iron_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "iron_pickaxe", "count": 1 }
+  },
+  {
+    "id": "craft_steel_pickaxe",
+    "name": "Steel Pickaxe",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "steel_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "steel_pickaxe", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_axe",
+    "name": "Wooden Axe",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 },
+      { "itemId": "fiber", "count": 2 }
+    ],
+    "result": { "itemId": "wooden_axe", "count": 1 }
+  },
+  {
+    "id": "craft_stone_axe",
+    "name": "Stone Axe",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "stone", "count": 5 }
+    ],
+    "result": { "itemId": "stone_axe", "count": 1 }
+  },
+  {
+    "id": "craft_iron_axe",
+    "name": "Iron Axe",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 },
+      { "itemId": "iron_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "iron_axe", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_shovel",
+    "name": "Wooden Shovel",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 4 },
+      { "itemId": "fiber", "count": 1 }
+    ],
+    "result": { "itemId": "wooden_shovel", "count": 1 }
+  },
+  {
+    "id": "craft_iron_shovel",
+    "name": "Iron Shovel",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "iron_ingot", "count": 3 }
+    ],
+    "result": { "itemId": "iron_shovel", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_hoe",
+    "name": "Wooden Hoe",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 4 },
+      { "itemId": "fiber", "count": 1 }
+    ],
+    "result": { "itemId": "wooden_hoe", "count": 1 }
+  },
+  {
+    "id": "craft_iron_hoe",
+    "name": "Iron Hoe",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "iron_ingot", "count": 3 }
+    ],
+    "result": { "itemId": "iron_hoe", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_sword",
+    "name": "Wooden Sword",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 6 }
+    ],
+    "result": { "itemId": "wooden_sword", "count": 1 }
+  },
+  {
+    "id": "craft_stone_sword",
+    "name": "Stone Sword",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "stone", "count": 5 }
+    ],
+    "result": { "itemId": "stone_sword", "count": 1 }
+  },
+  {
+    "id": "craft_copper_sword",
+    "name": "Copper Sword",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "copper_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "copper_sword", "count": 1 }
+  },
+  {
+    "id": "craft_iron_sword",
+    "name": "Iron Sword",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "iron_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "iron_sword", "count": 1 }
+  },
+  {
+    "id": "craft_steel_sword",
+    "name": "Steel Sword",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "steel_ingot", "count": 5 }
+    ],
+    "result": { "itemId": "steel_sword", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_bow",
+    "name": "Wooden Bow",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 },
+      { "itemId": "fiber", "count": 3 }
+    ],
+    "result": { "itemId": "wooden_bow", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_arrow",
+    "name": "Wooden Arrow x10",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "feather", "count": 1 }
+    ],
+    "result": { "itemId": "wooden_arrow", "count": 10 }
+  },
+  {
+    "id": "craft_iron_arrow",
+    "name": "Iron Arrow x10",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 },
+      { "itemId": "iron_ingot", "count": 1 },
+      { "itemId": "feather", "count": 1 }
+    ],
+    "result": { "itemId": "iron_arrow", "count": 10 }
+  },
+  {
+    "id": "craft_leather_armor",
+    "name": "Leather Armor",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "leather", "count": 8 }
+    ],
+    "result": { "itemId": "leather_armor", "count": 1 }
+  },
+  {
+    "id": "craft_chain_mail",
+    "name": "Chain Mail",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 10 }
+    ],
+    "result": { "itemId": "chain_mail", "count": 1 }
+  },
+  {
+    "id": "craft_plate_armor",
+    "name": "Plate Armor",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "steel_ingot", "count": 15 }
+    ],
+    "result": { "itemId": "plate_armor", "count": 1 }
+  },
+  {
+    "id": "craft_shield",
+    "name": "Shield",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 5 },
+      { "itemId": "wood", "count": 3 }
+    ],
+    "result": { "itemId": "shield", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_door",
+    "name": "Wooden Door",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 }
+    ],
+    "result": { "itemId": "wooden_door", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_wall",
+    "name": "Wooden Wall",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 3 }
+    ],
+    "result": { "itemId": "wooden_wall", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_window",
+    "name": "Wooden Window",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 4 },
+      { "itemId": "glass", "count": 2 }
+    ],
+    "result": { "itemId": "wooden_window", "count": 1 }
+  },
+  {
+    "id": "craft_copper_door",
+    "name": "Copper Door",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "copper_ingot", "count": 5 },
+      { "itemId": "wood", "count": 2 }
+    ],
+    "result": { "itemId": "copper_door", "count": 1 }
+  },
+  {
+    "id": "craft_iron_door",
+    "name": "Iron Door",
+    "station": "anvil",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 5 },
+      { "itemId": "wood", "count": 2 }
+    ],
+    "result": { "itemId": "iron_door", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_table",
+    "name": "Wooden Table",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 4 }
+    ],
+    "result": { "itemId": "wooden_table", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_chair",
+    "name": "Wooden Chair",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 }
+    ],
+    "result": { "itemId": "wooden_chair", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_bed",
+    "name": "Wooden Bed",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 6 },
+      { "itemId": "cloth", "count": 3 }
+    ],
+    "result": { "itemId": "wooden_bed", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_bookshelf",
+    "name": "Wooden Bookshelf",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 }
+    ],
+    "result": { "itemId": "wooden_bookshelf", "count": 1 }
+  },
+  {
+    "id": "craft_wooden_floor",
+    "name": "Wooden Floor x4",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 2 }
+    ],
+    "result": { "itemId": "wooden_floor_tile", "count": 4 }
+  },
+  {
+    "id": "craft_stone_floor",
+    "name": "Stone Floor x4",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "stone", "count": 2 }
+    ],
+    "result": { "itemId": "stone_floor_tile", "count": 4 }
+  },
+  {
+    "id": "craft_crafting_bench",
+    "name": "Crafting Bench",
+    "station": "hand",
+    "ingredients": [
+      { "itemId": "wood", "count": 8 }
+    ],
+    "result": { "itemId": "crafting_bench", "count": 1 }
+  },
+  {
+    "id": "craft_furnace",
+    "name": "Furnace",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "stone", "count": 10 },
+      { "itemId": "coal", "count": 3 }
+    ],
+    "result": { "itemId": "furnace", "count": 1 }
+  },
+  {
+    "id": "craft_anvil",
+    "name": "Anvil",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 10 }
+    ],
+    "result": { "itemId": "anvil", "count": 1 }
+  },
+  {
+    "id": "craft_cooking_pot",
+    "name": "Cooking Pot",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 5 },
+      { "itemId": "wood", "count": 2 }
+    ],
+    "result": { "itemId": "cooking_pot", "count": 1 }
+  },
+  {
+    "id": "craft_alchemy_table",
+    "name": "Alchemy Table",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 5 },
+      { "itemId": "glass", "count": 3 },
+      { "itemId": "iron_ingot", "count": 2 }
+    ],
+    "result": { "itemId": "alchemy_table", "count": 1 }
+  },
+  {
+    "id": "craft_loom",
+    "name": "Loom",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 6 },
+      { "itemId": "fiber", "count": 5 }
+    ],
+    "result": { "itemId": "loom", "count": 1 }
+  },
+  {
+    "id": "craft_chest",
+    "name": "Chest",
+    "station": "workbench",
+    "ingredients": [
+      { "itemId": "wood", "count": 8 },
+      { "itemId": "iron_ingot", "count": 1 }
+    ],
+    "result": { "itemId": "chest", "count": 1 }
+  },
+  {
+    "id": "craft_torch",
+    "name": "Torch x5",
+    "station": "hand",
+    "ingredients": [
+      { "itemId": "wood", "count": 1 },
+      { "itemId": "fiber", "count": 1 }
+    ],
+    "result": { "itemId": "torch_material", "count": 5 }
+  },
+  {
+    "id": "craft_rope",
+    "name": "Rope",
+    "station": "hand",
+    "ingredients": [
+      { "itemId": "fiber", "count": 3 }
+    ],
+    "result": { "itemId": "rope", "count": 1 }
+  },
+  {
+    "id": "craft_cloth",
+    "name": "Cloth",
+    "station": "loom",
+    "ingredients": [
+      { "itemId": "fiber", "count": 4 }
+    ],
+    "result": { "itemId": "cloth", "count": 1 }
+  }
+]

@@ -1,0 +1,199 @@
+[
+  {
+    "id": "raw_meat",
+    "name": "Raw Meat",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16711680,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 10, "thirstRestore": 0, "healthRestore": 0 }
+  },
+  {
+    "id": "cooked_meat",
+    "name": "Cooked Meat",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 11162880,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 30, "thirstRestore": 0, "healthRestore": 5 }
+  },
+  {
+    "id": "raw_fish",
+    "name": "Raw Fish",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 6737151,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 8, "thirstRestore": 2, "healthRestore": 0 }
+  },
+  {
+    "id": "cooked_fish",
+    "name": "Cooked Fish",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16766720,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 25, "thirstRestore": 5, "healthRestore": 3 }
+  },
+  {
+    "id": "bread",
+    "name": "Bread",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 20, "thirstRestore": 0, "healthRestore": 0 }
+  },
+  {
+    "id": "apple",
+    "name": "Apple",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16711680,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 12, "thirstRestore": 5, "healthRestore": 0 }
+  },
+  {
+    "id": "berry",
+    "name": "Berry",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 8388736,
+    "stackable": true,
+    "maxStackSize": 30,
+    "materialTier": "none",
+    "food": { "hungerRestore": 5, "thirstRestore": 3, "healthRestore": 0 }
+  },
+  {
+    "id": "mushroom",
+    "name": "Mushroom",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 11173350,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 8, "thirstRestore": 0, "healthRestore": 0 }
+  },
+  {
+    "id": "wheat",
+    "name": "Wheat",
+    "category": "material",
+    "glyphId": 35,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none"
+  },
+  {
+    "id": "corn",
+    "name": "Corn",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16766720,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 10, "thirstRestore": 0, "healthRestore": 0 }
+  },
+  {
+    "id": "potato",
+    "name": "Potato",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 11173350,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 8, "thirstRestore": 0, "healthRestore": 0 }
+  },
+  {
+    "id": "baked_potato",
+    "name": "Baked Potato",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 25, "thirstRestore": 0, "healthRestore": 2 }
+  },
+  {
+    "id": "carrot",
+    "name": "Carrot",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16744448,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "food": { "hungerRestore": 10, "thirstRestore": 2, "healthRestore": 0 }
+  },
+  {
+    "id": "pumpkin",
+    "name": "Pumpkin",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 16744448,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none",
+    "food": { "hungerRestore": 15, "thirstRestore": 5, "healthRestore": 0 }
+  },
+  {
+    "id": "stew",
+    "name": "Stew",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 11162880,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none",
+    "food": { "hungerRestore": 40, "thirstRestore": 10, "healthRestore": 5 }
+  },
+  {
+    "id": "pie",
+    "name": "Pie",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none",
+    "food": { "hungerRestore": 35, "thirstRestore": 0, "healthRestore": 3 }
+  },
+  {
+    "id": "water_flask",
+    "name": "Water Flask",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 255,
+    "stackable": true,
+    "maxStackSize": 5,
+    "materialTier": "none",
+    "food": { "hungerRestore": 0, "thirstRestore": 30, "healthRestore": 0 }
+  },
+  {
+    "id": "juice",
+    "name": "Berry Juice",
+    "category": "food",
+    "glyphId": 37,
+    "fgColor": 8388736,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none",
+    "food": { "hungerRestore": 5, "thirstRestore": 25, "healthRestore": 0 }
+  }
+]

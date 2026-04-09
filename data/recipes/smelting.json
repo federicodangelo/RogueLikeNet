@@ -1,0 +1,82 @@
+[
+  {
+    "id": "smelt_copper_ingot",
+    "name": "Copper Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "copper_ore", "count": 3 },
+      { "itemId": "coal", "count": 1 }
+    ],
+    "result": { "itemId": "copper_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_iron_ingot",
+    "name": "Iron Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "iron_ore", "count": 3 },
+      { "itemId": "coal", "count": 1 }
+    ],
+    "result": { "itemId": "iron_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_gold_ingot",
+    "name": "Gold Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "gold_ore", "count": 3 },
+      { "itemId": "coal", "count": 1 }
+    ],
+    "result": { "itemId": "gold_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_steel_ingot",
+    "name": "Steel Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "iron_ingot", "count": 2 },
+      { "itemId": "coal", "count": 3 }
+    ],
+    "result": { "itemId": "steel_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_mithril_ingot",
+    "name": "Mithril Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "mithril_ore", "count": 4 },
+      { "itemId": "coal", "count": 2 }
+    ],
+    "result": { "itemId": "mithril_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_adamantite_ingot",
+    "name": "Adamantite Ingot",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "adamantite_ore", "count": 5 },
+      { "itemId": "coal", "count": 3 }
+    ],
+    "result": { "itemId": "adamantite_ingot", "count": 1 }
+  },
+  {
+    "id": "smelt_glass",
+    "name": "Glass",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "sand", "count": 3 },
+      { "itemId": "coal", "count": 1 }
+    ],
+    "result": { "itemId": "glass", "count": 1 }
+  },
+  {
+    "id": "smelt_brick",
+    "name": "Brick Block",
+    "station": "furnace",
+    "ingredients": [
+      { "itemId": "clay", "count": 4 },
+      { "itemId": "coal", "count": 1 }
+    ],
+    "result": { "itemId": "brick_block", "count": 1 }
+  }
+]

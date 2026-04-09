@@ -1,0 +1,290 @@
+[
+  {
+    "id": "stone",
+    "numericId": 0,
+    "name": "Stone",
+    "floorColor": 8947848,
+    "tintR": 100,
+    "tintG": 100,
+    "tintB": 100,
+    "decorations": [
+      { "glyphId": 177, "fgColor": 8947575, "chance1000": 4 },
+      { "glyphId": 9, "fgColor": 10066329, "chance1000": 2 }
+    ],
+    "enemySpawns": [
+      { "npcId": "goblin", "weight": 50 },
+      { "npcId": "skeleton", "weight": 50 }
+    ],
+    "liquid": null,
+    "resourceWeights": [
+      { "nodeId": "copper_rock", "weight": 50 },
+      { "nodeId": "iron_rock", "weight": 25 },
+      { "nodeId": "tree", "weight": 10 },
+      { "nodeId": "gold_rock", "weight": 5 },
+      { "nodeId": "coal_deposit", "weight": 15 }
+    ]
+  },
+  {
+    "id": "lava",
+    "numericId": 1,
+    "name": "Lava",
+    "floorColor": 16729088,
+    "tintR": 110,
+    "tintG": 85,
+    "tintB": 75,
+    "decorations": [
+      { "glyphId": 7, "fgColor": 16737826, "chance1000": 8 },
+      { "glyphId": 126, "fgColor": 6697506, "chance1000": 6 }
+    ],
+    "enemySpawns": [
+      { "npcId": "orc", "weight": 70 },
+      { "npcId": "dragon", "weight": 30 }
+    ],
+    "liquid": {
+      "tileType": "lava",
+      "glyphId": 247,
+      "fgColor": 16729088,
+      "bgColor": 3346432,
+      "chance100": 30
+    },
+    "resourceWeights": [
+      { "nodeId": "gold_rock", "weight": 40 },
+      { "nodeId": "iron_rock", "weight": 30 },
+      { "nodeId": "copper_rock", "weight": 15 },
+      { "nodeId": "coal_deposit", "weight": 20 }
+    ]
+  },
+  {
+    "id": "ice",
+    "numericId": 2,
+    "name": "Ice",
+    "floorColor": 11206655,
+    "tintR": 80,
+    "tintG": 95,
+    "tintB": 115,
+    "decorations": [
+      { "glyphId": 124, "fgColor": 11206655, "chance1000": 8 },
+      { "glyphId": 126, "fgColor": 11206655, "chance1000": 4 }
+    ],
+    "enemySpawns": [
+      { "npcId": "skeleton", "weight": 70 },
+      { "npcId": "orc", "weight": 30 }
+    ],
+    "liquid": {
+      "tileType": "water",
+      "glyphId": 247,
+      "fgColor": 11206655,
+      "bgColor": 659746,
+      "chance100": 25
+    },
+    "resourceWeights": [
+      { "nodeId": "iron_rock", "weight": 50 },
+      { "nodeId": "copper_rock", "weight": 20 },
+      { "nodeId": "gold_rock", "weight": 10 }
+    ]
+  },
+  {
+    "id": "forest",
+    "numericId": 3,
+    "name": "Forest",
+    "floorColor": 6710835,
+    "tintR": 85,
+    "tintG": 110,
+    "tintB": 80,
+    "decorations": [
+      { "glyphId": 44, "fgColor": 5605444, "chance1000": 12 },
+      { "glyphId": 39, "fgColor": 4881978, "chance1000": 8 },
+      { "glyphId": 244, "fgColor": 3375155, "chance1000": 4 }
+    ],
+    "enemySpawns": [
+      { "npcId": "goblin", "weight": 50 },
+      { "npcId": "wolf", "weight": 30 },
+      { "npcId": "spider", "weight": 20 }
+    ],
+    "liquid": {
+      "tileType": "water",
+      "glyphId": 247,
+      "fgColor": 4490495,
+      "bgColor": 4403,
+      "chance100": 20
+    },
+    "resourceWeights": [
+      { "nodeId": "tree", "weight": 60 },
+      { "nodeId": "copper_rock", "weight": 20 },
+      { "nodeId": "iron_rock", "weight": 10 },
+      { "nodeId": "gold_rock", "weight": 5 }
+    ]
+  },
+  {
+    "id": "arcane",
+    "numericId": 4,
+    "name": "Arcane",
+    "floorColor": 6702216,
+    "tintR": 90,
+    "tintG": 80,
+    "tintB": 110,
+    "decorations": [
+      { "glyphId": 42, "fgColor": 13403903, "chance1000": 6 },
+      { "glyphId": 4, "fgColor": 8965375, "chance1000": 6 }
+    ],
+    "enemySpawns": [
+      { "npcId": "skeleton", "weight": 30 },
+      { "npcId": "orc", "weight": 25 },
+      { "npcId": "goblin", "weight": 25 },
+      { "npcId": "dragon", "weight": 20 }
+    ],
+    "liquid": null,
+    "resourceWeights": [
+      { "nodeId": "copper_rock", "weight": 30 },
+      { "nodeId": "iron_rock", "weight": 30 },
+      { "nodeId": "gold_rock", "weight": 15 },
+      { "nodeId": "tree", "weight": 10 },
+      { "nodeId": "mithril_rock", "weight": 10 }
+    ]
+  },
+  {
+    "id": "crypt",
+    "numericId": 5,
+    "name": "Crypt",
+    "floorColor": 6710835,
+    "tintR": 95,
+    "tintG": 90,
+    "tintB": 85,
+    "decorations": [
+      { "glyphId": 229, "fgColor": 13417369, "chance1000": 10 },
+      { "glyphId": 254, "fgColor": 13417369, "chance1000": 4 },
+      { "glyphId": 37, "fgColor": 12303308, "chance1000": 6 }
+    ],
+    "enemySpawns": [
+      { "npcId": "skeleton", "weight": 50 },
+      { "npcId": "zombie", "weight": 30 },
+      { "npcId": "goblin", "weight": 20 }
+    ],
+    "liquid": null,
+    "resourceWeights": [
+      { "nodeId": "iron_rock", "weight": 35 },
+      { "nodeId": "copper_rock", "weight": 25 },
+      { "nodeId": "gold_rock", "weight": 10 }
+    ]
+  },
+  {
+    "id": "sewer",
+    "numericId": 6,
+    "name": "Sewer",
+    "floorColor": 6710835,
+    "tintR": 85,
+    "tintG": 95,
+    "tintB": 90,
+    "decorations": [
+      { "glyphId": 39, "fgColor": 4881978, "chance1000": 8 },
+      { "glyphId": 232, "fgColor": 10053171, "chance1000": 4 },
+      { "glyphId": 126, "fgColor": 8947575, "chance1000": 4 }
+    ],
+    "enemySpawns": [
+      { "npcId": "goblin", "weight": 40 },
+      { "npcId": "slime", "weight": 35 },
+      { "npcId": "spider", "weight": 25 }
+    ],
+    "liquid": {
+      "tileType": "water",
+      "glyphId": 247,
+      "fgColor": 4490495,
+      "bgColor": 4403,
+      "chance100": 40
+    },
+    "resourceWeights": [
+      { "nodeId": "copper_rock", "weight": 40 },
+      { "nodeId": "iron_rock", "weight": 20 },
+      { "nodeId": "tree", "weight": 10 }
+    ]
+  },
+  {
+    "id": "fungal",
+    "numericId": 7,
+    "name": "Fungal",
+    "floorColor": 6710835,
+    "tintR": 95,
+    "tintG": 85,
+    "tintB": 105,
+    "decorations": [
+      { "glyphId": 6, "fgColor": 13395626, "chance1000": 12 },
+      { "glyphId": 39, "fgColor": 4881978, "chance1000": 6 },
+      { "glyphId": 44, "fgColor": 3375155, "chance1000": 4 }
+    ],
+    "enemySpawns": [
+      { "npcId": "goblin", "weight": 40 },
+      { "npcId": "slime", "weight": 35 },
+      { "npcId": "skeleton", "weight": 25 }
+    ],
+    "liquid": {
+      "tileType": "water",
+      "glyphId": 247,
+      "fgColor": 4881978,
+      "bgColor": 4403,
+      "chance100": 15
+    },
+    "resourceWeights": [
+      { "nodeId": "tree", "weight": 40 },
+      { "nodeId": "copper_rock", "weight": 25 },
+      { "nodeId": "iron_rock", "weight": 15 },
+      { "nodeId": "gold_rock", "weight": 5 }
+    ]
+  },
+  {
+    "id": "ruined",
+    "numericId": 8,
+    "name": "Ruined",
+    "floorColor": 8947575,
+    "tintR": 105,
+    "tintG": 95,
+    "tintB": 85,
+    "decorations": [
+      { "glyphId": 177, "fgColor": 8947575, "chance1000": 10 },
+      { "glyphId": 9, "fgColor": 10066329, "chance1000": 4 },
+      { "glyphId": 234, "fgColor": 10066329, "chance1000": 2 }
+    ],
+    "enemySpawns": [
+      { "npcId": "orc", "weight": 40 },
+      { "npcId": "skeleton", "weight": 30 },
+      { "npcId": "zombie", "weight": 30 }
+    ],
+    "liquid": null,
+    "resourceWeights": [
+      { "nodeId": "copper_rock", "weight": 30 },
+      { "nodeId": "iron_rock", "weight": 30 },
+      { "nodeId": "gold_rock", "weight": 10 },
+      { "nodeId": "tree", "weight": 10 }
+    ]
+  },
+  {
+    "id": "infernal",
+    "numericId": 9,
+    "name": "Infernal",
+    "floorColor": 16729088,
+    "tintR": 115,
+    "tintG": 80,
+    "tintB": 70,
+    "decorations": [
+      { "glyphId": 7, "fgColor": 16737826, "chance1000": 10 },
+      { "glyphId": 126, "fgColor": 6697506, "chance1000": 6 },
+      { "glyphId": 229, "fgColor": 13417369, "chance1000": 4 }
+    ],
+    "enemySpawns": [
+      { "npcId": "dragon", "weight": 50 },
+      { "npcId": "orc", "weight": 50 }
+    ],
+    "liquid": {
+      "tileType": "lava",
+      "glyphId": 247,
+      "fgColor": 16729088,
+      "bgColor": 3346432,
+      "chance100": 35
+    },
+    "resourceWeights": [
+      { "nodeId": "gold_rock", "weight": 35 },
+      { "nodeId": "iron_rock", "weight": 35 },
+      { "nodeId": "copper_rock", "weight": 15 },
+      { "nodeId": "adamantite_rock", "weight": 10 }
+    ]
+  }
+]

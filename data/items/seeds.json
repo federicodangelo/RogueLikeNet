@@ -1,0 +1,90 @@
+[
+  {
+    "id": "wheat_seeds",
+    "name": "Wheat Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 600, "harvestItemId": "wheat", "harvestMin": 1, "harvestMax": 3 }
+  },
+  {
+    "id": "corn_seeds",
+    "name": "Corn Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 16766720,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 800, "harvestItemId": "corn", "harvestMin": 1, "harvestMax": 2 }
+  },
+  {
+    "id": "potato_seeds",
+    "name": "Potato Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 11173350,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 700, "harvestItemId": "potato", "harvestMin": 1, "harvestMax": 3 }
+  },
+  {
+    "id": "carrot_seeds",
+    "name": "Carrot Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 16744448,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 500, "harvestItemId": "carrot", "harvestMin": 1, "harvestMax": 3 }
+  },
+  {
+    "id": "pumpkin_seeds",
+    "name": "Pumpkin Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 16744448,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 1000, "harvestItemId": "pumpkin", "harvestMin": 1, "harvestMax": 1 }
+  },
+  {
+    "id": "berry_seeds",
+    "name": "Berry Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 8388736,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 400, "harvestItemId": "berry", "harvestMin": 2, "harvestMax": 5 }
+  },
+  {
+    "id": "apple_sapling",
+    "name": "Apple Sapling",
+    "category": "seed",
+    "glyphId": 5,
+    "fgColor": 2263842,
+    "stackable": true,
+    "maxStackSize": 20,
+    "materialTier": "none",
+    "seed": { "growthTicks": 2000, "harvestItemId": "apple", "harvestMin": 2, "harvestMax": 4 }
+  },
+  {
+    "id": "herb_seeds",
+    "name": "Herb Seeds",
+    "category": "seed",
+    "glyphId": 44,
+    "fgColor": 65280,
+    "stackable": true,
+    "maxStackSize": 99,
+    "materialTier": "none",
+    "seed": { "growthTicks": 400, "harvestItemId": "fiber", "harvestMin": 1, "harvestMax": 2 }
+  }
+]

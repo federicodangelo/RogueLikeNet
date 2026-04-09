@@ -1,0 +1,1404 @@
+================================================================================
+  OPEN-WORLD / CRAFTING GAME - ITEM CATALOG
+================================================================================
+  Reference games: Minecraft, Terraria, Valheim, Don't Starve, Stardew Valley,
+  Rimworld, Dwarf Fortress, Caves of Qud, Cataclysm: DDA, Core Keeper,
+  Starbound, Rust, ARK, The Forest, 7 Days to Die, Factorio, Raft, Subnautica
+================================================================================
+
+
+================================================================================
+ 1. RAW MATERIALS / NATURAL RESOURCES
+================================================================================
+
+  1.1 Wood & Plant Materials
+  ---------------------------------------------------------------------------
+  - Log (raw tree trunk)
+  - Wood Plank (processed lumber)
+  - Stick / Branch
+  - Bark
+  - Bamboo
+  - Reed / Thatch
+  - Vine
+  - Root
+  - Cork
+  - Sawdust
+  - Charcoal (from burning wood)
+  - Resin / Sap
+  - Hardwood (oak, maple, etc.)
+  - Softwood (pine, birch, etc.)
+  - Petrified Wood
+  - Driftwood
+
+  1.2 Stone & Mineral
+  ---------------------------------------------------------------------------
+  - Stone / Rock
+  - Cobblestone
+  - Sandstone
+  - Limestone
+  - Granite
+  - Marble
+  - Obsidian
+  - Slate
+  - Basalt
+  - Flint
+  - Clay
+  - Sand
+  - Gravel
+  - Salt
+  - Sulfur
+  - Saltpeter / Niter
+  -Ite (calcium mineral)
+  - Chalk
+
+  1.3 Metal Ores & Ingots
+  ---------------------------------------------------------------------------
+  - Copper Ore / Copper Ingot
+  - Tin Ore / Tin Ingot
+  - Iron Ore / Iron Ingot
+  - Gold Ore / Gold Ingot
+  - Silver Ore / Silver Ingot
+  - Lead Ore / Lead Ingot
+  - Zinc Ore
+  - Nickel Ore
+  - Titanium Ore / Titanium Ingot
+  - Mithril Ore / Mithril Ingot (fantasy)
+  - Adamantite Ore / Adamantite Ingot (fantasy)
+  - Orichalcum Ore (fantasy)
+  - Bronze Ingot (alloy: copper + tin)
+  - Steel Ingot (alloy: iron + carbon)
+  - Electrum Ingot (alloy: gold + silver)
+  - Metal Scrap
+  - Metal Sheet / Plate
+  - Wire
+  - Nails
+  - Chain Links
+  - Rivets
+
+  1.4 Gems & Crystals
+  ---------------------------------------------------------------------------
+  - Diamond
+  - Ruby
+  - Sapphire
+  - Emerald
+  - Amethyst
+  - Topaz
+  - Opal
+  - Quartz
+  - Crystal Shard
+  - Jade
+  - Onyx
+  - Pearl
+  - Moonstone
+  - Sunstone
+  - Soul Gem (fantasy)
+  - Magic Crystal (fantasy)
+
+  1.5 Earth & Terrain
+  ---------------------------------------------------------------------------
+  - Dirt / Soil
+  - Mud
+  - Peat
+  - Snow Block
+  - Ice Block
+  - Ash
+  - Volcanic Rock
+  - Coral
+  - Silt
+
+
+================================================================================
+ 2. BIOLOGICAL MATERIALS
+================================================================================
+
+  2.1 Animal Drops
+  ---------------------------------------------------------------------------
+  - Raw Meat
+  - Hide / Pelt / Leather
+  - Bone
+  - Horn / Antler
+  - Tusk / Fang / Tooth
+  - Claw / Talon
+  - Feather
+  - Wool / Fur
+  - Sinew / Tendon
+  - Fat / Tallow
+  - Gut / Intestine
+  - Shell (snail, turtle, crab)
+  - Chitin (insect shell)
+  - Scale (fish / reptile)
+  - Silk (from spiders / worms)
+  - Egg
+  - Milk
+  - Honey
+  - Beeswax
+  - Venom Sac
+  - Ink Sac
+  - Eye (monster drop)
+  - Blood (alchemic ingredient)
+  - Slime / Gel (monster drop)
+  - Ectoplasm (fantasy)
+
+  2.2 Plant Drops & Fibers
+  ---------------------------------------------------------------------------
+  - Fiber / Plant Fiber
+  - Cotton
+  - Flax / Linen
+  - Hemp
+  - Hay / Straw
+  - Leaf (various types)
+  - Moss
+  - Lichen
+  - Kelp / Seaweed
+  - Mushroom (various types)
+  - Truffle
+  - Flower (various types)
+  - Petal
+  - Pollen
+  - Seed (various types)
+  - Nut (various types)
+  - Acorn
+  - Berry (various types)
+  - Herb (various types: mint, basil, rosemary...)
+  - Cactus Flesh
+  - Aloe
+  - Spore
+  - Thorn
+
+
+================================================================================
+ 3. PROCESSED / CRAFTING MATERIALS
+================================================================================
+
+  3.1 Refined Materials
+  ---------------------------------------------------------------------------
+  - Plank (from logs)
+  - Brick (from clay)
+  - Stone Brick (from stone)
+  - Glass (from sand)
+  - Glass Pane
+  - Concrete (from cement + gravel)
+  - Cement
+  - Morite (mortar mix)
+  - Paper (from wood pulp / papyrus)
+  - Parchment
+  - Glue (from animal parts / resin)
+  - Wax
+  - Tar / Pitch (from wood / coal)
+  - Rubber (from sap)
+  - Plastic (advanced)
+  - Carbon Fiber (advanced)
+  - Composite Material (advanced)
+
+  3.2 Textile & Fiber Products
+  ---------------------------------------------------------------------------
+  - Thread / String / Twine
+  - Rope
+  - Cloth / Fabric
+  - Silk Cloth
+  - Wool Cloth
+  - Leather (tanned hide)
+  - Cured Leather
+  - Hardened Leather
+  - Canvas
+  - Bandage (from cloth)
+  - Net
+
+  3.3 Chemical & Alchemic
+  ---------------------------------------------------------------------------
+  - Gunpowder (sulfur + charcoal + niter)
+  - Dye (various colors, from plants/minerals)
+  - Pigment
+  - Ink
+  - Oil (animal/plant/mineral)
+  - Acid
+  - Alcohol / Spirits
+  - Lye (from ash + water)
+  - Soap (from lye + fat)
+  - Flux (for smelting)
+  - Alchemic Catalyst
+  - Elixir Base
+  - Enchanting Dust (fantasy)
+  - Mana Essence (fantasy)
+
+  3.4 Mechanical Components
+  ---------------------------------------------------------------------------
+  - Gear / Cog
+  - Spring
+  - Lever Mechanism
+  - Piston
+  - Pulley
+  - Bearing
+  - Axle
+  - Belt (mechanical)
+  - Pipe
+  - Valve
+  - Circuit Board (advanced)
+  - Battery / Power Cell (advanced)
+  - Motor (advanced)
+  - Lens
+
+
+================================================================================
+ 4. TOOLS
+================================================================================
+
+  4.1 Gathering Tools
+  ---------------------------------------------------------------------------
+  - Pickaxe (mining stone/ore)
+  - Axe / Hatchet (chopping wood)
+  - Shovel (digging dirt/sand)
+  - Hammer (breaking/building)
+  - Sickle / Scythe (harvesting plants)
+  - Fishing Rod
+  - Bug Net
+  - Chisel (precise stone work)
+  - Saw (cutting wood)
+  - Drill (advanced mining)
+
+  4.2 Crafting Tools (hand-held)
+  ---------------------------------------------------------------------------
+  - Knife / Utility Knife
+  - Needle (sewing)
+  - Mortar and Pestle (grinding)
+  - Tongs (smithing)
+  - File / Rasp
+  - Wrench
+  - Screwdriver
+  - Pliers
+  - Shears (cutting cloth/wool)
+  - Mold (casting metals)
+  - Crucible (smelting)
+  - Flint and Steel (fire starting)
+  - Tinderbox
+
+  4.3 Measurement & Exploration Tools
+  ---------------------------------------------------------------------------
+  - Compass
+  - Map / Cartography Kit
+  - Spyglass / Telescope
+  - Magnifying Glass
+  - Thermometer
+  - Barometer
+  - Clock / Watch
+  - Surveying Kit
+  - Diving Mask / Goggles
+
+  4.4 Utility Tools
+  ---------------------------------------------------------------------------
+  - Bucket
+  - Watering Can
+  - Grappling Hook
+  - Rope Ladder
+  - Lockpick
+  - Wrench
+  - Torch (handheld light)
+  - Lantern (handheld)
+  - Parachute / Glider
+  - Climbing Gear
+
+
+================================================================================
+ 5. WEAPONS
+================================================================================
+
+  5.1 Melee Weapons - Swords & Blades
+  ---------------------------------------------------------------------------
+  - Short Sword
+  - Long Sword / Broadsword
+  - Greatsword / Two-Handed Sword
+  - Rapier
+  - Katana
+  - Scimitar
+  - Cutlass
+  - Dagger / Knife
+  - Machete
+  - Cleaver
+
+  5.2 Melee Weapons - Blunt & Polearms
+  ---------------------------------------------------------------------------
+  - Club / Cudgel
+  - Mace
+  - War Hammer
+  - Flail / Morning Star
+  - Staff / Quarterstaff
+  - Spear
+  - Lance
+  - Halberd
+  - Trident
+  - Pike
+  - Glaive
+  - Battle Axe
+  - Warhammer
+
+  5.3 Ranged Weapons
+  ---------------------------------------------------------------------------
+  - Bow (short / long / composite)
+  - Crossbow
+  - Slingshot / Sling
+  - Throwing Knife
+  - Throwing Axe
+  - Javelin
+  - Boomerang
+  - Blowgun
+  - Musket / Flintlock (if gunpowder era)
+  - Pistol
+  - Rifle
+  - Shotgun
+  - Cannon (mounted)
+
+  5.4 Ammunition
+  ---------------------------------------------------------------------------
+  - Arrow (wood, iron, fire, poison, explosive...)
+  - Bolt (crossbow)
+  - Bullet / Musket Ball
+  - Stone (sling)
+  - Dart (blowgun)
+  - Bomb / Grenade
+  - Dynamite / TNT
+  - Rocket (advanced)
+
+  5.5 Magic Weapons / Staves (Fantasy)
+  ---------------------------------------------------------------------------
+  - Wand
+  - Magic Staff
+  - Scepter
+  - Orb / Focus
+  - Spell Tome / Grimoire
+  - Runic Blade
+  - Enchanted Bow
+
+
+================================================================================
+ 6. ARMOR & CLOTHING
+================================================================================
+
+  6.1 Armor Pieces
+  ---------------------------------------------------------------------------
+  - Helmet / Helm / Hood / Hat
+  - Chest Plate / Breastplate / Tunic
+  - Leggings / Greaves / Pants
+  - Boots / Shoes / Sandals
+  - Gauntlets / Gloves / Bracers
+  - Shield (buckler, tower, round)
+  - Pauldrons / Shoulder Guards
+  - Cape / Cloak / Mantle
+  - Belt
+
+  6.2 Armor Material Tiers (progression)
+  ---------------------------------------------------------------------------
+  - Cloth / Padded
+  - Leather
+  - Hide / Fur
+  - Bone
+  - Chain Mail
+  - Scale Mail
+  - Iron / Steel Plate
+  - Gold / Silver (ornamental)
+  - Mithril (fantasy)
+  - Adamantite (fantasy)
+  - Dragon Scale (fantasy)
+  - Crystal / Gem-Encrusted (fantasy)
+
+  6.3 Clothing (non-combat)
+  ---------------------------------------------------------------------------
+  - Shirt / Tunic
+  - Pants / Trousers
+  - Dress / Robe
+  - Vest
+  - Coat / Jacket
+  - Scarf
+  - Apron (crafting bonus)
+  - Backpack (inventory expansion)
+  - Satchel / Bag
+  - Quiver (arrow storage)
+
+  6.4 Accessories
+  ---------------------------------------------------------------------------
+  - Ring
+  - Necklace / Amulet / Pendant
+  - Bracelet
+  - Earring
+  - Brooch / Pin
+  - Crown / Tiara
+  - Goggles
+  - Mask
+
+
+================================================================================
+ 7. FOOD & COOKING
+================================================================================
+
+  7.1 Raw Ingredients - Produce
+  ---------------------------------------------------------------------------
+  - Wheat / Grain
+  - Rice
+  - Corn / Maize
+  - Potato
+  - Carrot
+  - Onion
+  - Garlic
+  - Tomato
+  - Pumpkin / Squash
+  - Beet
+  - Turnip
+  - Cabbage / Lettuce
+  - Pepper (bell / hot)
+  - Bean
+  - Pea
+  - Sugarcane / Sugar
+  - Apple
+  - Grape
+  - Melon / Watermelon
+  - Banana
+  - Orange / Citrus
+  - Coconut
+  - Cacao / Cocoa Bean
+  - Coffee Bean
+  - Tea Leaf
+
+  7.2 Raw Ingredients - Animal Products
+  ---------------------------------------------------------------------------
+  - Raw Meat (beef, pork, chicken, mutton, venison, fish, etc.)
+  - Egg
+  - Milk
+  - Cheese
+  - Butter
+  - Cream
+  - Honey
+  - Lard / Fat
+
+  7.3 Basic Processed Food
+  ---------------------------------------------------------------------------
+  - Flour (from wheat)
+  - Dough (from flour + water)
+  - Bread (from dough, baked)
+  - Cooked Meat (roasted, grilled, fried)
+  - Smoked Meat / Jerky (preserved)
+  - Dried Fish
+  - Salted Meat
+  - Cheese (from milk, aged)
+  - Butter (from cream, churned)
+  - Sugar (from sugarcane)
+  - Salt (from evaporating sea water / mining)
+  - Vinegar
+  - Oil (cooking, from plants/animals)
+  - Spice (pepper, cinnamon, cumin, etc.)
+  - Herbs (dried, for cooking)
+
+  7.4 Cooked Meals & Recipes
+  ---------------------------------------------------------------------------
+  - Stew / Soup (meat + vegetables + water)
+  - Pie (crust + filling)
+  - Roast (large meat dish)
+  - Salad (vegetables)
+  - Sandwich
+  - Sushi / Rice Dish
+  - Pasta / Noodles
+  - Pizza
+  - Cake / Pastry
+  - Cookie / Biscuit
+  - Jam / Preserve (fruit + sugar)
+  - Porridge / Oatmeal
+  - Sausage
+  - Kebab / Skewer
+  - Fried Egg / Omelette
+  - Pancake
+  - Trail Mix / Ration Bar (travel food)
+
+  7.5 Drinks
+  ---------------------------------------------------------------------------
+  - Water (collected / purified)
+  - Juice (from fruits)
+  - Tea (from tea leaves)
+  - Coffee (from coffee beans)
+  - Ale / Beer (from grain, fermented)
+  - Wine (from grapes, fermented)
+  - Mead (from honey, fermented)
+  - Cider (from apples, fermented)
+  - Milk
+  - Smoothie / Shake
+  - Hot Chocolate
+
+
+================================================================================
+ 8. POTIONS, MEDICINE & CONSUMABLES
+================================================================================
+
+  8.1 Potions (Fantasy)
+  ---------------------------------------------------------------------------
+  - Health Potion (restores HP)
+  - Mana Potion (restores MP)
+  - Stamina Potion (restores energy)
+  - Strength Potion (temporary damage buff)
+  - Speed Potion (temporary movement buff)
+  - Defense Potion (temporary armor buff)
+  - Invisibility Potion
+  - Night Vision Potion
+  - Water Breathing Potion
+  - Fire Resistance Potion
+  - Poison Resistance Potion
+  - Regeneration Potion
+  - Luck Potion
+  - Antidote (cures poison)
+
+  8.2 Medicine & First Aid
+  ---------------------------------------------------------------------------
+  - Bandage
+  - Poultice (herbal compress)
+  - Splint (for broken bones)
+  - Antiseptic / Disinfectant
+  - Painkiller
+  - Herbal Tea (restorative)
+  - Healing Salve / Ointment
+  - Antivenom
+  - Stimulant
+  - Sedative
+  - Vaccine (disease prevention)
+  - Medical Kit (combined first aid)
+
+  8.3 Buff Items / Consumables
+  ---------------------------------------------------------------------------
+  - Scroll (single-use spell)
+  - Enchantment Stone
+  - Experience Orb / Book
+  - Stat Reset Token
+  - Teleport Scroll / Stone
+  - Recall / Home Stone
+  - Bait (fishing)
+  - Animal Feed
+  - Fertilizer
+  - Insect Repellent
+  - Campfire Fuel
+  - Whetstone (temporary weapon sharpness)
+  - Oil / Polish (temporary weapon coating)
+  - Poison Coating (apply to weapon)
+
+
+================================================================================
+ 9. CONSTRUCTION BLOCKS & BUILDING MATERIALS
+================================================================================
+
+  9.1 Foundation & Structural Blocks
+  ---------------------------------------------------------------------------
+  - Dirt Block
+  - Stone Block
+  - Cobblestone Block
+  - Brick Block
+  - Sandstone Block
+  - Marble Block
+  - Granite Block
+  - Wood Block / Log Block
+  - Plank Block
+  - Clay Block
+  - Concrete Block
+  - Metal Block (iron, steel, copper)
+  - Reinforced Block (armored)
+  - Glass Block
+  - Ice Block
+  - Obsidian Block
+
+  9.2 Walls
+  ---------------------------------------------------------------------------
+  - Wooden Wall
+  - Stone Wall
+  - Brick Wall
+  - Mud / Adobe Wall
+  - Palisade (spiked wooden wall)
+  - Metal Wall
+  - Reinforced Wall
+  - Glass Wall / Window Wall
+  - Half Wall / Low Wall
+  - Fence (wood, iron, stone)
+  - Lattice / Trellis
+  - Curtain Wall
+  - Castle Wall / Battlements
+
+  9.3 Floors & Ceilings
+  ---------------------------------------------------------------------------
+  - Wooden Floor / Platform
+  - Stone Floor / Tile
+  - Brick Floor
+  - Metal Grate Floor
+  - Carpet / Rug (overlay)
+  - Marble Floor
+  - Dirt Floor
+  - Glass Floor
+  - Wooden Ceiling
+  - Stone Ceiling
+  - Thatched Roof
+  - Tile Roof
+  - Metal Roof
+
+  9.4 Doors & Gates
+  ---------------------------------------------------------------------------
+  - Wooden Door
+  - Reinforced Door
+  - Iron / Metal Door
+  - Stone Door
+  - Trap Door (floor hatch)
+  - Double Door
+  - Gate (large, for walls)
+  - Drawbridge
+  - Portcullis (castle gate)
+  - Secret Door / Hidden Passage
+  - Sliding Door
+  - Vault Door (heavy security)
+
+  9.5 Stairs, Ramps & Vertical
+  ---------------------------------------------------------------------------
+  - Wooden Stairs
+  - Stone Stairs
+  - Ladder
+  - Rope Ladder
+  - Ramp / Slope
+  - Scaffolding
+  - Elevator / Lift (mechanical)
+  - Spiral Staircase
+  - Platform / Ledge
+
+  9.6 Windows & Openings
+  ---------------------------------------------------------------------------
+  - Window (open)
+  - Glass Window
+  - Stained Glass Window
+  - Shuttered Window
+  - Arrow Slit / Loophole
+  - Skylight
+  - Vent / Air Duct
+
+  9.7 Pillars, Beams & Supports
+  ---------------------------------------------------------------------------
+  - Wooden Pillar / Post
+  - Stone Pillar / Column
+  - Wooden Beam
+  - Metal Beam / I-Beam
+  - Arch (stone, wood)
+  - Buttress
+  - Balcony
+
+
+================================================================================
+ 10. FURNITURE & FUNCTIONAL STATIONS
+================================================================================
+
+  10.1 Crafting Stations
+  ---------------------------------------------------------------------------
+  - Workbench (basic crafting)
+  - Advanced Workbench
+  - Forge / Furnace / Smelter (metal processing)
+  - Anvil (smithing weapons/armor)
+  - Kiln (pottery / bricks)
+  - Loom (weaving cloth)
+  - Spinning Wheel (thread from fiber)
+  - Tanning Rack (leather from hide)
+  - Sawmill (planks from logs)
+  - Stone Cutter (cut stone blocks)
+  - Cooking Station / Stove / Oven
+  - Cauldron (brewing / alchemy)
+  - Alchemy Table / Lab
+  - Enchanting Table (fantasy)
+  - Inscription Table / Writing Desk
+  - Gem Cutter / Jeweler's Bench
+  - Tinker's Table (gadgets / mechanisms)
+  - Assembly Table (advanced items)
+  - Dye Vat (coloring items)
+  - Fermenting Barrel (brewing drinks)
+  - Pottery Wheel
+  - Carpentry Bench
+  - Fletching Table (arrows)
+  - Grindstone (sharpening / repair)
+  - Research Table / Blueprint Station
+
+  10.2 Storage
+  ---------------------------------------------------------------------------
+  - Chest (small, medium, large)
+  - Crate / Box
+  - Barrel
+  - Cabinet / Wardrobe
+  - Shelf / Bookshelf
+  - Sack / Bag
+  - Safe / Locked Chest
+  - Display Case
+  - Weapon Rack
+  - Armor Stand / Mannequin
+  - Tool Rack
+  - Storage Silo (bulk)
+  - Pantry / Food Storage
+  - Ice Box / Refrigerator (food preservation)
+
+  10.3 Seating & Sleeping
+  ---------------------------------------------------------------------------
+  - Chair / Stool
+  - Bench
+  - Throne
+  - Bed (straw, wood, fancy)
+  - Hammock
+  - Sleeping Bag / Bedroll
+  - Cot
+
+  10.4 Tables & Surfaces
+  ---------------------------------------------------------------------------
+  - Table (small, large)
+  - Dining Table
+  - Counter / Bar
+  - Desk
+  - Podium / Lectern
+
+  10.5 Lighting
+  ---------------------------------------------------------------------------
+  - Torch (wall-mounted)
+  - Campfire / Fire Pit
+  - Fireplace / Hearth
+  - Candle / Candlestick
+  - Candelabra
+  - Lantern (hanging / standing)
+  - Chandelier
+  - Oil Lamp
+  - Wall Sconce
+  - Brazier (fire basket)
+  - Glowing Crystal (fantasy)
+  - Magic Orb Light (fantasy)
+  - Street Lamp / Lamp Post
+
+  10.6 Doors, Containers & Interactive
+  ---------------------------------------------------------------------------
+  - Lever / Switch
+  - Button
+  - Pressure Plate
+  - Tripwire
+  - Lock / Padlock
+  - Key
+  - Bell
+  - Horn / Alarm
+  - Sign / Signpost
+  - Notice Board / Bulletin Board
+  - Mailbox
+  - Clock (wall / grandfather)
+
+
+================================================================================
+ 11. DECORATIONS & AESTHETICS
+================================================================================
+
+  11.1 Wall Decorations
+  ---------------------------------------------------------------------------
+  - Painting / Portrait
+  - Tapestry
+  - Banner / Flag
+  - Mounted Trophy (animal head, skull)
+  - Wall Clock
+  - Mirror
+  - Map (wall-mounted)
+  - Coat of Arms / Crest
+  - Shelf (decorative)
+  - Mounted Weapon / Shield
+
+  11.2 Floor Decorations
+  ---------------------------------------------------------------------------
+  - Rug / Carpet (various patterns)
+  - Animal Skin Rug
+  - Doormat
+  - Floor Mosaic / Tile Pattern
+
+  11.3 Freestanding Decorations
+  ---------------------------------------------------------------------------
+  - Statue / Sculpture (stone, metal, wood)
+  - Vase / Pot (empty or with flowers)
+  - Flower Arrangement
+  - Potted Plant
+  - Globe
+  - Treasure Pile (coins, gems)
+  - Skull / Skeleton (display)
+  - Totem Pole
+  - Fountain
+  - Sundial
+  - Obelisk / Monolith
+  - Pillar (decorative)
+  - Aquarium / Fish Tank
+  - Terrarium
+  - Music Box
+  - Telescope (decorative)
+  - Hourglass
+  - Crystal Ball
+  - Scarecrow
+
+  11.4 Outdoor Decorations
+  ---------------------------------------------------------------------------
+  - Garden Gnome / Lawn Statue
+  - Bird Bath
+  - Wind Chime
+  - Weather Vane
+  - Well (decorative / functional)
+  - Stone Path / Stepping Stones
+  - Garden Arch / Arbor
+  - Hedge (shaped)
+  - Flower Bed
+  - Planter Box
+  - Tiki Torch
+  - Gravestone / Tombstone
+  - Memorial Stone
+  - Mailbox
+  - Flagpole
+  - Clothesline
+
+
+================================================================================
+ 12. FARMING & AGRICULTURE
+================================================================================
+
+  12.1 Farming Tools & Items
+  ---------------------------------------------------------------------------
+  - Hoe (tilling soil)
+  - Watering Can
+  - Seed Bag (various crop seeds)
+  - Fertilizer
+  - Compost / Compost Bin
+  - Scarecrow
+  - Plant Pot / Planter
+  - Trellis (climbing plants)
+  - Plowing Tool
+  - Harvesting Basket
+
+  12.2 Farm Structures
+  ---------------------------------------------------------------------------
+  - Farm Plot / Raised Bed
+  - Irrigation Channel / Sprinkler
+  - Greenhouse
+  - Barn
+  - Chicken Coop
+  - Stable
+  - Silo (grain storage)
+  - Beehive
+  - Fish Pond
+  - Mill / Windmill (grain processing)
+  - Water Well
+  - Trough (animal feed)
+  - Fence / Gate (animal pen)
+
+  12.3 Animal Husbandry
+  ---------------------------------------------------------------------------
+  - Chicken (eggs, feathers, meat)
+  - Cow (milk, leather, meat)
+  - Sheep (wool, meat)
+  - Pig (meat)
+  - Goat (milk, meat)
+  - Horse / Donkey (mount / pack animal)
+  - Dog (companion / herding)
+  - Cat (companion / pest control)
+  - Bee (honey, wax)
+  - Fish (various species)
+  - Rabbit (fur, meat)
+  - Duck (eggs, feathers, meat)
+  - Llama / Alpaca (wool)
+
+  12.4 Crops (Seeds -> Harvest)
+  ---------------------------------------------------------------------------
+  - Wheat -> Grain -> Flour
+  - Corn -> Corn Cob
+  - Rice -> Rice Grain
+  - Potato -> Potato
+  - Carrot -> Carrot
+  - Tomato -> Tomato
+  - Pumpkin -> Pumpkin
+  - Melon -> Melon Slice
+  - Berry Bush -> Berries
+  - Grape Vine -> Grapes
+  - Apple Tree -> Apples
+  - Cotton Plant -> Cotton
+  - Flax Plant -> Flax Fiber
+  - Herb Garden -> Various Herbs
+  - Mushroom Patch -> Mushrooms
+  - Cactus -> Cactus Fruit
+  - Sugarcane -> Sugar
+  - Coffee Plant -> Coffee Beans
+  - Tea Plant -> Tea Leaves
+  - Flower (various) -> Seeds / Dye ingredients
+
+
+================================================================================
+ 13. TRANSPORT & VEHICLES
+================================================================================
+
+  13.1 Mounts
+  ---------------------------------------------------------------------------
+  - Horse
+  - Donkey / Mule
+  - Camel
+  - Giant Spider (fantasy)
+  - Wolf / Dire Wolf (fantasy)
+  - Dragon (fantasy, late game)
+  - Flying Mount (griffin, pegasus)
+
+  13.2 Vehicles & Conveyances
+  ---------------------------------------------------------------------------
+  - Minecart (rails)
+  - Cart / Wagon (pulled)
+  - Boat / Canoe / Raft
+  - Sailboat
+  - Ship / Galleon
+  - Sled / Toboggan
+  - Hot Air Balloon
+  - Glider
+  - Portal / Teleporter (fantasy)
+
+  13.3 Rail & Track System
+  ---------------------------------------------------------------------------
+  - Rail / Track
+  - Powered Rail
+  - Rail Switch / Junction
+  - Rail Station / Platform
+  - Minecart (passenger, cargo, hopper)
+
+  13.4 Saddles & Attachments
+  ---------------------------------------------------------------------------
+  - Saddle
+  - Saddlebag
+  - Armor Barding (mount armor)
+  - Harness
+  - Reins
+
+
+================================================================================
+ 14. TRAPS & DEFENSES
+================================================================================
+
+  14.1 Passive Traps
+  ---------------------------------------------------------------------------
+  - Spike Trap / Punji Sticks
+  - Pitfall Trap
+  - Bear Trap
+  - Snare / Rope Trap
+  - Caltrops
+  - Tripwire (alarm / damage)
+  - Landmine
+  - Net Trap (capture)
+  - Glue Trap / Tar Pit
+  - Falling Rock Trap
+  - Poison Gas Trap
+
+  14.2 Active / Mechanical Traps
+  ---------------------------------------------------------------------------
+  - Arrow Trap (wall-mounted)
+  - Dart Trap
+  - Flame Trap / Flamethrower
+  - Spinning Blade Trap
+  - Tesla Coil / Electric Trap (advanced)
+  - Spring Trap (launches)
+  - Swinging Log / Axe Trap
+  - Retracting Floor
+
+  14.3 Defensive Structures
+  ---------------------------------------------------------------------------
+  - Wooden Barricade
+  - Sandbag Wall
+  - Spiked Wall / Fence
+  - Watch Tower / Guard Tower
+  - Turret (auto-firing, advanced)
+  - Moat (water ditch)
+  - Drawbridge
+  - Battlement / Crenellation
+  - Murder Holes (ceiling defense)
+  - Gate House
+  - Arrow Slit Wall
+  - Ballista (mounted weapon)
+  - Catapult / Trebuchet (siege weapon)
+  - Boiling Oil / Tar Dispenser
+
+
+================================================================================
+ 15. REDSTONE / WIRING / AUTOMATION
+================================================================================
+
+  15.1 Power & Signal
+  ---------------------------------------------------------------------------
+  - Redstone Dust / Wire / Cable
+  - Power Source (generator, solar, wind, water wheel)
+  - Battery / Accumulator
+  - Switch / Lever
+  - Button
+  - Pressure Plate (wood, stone, metal)
+  - Timer / Clock Circuit
+  - Daylight Sensor
+  - Motion Sensor / Tripwire
+
+  15.2 Logic & Control
+  ---------------------------------------------------------------------------
+  - Repeater (signal extender)
+  - Comparator (signal strength logic)
+  - AND Gate / OR Gate / NOT Gate
+  - Delay Circuit
+  - Pulse Generator
+  - Signal Splitter
+  - Signal Filter
+
+  15.3 Actuators & Machines
+  ---------------------------------------------------------------------------
+  - Piston (push/pull blocks)
+  - Sticky Piston
+  - Dispenser (shoots items)
+  - Dropper (drops items)
+  - Hopper (item transfer)
+  - Conveyor Belt
+  - Fan / Blower
+  - Pump (water / lava)
+  - Pipe (fluid transport)
+  - Automated Drill
+  - Automated Arm / Inserter (Factorio-like)
+  - Assembler (auto-crafting)
+  - Sorter (item filtering)
+  - Crusher (ore processing)
+  - Centrifuge (material separation)
+
+
+================================================================================
+ 16. LIGHTING & ENVIRONMENTAL
+================================================================================
+
+  16.1 Natural Light Sources
+  ---------------------------------------------------------------------------
+  - Glowworm / Bioluminescent Plant
+  - Lava Pool (ambient light)
+  - Glowing Mushroom
+  - Glowing Crystal
+  - Firefly Jar
+
+  16.2 Placed Light Sources
+  ---------------------------------------------------------------------------
+  - Torch
+  - Campfire
+  - Bonfire
+  - Lantern (floor, ceiling, wall)
+  - Candle
+  - Oil Lamp
+  - Chandelier
+  - Neon Light (advanced)
+  - Spotlight (advanced)
+  - Lava Lamp (decorative)
+
+  16.3 Environmental / Hazard Blocks
+  ---------------------------------------------------------------------------
+  - Water (source block, flowing)
+  - Lava (source block, flowing)
+  - Quicksand
+  - Poison Gas Cloud
+  - Steam Vent
+  - Thorny Vine
+  - Spider Web
+  - Acid Pool
+  - Fire (spreading)
+  - Smoke
+
+
+================================================================================
+ 17. CONTAINERS & PACKAGING
+================================================================================
+
+  - Bottle / Flask (empty, for potions / water)
+  - Jar (for preserves, fireflies, etc.)
+  - Bowl (for soups, stews)
+  - Plate (food serving)
+  - Cup / Mug / Tankard
+  - Bucket (water, milk, lava)
+  - Basket
+  - Sack / Bag (bulk materials)
+  - Barrel (bulk liquids / storage)
+  - Crate (shipping container)
+  - Urn (decorative / ashes)
+  - Chest (portable, small)
+  - Pouch (small item storage)
+  - Quiver (arrows)
+  - Kit / Case (tools)
+  - Backpack / Rucksack
+  - Canteen / Waterskin
+
+
+================================================================================
+ 18. BOOKS, MAPS & KNOWLEDGE
+================================================================================
+
+  - Book (blank, written, enchanted)
+  - Scroll (blank, written, spell)
+  - Map (blank, explored, treasure)
+  - Blueprint / Schematic
+  - Recipe Book
+  - Field Guide / Bestiary
+  - Journal / Diary
+  - Letter / Note
+  - Encyclopedia / Codex
+  - Skill Book (learn ability)
+  - Research Notes
+  - Rune Stone / Inscription
+  - Tablet (ancient writing)
+  - Wanted Poster
+  - Quest Log / Notice
+
+
+================================================================================
+ 19. CURRENCY & VALUABLES
+================================================================================
+
+  - Coin (copper, silver, gold, platinum)
+  - Gem (raw, cut, polished)
+  - Gold Nugget
+  - Silver Bar
+  - Treasure Chest (loot)
+  - Artifact (rare collectable)
+  - Trophy (boss drop / achievement)
+  - Ancient Relic
+  - Crown Jewel
+  - Trade Token
+  - Rare Stamp / Collectible
+  - Bounty Voucher
+
+
+================================================================================
+ 20. MAGIC & ENCHANTING (FANTASY)
+================================================================================
+
+  20.1 Spell Components
+  ---------------------------------------------------------------------------
+  - Mana Crystal / Shard
+  - Soul Fragment / Soul Gem
+  - Enchanting Dust
+  - Rune (fire, ice, lightning, earth, wind, etc.)
+  - Glyph / Sigil
+  - Spell Ink
+  - Arcane Focus
+  - Elemental Essence (fire, water, earth, air)
+  - Dragon Scale
+  - Phoenix Feather
+  - Unicorn Hair
+  - Troll Blood
+  - Demon Core
+
+  20.2 Enchantments (applied to weapons/armor)
+  ---------------------------------------------------------------------------
+  - Sharpness (extra melee damage)
+  - Fire Aspect (fire damage on hit)
+  - Frost Touch (slow on hit)
+  - Lightning Strike (chain lightning)
+  - Poison Edge (poison on hit)
+  - Lifesteal / Vampiric
+  - Knockback
+  - Unbreaking / Durability
+  - Protection (damage reduction)
+  - Feather Fall (reduced fall damage)
+  - Water Walking
+  - Night Vision
+  - Haste (mining speed)
+  - Fortune (extra drops)
+  - Silk Touch (mine block as-is)
+  - Thorns (damage reflect)
+  - Mending (self-repair)
+
+  20.3 Magic Structures
+  ---------------------------------------------------------------------------
+  - Enchanting Table
+  - Altar
+  - Summoning Circle
+  - Mana Well / Fountain
+  - Crystal Pillar
+  - Runestone
+  - Magic Mirror (teleportation)
+  - Portal Frame / Portal
+
+
+================================================================================
+ 21. MUSIC & INSTRUMENTS
+================================================================================
+
+  - Drum
+  - Flute / Recorder
+  - Lute / Guitar
+  - Harp
+  - Violin / Fiddle
+  - Horn / Trumpet
+  - Bell (hand bell)
+  - Piano / Keyboard
+  - Music Box
+  - Note Block (programmable)
+  - Record / Music Disc
+  - Jukebox
+
+
+================================================================================
+ 22. SPECIAL / ENDGAME ITEMS
+================================================================================
+
+  22.1 Boss Drops & Trophies
+  ---------------------------------------------------------------------------
+  - Boss Trophy (head / artifact)
+  - Legendary Weapon
+  - Legendary Armor Set
+  - Unique Accessory
+  - Summon Item (boss spawner)
+  - Key to Next Area / Biome
+
+  22.2 Progression Keys
+  ---------------------------------------------------------------------------
+  - Biome Key (unlocks new area)
+  - Dungeon Key (unlocks dungeon)
+  - Grappling Hook (access vertical areas)
+  - Diving Gear (access underwater)
+  - Heat Suit (access lava areas)
+  - Cold Suit (access frozen areas)
+  - Jetpack / Wings (access sky areas)
+  - Drill Mount (access deep underground)
+  - Dimensional Key / Portal Stone
+
+  22.3 Unique / Legendary
+  ---------------------------------------------------------------------------
+  - Infinity Bag (unlimited storage)
+  - Builder's Wand (place many blocks)
+  - Staff of Regrowth (restore nature)
+  - Time Stop Device
+  - Terraforming Tool
+  - Weather Control Device
+  - Resurrection Token
+  - World Seed / Creation Stone
+
+
+================================================================================
+ 23. NPC & TRADING
+================================================================================
+
+  23.1 NPC Items
+  ---------------------------------------------------------------------------
+  - Villager Spawn Egg / Recruitment Item
+  - NPC Housing Deed
+  - Trade Contract
+  - Gift (increase NPC reputation)
+  - Quest Item (NPC-specific)
+
+  23.2 Trade Goods
+  ---------------------------------------------------------------------------
+  - Spice (valuable trade commodity)
+  - Silk Cloth (valuable material)
+  - Exotic Wood
+  - Rare Ore
+  - Fine Wine
+  - Perfume
+  - Exotic Spice
+  - Ancient Artifact
+  - Rare Book / Manuscript
+  - Enchanted Item
+
+  23.3 Services (purchased, not items)
+  ---------------------------------------------------------------------------
+  - Repair Service
+  - Enchanting Service
+  - Healing Service
+  - Transport / Fast Travel
+  - Information / Map Reveal
+  - Training (skill upgrade)
+
+
+================================================================================
+ 24. BIOME-SPECIFIC ITEMS
+================================================================================
+
+  24.1 Forest / Plains
+  ---------------------------------------------------------------------------
+  - Oak Wood, Birch Wood, Pine Wood
+  - Wildflower, Sunflower
+  - Mushroom (common)
+  - Rabbit Foot, Deer Antler
+  - Bird Nest, Feather
+
+  24.2 Desert
+  ---------------------------------------------------------------------------
+  - Cactus, Cactus Fruit, Aloe
+  - Sand, Sandstone, Red Sand
+  - Scorpion Stinger, Snake Fang
+  - Desert Rose (mineral)
+  - Mirage Crystal (fantasy)
+  - Ancient Pottery Shard
+
+  24.3 Snow / Tundra
+  ---------------------------------------------------------------------------
+  - Snow Block, Packed Ice
+  - Frost Crystal, Frozen Tear
+  - Polar Bear Pelt, Wolf Fang
+  - Yeti Fur (fantasy)
+  - Frozen Fish
+  - Hot Spring Water
+
+  24.4 Swamp / Marsh
+  ---------------------------------------------------------------------------
+  - Swamp Wood, Mangrove Root
+  - Peat, Bog Iron
+  - Leech, Frog Leg
+  - Witch's Herb, Nightshade
+  - Will-o-Wisp Lantern (fantasy)
+  - Swamp Gas
+
+  24.5 Ocean / Beach
+  ---------------------------------------------------------------------------
+  - Coral (various colors)
+  - Seashell, Conch
+  - Pearl, Black Pearl
+  - Kelp, Sea Sponge
+  - Driftwood, Sea Glass
+  - Starfish, Sea Urchin Spine
+  - Shark Tooth, Whale Bone
+  - Treasure Map, Bottle Message
+
+  24.6 Underground / Cave
+  ---------------------------------------------------------------------------
+  - Stalactite / Stalagmite
+  - Glowing Mushroom
+  - Cave Moss, Cave Lichen
+  - Bat Wing, Spider Silk
+  - Geode
+  - Fossil
+  - Underground Lake Water
+  - Ancient Relic / Artifact
+
+  24.7 Volcanic / Lava
+  ---------------------------------------------------------------------------
+  - Obsidian, Volcanic Rock
+  - Fire Crystal, Magma Cream
+  - Sulfur, Brimstone
+  - Phoenix Feather (fantasy)
+  - Lava Core, Flame Essence
+  - Heat-Resistant Fiber
+
+  24.8 Sky / Floating Islands
+  ---------------------------------------------------------------------------
+  - Cloud Block
+  - Feather, Harpy Talon (fantasy)
+  - Sky Crystal, Star Fragment
+  - Wind Essence
+  - Moonstone
+  - Gravity Core
+
+
+================================================================================
+ NOTES & DESIGN CONSIDERATIONS
+================================================================================
+
+  Material Tier Progression (typical):
+    Wood -> Stone -> Copper -> Iron/Bronze -> Steel -> Gold(special) ->
+    Mithril/Fantasy -> Endgame Fantasy Metals
+
+  Crafting Chain Depth (examples):
+    Ore -> Ingot -> Component -> Tool/Weapon/Armor
+    Seed -> Crop -> Ingredient -> Cooked Meal
+    Log -> Plank -> Furniture / Building Block
+    Hide -> Leather -> Armor / Bag
+    Fiber -> Thread -> Cloth -> Clothing
+    Sand -> Glass -> Window / Bottle
+    Clay -> Brick -> Building Block / Pottery
+
+  Item Properties to Consider:
+    - Stack size (1 for tools/weapons, 99/999 for materials)
+    - Durability (tools, weapons, armor)
+    - Quality tiers (common, uncommon, rare, epic, legendary)
+    - Weight (for inventory systems)
+    - Placeable vs. holdable vs. consumable
+    - Craftable vs. found-only vs. purchased
+    - Biome-specific availability
+    - Level / progression gate requirements
+
+================================================================================

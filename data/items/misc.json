@@ -1,0 +1,32 @@
+[
+  {
+    "id": "gold_coin",
+    "name": "Gold Coin",
+    "category": "misc",
+    "glyphId": 36,
+    "fgColor": 16766720,
+    "stackable": true,
+    "maxStackSize": 9999,
+    "materialTier": "gold"
+  },
+  {
+    "id": "map_fragment",
+    "name": "Map Fragment",
+    "category": "misc",
+    "glyphId": 42,
+    "fgColor": 14329120,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none"
+  },
+  {
+    "id": "key",
+    "name": "Key",
+    "category": "misc",
+    "glyphId": 42,
+    "fgColor": 16766720,
+    "stackable": true,
+    "maxStackSize": 10,
+    "materialTier": "none"
+  }
+]
