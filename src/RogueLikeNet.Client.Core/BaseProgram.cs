@@ -22,8 +22,8 @@ public abstract class BaseProgram
     {
         Game.Initialize(platform);
 
-        Game.PlayOfflineRequested += debugMode => OnPlayOffline(debugMode);
-        Game.StartOfflineRequested += (seed, classId, playerName, genIndex, debugMode) => OnStartOffline(seed, classId, playerName, genIndex, debugMode);
+        Game.PlayOfflineRequested += OnPlayOffline;
+        Game.StartOfflineRequested += OnStartOffline;
         Game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
         Game.ReturnToMenuRequested += OnReturnToMenu;
         Game.DebugSyncRequested += OnDebugSync;
@@ -33,14 +33,11 @@ public abstract class BaseProgram
         Game.QuitRequested += () => _quitRequested = true;
     }
 
-    private async void OnPlayOffline(bool debugMode)
+    private async void OnPlayOffline()
     {
         var saveProvider = CreateSaveProvider();
         var generator = GeneratorRegistry.Create(GeneratorRegistry.DefaultIndex, 0);
         _embeddedServer = new GameServer(0, generator, logWriter: Console.Out, saveProvider: saveProvider);
-
-        if (debugMode)
-            ApplyDebugSettings();
 
         _embeddedServer.Start();
 
@@ -58,7 +55,7 @@ public abstract class BaseProgram
         Game.TransitionToClassSelect();
     }
 
-    private async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex, bool debugMode)
+    private async void OnStartOffline(long seed, int classId, string playerName, int generatorIndex)
     {
         Game.TransitionToConnecting();
 
@@ -77,6 +74,7 @@ public abstract class BaseProgram
             });
 
             await _connection.ReconnectAsync();
+
         }
         else
         {
@@ -84,9 +82,6 @@ public abstract class BaseProgram
             var generator = GeneratorRegistry.Create(generatorIndex, seed);
             _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out, saveProvider: saveProvider);
             _embeddedServer.InitializeNewGame(playerName + "'s World", seed, generatorId);
-
-            if (debugMode)
-                ApplyDebugSettings();
 
             _embeddedServer.Start();
 
@@ -103,8 +98,8 @@ public abstract class BaseProgram
             await Task.Delay(50);
         }
 
-        if (debugMode)
-            Game.GameState.DebugSeeAll = Game.Debug.VisibilityOff;
+        if (Game.Debug.Enabled)
+            ApplyDebugSettings();
 
         Game.TransitionToPlaying();
     }
@@ -130,7 +125,7 @@ public abstract class BaseProgram
         }
 
         if (Game.Debug.Enabled)
-            Game.GameState.DebugSeeAll = Game.Debug.VisibilityOff;
+            ApplyDebugSettings();
 
         Game.TransitionToPlaying();
     }

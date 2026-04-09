@@ -40,10 +40,10 @@ public sealed class RogueLikeGame : GameBase
     public DebugSettings Debug => _debug;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu (sets up server before slot selection).</summary>
-    public event Action<bool>? PlayOfflineRequested;
+    public event Action? PlayOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Offline" from the main menu.</summary>
-    public event Action<long, int, string, int, bool>? StartOfflineRequested;
+    public event Action<long, int, string, int>? StartOfflineRequested;
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
     public event Action<int, string>? StartOnlineRequested;
@@ -79,11 +79,11 @@ public sealed class RogueLikeGame : GameBase
             ScreenShake = _screenShake,
             Debug = _debug,
             RequestTransition = state => _screenManager!.TransitionTo(state),
-            OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex, _debug.Enabled),
+            OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex),
             OnStartOnline = (classId, name) => StartOnlineRequested?.Invoke(classId, name),
             OnReturnToMenu = () => ReturnToMenuRequested?.Invoke(),
             OnQuit = () => QuitRequested?.Invoke(),
-            OnPlayOffline = () => PlayOfflineRequested?.Invoke(_debug.Enabled),
+            OnPlayOffline = () => PlayOfflineRequested?.Invoke(),
             OnAdminOnline = () => AdminOnlineRequested?.Invoke(),
             DebugSyncRequested = () => DebugSyncRequested?.Invoke(),
         };
