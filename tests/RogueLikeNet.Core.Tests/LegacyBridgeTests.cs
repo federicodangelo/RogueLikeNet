@@ -299,6 +299,34 @@ public class LegacyBridgeTests
         Assert.Equal(NpcDefinitions.Dragon, reg.Get("dragon")!.NumericId);
     }
 
+    // --- New NPC tests ---
+
+    [Fact]
+    public void NpcBridge_NewNpcs_AccessibleByNumericId()
+    {
+        var reg = GameData.Instance.Npcs;
+        string[] newNpcs = ["slime", "wolf", "spider", "zombie"];
+        foreach (var id in newNpcs)
+        {
+            var npcDef = reg.Get(id);
+            Assert.NotNull(npcDef);
+            Assert.True(npcDef.NumericId > NpcDefinitions.Dragon,
+                $"{id} should have NumericId > Dragon({NpcDefinitions.Dragon})");
+
+            var def = NpcDefinitions.Get(npcDef.NumericId);
+            Assert.False(string.IsNullOrEmpty(def.Name), $"{id} has no name via Get()");
+            Assert.True(def.Health > 0, $"{id} has no health");
+        }
+    }
+
+    [Fact]
+    public void BiomeSpawns_IncludeNewEnemies_WhenDataLoaded()
+    {
+        var spawns = BiomeDefinitions.GetEnemySpawns(BiomeType.Forest);
+        Assert.True(spawns.Length > 2,
+            $"Forest should have >2 enemy types with new data, got {spawns.Length}");
+    }
+
     [Fact]
     public void ResourceNodeRegistry_LegacyIds_MatchOldConstants()
     {

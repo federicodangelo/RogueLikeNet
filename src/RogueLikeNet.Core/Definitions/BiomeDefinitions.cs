@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
@@ -187,8 +188,75 @@ public static class BiomeDefinitions
     /// <summary>Returns the liquid definition for a biome, or null if it has no liquid.</summary>
     public static LiquidDef? GetLiquid(BiomeType biome) => Liquids[(int)biome];
 
-    /// <summary>Returns the enemy spawn table for a biome.</summary>
-    public static ReadOnlySpan<EnemySpawnDef> GetEnemySpawns(BiomeType biome) => EnemySpawns[(int)biome];
+    /// <summary>Returns the enemy spawn table for a biome, extended with new NPCs when data is loaded.</summary>
+    public static EnemySpawnDef[] GetEnemySpawns(BiomeType biome)
+    {
+        var baseSpawns = EnemySpawns[(int)biome];
+        var reg = GameData.Instance.Npcs;
+        if (reg.Count == 0) return baseSpawns;
+
+        var slime = reg.Get("slime");
+        var wolf = reg.Get("wolf");
+        var spider = reg.Get("spider");
+        var zombie = reg.Get("zombie");
+
+        var extended = new List<EnemySpawnDef>(baseSpawns);
+
+        // Slime: weak, common early-game enemy for Forest/Fungal/Sewer
+        if (slime != null)
+        {
+            int w = biome switch
+            {
+                BiomeType.Forest or BiomeType.Fungal => 30,
+                BiomeType.Sewer => 25,
+                BiomeType.Stone => 15,
+                _ => 0,
+            };
+            if (w > 0) extended.Add(new(slime.NumericId, w));
+        }
+
+        // Wolf: aggressive, Forest/Ice
+        if (wolf != null)
+        {
+            int w = biome switch
+            {
+                BiomeType.Forest => 20,
+                BiomeType.Ice => 25,
+                BiomeType.Fungal => 10,
+                _ => 0,
+            };
+            if (w > 0) extended.Add(new(wolf.NumericId, w));
+        }
+
+        // Spider: moderate, dark areas
+        if (spider != null)
+        {
+            int w = biome switch
+            {
+                BiomeType.Crypt or BiomeType.Sewer => 20,
+                BiomeType.Stone or BiomeType.Fungal => 15,
+                BiomeType.Ruined => 10,
+                _ => 0,
+            };
+            if (w > 0) extended.Add(new(spider.NumericId, w));
+        }
+
+        // Zombie: tough, undead areas
+        if (zombie != null)
+        {
+            int w = biome switch
+            {
+                BiomeType.Crypt => 25,
+                BiomeType.Ruined => 20,
+                BiomeType.Sewer => 15,
+                BiomeType.Infernal => 10,
+                _ => 0,
+            };
+            if (w > 0) extended.Add(new(zombie.NumericId, w));
+        }
+
+        return extended.ToArray();
+    }
 
     /// <summary>
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.
@@ -196,8 +264,11 @@ public static class BiomeDefinitions
     /// </summary>
     public static NpcDefinition PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
     {
-        var spawns = EnemySpawns[(int)biome];
-        int maxTypeId = Math.Min(difficulty + 1, NpcDefinitions.All.Length - 1);
+        var spawns = GetEnemySpawns(biome);
+        var npcReg = GameData.Instance.Npcs;
+        int maxTypeId = npcReg.Count > 0
+            ? Math.Min(difficulty + 1, npcReg.Count - 1)
+            : Math.Min(difficulty + 1, NpcDefinitions.All.Length - 1);
 
         int totalWeight = 0;
         foreach (var s in spawns)

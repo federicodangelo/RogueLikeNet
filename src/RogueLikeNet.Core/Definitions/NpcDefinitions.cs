@@ -32,26 +32,51 @@ public static class NpcDefinitions
     public static NpcDefinition Get(int typeId)
     {
         var npcReg = GameData.Instance.Npcs;
-        if (npcReg.Count > 0 && typeId >= 0 && typeId < OldToNewNpcId.Length)
+        if (npcReg.Count > 0 && typeId >= 0)
         {
-            var d = npcReg.Get(OldToNewNpcId[typeId]);
-            if (d != null)
-                return new NpcDefinition(typeId, d.Name, d.GlyphId, d.FgColor,
-                    d.Health, d.Attack, d.Defense, d.Speed);
+            // Try legacy string lookup first
+            if (typeId < OldToNewNpcId.Length)
+            {
+                var d = npcReg.Get(OldToNewNpcId[typeId]);
+                if (d != null)
+                    return ConvertFromData(typeId, d);
+            }
+            else
+            {
+                // Direct registry lookup by NumericId (for new NPCs without legacy mapping)
+                var d = npcReg.Get(typeId);
+                if (d != null)
+                    return ConvertFromData(typeId, d);
+            }
         }
 
         return Array.Find(All, d => d.TypeId == typeId);
     }
 
+    private static NpcDefinition ConvertFromData(int typeId, Data.NpcDefinition d) =>
+        new(typeId, d.Name, d.GlyphId, d.FgColor, d.Health, d.Attack, d.Defense, d.Speed);
+
     /// <summary>
     /// Picks a random monster type suitable for the given difficulty tier (0-based).
+    /// When GameData is loaded, includes new NPC types from the registry.
     /// </summary>
     public static NpcDefinition Pick(SeededRandom rng, int difficulty)
     {
-        // Higher difficulty unlocks harder monsters
-        int maxIndex = Math.Min(difficulty + 1, All.Length - 1);
-        int idx = rng.Next(maxIndex + 1);
-        return All[idx];
+        var npcReg = GameData.Instance.Npcs;
+        if (npcReg.Count > 0)
+        {
+            // Use all registered NPCs, gated by difficulty
+            int totalCount = npcReg.Count;
+            int maxIndex = Math.Min(difficulty + 1, totalCount - 1);
+            int idx = rng.Next(maxIndex + 1);
+            // Get the NPC at this index (sorted alphabetically by ID during registration)
+            var npc = npcReg.Get(idx);
+            if (npc != null) return ConvertFromData(idx, npc);
+        }
+
+        // Fallback: Higher difficulty unlocks harder monsters
+        int maxIdx = Math.Min(difficulty + 1, All.Length - 1);
+        return All[rng.Next(maxIdx + 1)];
     }
 
     public static MonsterData GenerateMonsterData(NpcDefinition def, int difficulty)
