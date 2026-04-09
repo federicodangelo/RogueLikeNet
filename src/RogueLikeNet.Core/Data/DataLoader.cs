@@ -15,6 +15,7 @@ public static class DataLoader
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        TypeInfoResolver = DataJsonContext.Default,
     };
 
     /// <summary>
