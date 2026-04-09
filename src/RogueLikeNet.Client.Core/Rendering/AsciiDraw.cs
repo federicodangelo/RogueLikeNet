@@ -106,6 +106,8 @@ public static class AsciiDraw
         ItemDefinitions.CategoryGold => "[Gld]",
         ItemDefinitions.CategoryResource => "[Res]",
         ItemDefinitions.CategoryPlaceable => "[Plc]",
+        ItemDefinitions.CategoryTool => "[Tol]",
+        ItemDefinitions.CategoryFood => "[Fod]",
         _ => "     ",
     };
 

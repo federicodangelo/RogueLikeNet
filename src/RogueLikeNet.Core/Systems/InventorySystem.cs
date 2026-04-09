@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.World;
@@ -103,14 +104,30 @@ public class InventorySystem
                 player.QuickSlots.OnItemRemoved(slot);
                 break;
 
+            case ItemDefinitions.CategoryFood:
+                ApplyFood(ref player, itemData.ItemTypeId);
+                player.Inventory.Items.RemoveAt(slot);
+                player.QuickSlots.OnItemRemoved(slot);
+                break;
+
             case ItemDefinitions.CategoryWeapon:
             case ItemDefinitions.CategoryArmor:
+            case ItemDefinitions.CategoryTool:
                 EquipItem(ref player, slot);
                 break;
         }
     }
 
-    private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
+    private static void ApplyFood(ref PlayerEntity player, int itemTypeId)
+    {
+        var newDef = LegacyItemBridge.GetNewDefinition(itemTypeId)
+                  ?? GameData.Instance.Items.Get(itemTypeId);
+        int healthRestore = newDef?.Food?.HealthRestore ?? 0;
+        if (healthRestore > 0)
+            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + healthRestore);
+    }
+
+    private static void ApplyPotion(ref PlayerEntity player, Definitions.ItemDefinition def)
     {
         if (def.BaseHealth > 0)
             player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.BaseHealth);
@@ -138,6 +155,20 @@ public class InventorySystem
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
+    private static int ResolveEquipSlot(Definitions.ItemDefinition def, int itemTypeId)
+    {
+        // Try JSON registry for the real EquipSlot
+        var newDef = LegacyItemBridge.GetNewDefinition(itemTypeId)
+                  ?? GameData.Instance.Items.Get(itemTypeId);
+        if (newDef?.EquipSlot is { } slot)
+            return (int)slot;
+
+        // Fallback: weapons/tools → Weapon slot, armor → Chest
+        return def.Category == ItemDefinitions.CategoryWeapon || def.Category == ItemDefinitions.CategoryTool
+            ? (int)EquipSlot.Weapon
+            : (int)EquipSlot.Chest;
+    }
+
     private static void EquipItem(ref PlayerEntity player, int slot)
     {
         var newItem = player.Inventory.Items[slot];
@@ -145,9 +176,7 @@ public class InventorySystem
         player.Inventory.Items.RemoveAt(slot);
         player.QuickSlots.OnItemRemoved(slot);
 
-        int equipSlot = def.Category == ItemDefinitions.CategoryWeapon
-            ? (int)Data.EquipSlot.Weapon
-            : (int)Data.EquipSlot.Chest;
+        int equipSlot = ResolveEquipSlot(def, newItem.ItemTypeId);
 
         if (player.Equipment.HasItem(equipSlot))
         {
@@ -209,6 +238,7 @@ public class InventorySystem
         {
             case ItemDefinitions.CategoryWeapon:
             case ItemDefinitions.CategoryArmor:
+            case ItemDefinitions.CategoryTool:
                 EquipItem(ref player, slot);
                 break;
         }
@@ -257,8 +287,15 @@ public class InventorySystem
                 player.QuickSlots.OnItemRemoved(invIndex);
                 break;
 
+            case ItemDefinitions.CategoryFood:
+                ApplyFood(ref player, itemData.ItemTypeId);
+                player.Inventory.Items.RemoveAt(invIndex);
+                player.QuickSlots.OnItemRemoved(invIndex);
+                break;
+
             case ItemDefinitions.CategoryWeapon:
             case ItemDefinitions.CategoryArmor:
+            case ItemDefinitions.CategoryTool:
                 EquipItem(ref player, invIndex);
                 break;
         }
@@ -315,7 +352,9 @@ public class InventorySystem
         if (def.Category != ItemDefinitions.CategoryWeapon &&
             def.Category != ItemDefinitions.CategoryArmor &&
             def.Category != ItemDefinitions.CategoryPotion &&
-            def.Category != ItemDefinitions.CategoryPlaceable)
+            def.Category != ItemDefinitions.CategoryPlaceable &&
+            def.Category != ItemDefinitions.CategoryTool &&
+            def.Category != ItemDefinitions.CategoryFood)
             return;
         int emptySlot = player.QuickSlots.FirstEmptySlot();
         if (emptySlot >= 0)

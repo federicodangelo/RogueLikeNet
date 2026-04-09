@@ -200,13 +200,21 @@ public sealed class InventoryRenderer
         var item = hud.InventoryItems[selIdx];
         var def = ItemDefinitions.Get(item.ItemTypeId);
 
-        // Only show preview for equippable items (weapons and armor)
-        if (def.Category != ItemDefinitions.CategoryWeapon && def.Category != ItemDefinitions.CategoryArmor)
+        // Only show preview for equippable items (weapons, armor, tools)
+        if (def.Category != ItemDefinitions.CategoryWeapon &&
+            def.Category != ItemDefinitions.CategoryArmor &&
+            def.Category != ItemDefinitions.CategoryTool)
             return;
 
-        // Find the currently equipped item in the same slot
-        int targetSlot = def.Category == ItemDefinitions.CategoryWeapon
-            ? (int)EquipSlot.Weapon : (int)EquipSlot.Chest;
+        // Resolve the correct equipment slot from JSON registry
+        int targetSlot;
+        var newDef = LegacyItemBridge.GetNewDefinition(item.ItemTypeId)
+                  ?? GameData.Instance.Items.Get(item.ItemTypeId);
+        if (newDef?.EquipSlot is { } regSlot)
+            targetSlot = (int)regSlot;
+        else
+            targetSlot = def.Category == ItemDefinitions.CategoryWeapon || def.Category == ItemDefinitions.CategoryTool
+                ? (int)EquipSlot.Weapon : (int)EquipSlot.Chest;
         var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
 
         var eqDef = equipped != null ? ItemDefinitions.Get(equipped.ItemTypeId) : default;
