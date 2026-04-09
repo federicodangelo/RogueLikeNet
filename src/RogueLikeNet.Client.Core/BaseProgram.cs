@@ -47,6 +47,8 @@ public abstract class BaseProgram
         var saveProvider = CreateSaveProvider();
         var generator = GeneratorRegistry.Create(GeneratorRegistry.DefaultIndex, 0);
         _embeddedServer = new GameServer(0, generator, logWriter: Console.Out, saveProvider: saveProvider);
+        if (Game.Debug.Enabled)
+            ApplyDebugSettings();
 
         _embeddedServer.Start();
 
@@ -90,6 +92,9 @@ public abstract class BaseProgram
             var saveProvider = CreateSaveProvider();
             var generator = GeneratorRegistry.Create(generatorIndex, seed);
             _embeddedServer = new GameServer(seed, generator, logWriter: Console.Out, saveProvider: saveProvider);
+            if (Game.Debug.Enabled)
+                ApplyDebugSettings();
+
             _embeddedServer.InitializeNewGame(playerName + "'s World", seed, generatorId);
 
             _embeddedServer.Start();
