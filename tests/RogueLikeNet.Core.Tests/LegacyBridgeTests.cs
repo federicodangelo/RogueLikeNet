@@ -307,6 +307,55 @@ public class LegacyBridgeTests
         Assert.Equal(ResourceNodeDefinitions.CopperRock, reg.Get("copper_rock")!.NumericId);
     }
 
+    // --- New resource node tests ---
+
+    [Fact]
+    public void ResourceNode_NewNodes_AccessibleByNumericId()
+    {
+        var reg = GameData.Instance.ResourceNodes;
+        var coal = reg.Get("coal_deposit");
+        Assert.NotNull(coal);
+        Assert.True(coal.NumericId > ResourceNodeDefinitions.Tree,
+            $"coal_deposit should have NumericId > {ResourceNodeDefinitions.Tree}");
+
+        var def = ResourceNodeDefinitions.Get(coal.NumericId);
+        Assert.Equal("Coal Deposit", def.Name);
+        Assert.True(def.Health > 0);
+        Assert.True(def.ResourceItemTypeId > 0, "Drop item should have valid NumericId");
+    }
+
+    [Fact]
+    public void ResourceNode_NewNodes_DropItemsResolve()
+    {
+        var reg = GameData.Instance.ResourceNodes;
+        string[] newNodes = ["coal_deposit", "sand_deposit", "clay_deposit", "mithril_rock", "adamantite_rock"];
+        foreach (var nodeId in newNodes)
+        {
+            var nodeDef = reg.Get(nodeId);
+            Assert.NotNull(nodeDef);
+            var def = ResourceNodeDefinitions.Get(nodeDef.NumericId);
+            Assert.True(def.ResourceItemTypeId > 0,
+                $"{nodeId} drop item should have valid NumericId, got {def.ResourceItemTypeId}");
+            // Verify the drop item actually exists
+            var dropItem = ItemDefinitions.Get(def.ResourceItemTypeId);
+            Assert.False(string.IsNullOrEmpty(dropItem.Name),
+                $"{nodeId} drop item {def.ResourceItemTypeId} has no definition");
+        }
+    }
+
+    [Fact]
+    public void ResourceNode_GetForBiome_IncludesNewNodes()
+    {
+        var stoneNodes = ResourceNodeDefinitions.GetForBiome(BiomeType.Stone);
+        // With GameData loaded, should include coal, sand, clay, and mithril
+        Assert.True(stoneNodes.Length > 4,
+            $"Stone biome should have >4 node types with new data, got {stoneNodes.Length}");
+
+        var names = stoneNodes.Select(n => n.Def.Name).ToArray();
+        Assert.Contains("Coal Deposit", names);
+        Assert.Contains("Mithril Rock", names);
+    }
+
     // --- Crafting recipe bridge tests ---
 
     [Fact]

@@ -33,29 +33,123 @@ public static class ResourceNodeDefinitions
     public static ResourceNodeDefinition Get(int nodeTypeId)
     {
         var reg = GameData.Instance.ResourceNodes;
-        if (reg.Count > 0 && nodeTypeId > 0 && nodeTypeId < OldToNewNodeId.Length)
+        if (reg.Count > 0 && nodeTypeId > 0)
         {
-            var newId = OldToNewNodeId[nodeTypeId];
-            if (newId != null)
+            // Try legacy string ID lookup first
+            if (nodeTypeId < OldToNewNodeId.Length)
             {
-                var d = reg.Get(newId);
-                if (d != null)
+                var newId = OldToNewNodeId[nodeTypeId];
+                if (newId != null)
                 {
-                    // Convert dropItemId string to legacy int via LegacyItemBridge
-                    int resItemId = LegacyItemBridge.GetLegacyId(d.DropItemId);
-                    return new ResourceNodeDefinition(nodeTypeId, d.Name, d.GlyphId, d.FgColor,
-                        d.Health, d.Defense, resItemId, d.MinDrop, d.MaxDrop);
+                    var d = reg.Get(newId);
+                    if (d != null)
+                        return ConvertFromData(nodeTypeId, d);
                 }
+            }
+            else
+            {
+                // Direct registry lookup by NumericId (for new nodes without legacy mapping)
+                var d = reg.Get(nodeTypeId);
+                if (d != null)
+                    return ConvertFromData(nodeTypeId, d);
             }
         }
 
         return nodeTypeId > 0 && nodeTypeId < _byId.Length ? _byId[nodeTypeId] : default;
     }
 
+    private static ResourceNodeDefinition ConvertFromData(int nodeTypeId, Data.ResourceNodeDefinition d)
+    {
+        int resItemId = LegacyItemBridge.GetLegacyId(d.DropItemId);
+        if (resItemId == 0)
+            resItemId = GameData.Instance.Items.GetNumericId(d.DropItemId);
+        return new ResourceNodeDefinition(nodeTypeId, d.Name, d.GlyphId, d.FgColor,
+            d.Health, d.Defense, resItemId, d.MinDrop, d.MaxDrop);
+    }
+
     /// <summary>
     /// Returns an array of (NodeDefinition, Weight) pairs for the given biome.
+    /// When GameData is loaded, includes new node types (coal, sand, clay, mithril, adamantite).
     /// </summary>
-    public static (ResourceNodeDefinition Def, int Weight)[] GetForBiome(BiomeType biome) => biome switch
+    public static (ResourceNodeDefinition Def, int Weight)[] GetForBiome(BiomeType biome)
+    {
+        var baseList = GetBaseForBiome(biome);
+        var reg = GameData.Instance.ResourceNodes;
+        if (reg.Count == 0) return baseList;
+
+        // Look up new node types by string ID → NumericId
+        var coal = reg.Get("coal_deposit");
+        var sand = reg.Get("sand_deposit");
+        var clay = reg.Get("clay_deposit");
+        var mithril = reg.Get("mithril_rock");
+        var adamantite = reg.Get("adamantite_rock");
+
+        var extended = new List<(ResourceNodeDefinition, int)>(baseList);
+
+        // Add coal to most biomes
+        if (coal != null)
+        {
+            int coalWeight = biome switch
+            {
+                BiomeType.Stone or BiomeType.Ruined => 15,
+                BiomeType.Ice or BiomeType.Crypt => 10,
+                BiomeType.Lava or BiomeType.Infernal => 5,
+                BiomeType.Forest or BiomeType.Fungal or BiomeType.Sewer => 8,
+                _ => 10,
+            };
+            extended.Add((Get(coal.NumericId), coalWeight));
+        }
+
+        // Add sand/clay to surface-like biomes
+        if (sand != null)
+        {
+            int sandWeight = biome switch
+            {
+                BiomeType.Stone or BiomeType.Ruined => 10,
+                BiomeType.Forest or BiomeType.Fungal => 5,
+                _ => 3,
+            };
+            extended.Add((Get(sand.NumericId), sandWeight));
+        }
+        if (clay != null)
+        {
+            int clayWeight = biome switch
+            {
+                BiomeType.Forest or BiomeType.Fungal or BiomeType.Sewer => 8,
+                BiomeType.Stone => 5,
+                _ => 3,
+            };
+            extended.Add((Get(clay.NumericId), clayWeight));
+        }
+
+        // Add rare ores to harder biomes
+        if (mithril != null)
+        {
+            int mithrilWeight = biome switch
+            {
+                BiomeType.Stone or BiomeType.Arcane => 5,
+                BiomeType.Lava or BiomeType.Infernal => 8,
+                BiomeType.Crypt or BiomeType.Ice => 3,
+                _ => 0,
+            };
+            if (mithrilWeight > 0) extended.Add((Get(mithril.NumericId), mithrilWeight));
+        }
+        if (adamantite != null)
+        {
+            int adamantiteWeight = biome switch
+            {
+                BiomeType.Lava => 5,
+                BiomeType.Infernal => 4,
+                BiomeType.Arcane => 2,
+                _ => 0,
+            };
+            if (adamantiteWeight > 0) extended.Add((Get(adamantite.NumericId), adamantiteWeight));
+        }
+
+        return extended.ToArray();
+    }
+
+    private static (ResourceNodeDefinition Def, int Weight)[] GetBaseForBiome(BiomeType biome) => biome switch
     {
         BiomeType.Forest => [(Get(Tree), 60), (Get(CopperRock), 20), (Get(IronRock), 10), (Get(GoldRock), 5)],
         BiomeType.Fungal => [(Get(Tree), 40), (Get(CopperRock), 25), (Get(IronRock), 15), (Get(GoldRock), 5)],
