@@ -36,7 +36,7 @@ public static class DataLoader
                     items.AddRange(loaded);
             }
         }
-        data.Items.Register(items);
+        data.Items.Register(items, LegacyItemBridge.GetLegacyId);
 
         // Load recipes from all JSON files in data/recipes/
         var recipes = new List<RecipeDefinition>();
@@ -58,7 +58,7 @@ public static class DataLoader
         {
             var nodes = DeserializeFile<ResourceNodeDefinition[]>(nodesFile);
             if (nodes != null)
-                data.ResourceNodes.Register(nodes);
+                data.ResourceNodes.Register(nodes, LegacyItemBridge.GetLegacyNodeId);
         }
 
         // Load NPCs/monsters
@@ -67,7 +67,7 @@ public static class DataLoader
         {
             var npcs = DeserializeFile<NpcDefinition[]>(monstersFile);
             if (npcs != null)
-                data.Npcs.Register(npcs);
+                data.Npcs.Register(npcs, LegacyItemBridge.GetLegacyNpcId);
         }
 
         // Load biomes

@@ -226,4 +226,68 @@ public class LegacyBridgeTests : IDisposable
         Assert.True(def.Walkable);
         Assert.True(def.Transparent);
     }
+
+    [Fact]
+    public void ItemRegistry_LegacyIds_MatchOldConstants()
+    {
+        // Verify items with legacy mappings get their old NumericIds
+        var reg = GameData.Instance.Items;
+        Assert.Equal(ItemDefinitions.ShortSword, reg.Get("short_sword")!.NumericId);
+        Assert.Equal(ItemDefinitions.Gold, reg.Get("gold_coin")!.NumericId);
+        Assert.Equal(ItemDefinitions.Wood, reg.Get("wood")!.NumericId);
+        Assert.Equal(ItemDefinitions.WoodenDoor, reg.Get("wooden_door")!.NumericId);
+        Assert.Equal(ItemDefinitions.GoldFloorTile, reg.Get("gold_floor_tile")!.NumericId);
+    }
+
+    [Fact]
+    public void ItemRegistry_NewItems_GetIdsAboveLegacyRange()
+    {
+        // Verify new items (tools, food, etc.) get NumericIds above old range
+        var reg = GameData.Instance.Items;
+        var ironPickaxe = reg.Get("iron_pickaxe");
+        Assert.NotNull(ironPickaxe);
+        Assert.True(ironPickaxe.NumericId > ItemDefinitions.GoldFloorTile,
+            $"New item iron_pickaxe should have NumericId > {ItemDefinitions.GoldFloorTile}, got {ironPickaxe.NumericId}");
+    }
+
+    [Fact]
+    public void ItemRegistry_NewItems_AccessibleByNumericId()
+    {
+        // Verify new items can be looked up by their assigned NumericId
+        var reg = GameData.Instance.Items;
+        var ironPickaxe = reg.Get("iron_pickaxe");
+        Assert.NotNull(ironPickaxe);
+
+        var byNumericId = reg.Get(ironPickaxe.NumericId);
+        Assert.Same(ironPickaxe, byNumericId);
+    }
+
+    [Fact]
+    public void ItemDefinitions_Get_WorksForNewItems()
+    {
+        // Verify ItemDefinitions.Get() returns correct data for new items (via registry)
+        var reg = GameData.Instance.Items;
+        var ironPickaxe = reg.Get("iron_pickaxe");
+        Assert.NotNull(ironPickaxe);
+
+        var def = ItemDefinitions.Get(ironPickaxe.NumericId);
+        Assert.Equal("Iron Pickaxe", def.Name);
+        Assert.Equal(ItemDefinitions.CategoryTool, def.Category);
+    }
+
+    [Fact]
+    public void NpcRegistry_LegacyIds_MatchOldConstants()
+    {
+        var reg = GameData.Instance.Npcs;
+        Assert.Equal(NpcDefinitions.Goblin, reg.Get("goblin")!.NumericId);
+        Assert.Equal(NpcDefinitions.Dragon, reg.Get("dragon")!.NumericId);
+    }
+
+    [Fact]
+    public void ResourceNodeRegistry_LegacyIds_MatchOldConstants()
+    {
+        var reg = GameData.Instance.ResourceNodes;
+        Assert.Equal(ResourceNodeDefinitions.Tree, reg.Get("tree")!.NumericId);
+        Assert.Equal(ResourceNodeDefinitions.CopperRock, reg.Get("copper_rock")!.NumericId);
+    }
 }

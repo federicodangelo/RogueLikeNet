@@ -16,6 +16,10 @@ public sealed class NpcDefinition
     public int Speed { get; set; }
     public int XpReward { get; set; }
     public LootEntry[] LootTable { get; set; } = [];
+
+    /// <summary>Internal flag for registry: true when NumericId was set from a legacy mapping.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    internal bool HasLegacyId { get; set; }
 }
 
 public sealed class LootEntry

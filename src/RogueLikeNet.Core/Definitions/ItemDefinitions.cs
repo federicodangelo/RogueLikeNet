@@ -17,6 +17,8 @@ public static class ItemDefinitions
     public const int CategoryGold = 3;
     public const int CategoryResource = 4;
     public const int CategoryPlaceable = 5;
+    public const int CategoryTool = 6;
+    public const int CategoryFood = 7;
 
     // Item rarities
     public const int RarityCommon = 0;
@@ -115,15 +117,27 @@ public static class ItemDefinitions
     ];
 
     /// <summary>
-    /// Lookup by TypeId. When GameData is loaded, returns data from the JSON registry
-    /// via LegacyItemBridge. Otherwise falls back to the hardcoded array.
+    /// Lookup by TypeId. When GameData is loaded, looks up from JSON registry.
+    /// Handles both legacy IDs (via bridge) and new registry NumericIds.
+    /// Falls back to the hardcoded array when GameData is not loaded.
     /// </summary>
     public static ItemDefinition Get(int typeId)
     {
+        // Try bridge first (legacy old int → string → registry)
         var newDef = LegacyItemBridge.GetNewDefinition(typeId);
         if (newDef != null)
             return ConvertFromData(typeId, newDef);
 
+        // Try direct registry lookup by NumericId (for new items without legacy mapping)
+        var reg = GameData.Instance.Items;
+        if (reg.Count > 0)
+        {
+            newDef = reg.Get(typeId);
+            if (newDef != null)
+                return ConvertFromData(typeId, newDef);
+        }
+
+        // Fall back to hardcoded array
         return typeId > 0 && typeId < _byId.Length ? _byId[typeId] : default;
     }
 
@@ -147,9 +161,11 @@ public static class ItemDefinitions
         ItemCategory.Potion => CategoryPotion,
         ItemCategory.Material => CategoryResource,
         ItemCategory.Furniture or ItemCategory.Block => CategoryPlaceable,
+        ItemCategory.Tool => CategoryTool,
+        ItemCategory.Food => CategoryFood,
         // gold_coin is Misc in JSON but CategoryGold in old system
         ItemCategory.Misc when d.Id == "gold_coin" => CategoryGold,
-        _ => CategoryResource, // Tools, Food, Seeds, etc. default to resource (stackable)
+        _ => CategoryResource, // Seeds, Ammo, Magic, etc.
     };
 
     private static readonly ItemDefinition[] _byId;

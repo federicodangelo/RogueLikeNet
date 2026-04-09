@@ -3,9 +3,9 @@ using RogueLikeNet.Core.Definitions;
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
-/// Maps legacy numeric item IDs (from ItemDefinitions constants) to new string-based
-/// ItemDefinition objects from the ItemRegistry. Enables gradual migration from
-/// hardcoded definitions to JSON-driven data.
+/// Maps legacy numeric IDs (from old Definitions constants) to new string-based
+/// registry IDs. Enables gradual migration from hardcoded definitions to JSON-driven data.
+/// Covers items, NPCs, and resource nodes.
 /// </summary>
 public static class LegacyItemBridge
 {
@@ -88,4 +88,38 @@ public static class LegacyItemBridge
         var newId = GetNewId(legacyId);
         return newId != null ? GameData.Instance.Items.Get(newId) : null;
     }
+
+    // --- NPC legacy mappings ---
+
+    private static readonly Dictionary<string, int> NpcNewToOldId = new()
+    {
+        ["goblin"] = NpcDefinitions.Goblin,
+        ["orc"] = NpcDefinitions.Orc,
+        ["skeleton"] = NpcDefinitions.Skeleton,
+        ["dragon"] = NpcDefinitions.Dragon,
+    };
+
+    /// <summary>
+    /// Gets the legacy numeric ID for a new NPC string ID.
+    /// Returns -1 if the NPC has no legacy mapping.
+    /// </summary>
+    public static int GetLegacyNpcId(string newId) =>
+        NpcNewToOldId.TryGetValue(newId, out var id) ? id : -1;
+
+    // --- Resource node legacy mappings ---
+
+    private static readonly Dictionary<string, int> NodeNewToOldId = new()
+    {
+        ["copper_rock"] = ResourceNodeDefinitions.CopperRock,
+        ["iron_rock"] = ResourceNodeDefinitions.IronRock,
+        ["gold_rock"] = ResourceNodeDefinitions.GoldRock,
+        ["tree"] = ResourceNodeDefinitions.Tree,
+    };
+
+    /// <summary>
+    /// Gets the legacy numeric ID for a new resource node string ID.
+    /// Returns 0 if the node has no legacy mapping.
+    /// </summary>
+    public static int GetLegacyNodeId(string newId) =>
+        NodeNewToOldId.GetValueOrDefault(newId);
 }
