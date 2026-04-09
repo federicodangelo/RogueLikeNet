@@ -257,13 +257,13 @@ public static class BiomeDefinitions
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.
     /// Higher difficulty unlocks harder monsters (gated by NPC attack stat).
     /// </summary>
-    public static NpcDef PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
+    public static NpcDefinition PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
     {
         var spawns = GetEnemySpawns(biome);
         var npcReg = GameData.Instance.Npcs;
 
         // Resolve spawns and filter by difficulty (attack-based gating)
-        var resolved = new List<(NpcDef Def, int Weight)>();
+        var resolved = new List<(NpcDefinition Def, int Weight)>();
         foreach (var s in spawns)
         {
             var npc = npcReg.Get(s.NpcId);
@@ -271,18 +271,14 @@ public static class BiomeDefinitions
             // Higher attack NPCs require higher difficulty
             int requiredDifficulty = npc.Attack / 4;
             if (difficulty >= requiredDifficulty)
-                resolved.Add((new NpcDef(npc.NumericId, npc.Name, npc.GlyphId, npc.FgColor,
-                    npc.Health, npc.Attack, npc.Defense, npc.Speed), s.Weight));
+                resolved.Add((npc, s.Weight));
         }
 
         if (resolved.Count == 0)
         {
             // Fallback: return weakest NPC
             var weakest = npcReg.All.OrderBy(n => n.Attack).FirstOrDefault();
-            if (weakest != null)
-                return new NpcDef(weakest.NumericId, weakest.Name, weakest.GlyphId, weakest.FgColor,
-                    weakest.Health, weakest.Attack, weakest.Defense, weakest.Speed);
-            return default;
+            return weakest!;
         }
 
         int totalWeight = 0;

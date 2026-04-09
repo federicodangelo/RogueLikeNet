@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -106,8 +107,8 @@ public class ArenaGenerator : IDungeonGenerator
             int distToCenter = Math.Abs(x - 32) + Math.Abs(y - 32);
             if (distToCenter < 8) continue;
 
-            var def = NpcDefinitions.Pick(rng, difficulty);
-            var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+            var def = GameData.Instance.Npcs.Pick(rng, difficulty);
+            var monsterData = NpcRegistry.GenerateMonsterData(def!, difficulty);
             result.Monsters.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, chunkZ), monsterData));
         }
 

@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 
@@ -216,11 +216,12 @@ public static class EntitySerializer
         {
             int resourceItemTypeId = GetInt(dict, "ResourceItemTypeId");
             int nodeTypeId = 0;
-            foreach (var def in ResourceNodeDefinitions.All)
+            foreach (var def in GameData.Instance.ResourceNodes.All)
             {
-                if (def.ResourceItemTypeId == resourceItemTypeId)
+                int resItemId = GameData.Instance.Items.GetNumericId(def.DropItemId);
+                if (resItemId == resourceItemTypeId)
                 {
-                    nodeTypeId = def.NodeTypeId;
+                    nodeTypeId = def.NumericId;
                     break;
                 }
             }
@@ -269,8 +270,8 @@ public static class EntitySerializer
     {
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         int nodeTypeId = GetInt(dict, "NodeTypeId");
-        var def = ResourceNodeDefinitions.Get(nodeTypeId);
-        ref var node = ref engine.SpawnResourceNode(Position.FromCoords(x, y, z), def);
+        var def = GameData.Instance.ResourceNodes.Get(nodeTypeId);
+        ref var node = ref engine.SpawnResourceNode(Position.FromCoords(x, y, z), def!);
 
         // Restore runtime state
         node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);

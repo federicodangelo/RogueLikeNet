@@ -2,6 +2,7 @@ using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
@@ -82,12 +83,12 @@ public sealed class GameWorldRenderer
                     // Override glyph/color from placed item when present
                     if (tile.PlaceableItemId != 0)
                     {
-                        glyphId = PlaceableDefinitions.GetGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
-                        fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(PlaceableDefinitions.GetFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
+                        glyphId = GameData.Instance.Items.GetPlaceableGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
+                        fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(GameData.Instance.Items.GetPlaceableFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
                     }
 
                     // Client-side door glyph override: pick | or - based on surrounding walls
-                    if (PlaceableDefinitions.IsDoor(tile.PlaceableItemId))
+                    if (GameData.Instance.Items.IsPlaceableDoor(tile.PlaceableItemId))
                     {
                         var worldDoorX = cameraCenterX - visibleCols / 2 + col;
                         var worldDoorY = cameraCenterY - visibleRows / 2 + row;
@@ -246,13 +247,13 @@ public sealed class GameWorldRenderer
                     dotColor = visible ? new Color4(70, 130, 255, 255) : new Color4(25, 45, 80, 255);
                 else if (tile.GlyphId == TileDefinitions.GlyphTorch)
                     dotColor = visible ? new Color4(255, 200, 100, 255) : new Color4(80, 65, 35, 255);
-                else if (PlaceableDefinitions.IsDoor(tile.PlaceableItemId))
+                else if (GameData.Instance.Items.IsPlaceableDoor(tile.PlaceableItemId))
                     dotColor = visible ? new Color4(180, 130, 60, 255) : new Color4(60, 45, 25, 255);
-                else if (PlaceableDefinitions.IsWall(tile.PlaceableItemId))
+                else if (GameData.Instance.Items.IsPlaceableWall(tile.PlaceableItemId))
                     dotColor = visible ? new Color4(120, 120, 140, 255) : new Color4(50, 50, 60, 255);
                 else if (tile.Type == TileType.StairsDown || tile.Type == TileType.StairsUp)
                     dotColor = visible ? new Color4(255, 255, 80, 255) : new Color4(80, 80, 30, 255);
-                else if (tile.PlaceableItemId != 0 && PlaceableDefinitions.IsWalkable(tile.PlaceableItemId, tile.PlaceableItemExtra))
+                else if (tile.PlaceableItemId != 0 && GameData.Instance.Items.IsPlaceableWalkable(tile.PlaceableItemId, tile.PlaceableItemExtra))
                     dotColor = visible ? new Color4(80, 80, 60, 255) : new Color4(30, 30, 25, 255);
                 else if (tile.Type == TileType.Floor)
                     dotColor = visible ? new Color4(60, 60, 70, 255) : new Color4(25, 25, 30, 255);
@@ -302,5 +303,5 @@ public sealed class GameWorldRenderer
     }
 
     private static bool IsWallLike(TileInfo tile) =>
-        tile.Type == TileType.Blocked || PlaceableDefinitions.IsWall(tile.PlaceableItemId);
+        tile.Type == TileType.Blocked || GameData.Instance.Items.IsPlaceableWall(tile.PlaceableItemId);
 }

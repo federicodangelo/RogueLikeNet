@@ -174,8 +174,8 @@ internal static class DungeonHelper
         {
             if (FindRandomRoomWalkableCoordinate(out var x, out var y))
             {
-                var def = NpcDefinitions.Pick(rng, difficulty);
-                var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+                var def = GameData.Instance.Npcs.Pick(rng, difficulty);
+                var monsterData = NpcRegistry.GenerateMonsterData(def!, difficulty);
                 int hpScale = 1 + difficulty / 2;
                 result.Monsters.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), monsterData));
             }
@@ -229,7 +229,7 @@ internal static class DungeonHelper
                     if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
                     if (result.Chunk.Tiles[x, y].Type != TileType.Floor) continue;
 
-                    var def = ResourceNodeDefinitions.Pick(rng, biome);
+                    var def = GameData.Instance.ResourceNodes.Pick(rng, biome);
                     result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), def));
                     break;
                 }

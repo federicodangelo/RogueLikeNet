@@ -129,10 +129,11 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
         // Placeables
 
-        for (int placeableIdx = 0; placeableIdx < PlaceableDefinitions.All.Length; placeableIdx++)
+        var allPlaceables = GameData.Instance.Items.GetAllPlaceables();
+        for (int placeableIdx = 0; placeableIdx < allPlaceables.Length; placeableIdx++)
         {
-            var def = PlaceableDefinitions.All[placeableIdx];
-            if (def.ItemTypeId == 0)
+            var def = allPlaceables[placeableIdx];
+            if (def.NumericId == 0)
                 continue;
 
             int lx = startX + placeableIdx % 5 * spacingX;
@@ -141,16 +142,17 @@ public class ItemShowcaseGenerator : IDungeonGenerator
             if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
                 continue;
 
-            chunk.Tiles[lx, ly].PlaceableItemId = def.ItemTypeId;
+            chunk.Tiles[lx, ly].PlaceableItemId = def.NumericId;
         }
 
         startX += 6 * spacingX; // Shift right for resource nodes
 
         // Resource nodes
-        for (int nodeIdx = 0; nodeIdx < ResourceNodeDefinitions.All.Length; nodeIdx++)
+        var allNodes = GameData.Instance.ResourceNodes.All.ToArray();
+        for (int nodeIdx = 0; nodeIdx < allNodes.Length; nodeIdx++)
         {
-            var def = ResourceNodeDefinitions.All[nodeIdx];
-            if (def.NodeTypeId == 0)
+            var def = allNodes[nodeIdx];
+            if (def.NumericId == 0)
                 continue;
 
             int lx = startX + nodeIdx % 5 * spacingX;
@@ -163,7 +165,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         }
 
         // Resources
-        startY += spacingY * ((ResourceNodeDefinitions.All.Length / 5) + 1);
+        startY += spacingY * ((allNodes.Length / 5) + 1);
         var resouceItems = GameData.Instance.Items.All.Where(d => d.Category == ItemCategory.Material).ToArray();
         for (int resourceIdx = 0; resourceIdx < resouceItems.Length; resourceIdx++)
         {

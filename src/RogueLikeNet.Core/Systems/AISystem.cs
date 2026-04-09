@@ -1,6 +1,6 @@
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -198,7 +198,7 @@ public class AISystem
                     continue;
 
                 var targetTile = map.GetTile(nextPosition);
-                if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+                if (GameData.Instance.Items.IsPlaceableDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
                 {
                     map.OpenDoor(nextPosition);
                     npc.MoveDelay.Current = npc.MoveDelay.Interval;

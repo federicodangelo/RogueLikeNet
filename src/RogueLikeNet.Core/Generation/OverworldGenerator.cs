@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -173,7 +174,7 @@ public class OverworldGenerator : IDungeonGenerator
                         tile.GlyphId = TileDefinitions.GlyphFloor;
                         tile.FgColor = TileDefinitions.ColorFloorFg;
                         tile.BgColor = TileDefinitions.ColorBlack;
-                        result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), ResourceNodeDefinitions.PickRock(rng, biome)));
+                        result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), GameData.Instance.ResourceNodes.PickRock(rng, biome)));
                         addedResourceNode = true;
                     }
                     else
@@ -195,10 +196,10 @@ public class OverworldGenerator : IDungeonGenerator
                 if (tile.Type == TileType.Floor && !addedResourceNode) // Only add features on floor tiles that don't have a resource node
                 {
                     // Trees spawn where resource noise overlaps with floors
-                    if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
+                    if (canBeResourceNode && rng.Next(100) < GameData.Instance.ResourceNodes.BiomeTreeChance(biome))
                     {
                         result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
-                            ResourceNodeDefinitions.Get("tree")));
+                            GameData.Instance.ResourceNodes.Get("tree")!));
                     }
                     else
                     {
@@ -219,7 +220,7 @@ public class OverworldGenerator : IDungeonGenerator
                         if (rng.Next(1000) < MonsterChance1000)
                         {
                             var def = BiomeDefinitions.PickEnemy(biome, rng, difficulty);
-                            var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+                            var monsterData = NpcRegistry.GenerateMonsterData(def, difficulty);
                             result.Monsters.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
                         }
                         else if (rng.Next(1000) < ItemChance1000)

@@ -543,7 +543,7 @@ public class GameEngineTests
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         chunk.ClearSaveFlag();
 
-        engine.SpawnResourceNode(Position.FromCoords(5, 5, Position.DefaultZ), ResourceNodeDefinitions.Get("tree"));
+        engine.SpawnResourceNode(Position.FromCoords(5, 5, Position.DefaultZ), GameData.Instance.ResourceNodes.Get("tree")!);
 
         Assert.True(chunk.IsModifiedSinceLastSave);
     }

@@ -1,3 +1,6 @@
+using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Generation;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -35,4 +38,38 @@ public sealed class NpcRegistry
         numericId >= 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
 
     public int Count => _byStringId.Count;
+
+    /// <summary>
+    /// Picks a random monster type suitable for the given difficulty tier (0-based).
+    /// </summary>
+    public NpcDefinition? Pick(SeededRandom rng, int difficulty)
+    {
+        if (Count > 0)
+        {
+            int totalCount = Count;
+            int maxIndex = Math.Min(difficulty + 1, totalCount - 1);
+            int idx = rng.Next(maxIndex + 1);
+            var npc = Get(idx);
+            if (npc != null) return npc;
+        }
+
+        return null;
+    }
+
+    public static MonsterData GenerateMonsterData(NpcDefinition def, int difficulty)
+    {
+        int bonusHealth = def.Health * (difficulty / 2);
+        int bonusAttack = difficulty;
+        int bonusDefense = difficulty / 2;
+        int bonusSpeed = 0;
+
+        return new MonsterData
+        {
+            MonsterTypeId = def.NumericId,
+            Health = def.Health + bonusHealth,
+            Attack = def.Attack + bonusAttack,
+            Defense = def.Defense + bonusDefense,
+            Speed = def.Speed + bonusSpeed,
+        };
+    }
 }

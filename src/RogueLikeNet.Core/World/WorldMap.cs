@@ -2,9 +2,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
-using static RogueLikeNet.Core.Definitions.PlaceableDefinitions;
 
 namespace RogueLikeNet.Core.World;
 
@@ -433,7 +432,7 @@ public class WorldMap
     public void OpenDoor(Position pos)
     {
         var tile = GetTile(pos);
-        if (!IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra)) return;
+        if (!GameData.Instance.Items.IsPlaceableDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra)) return;
         tile.PlaceableItemExtra = DoorGraceTicks; // ticks until auto-close
         SetTile(pos, tile);
     }
@@ -459,8 +458,8 @@ public class WorldMap
     private static bool IsDynamicTile(TileInfo tile)
     {
         if (tile.PlaceableItemId == 0) return false;
-        var def = PlaceableDefinitions.Get(tile.PlaceableItemId);
-        return def.HasState && tile.PlaceableItemExtra > 0;
+        var def = GameData.Instance.Items.Get(tile.PlaceableItemId);
+        return def != null && GameData.Instance.Items.IsPlaceableHasState(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0;
     }
 
     private void TrackDynamicTile(Position pos)
@@ -530,7 +529,7 @@ public class WorldMap
 
             ref var tile = ref chunk.Tiles[lx, ly];
 
-            if (IsDoor(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0)
+            if (GameData.Instance.Items.IsPlaceableDoor(tile.PlaceableItemId) && tile.PlaceableItemExtra > 0)
             {
                 int next = tile.PlaceableItemExtra - 1;
                 if (next > 0)

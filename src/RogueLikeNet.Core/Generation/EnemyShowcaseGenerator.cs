@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -72,9 +73,10 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
             new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
             new LightSource(30, TileDefinitions.ColorTorchFg)));
 
-        for (int enemyIdx = 0; enemyIdx < NpcDefinitions.All.Length; enemyIdx++)
+        var allNpcs = GameData.Instance.Npcs.All.ToArray();
+        for (int enemyIdx = 0; enemyIdx < allNpcs.Length; enemyIdx++)
         {
-            var def = NpcDefinitions.All[enemyIdx];
+            var def = allNpcs[enemyIdx];
 
             for (int diffIdx = 0; diffIdx < DifficultyTiers.Length; diffIdx++)
             {
@@ -91,13 +93,13 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
                 // Torch inside room so player can see through the doorway
                 result.Elements.Add(new DungeonElement(
                     Position.FromCoords(worldOffsetX + rx + roomSize / 2, worldOffsetY + ry + roomSize / 2, chunkZ),
-                    new TileAppearance(TileDefinitions.GlyphTorch, def.Color),
-                    new LightSource(5, def.Color)));
+                    new TileAppearance(TileDefinitions.GlyphTorch, def.FgColor),
+                    new LightSource(5, def.FgColor)));
 
                 // Enemy in center
                 int cx = rx + roomSize / 2;
                 int cy = ry + roomSize / 2;
-                var monsterData = NpcDefinitions.GenerateMonsterData(def, difficulty);
+                var monsterData = NpcRegistry.GenerateMonsterData(def, difficulty);
                 result.Monsters.Add((Position.FromCoords(worldOffsetX + cx, worldOffsetY + cy, chunkZ), monsterData));
             }
         }

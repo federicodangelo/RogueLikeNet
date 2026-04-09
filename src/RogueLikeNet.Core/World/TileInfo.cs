@@ -1,4 +1,4 @@
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Core.World;
 
@@ -24,7 +24,7 @@ public struct TileInfo
     /// <summary>
     /// The placeable item on this tile. 0 means nothing is placed.
     /// The base tile (Type/GlyphId/FgColor/BgColor) represents the underlying terrain;
-    /// the placed item's appearance is derived from PlaceableDefinitions at render time.
+    /// the placed item's appearance is derived from the item registry at render time.
     /// </summary>
     public int PlaceableItemId;
 
@@ -41,7 +41,7 @@ public struct TileInfo
             var baseWalkable = Type is TileType.Floor or TileType.StairsDown or TileType.StairsUp;
             if (!baseWalkable) return false;
             if (PlaceableItemId != 0)
-                return PlaceableDefinitions.IsWalkable(PlaceableItemId, PlaceableItemExtra);
+                return GameData.Instance.Items.IsPlaceableWalkable(PlaceableItemId, PlaceableItemExtra);
             return true;
         }
     }
@@ -53,7 +53,7 @@ public struct TileInfo
             var baseTransparent = Type is not TileType.Blocked;
             if (!baseTransparent) return false;
             if (PlaceableItemId != 0)
-                return PlaceableDefinitions.IsTransparent(PlaceableItemId, PlaceableItemExtra);
+                return GameData.Instance.Items.IsPlaceableTransparent(PlaceableItemId, PlaceableItemExtra);
             return true;
         }
     }

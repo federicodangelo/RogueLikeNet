@@ -112,7 +112,7 @@ public class WorldMapTests
 
         var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(WorldMap.DoorGraceTicks, tile.PlaceableItemExtra);
-        Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class WorldMapTests
             map.Update();
 
         var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
-        Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
         Assert.Equal(1, tile.PlaceableItemExtra); // one tick remaining
         Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
@@ -154,7 +154,7 @@ public class WorldMapTests
 
         tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(0, tile.PlaceableItemExtra);
-        Assert.True(PlaceableDefinitions.IsDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorClosed(tile.PlaceableItemId, tile.PlaceableItemExtra));
         Assert.False(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
@@ -183,7 +183,7 @@ public class WorldMapTests
 
         // Door should remain open because it's occupied
         var tile = map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
-        Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
         Assert.True(map.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
@@ -211,7 +211,7 @@ public class WorldMapTests
             map.Update();
 
         // Door still open
-        Assert.True(PlaceableDefinitions.IsDoorOpen(
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(
             map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemId,
             map.GetTile(Position.FromCoords(5, 5, Position.DefaultZ)).PlaceableItemExtra));
 
@@ -252,7 +252,7 @@ public class WorldMapTests
         newMap.AddChunk(newChunk);
 
         var loadedTile = newMap.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
-        Assert.True(PlaceableDefinitions.IsDoorOpen(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
         Assert.Equal(remainingTicks, loadedTile.PlaceableItemExtra);
         Assert.True(newMap.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
 
@@ -261,7 +261,7 @@ public class WorldMapTests
 
         loadedTile = newMap.GetTile(Position.FromCoords(5, 5, Position.DefaultZ));
         Assert.Equal(0, loadedTile.PlaceableItemExtra);
-        Assert.True(PlaceableDefinitions.IsDoorClosed(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorClosed(loadedTile.PlaceableItemId, loadedTile.PlaceableItemExtra));
         Assert.False(newMap.IsDynamicTileTracked(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 

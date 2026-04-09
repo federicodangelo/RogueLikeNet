@@ -1,6 +1,6 @@
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -108,7 +108,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void ResourceNode_RoundTrip_PreservesData()
     {
-        var def = ResourceNodeDefinitions.Get("copper_rock");
+        var def = GameData.Instance.ResourceNodes.Get("copper_rock")!;
         var node = _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), def);
 
         // Damage the node to test HP preservation
@@ -128,8 +128,8 @@ public class EntitySerializerTests : IDisposable
         var found = chunk2.ResourceNodes.ToArray().FirstOrDefault(r => r.Position.X == 3 && r.Position.Y == 3 && r.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
 
-        Assert.Equal(def.NodeTypeId, found!.NodeData.NodeTypeId);
-        Assert.Equal(def.ResourceItemTypeId, found.NodeData.ResourceItemTypeId);
+        Assert.Equal(def.NumericId, found!.NodeData.NodeTypeId);
+        Assert.Equal(GameData.Instance.Items.GetNumericId(def.DropItemId), found.NodeData.ResourceItemTypeId);
         Assert.Equal(def.MinDrop, found.NodeData.MinDrop);
         Assert.Equal(def.MaxDrop, found.NodeData.MaxDrop);
 
@@ -232,7 +232,7 @@ public class EntitySerializerTests : IDisposable
     {
         _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
-        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.Get("copper_rock"));
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnElement(new DungeonElement(
             Position.FromCoords(4, 4, Z),
             new TileAppearance(20, 0, 0),
@@ -331,7 +331,7 @@ public class EntitySerializerTests : IDisposable
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
         _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
-        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), ResourceNodeDefinitions.Get("copper_rock"));
+        _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnTownNpc(Position.FromCoords(4, 4, Z), "Blacksmith", 4, 4, 3);
 
         var entityJson = EntitySerializer.SerializeEntities(chunk);

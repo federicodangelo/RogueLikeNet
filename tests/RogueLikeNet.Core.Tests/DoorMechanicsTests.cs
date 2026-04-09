@@ -81,7 +81,7 @@ public class DoorMechanicsTests
         // Door should now be open (PlaceableItemExtra > 0 = ticks remaining)
         var tile = engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ));
         Assert.Equal(ItemId("wooden_door"), tile.PlaceableItemId);
-        Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
         Assert.Equal(sx, player.Position.X);
@@ -115,7 +115,7 @@ public class DoorMechanicsTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.True(PlaceableDefinitions.IsDoorOpen(
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra)); // open
 
@@ -136,7 +136,7 @@ public class DoorMechanicsTests
         Assert.Equal(doorX + 1, player.Position.X);
 
         // Door should still be open during grace period
-        Assert.True(PlaceableDefinitions.IsDoorOpen(
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
 
@@ -166,13 +166,13 @@ public class DoorMechanicsTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.True(PlaceableDefinitions.IsDoorOpen(
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
 
         // One more tick — door should stay open (grace period active)
         engine.Tick();
-        Assert.True(PlaceableDefinitions.IsDoorOpen(
+        Assert.True(GameData.Instance.Items.IsPlaceableDoorOpen(
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemId,
             engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ)).PlaceableItemExtra));
     }

@@ -1,5 +1,5 @@
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
@@ -62,7 +62,7 @@ public class MovementSystem
             if (!debugNoCollision)
             {
                 var targetTile = map.GetTile(newPosition);
-                if (PlaceableDefinitions.IsDoor(targetTile.PlaceableItemId) && PlaceableDefinitions.IsDoorClosed(targetTile.PlaceableItemId, targetTile.PlaceableItemExtra))
+                if (GameData.Instance.Items.IsPlaceableDoor(targetTile.PlaceableItemId) && GameData.Instance.Items.IsPlaceableDoorClosed(targetTile.PlaceableItemId, targetTile.PlaceableItemExtra))
                 {
                     map.OpenDoor(newPosition);
                     input.ActionType = ActionTypes.None;

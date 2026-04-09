@@ -180,7 +180,7 @@ public class GameEngine : IDisposable
     /// </summary>
     public ref MonsterEntity SpawnMonster(Position pos, MonsterData data)
     {
-        var def = NpcDefinitions.Get(data.MonsterTypeId);
+        var def = GameData.Instance.Npcs.Get(data.MonsterTypeId);
         int moveInterval = Math.Max(0, 10 - data.Speed);
         var monster = new MonsterEntity(_worldMap.AllocateEntityId())
         {
@@ -188,7 +188,7 @@ public class GameEngine : IDisposable
             MonsterData = data,
             Health = new Health(data.Health),
             CombatStats = new CombatStats(data.Attack, data.Defense, data.Speed),
-            Appearance = new TileAppearance(def.GlyphId, def.Color),
+            Appearance = new TileAppearance(def?.GlyphId ?? 0, def?.FgColor ?? 0),
             AI = new AIState { StateId = AIStates.Idle },
             MoveDelay = new MoveDelay(moveInterval),
             AttackDelay = new AttackDelay(moveInterval),
@@ -242,37 +242,23 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
-    public ref ResourceNodeEntity SpawnResourceNode(Position pos, ResourceNodeDef def)
+    public ref ResourceNodeEntity SpawnResourceNode(Position pos, Data.ResourceNodeDefinition def)
     {
-        // Try to get tool type from JSON registry
-        var toolType = Data.ToolType.None;
-        var reg = GameData.ResourceNodes;
-        if (reg.Count > 0)
-        {
-            // Search by name since we have the old definition
-            foreach (var nodeDef in reg.All)
-            {
-                if (nodeDef.NumericId == def.NodeTypeId)
-                {
-                    toolType = nodeDef.RequiredToolType;
-                    break;
-                }
-            }
-        }
+        int resItemId = GameData.Instance.Items.GetNumericId(def.DropItemId);
 
         var node = new ResourceNodeEntity(_worldMap.AllocateEntityId())
         {
             Position = pos,
             Health = new Health(def.Health),
             CombatStats = new CombatStats(0, def.Defense, 0),
-            Appearance = new TileAppearance(def.GlyphId, def.Color),
+            Appearance = new TileAppearance(def.GlyphId, def.FgColor),
             NodeData = new ResourceNodeData
             {
-                NodeTypeId = def.NodeTypeId,
-                ResourceItemTypeId = def.ResourceItemTypeId,
+                NodeTypeId = def.NumericId,
+                ResourceItemTypeId = resItemId,
                 MinDrop = def.MinDrop,
                 MaxDrop = def.MaxDrop,
-                RequiredToolType = toolType,
+                RequiredToolType = def.RequiredToolType,
             },
             AttackDelay = new AttackDelay(0),
         };
