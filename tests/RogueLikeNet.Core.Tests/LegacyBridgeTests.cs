@@ -5,29 +5,44 @@ using Xunit;
 namespace RogueLikeNet.Core.Tests;
 
 /// <summary>
-/// Validates that the Strangler Fig bridges correctly delegate from old Definitions
-/// to the new JSON-based registries when GameData is loaded.
+/// Shared fixture that loads real JSON data once for all bridge tests.
 /// </summary>
-public class LegacyBridgeTests : IDisposable
+public class GameDataFixture : IDisposable
 {
+    private static readonly object Lock = new();
     private readonly GameData _previousData;
 
-    public LegacyBridgeTests()
+    public GameData TestData { get; }
+
+    public GameDataFixture()
     {
-        // Save previous GameData state (tests may run in parallel)
+        Monitor.Enter(Lock);
         _previousData = GameData.Instance;
 
-        // Load real JSON data from the data/ directory
-        var dataDir = DataDirectory.Find();
-        Assert.NotNull(dataDir);
-        DataLoader.Load(dataDir);
+        var dataDir = DataDirectory.Find()
+            ?? throw new DirectoryNotFoundException("data/ directory not found");
+        TestData = DataLoader.Load(dataDir);
     }
 
     public void Dispose()
     {
-        // Restore previous GameData state
         GameData.Instance = _previousData;
+        Monitor.Exit(Lock);
     }
+}
+
+[CollectionDefinition("GameData")]
+public class GameDataCollection : ICollectionFixture<GameDataFixture>;
+
+/// <summary>
+/// Validates that the Strangler Fig bridges correctly delegate from old Definitions
+/// to the new JSON-based registries when GameData is loaded.
+/// Uses a shared fixture with a lock to prevent parallel test pollution.
+/// </summary>
+[Collection("GameData")]
+public class LegacyBridgeTests
+{
+    public LegacyBridgeTests(GameDataFixture fixture) { _ = fixture; }
 
     [Fact]
     public void ItemBridge_ShortSword_ReturnsCorrectData()

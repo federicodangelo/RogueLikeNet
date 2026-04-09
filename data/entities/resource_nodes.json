@@ -9,7 +9,8 @@
         "defense": 0,
         "dropItemId": "wood",
         "minDrop": 2,
-        "maxDrop": 4
+        "maxDrop": 4,
+        "requiredToolType": "axe"
     },
     {
         "id": "copper_rock",
@@ -21,7 +22,8 @@
         "defense": 2,
         "dropItemId": "copper_ore",
         "minDrop": 1,
-        "maxDrop": 3
+        "maxDrop": 3,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "iron_rock",
@@ -33,7 +35,8 @@
         "defense": 4,
         "dropItemId": "iron_ore",
         "minDrop": 1,
-        "maxDrop": 3
+        "maxDrop": 3,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "gold_rock",
@@ -45,7 +48,8 @@
         "defense": 6,
         "dropItemId": "gold_ore",
         "minDrop": 1,
-        "maxDrop": 2
+        "maxDrop": 2,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "mithril_rock",
@@ -57,7 +61,8 @@
         "defense": 8,
         "dropItemId": "mithril_ore",
         "minDrop": 1,
-        "maxDrop": 2
+        "maxDrop": 2,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "adamantite_rock",
@@ -69,7 +74,8 @@
         "defense": 10,
         "dropItemId": "adamantite_ore",
         "minDrop": 1,
-        "maxDrop": 2
+        "maxDrop": 2,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "coal_deposit",
@@ -81,7 +87,8 @@
         "defense": 1,
         "dropItemId": "coal",
         "minDrop": 1,
-        "maxDrop": 3
+        "maxDrop": 3,
+        "requiredToolType": "pickaxe"
     },
     {
         "id": "sand_deposit",
@@ -93,7 +100,8 @@
         "defense": 0,
         "dropItemId": "sand",
         "minDrop": 2,
-        "maxDrop": 4
+        "maxDrop": 4,
+        "requiredToolType": "shovel"
     },
     {
         "id": "clay_deposit",
@@ -105,6 +113,7 @@
         "defense": 0,
         "dropItemId": "clay",
         "minDrop": 2,
-        "maxDrop": 4
+        "maxDrop": 4,
+        "requiredToolType": "shovel"
     }
 ]

@@ -240,6 +240,22 @@ public class GameEngine : IDisposable
     /// </summary>
     public ref ResourceNodeEntity SpawnResourceNode(Position pos, Definitions.ResourceNodeDefinition def)
     {
+        // Try to get tool type from JSON registry
+        var toolType = Data.ToolType.None;
+        var reg = GameData.ResourceNodes;
+        if (reg.Count > 0)
+        {
+            // Search by name since we have the old definition
+            foreach (var nodeDef in reg.All)
+            {
+                if (nodeDef.NumericId == def.NodeTypeId)
+                {
+                    toolType = nodeDef.RequiredToolType;
+                    break;
+                }
+            }
+        }
+
         var node = new ResourceNodeEntity(_worldMap.AllocateEntityId())
         {
             Position = pos,
@@ -252,6 +268,7 @@ public class GameEngine : IDisposable
                 ResourceItemTypeId = def.ResourceItemTypeId,
                 MinDrop = def.MinDrop,
                 MaxDrop = def.MaxDrop,
+                RequiredToolType = toolType,
             },
             AttackDelay = new AttackDelay(0),
         };

@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Data;
+
 namespace RogueLikeNet.Core.Components;
 
 public struct ResourceNodeData
@@ -6,4 +8,5 @@ public struct ResourceNodeData
     public int ResourceItemTypeId;
     public int MinDrop;
     public int MaxDrop;
+    public ToolType RequiredToolType;
 }

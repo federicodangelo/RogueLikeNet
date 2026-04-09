@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.World;
@@ -99,12 +100,16 @@ public class CombatSystem
                     });
                 }
 
-                // Resource nodes
+                // Resource nodes — tools provide bonus damage
                 foreach (ref var node in targetChunk.ResourceNodes)
                 {
                     if (node.IsDead || node.Position != targetPosition) continue;
 
-                    int damage = Math.Max(1, attackerAttack - node.CombatStats.Defense);
+                    int effectiveAttack = attackerAttack;
+                    int toolBonus = GetToolBonus(ref player, node.NodeData.RequiredToolType);
+                    effectiveAttack += toolBonus;
+
+                    int damage = Math.Max(1, effectiveAttack - node.CombatStats.Defense);
                     node.Health.Current = Math.Max(0, node.Health.Current - damage);
 
                     _events.Add(new CombatEvent
@@ -195,6 +200,32 @@ public class CombatSystem
         }
 
         return best;
+    }
+
+    /// <summary>
+    /// Calculates tool bonus damage when attacking a resource node.
+    /// If the player has a tool equipped that matches the node's required tool type,
+    /// the tool's MiningPower is added as bonus damage.
+    /// </summary>
+    private static int GetToolBonus(ref PlayerEntity player, ToolType requiredTool)
+    {
+        if (requiredTool == ToolType.None) return 0;
+
+        // Check weapon slot for a matching tool
+        var weaponItem = player.Equipment.Weapon;
+        if (weaponItem.IsNone) return 0;
+
+        var itemDef = LegacyItemBridge.GetNewDefinition(weaponItem.ItemTypeId);
+        if (itemDef == null)
+        {
+            // Try direct registry lookup (for new items without legacy mapping)
+            itemDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);
+        }
+
+        if (itemDef?.Tool != null && itemDef.Tool.ToolType == requiredTool)
+            return itemDef.Tool.MiningPower;
+
+        return 0;
     }
 }
 

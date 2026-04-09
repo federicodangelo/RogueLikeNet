@@ -15,4 +15,5 @@ public sealed class ResourceNodeDefinition
     public string DropItemId { get; set; } = "";
     public int MinDrop { get; set; } = 1;
     public int MaxDrop { get; set; } = 1;
+    public ToolType RequiredToolType { get; set; }
 }
