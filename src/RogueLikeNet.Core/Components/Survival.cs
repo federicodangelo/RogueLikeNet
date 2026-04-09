@@ -3,7 +3,7 @@ namespace RogueLikeNet.Core.Components;
 public struct Survival
 {
     public const int MaxHunger = 100;
-    public const int DefaultDecayRate = 30; // ticks per hunger point lost
+    public const int DefaultDecayRate = 20 * 30; // ticks per hunger point lost
 
     public int Hunger;
     public int HungerDecayRate;

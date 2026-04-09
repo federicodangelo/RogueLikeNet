@@ -30,13 +30,17 @@ public class SurvivalSystem
         {
             s.DecayCounter = 0;
             if (s.Hunger > 0)
+            {
                 s.Hunger--;
-        }
-
-        // Starvation damage
-        if (s.IsStarving && s.Hunger > 0 == false)
-        {
-            player.Health.Current = Math.Max(0, player.Health.Current - StarvationDamage);
+            }
+            else
+            {
+                if (s.IsStarving)
+                {
+                    // Starvation damage
+                    player.Health.Current = Math.Max(0, player.Health.Current - StarvationDamage);
+                }
+            }
         }
     }
 }
