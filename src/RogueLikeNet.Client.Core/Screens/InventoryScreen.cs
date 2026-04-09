@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
@@ -18,6 +19,11 @@ public sealed class InventoryScreen : IScreen
 
     /// <summary>When >= 0, the player is choosing a direction to place the buildable item at this slot.</summary>
     private int _placingSlot = -1;
+
+    // Key repeat
+    private static readonly long RepeatDelayTicks = Stopwatch.Frequency / 4; // 250ms
+    private InputAction? _heldAction;
+    private long _heldSinceTicks;
 
     public bool IsPlacingMode => _placingSlot >= 0;
 
@@ -81,16 +87,45 @@ public sealed class InventoryScreen : IScreen
             return;
         }
 
+        // Key repeat for up/down
+        bool up = false, down = false;
+        InputAction? activeNav = null;
+        if (input.IsActionDown(InputAction.MenuUp)) activeNav = InputAction.MenuUp;
+        else if (input.IsActionDown(InputAction.MenuDown)) activeNav = InputAction.MenuDown;
+
+        if (activeNav != null)
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (_heldAction != activeNav)
+            {
+                _heldAction = activeNav;
+                _heldSinceTicks = now;
+            }
+            if (input.IsActionPressed(activeNav.Value))
+            {
+                if (activeNav == InputAction.MenuUp) up = true; else down = true;
+            }
+            else if (now - _heldSinceTicks >= RepeatDelayTicks)
+            {
+                _heldSinceTicks = now;
+                if (activeNav == InputAction.MenuUp) up = true; else down = true;
+            }
+        }
+        else
+        {
+            _heldAction = null;
+        }
+
         var focused = _inventoryRenderer.InventoryLayout.FocusedSection;
         if (focused == null) return;
 
         switch (focused.Name)
         {
             case "InvItems":
-                HandleInvItemsInput(input, focused, cap);
+                HandleInvItemsInput(input, focused, cap, up, down);
                 break;
             case "InvEquipment":
-                HandleInvEquipmentInput(input, focused, cap);
+                HandleInvEquipmentInput(input, focused, cap, up, down);
                 break;
         }
     }
@@ -134,9 +169,9 @@ public sealed class InventoryScreen : IScreen
         _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 
-    private void HandleInvItemsInput(IInputManager input, HudSection section, int cap)
+    private void HandleInvItemsInput(IInputManager input, HudSection section, int cap, bool up, bool down)
     {
-        if (input.IsActionPressed(InputAction.MenuUp))
+        if (up)
         {
             if (section.SelectedIndex > 0)
                 section.ScrollUp();
@@ -156,7 +191,7 @@ public sealed class InventoryScreen : IScreen
                 }
             }
         }
-        else if (input.IsActionPressed(InputAction.MenuDown))
+        else if (down)
         {
             if (section.SelectedIndex < cap - 1)
                 section.ScrollDown(cap);
@@ -193,10 +228,10 @@ public sealed class InventoryScreen : IScreen
             TryBeginPlace(section.SelectedIndex);
     }
 
-    private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
+    private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap, bool up, bool down)
     {
         int EquipmentSlots = Equipment.SlotCount;
-        if (input.IsActionPressed(InputAction.MenuUp))
+        if (up)
         {
             if (section.SelectedIndex > 0)
                 section.SelectedIndex--;
@@ -215,7 +250,7 @@ public sealed class InventoryScreen : IScreen
                 }
             }
         }
-        else if (input.IsActionPressed(InputAction.MenuDown))
+        else if (down)
         {
             if (section.SelectedIndex < EquipmentSlots - 1)
                 section.SelectedIndex++;

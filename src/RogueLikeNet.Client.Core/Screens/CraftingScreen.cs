@@ -24,6 +24,8 @@ public sealed class CraftingScreen : IScreen
     private int[] _categoryOrder = []; // sorted category ids
     private CraftingRecipe[] _filteredRecipes = [];
     private int _selectedCategory;
+    private int _savedCategoryIndex;
+    private int _savedCategoryScroll;
 
     // Recent crafted recipes (last 3)
     private readonly List<int> _recentRecipeIds = [];
@@ -66,9 +68,9 @@ public sealed class CraftingScreen : IScreen
             if (!_inCategoryMode)
             {
                 _inCategoryMode = true;
-                _listSection.SelectedIndex = 0;
-                _listSection.ScrollOffset = 0;
                 RebuildCategoryOrder();
+                _listSection.SelectedIndex = _savedCategoryIndex;
+                _listSection.ScrollOffset = _savedCategoryScroll;
                 return;
             }
             _ctx.RequestTransition(ScreenState.Playing);
@@ -115,6 +117,8 @@ public sealed class CraftingScreen : IScreen
                 if (idx >= 0 && idx < _categoryOrder.Length)
                 {
                     _selectedCategory = _categoryOrder[idx];
+                    _savedCategoryIndex = idx;
+                    _savedCategoryScroll = _listSection.ScrollOffset;
                     _inCategoryMode = false;
                     RebuildFilteredRecipes();
                     _listSection.SelectedIndex = 0;
@@ -266,8 +270,9 @@ public sealed class CraftingScreen : IScreen
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
-            int recipeCount = CountRecipesInCategory(cat);
-            string text = $"{prefix}{ItemDefinitions.CategoryName(cat)} ({recipeCount})";
+            int totalCount = CountRecipesInCategory(cat);
+            int craftableCount = CountCraftableInCategory(cat, hud);
+            string text = $"{prefix}{ItemDefinitions.CategoryName(cat)} ({craftableCount}/{totalCount})";
             if (hasCraftable) text += " \u2605";
             if (text.Length > innerW) text = text[..innerW];
 
@@ -481,6 +486,17 @@ public sealed class CraftingScreen : IScreen
         {
             var def = ItemDefinitions.Get(r.ResultItemTypeId);
             if (def.Category == category) count++;
+        }
+        return count;
+    }
+
+    private static int CountCraftableInCategory(int category, PlayerStateMsg hud)
+    {
+        int count = 0;
+        foreach (var r in CraftingDefinitions.All)
+        {
+            var def = ItemDefinitions.Get(r.ResultItemTypeId);
+            if (def.Category == category && CanCraftRecipe(r, hud)) count++;
         }
         return count;
     }
