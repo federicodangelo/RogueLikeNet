@@ -126,6 +126,24 @@
         }
     },
     {
+        "id": "iron_sword",
+        "name": "Iron Sword",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "weapon",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 5,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
         "id": "steel_sword",
         "name": "Steel Sword",
         "category": "weapon",

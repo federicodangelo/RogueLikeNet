@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Data;
+
 namespace RogueLikeNet.Core.Definitions;
 
 public readonly record struct CraftingIngredient(int ItemTypeId, int Count);
@@ -9,7 +11,7 @@ public readonly record struct CraftingRecipe(
 
 public static class CraftingDefinitions
 {
-    public static readonly CraftingRecipe[] All =
+    private static readonly CraftingRecipe[] HardcodedAll =
     [
         new(0,  "Wooden Door",   ItemDefinitions.WoodenDoor,   1, [new(ItemDefinitions.Wood, 5)]),
         new(1,  "Wooden Wall",   ItemDefinitions.WoodenWall,   1, [new(ItemDefinitions.Wood, 3)]),
@@ -33,6 +35,41 @@ public static class CraftingDefinitions
         new(17, "Gold Floor",    ItemDefinitions.GoldFloorTile,   4, [new(ItemDefinitions.GoldOre, 2)]),
     ];
 
+    private static CraftingRecipe[]? _cachedAll;
+
+    /// <summary>
+    /// All available recipes. When GameData is loaded with JSON recipes,
+    /// returns converted recipes from RecipeRegistry; otherwise falls back to hardcoded array.
+    /// </summary>
+    public static CraftingRecipe[] All
+    {
+        get
+        {
+            var data = GameData.Instance;
+            if (data.Recipes.Count == 0) return HardcodedAll;
+            if (_cachedAll != null) return _cachedAll;
+
+            var sorted = data.Recipes.All.OrderBy(r => r.NumericId).ToArray();
+            var result = new CraftingRecipe[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var r = sorted[i];
+                var ingredients = new CraftingIngredient[r.Ingredients.Length];
+                for (int j = 0; j < r.Ingredients.Length; j++)
+                    ingredients[j] = new CraftingIngredient(data.Items.GetNumericId(r.Ingredients[j].ItemId), r.Ingredients[j].Count);
+
+                result[i] = new CraftingRecipe(
+                    r.NumericId,
+                    r.Name,
+                    data.Items.GetNumericId(r.Result.ItemId),
+                    r.Result.Count,
+                    ingredients);
+            }
+            _cachedAll = result;
+            return result;
+        }
+    }
+
     public static CraftingRecipe Get(int recipeId) =>
         Array.Find(All, r => r.RecipeId == recipeId);
 
@@ -53,4 +90,9 @@ public static class CraftingDefinitions
         }
         return true;
     }
+
+    /// <summary>
+    /// Clears the cached recipe array (for testing when GameData changes).
+    /// </summary>
+    public static void InvalidateCache() => _cachedAll = null;
 }

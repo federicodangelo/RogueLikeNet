@@ -27,6 +27,7 @@ public class GameDataFixture : IDisposable
     public void Dispose()
     {
         GameData.Instance = _previousData;
+        CraftingDefinitions.InvalidateCache();
         Monitor.Exit(Lock);
     }
 }
@@ -304,5 +305,92 @@ public class LegacyBridgeTests
         var reg = GameData.Instance.ResourceNodes;
         Assert.Equal(ResourceNodeDefinitions.Tree, reg.Get("tree")!.NumericId);
         Assert.Equal(ResourceNodeDefinitions.CopperRock, reg.Get("copper_rock")!.NumericId);
+    }
+
+    // --- Crafting recipe bridge tests ---
+
+    [Fact]
+    public void CraftingBridge_ReturnsJsonRecipes_WhenDataLoaded()
+    {
+        var recipes = CraftingDefinitions.All;
+        Assert.True(recipes.Length > 18, $"Expected more than 18 recipes (old count), got {recipes.Length}");
+    }
+
+    [Fact]
+    public void CraftingBridge_LegacyRecipe_WoodenDoor_Exists()
+    {
+        var recipe = Array.Find(CraftingDefinitions.All, r => r.Name == "Wooden Door");
+        Assert.NotEqual(default, recipe);
+        Assert.Equal(ItemDefinitions.WoodenDoor, recipe.ResultItemTypeId);
+        Assert.Equal(1, recipe.ResultCount);
+    }
+
+    [Fact]
+    public void CraftingBridge_Ingredients_ResolveToNumericIds()
+    {
+        // Find a recipe with known ingredients
+        var recipe = Array.Find(CraftingDefinitions.All, r => r.Name == "Wooden Door");
+        Assert.NotEqual(default, recipe);
+
+        // Wooden Door requires wood
+        var woodIngredient = Array.Find(recipe.Ingredients, i => i.ItemTypeId == ItemDefinitions.Wood);
+        Assert.NotEqual(default, woodIngredient);
+        Assert.True(woodIngredient.Count > 0);
+    }
+
+    [Fact]
+    public void CraftingBridge_NewRecipe_WoodenPickaxe_Exists()
+    {
+        var recipe = Array.Find(CraftingDefinitions.All, r => r.Name == "Wooden Pickaxe");
+        Assert.NotEqual(default, recipe);
+
+        // Result should be a valid numeric ID above legacy range
+        Assert.True(recipe.ResultItemTypeId > ItemDefinitions.GoldFloorTile,
+            $"Wooden Pickaxe should have a new NumericId, got {recipe.ResultItemTypeId}");
+        Assert.Equal(1, recipe.ResultCount);
+    }
+
+    [Fact]
+    public void CraftingBridge_NewRecipe_IngredientsResolve()
+    {
+        var recipe = Array.Find(CraftingDefinitions.All, r => r.Name == "Wooden Pickaxe");
+        Assert.NotEqual(default, recipe);
+
+        // Wooden Pickaxe requires wood (legacy ID) and fiber (new ID)
+        var woodIngredient = Array.Find(recipe.Ingredients, i => i.ItemTypeId == ItemDefinitions.Wood);
+        Assert.NotEqual(default, woodIngredient);
+
+        // All ingredients should have non-zero ItemTypeIds
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            Assert.True(ingredient.ItemTypeId > 0, $"Ingredient should have NumericId > 0");
+            Assert.True(ingredient.Count > 0, $"Ingredient count should be > 0");
+        }
+    }
+
+    [Fact]
+    public void CraftingBridge_RecipeIds_AreContiguous()
+    {
+        var recipes = CraftingDefinitions.All;
+        for (int i = 0; i < recipes.Length; i++)
+        {
+            Assert.Equal(i, recipes[i].RecipeId);
+        }
+    }
+
+    [Fact]
+    public void CraftingBridge_AllRecipes_HaveValidResults()
+    {
+        foreach (var recipe in CraftingDefinitions.All)
+        {
+            Assert.True(recipe.ResultItemTypeId > 0, $"Recipe '{recipe.Name}' has invalid result NumericId");
+            Assert.True(recipe.ResultCount > 0, $"Recipe '{recipe.Name}' has zero result count");
+            Assert.False(string.IsNullOrEmpty(recipe.Name), $"Recipe ID {recipe.RecipeId} has no name");
+
+            // Every result should be resolvable by ItemDefinitions.Get()
+            var resultDef = ItemDefinitions.Get(recipe.ResultItemTypeId);
+            Assert.False(string.IsNullOrEmpty(resultDef.Name),
+                $"Recipe '{recipe.Name}' result item {recipe.ResultItemTypeId} has no definition");
+        }
     }
 }

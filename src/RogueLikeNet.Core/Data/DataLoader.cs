@@ -85,6 +85,7 @@ public static class DataLoader
 
     /// <summary>
     /// Loads data from in-memory JSON strings (for testing or embedded resources).
+    /// Does NOT set GameData.Instance — caller is responsible if needed.
     /// </summary>
     public static GameData LoadFromJson(
         string? itemsJson = null,
@@ -130,7 +131,6 @@ public static class DataLoader
                 data.Biomes.Register(biomes);
         }
 
-        GameData.Instance = data;
         return data;
     }
 
