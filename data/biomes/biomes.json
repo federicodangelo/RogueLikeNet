@@ -27,6 +27,14 @@
             {
                 "npcId": "skeleton",
                 "weight": 50
+            },
+            {
+                "npcId": "slime",
+                "weight": 15
+            },
+            {
+                "npcId": "spider",
+                "weight": 15
             }
         ],
         "liquid": null,
@@ -137,6 +145,10 @@
             {
                 "npcId": "orc",
                 "weight": 30
+            },
+            {
+                "npcId": "wolf",
+                "weight": 25
             }
         ],
         "liquid": {
@@ -198,6 +210,10 @@
             {
                 "npcId": "spider",
                 "weight": 20
+            },
+            {
+                "npcId": "slime",
+                "weight": 30
             }
         ],
         "liquid": {
@@ -325,6 +341,10 @@
             {
                 "npcId": "goblin",
                 "weight": 20
+            },
+            {
+                "npcId": "spider",
+                "weight": 20
             }
         ],
         "liquid": null,
@@ -380,6 +400,10 @@
             {
                 "npcId": "spider",
                 "weight": 25
+            },
+            {
+                "npcId": "zombie",
+                "weight": 15
             }
         ],
         "liquid": {
@@ -441,6 +465,14 @@
             {
                 "npcId": "skeleton",
                 "weight": 25
+            },
+            {
+                "npcId": "wolf",
+                "weight": 10
+            },
+            {
+                "npcId": "spider",
+                "weight": 15
             }
         ],
         "liquid": {
@@ -506,6 +538,10 @@
             {
                 "npcId": "zombie",
                 "weight": 30
+            },
+            {
+                "npcId": "spider",
+                "weight": 10
             }
         ],
         "liquid": null,
@@ -561,6 +597,10 @@
             {
                 "npcId": "orc",
                 "weight": 50
+            },
+            {
+                "npcId": "zombie",
+                "weight": 10
             }
         ],
         "liquid": {

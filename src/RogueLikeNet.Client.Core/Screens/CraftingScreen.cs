@@ -3,7 +3,6 @@ using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -23,7 +22,7 @@ public sealed class CraftingScreen : IScreen
     // Navigation state
     private bool _inCategoryMode = true;
     private int[] _categoryOrder = []; // sorted category ids
-    private CraftingRecipe[] _filteredRecipes = [];
+    private RecipeDefinition[] _filteredRecipes = [];
     private int _selectedCategory;
     private int _savedCategoryIndex;
     private int _savedCategoryScroll;
@@ -311,7 +310,7 @@ public sealed class CraftingScreen : IScreen
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
-            var def = GameData.Instance.Items.Get(recipe.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
             string tag = def != null ? AsciiDraw.CategoryTag(def.CategoryInt) : "     ";
             string text = $"{prefix}{tag}{recipe.Name}";
             if (text.Length > innerW) text = text[..innerW];
@@ -334,14 +333,14 @@ public sealed class CraftingScreen : IScreen
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
-        var recipes = CraftingDefinitions.All;
+        var recipes = GameData.Instance.Recipes;
         foreach (var recipeId in _recentRecipeIds)
         {
             if (row >= maxRow) break;
-            var recipe = CraftingDefinitions.Get(recipeId);
-            if (recipe.Name == null) continue;
+            var recipe = recipes.Get(recipeId);
+            if (recipe == null) continue;
             bool canCraft = CanCraftRecipe(recipe, hud);
-            var def = GameData.Instance.Items.Get(recipe.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
             string tag = def != null ? AsciiDraw.CategoryTag(def.CategoryInt) : "     ";
             string text = $"  {tag}{recipe.Name}";
             if (text.Length > innerW) text = text[..innerW];
@@ -365,8 +364,8 @@ public sealed class CraftingScreen : IScreen
         foreach (var ingredient in recipe.Ingredients)
         {
             if (row >= maxRow) break;
-            var def = GameData.Instance.Items.Get(ingredient.ItemTypeId);
-            int have = CountItem(hud, ingredient.ItemTypeId);
+            var def = GameData.Instance.Items.Get(ingredient.NumericItemId);
+            int have = CountItem(hud, ingredient.NumericItemId);
             bool enough = have >= ingredient.Count;
             var color = enough ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
             string text = $"  {def?.Name ?? "Unknown"}: {have}/{ingredient.Count}";
@@ -378,7 +377,7 @@ public sealed class CraftingScreen : IScreen
         if (row < maxRow) { AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++; }
         if (row < maxRow)
         {
-            int owned = CountItem(hud, recipe.ResultItemTypeId);
+            int owned = CountItem(hud, recipe.Result.NumericItemId);
             string ownedText = $"  Owned: {owned}";
             AsciiDraw.DrawString(r, col, row, ownedText, owned > 0 ? RenderingTheme.Stats : RenderingTheme.Dim);
             row++;
@@ -406,15 +405,15 @@ public sealed class CraftingScreen : IScreen
         if (!CanCraftRecipe(recipe, hud)) return;
 
         // Track recent recipe
-        _recentRecipeIds.Remove(recipe.RecipeId);
-        _recentRecipeIds.Insert(0, recipe.RecipeId);
+        _recentRecipeIds.Remove(recipe.NumericId);
+        _recentRecipeIds.Insert(0, recipe.NumericId);
         if (_recentRecipeIds.Count > MaxRecent)
             _recentRecipeIds.RemoveAt(_recentRecipeIds.Count - 1);
 
         var msg = new ClientInputMsg
         {
             ActionType = ActionTypes.Craft,
-            ItemSlot = recipe.RecipeId,
+            ItemSlot = recipe.NumericId,
             Tick = _ctx.GameState.WorldTick
         };
         _ = _ctx.Connection.SendInputAsync(msg);
@@ -423,13 +422,13 @@ public sealed class CraftingScreen : IScreen
     private void RebuildCategoryOrder()
     {
         var hud = _ctx.GameState.PlayerState;
-        var recipes = CraftingDefinitions.All;
+        var recipes = GameData.Instance.Recipes.All;
 
         // Collect unique categories
         var categories = new HashSet<int>();
         foreach (var r in recipes)
         {
-            var def = GameData.Instance.Items.Get(r.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
             if (def != null) categories.Add(def.CategoryInt);
         }
 
@@ -448,12 +447,12 @@ public sealed class CraftingScreen : IScreen
     private void RebuildFilteredRecipes()
     {
         var hud = _ctx.GameState.PlayerState;
-        var recipes = CraftingDefinitions.All;
-        var filtered = new List<CraftingRecipe>();
+        var recipes = GameData.Instance.Recipes.All;
+        var filtered = new List<RecipeDefinition>();
 
         foreach (var r in recipes)
         {
-            var def = GameData.Instance.Items.Get(r.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
             if (def != null && def.CategoryInt == _selectedCategory)
                 filtered.Add(r);
         }
@@ -471,9 +470,9 @@ public sealed class CraftingScreen : IScreen
 
     private bool CategoryHasCraftable(int category, PlayerStateMsg hud)
     {
-        foreach (var r in CraftingDefinitions.All)
+        foreach (var r in GameData.Instance.Recipes.All)
         {
-            var def = GameData.Instance.Items.Get(r.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
             if (def != null && def.CategoryInt == category && CanCraftRecipe(r, hud))
                 return true;
         }
@@ -483,9 +482,9 @@ public sealed class CraftingScreen : IScreen
     private static int CountRecipesInCategory(int category)
     {
         int count = 0;
-        foreach (var r in CraftingDefinitions.All)
+        foreach (var r in GameData.Instance.Recipes.All)
         {
-            var def = GameData.Instance.Items.Get(r.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
             if (def != null && def.CategoryInt == category) count++;
         }
         return count;
@@ -494,19 +493,19 @@ public sealed class CraftingScreen : IScreen
     private static int CountCraftableInCategory(int category, PlayerStateMsg hud)
     {
         int count = 0;
-        foreach (var r in CraftingDefinitions.All)
+        foreach (var r in GameData.Instance.Recipes.All)
         {
-            var def = GameData.Instance.Items.Get(r.ResultItemTypeId);
+            var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
             if (def != null && def.CategoryInt == category && CanCraftRecipe(r, hud)) count++;
         }
         return count;
     }
 
-    private static bool CanCraftRecipe(CraftingRecipe recipe, PlayerStateMsg hud)
+    private static bool CanCraftRecipe(RecipeDefinition recipe, PlayerStateMsg hud)
     {
         foreach (var ingredient in recipe.Ingredients)
         {
-            if (CountItem(hud, ingredient.ItemTypeId) < ingredient.Count)
+            if (CountItem(hud, ingredient.NumericItemId) < ingredient.Count)
                 return false;
         }
         return true;

@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Components;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -19,6 +21,11 @@ public sealed class RecipeRegistry
         {
             recipe.NumericId = nextId++;
             _byStringId[recipe.Id] = recipe;
+
+            // Resolve string item IDs to numeric IDs
+            recipe.Result.NumericItemId = itemRegistry.GetNumericId(recipe.Result.ItemId);
+            foreach (var ingredient in recipe.Ingredients)
+                ingredient.NumericItemId = itemRegistry.GetNumericId(ingredient.ItemId);
 
             if (!_byStation.TryGetValue(recipe.Station, out var list))
             {
@@ -43,4 +50,22 @@ public sealed class RecipeRegistry
         _byStation.TryGetValue(station, out var list) ? list : [];
 
     public int Count => _byStringId.Count;
+
+    /// <summary>
+    /// Returns true if the player inventory has enough resources to craft the recipe.
+    /// </summary>
+    public static bool CanCraft(RecipeDefinition recipe, IReadOnlyList<ItemData> items)
+    {
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            int have = 0;
+            foreach (var item in items)
+            {
+                if (item.ItemTypeId == ingredient.NumericItemId)
+                    have += item.StackCount;
+            }
+            if (have < ingredient.Count) return false;
+        }
+        return true;
+    }
 }

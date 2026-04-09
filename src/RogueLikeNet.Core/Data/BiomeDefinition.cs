@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using RogueLikeNet.Core.World;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -39,6 +42,9 @@ public sealed class BiomeLiquidDef
     public int FgColor { get; set; }
     public int BgColor { get; set; }
     public int Chance100 { get; set; }
+
+    [JsonIgnore]
+    public TileType ResolvedTileType { get; set; }
 }
 
 public sealed class BiomeResourceWeight

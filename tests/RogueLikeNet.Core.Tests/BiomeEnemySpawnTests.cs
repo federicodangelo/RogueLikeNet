@@ -1,5 +1,4 @@
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
@@ -10,7 +9,7 @@ public class BiomeEnemySpawnTests
     public void PickEnemy_ReturnsValidMonster()
     {
         var rng = new SeededRandom(42);
-        var def = BiomeDefinitions.PickEnemy(BiomeType.Forest, rng, 0);
+        var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Forest, rng, 0);
         Assert.True(def.Health > 0);
         Assert.True(def.Attack > 0);
     }
@@ -31,7 +30,7 @@ public class BiomeEnemySpawnTests
         var rng = new SeededRandom(123);
         for (int i = 0; i < 50; i++)
         {
-            var def = BiomeDefinitions.PickEnemy(biome, rng, 10);
+            var def = GameData.Instance.Biomes.PickEnemy(biome, rng, 10);
             Assert.True(def.Health > 0, $"Biome {biome} returned monster with 0 health");
         }
     }
@@ -42,7 +41,7 @@ public class BiomeEnemySpawnTests
         var rng = new SeededRandom(999);
         for (int i = 0; i < 200; i++)
         {
-            var def = BiomeDefinitions.PickEnemy(BiomeType.Infernal, rng, 0);
+            var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Infernal, rng, 0);
             // Difficulty 0 gates by attack/4, so only NPCs with attack < 4 should appear
             Assert.True(def.Attack < 4,
                 $"Difficulty 0 should not produce {def.Name} (Attack {def.Attack})");
@@ -57,7 +56,7 @@ public class BiomeEnemySpawnTests
         // High difficulty should allow NPCs with higher attack stats
         for (int i = 0; i < 200; i++)
         {
-            var def = BiomeDefinitions.PickEnemy(BiomeType.Infernal, rng, 10);
+            var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Infernal, rng, 10);
             if (def.Attack >= 8) foundStrong = true;
         }
         Assert.True(foundStrong, "High difficulty in Infernal biome should sometimes produce strong monsters");
@@ -75,10 +74,10 @@ public class BiomeEnemySpawnTests
 
         for (int i = 0; i < trials; i++)
         {
-            var forestDef = BiomeDefinitions.PickEnemy(BiomeType.Forest, forestRng, 10);
+            var forestDef = GameData.Instance.Biomes.PickEnemy(BiomeType.Forest, forestRng, 10);
             forestNames[forestDef.Name] = forestNames.GetValueOrDefault(forestDef.Name) + 1;
 
-            var cryptDef = BiomeDefinitions.PickEnemy(BiomeType.Crypt, cryptRng, 10);
+            var cryptDef = GameData.Instance.Biomes.PickEnemy(BiomeType.Crypt, cryptRng, 10);
             cryptNames[cryptDef.Name] = cryptNames.GetValueOrDefault(cryptDef.Name) + 1;
         }
 
@@ -102,7 +101,7 @@ public class BiomeEnemySpawnTests
     [InlineData(BiomeType.Infernal)]
     public void GetEnemySpawns_AllBiomesHaveEntries(BiomeType biome)
     {
-        var spawns = BiomeDefinitions.GetEnemySpawns(biome);
+        var spawns = GameData.Instance.Biomes.GetEnemySpawns(biome);
         Assert.True(spawns.Length > 0, $"Biome {biome} has no enemy spawn entries");
 
         int totalWeight = 0;

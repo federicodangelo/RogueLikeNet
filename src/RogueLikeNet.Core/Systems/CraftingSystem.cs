@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
@@ -20,9 +19,9 @@ public class CraftingSystem
             int recipeId = player.Input.ItemSlot;
             player.Input.ActionType = ActionTypes.None;
 
-            var recipe = CraftingDefinitions.Get(recipeId);
-            if (recipe.Name == null) continue;
-            if (!CraftingDefinitions.CanCraft(recipe, player.Inventory.Items)) continue;
+            var recipe = GameData.Instance.Recipes.Get(recipeId);
+            if (recipe == null) continue;
+            if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items)) continue;
 
             // Remove ingredients
             foreach (var ingredient in recipe.Ingredients)
@@ -30,7 +29,7 @@ public class CraftingSystem
                 int remaining = ingredient.Count;
                 for (int i = player.Inventory.Items.Count - 1; i >= 0 && remaining > 0; i--)
                 {
-                    if (player.Inventory.Items[i].ItemTypeId != ingredient.ItemTypeId) continue;
+                    if (player.Inventory.Items[i].ItemTypeId != ingredient.NumericItemId) continue;
                     var item = player.Inventory.Items[i];
                     int take = Math.Min(remaining, item.StackCount);
                     item.StackCount -= take;
@@ -48,12 +47,12 @@ public class CraftingSystem
             }
 
             // Add crafted item
-            var resultDef = GameData.Instance.Items.Get(recipe.ResultItemTypeId);
+            var resultDef = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
             if (resultDef == null) return;
             var resultItem = new ItemData
             {
-                ItemTypeId = recipe.ResultItemTypeId,
-                StackCount = recipe.ResultCount,
+                ItemTypeId = recipe.Result.NumericItemId,
+                StackCount = recipe.Result.Count,
             };
 
             bool stacked = false;

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -42,7 +43,7 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
+        var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
 
         // Step 1: Fill with walls
         DungeonHelper.FillWalls(chunk);

@@ -1,5 +1,5 @@
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -36,7 +36,7 @@ public class BiomeDungeonGenerator : IDungeonGenerator
 
     public GenerationResult Generate(ChunkPosition chunkPos)
     {
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
+        var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
         var generator = PickGenerator(biome);
         return generator.Generate(chunkPos);
     }

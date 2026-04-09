@@ -1,4 +1,4 @@
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.World;
 
@@ -10,8 +10,8 @@ public class BiomePaletteTests
     public void GetBiomeForChunk_ReturnsDeterministicResult()
     {
         var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(10, 20, Position.DefaultZ));
-        var biome1 = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
-        var biome2 = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
+        var biome1 = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
+        var biome2 = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
         Assert.Equal(biome1, biome2);
     }
 
@@ -20,8 +20,8 @@ public class BiomePaletteTests
     {
         string[] validNames = ["Stone", "Lava", "Ice", "Forest", "Arcane", "Crypt", "Sewer", "Fungal", "Ruined", "Infernal"];
         var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(5, 5, Position.DefaultZ));
-        var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
-        string name = BiomeDefinitions.GetBiomeName(biome);
+        var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42);
+        string name = GameData.Instance.Biomes.GetBiomeName(biome);
         Assert.Contains(name, validNames);
     }
 
@@ -33,7 +33,7 @@ public class BiomePaletteTests
             for (int y = 0; y < 500; y += 64)
             {
                 var (cx, cy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, Position.DefaultZ));
-                biomes.Add(BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42));
+                biomes.Add(BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, cy, 0), 42));
             }
 
         Assert.True(biomes.Count >= 2, $"Expected multiple biomes, got: {string.Join(", ", biomes)}");
@@ -47,8 +47,8 @@ public class BiomePaletteTests
         Assert.Equal(cx1, cx2);
         Assert.Equal(cy1, cy2);
         Assert.Equal(
-            BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx1, cy1, 0), 42),
-            BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx2, cy2, 0), 42));
+            BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx1, cy1, 0), 42),
+            BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx2, cy2, 0), 42));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class BiomePaletteTests
     {
         var biomes = new HashSet<BiomeType>();
         for (long seed = 0; seed < 50; seed++)
-            biomes.Add(BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(0, 0, 0), seed));
+            biomes.Add(BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(0, 0, 0), seed));
 
         Assert.True(biomes.Count >= 2, $"Different seeds should produce different biomes, got: {string.Join(", ", biomes)}");
     }
@@ -65,7 +65,7 @@ public class BiomePaletteTests
     public void ApplyBiomeTint_Stone_NoChange()
     {
         int color = 0x808080;
-        int result = BiomeDefinitions.ApplyBiomeTint(color, BiomeType.Stone);
+        int result = GameData.Instance.Biomes.ApplyBiomeTint(color, BiomeType.Stone);
         Assert.Equal(color, result);
     }
 
@@ -73,7 +73,7 @@ public class BiomePaletteTests
     public void ApplyBiomeTint_Lava_ShiftsWarm()
     {
         int color = 0x808080;
-        int result = BiomeDefinitions.ApplyBiomeTint(color, BiomeType.Lava);
+        int result = GameData.Instance.Biomes.ApplyBiomeTint(color, BiomeType.Lava);
         int r = (result >> 16) & 0xFF;
         int g = (result >> 8) & 0xFF;
         int b = result & 0xFF;
@@ -83,15 +83,15 @@ public class BiomePaletteTests
     [Fact]
     public void ApplyBiomeTint_Zero_ReturnsZero()
     {
-        Assert.Equal(0, BiomeDefinitions.ApplyBiomeTint(0, BiomeType.Ice));
+        Assert.Equal(0, GameData.Instance.Biomes.ApplyBiomeTint(0, BiomeType.Ice));
     }
 
     [Fact]
     public void AllBiomes_HaveDecorations()
     {
-        for (int i = 0; i < BiomeDefinitions.BiomeCount; i++)
+        for (int i = 0; i < BiomeRegistry.BiomeCount; i++)
         {
-            var decos = BiomeDefinitions.GetDecorations((BiomeType)i);
+            var decos = GameData.Instance.Biomes.GetDecorations((BiomeType)i);
             Assert.True(decos.Length > 0, $"Biome {(BiomeType)i} should have decorations");
         }
     }
@@ -99,9 +99,9 @@ public class BiomePaletteTests
     [Fact]
     public void AllBiomes_HaveNames()
     {
-        for (int i = 0; i < BiomeDefinitions.BiomeCount; i++)
+        for (int i = 0; i < BiomeRegistry.BiomeCount; i++)
         {
-            string name = BiomeDefinitions.GetBiomeName((BiomeType)i);
+            string name = GameData.Instance.Biomes.GetBiomeName((BiomeType)i);
             Assert.False(string.IsNullOrEmpty(name));
         }
     }
@@ -110,11 +110,11 @@ public class BiomePaletteTests
     public void LiquidBiomes_HaveValidLiquidDefs()
     {
         // Lava, Ice, Forest, Sewer, Fungal, Infernal should have liquid
-        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Lava));
-        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Sewer));
-        Assert.NotNull(BiomeDefinitions.GetLiquid(BiomeType.Infernal));
+        Assert.NotNull(GameData.Instance.Biomes.GetLiquid(BiomeType.Lava));
+        Assert.NotNull(GameData.Instance.Biomes.GetLiquid(BiomeType.Sewer));
+        Assert.NotNull(GameData.Instance.Biomes.GetLiquid(BiomeType.Infernal));
         // Stone, Arcane, Crypt, Ruined should not
-        Assert.Null(BiomeDefinitions.GetLiquid(BiomeType.Stone));
-        Assert.Null(BiomeDefinitions.GetLiquid(BiomeType.Arcane));
+        Assert.Null(GameData.Instance.Biomes.GetLiquid(BiomeType.Stone));
+        Assert.Null(GameData.Instance.Biomes.GetLiquid(BiomeType.Arcane));
     }
 }

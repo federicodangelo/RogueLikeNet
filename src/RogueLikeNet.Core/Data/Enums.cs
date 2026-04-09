@@ -1,5 +1,19 @@
 namespace RogueLikeNet.Core.Data;
 
+public enum BiomeType
+{
+    Stone,
+    Lava,
+    Ice,
+    Forest,
+    Arcane,
+    Crypt,
+    Sewer,
+    Fungal,
+    Ruined,
+    Infernal,
+}
+
 public enum ItemCategory
 {
     Weapon = 0,

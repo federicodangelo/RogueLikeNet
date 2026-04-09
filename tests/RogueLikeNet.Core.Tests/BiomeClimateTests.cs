@@ -1,4 +1,4 @@
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Core.Tests;
 
@@ -17,7 +17,7 @@ public class BiomeClimateTests
     [InlineData(0.6, 0.5, BiomeType.Infernal)]   // hot + wet
     public void GetBiomeFromClimate_MapsCorrectly(double temp, double moist, BiomeType expected)
     {
-        Assert.Equal(expected, BiomeDefinitions.GetBiomeFromClimate(temp, moist));
+        Assert.Equal(expected, BiomeRegistry.GetBiomeFromClimate(temp, moist));
     }
 
     [Fact]
@@ -27,8 +27,8 @@ public class BiomeClimateTests
         // Sweep the full range
         for (double t = -1.0; t <= 1.0; t += 0.1)
             for (double m = -1.0; m <= 1.0; m += 0.1)
-                found.Add(BiomeDefinitions.GetBiomeFromClimate(t, m));
+                found.Add(BiomeRegistry.GetBiomeFromClimate(t, m));
 
-        Assert.Equal(BiomeDefinitions.BiomeCount, found.Count);
+        Assert.Equal(BiomeRegistry.BiomeCount, found.Count);
     }
 }

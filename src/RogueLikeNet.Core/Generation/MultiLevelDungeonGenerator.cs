@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -62,7 +63,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
 
         int depth = Position.DefaultZ - chunkZ; // 0 at surface, increases going down
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
+        var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
 
         DungeonHelper.FillWalls(chunk);
 

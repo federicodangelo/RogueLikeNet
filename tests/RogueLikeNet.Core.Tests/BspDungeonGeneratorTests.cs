@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
@@ -56,7 +57,7 @@ public class BspDungeonGeneratorTests
         Chunk? tintedChunk = null;
         for (int cx = 0; cx < 20; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome != BiomeType.Stone)
             {
                 var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
@@ -109,8 +110,8 @@ public class BspDungeonGeneratorTests
         bool foundLiquid = false;
         for (int cx = 0; cx < 50 && !foundLiquid; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
-            if (BiomeDefinitions.GetLiquid(biome) == null) continue;
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            if (GameData.Instance.Biomes.GetLiquid(biome) == null) continue;
 
             var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size && !foundLiquid; x++)

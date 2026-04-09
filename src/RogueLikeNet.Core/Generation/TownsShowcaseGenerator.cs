@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 

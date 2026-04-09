@@ -122,7 +122,7 @@ public class OverworldGenerator : IDungeonGenerator
         {
             double temp = _tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
             double moist = _moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-            return BiomeDefinitions.GetBiomeFromClimate(temp, moist);
+            return BiomeRegistry.GetBiomeFromClimate(temp, moist);
         }
 
         // Pass 1: Carve terrain (floor vs wall vs liquid) using continuous noise
@@ -142,17 +142,16 @@ public class OverworldGenerator : IDungeonGenerator
                 var canBeResourceNode = resourceValue > ResourceRockThreshold;
                 var addedResourceNode = false;
 
-                var liquidDef = BiomeDefinitions.GetLiquid(biome);
+                var liquidDef = GameData.Instance.Biomes.GetLiquid(biome);
 
                 ref var tile = ref chunk.Tiles[lx, ly];
                 if (height < LiquidHeightThreshold && liquidDef != null)
                 {
                     // Liquid
-                    var l = liquidDef.Value;
-                    tile.Type = l.Type;
-                    tile.GlyphId = l.GlyphId;
-                    tile.FgColor = l.FgColor;
-                    tile.BgColor = l.BgColor;
+                    tile.Type = liquidDef.ResolvedTileType;
+                    tile.GlyphId = liquidDef.GlyphId;
+                    tile.FgColor = liquidDef.FgColor;
+                    tile.BgColor = liquidDef.BgColor;
                 }
                 else if (height > FloorThreshold)
                 {
@@ -189,8 +188,8 @@ public class OverworldGenerator : IDungeonGenerator
                 if (tile.Type == TileType.Blocked || tile.Type == TileType.Floor)
                 {
                     // Apply biome tint to walls and floors
-                    tile.FgColor = tile.Type == TileType.Floor ? BiomeDefinitions.GetFloorColor(biome) : BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-                    tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+                    tile.FgColor = tile.Type == TileType.Floor ? GameData.Instance.Biomes.GetFloorColor(biome) : GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
+                    tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
                 }
 
                 if (tile.Type == TileType.Floor && !addedResourceNode) // Only add features on floor tiles that don't have a resource node
@@ -204,14 +203,14 @@ public class OverworldGenerator : IDungeonGenerator
                     else
                     {
                         // Add decorative features
-                        var decorations = BiomeDefinitions.GetDecorations(biome);
+                        var decorations = GameData.Instance.Biomes.GetDecorations(biome);
                         foreach (var deco in decorations)
                         {
                             if (rng.Next(1000) < deco.Chance1000)
                             {
                                 tile.Type = TileType.Floor;
                                 tile.GlyphId = deco.GlyphId;
-                                tile.FgColor = BiomeDefinitions.ApplyBiomeTint(deco.FgColor, biome);
+                                tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(deco.FgColor, biome);
                                 break;
                             }
                         }
@@ -219,7 +218,7 @@ public class OverworldGenerator : IDungeonGenerator
                         // Add monster, items or torches
                         if (rng.Next(1000) < MonsterChance1000)
                         {
-                            var def = BiomeDefinitions.PickEnemy(biome, rng, difficulty);
+                            var def = GameData.Instance.Biomes.PickEnemy(biome, rng, difficulty);
                             var monsterData = NpcRegistry.GenerateMonsterData(def, difficulty);
                             result.Monsters.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
                         }
@@ -336,7 +335,7 @@ public class OverworldGenerator : IDungeonGenerator
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678) + chunkZ * 0x3C6EF35FL);
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
-        var biome = BiomeDefinitions.GetBiomeForChunk(chunkPos, _seed);
+        var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
 
         DungeonHelper.FillWalls(chunk);
 

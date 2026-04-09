@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -94,8 +95,8 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                 for (int y = ry; y < ry + roomH; y++)
                 {
                     ref var tile = ref chunk.Tiles[x, y];
-                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-                    tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+                    tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
+                    tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
                 }
 
             // Tint wall tiles on all four sides (TintWall is a no-op on floor tiles)
@@ -111,7 +112,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
             }
 
             // Decorations row near the south wall
-            var decorations = BiomeDefinitions.GetDecorations(biome);
+            var decorations = GameData.Instance.Biomes.GetDecorations(biome);
             if (decorations.Length > 0)
             {
                 int decoY = ry + roomH - 2;
@@ -122,15 +123,14 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                     ref var tile = ref chunk.Tiles[dx, decoY];
                     tile.Type = TileType.Floor;
                     tile.GlyphId = decorations[d].GlyphId;
-                    tile.FgColor = BiomeDefinitions.ApplyBiomeTint(decorations[d].FgColor, biome);
+                    tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(decorations[d].FgColor, biome);
                 }
             }
 
             // Liquid pool in the upper portion of the room
-            var liquidDef = BiomeDefinitions.GetLiquid(biome);
+            var liquidDef = GameData.Instance.Biomes.GetLiquid(biome);
             if (liquidDef != null)
             {
-                var liq = liquidDef.Value;
                 int poolX = rx + 3;
                 int poolY = ry + 2;
                 int poolW = Math.Min(4, roomW - 6);
@@ -141,10 +141,10 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                         if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                         {
                             ref var tile = ref chunk.Tiles[x, y];
-                            tile.Type = liq.Type;
-                            tile.GlyphId = liq.GlyphId;
-                            tile.FgColor = liq.FgColor;
-                            tile.BgColor = liq.BgColor;
+                            tile.Type = liquidDef.ResolvedTileType;
+                            tile.GlyphId = liquidDef.GlyphId;
+                            tile.FgColor = liquidDef.FgColor;
+                            tile.BgColor = liquidDef.BgColor;
                         }
                     }
             }
@@ -202,8 +202,8 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
         ref var tile = ref chunk.Tiles[x, y];
         if (tile.Type == TileType.Blocked)
         {
-            tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-            tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+            tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
+            tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
         }
     }
 }

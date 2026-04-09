@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -17,10 +19,16 @@ public sealed class RecipeIngredient
 {
     public string ItemId { get; set; } = "";
     public int Count { get; set; } = 1;
+
+    [JsonIgnore]
+    public int NumericItemId { get; set; }
 }
 
 public sealed class RecipeResult
 {
     public string ItemId { get; set; } = "";
     public int Count { get; set; } = 1;
+
+    [JsonIgnore]
+    public int NumericItemId { get; set; }
 }

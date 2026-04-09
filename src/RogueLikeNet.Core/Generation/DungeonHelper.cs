@@ -82,13 +82,12 @@ internal static class DungeonHelper
 
     public static void PlaceLiquidPools(Chunk chunk, List<Room> rooms, BiomeType biome, SeededRandom rng)
     {
-        var liquidDef = BiomeDefinitions.GetLiquid(biome);
+        var liquidDef = GameData.Instance.Biomes.GetLiquid(biome);
         if (liquidDef == null) return;
-        var liq = liquidDef.Value;
 
         for (int i = 1; i < rooms.Count - 1; i++)
         {
-            if (rng.Next(100) >= liq.Chance100RoomBecomesLiquid) continue;
+            if (rng.Next(100) >= liquidDef.Chance100) continue;
             var room = rooms[i];
             if (room.Width < 6 || room.Height < 6) continue;
             bool circular = rng.NextBool();
@@ -110,10 +109,10 @@ internal static class DungeonHelper
                             continue; // Make the pool roughly circular
 
                         ref var tile = ref chunk.Tiles[x, y];
-                        tile.Type = liq.Type;
-                        tile.GlyphId = liq.GlyphId;
-                        tile.FgColor = liq.FgColor;
-                        tile.BgColor = liq.BgColor;
+                        tile.Type = liquidDef.ResolvedTileType;
+                        tile.GlyphId = liquidDef.GlyphId;
+                        tile.FgColor = liquidDef.FgColor;
+                        tile.BgColor = liquidDef.BgColor;
                     }
                 }
             }
@@ -122,7 +121,7 @@ internal static class DungeonHelper
 
     public static void PlaceDecorations(Chunk chunk, BiomeType biome, SeededRandom rng)
     {
-        var decorations = BiomeDefinitions.GetDecorations(biome);
+        var decorations = GameData.Instance.Biomes.GetDecorations(biome);
         if (decorations.Length == 0) return;
 
         for (int x = 0; x < Chunk.Size; x++)
@@ -243,8 +242,8 @@ internal static class DungeonHelper
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.FgColor = BiomeDefinitions.ApplyBiomeTint(tile.FgColor, biome);
-                tile.BgColor = BiomeDefinitions.ApplyBiomeTint(tile.BgColor, biome);
+                tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
+                tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
             }
     }
 

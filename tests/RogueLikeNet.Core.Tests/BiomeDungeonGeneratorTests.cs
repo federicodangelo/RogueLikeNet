@@ -1,4 +1,4 @@
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -35,7 +35,7 @@ public class BiomeDungeonGeneratorTests
         Chunk? stoneChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            if (BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42) == BiomeType.Stone)
+            if (BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42) == BiomeType.Stone)
             {
                 stoneChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
                 break;
@@ -63,7 +63,7 @@ public class BiomeDungeonGeneratorTests
         Chunk? caveChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome is BiomeType.Lava or BiomeType.Forest or BiomeType.Fungal or BiomeType.Infernal)
             {
                 caveChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
@@ -89,7 +89,7 @@ public class BiomeDungeonGeneratorTests
         Chunk? tunnelChunk = null;
         for (int cx = 0; cx < 100; cx++)
         {
-            var biome = BiomeDefinitions.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome is BiomeType.Ice or BiomeType.Sewer)
             {
                 tunnelChunk = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ)).Chunk;
