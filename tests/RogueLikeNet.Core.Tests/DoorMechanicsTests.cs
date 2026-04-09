@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -8,6 +9,8 @@ namespace RogueLikeNet.Core.Tests;
 public class DoorMechanicsTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
 
     private GameEngine CreateEngine()
     {
@@ -22,7 +25,7 @@ public class DoorMechanicsTests
         GlyphId = TileDefinitions.GlyphFloor,
         FgColor = TileDefinitions.ColorFloorFg,
         BgColor = TileDefinitions.ColorBlack,
-        PlaceableItemId = ItemDefinitions.WoodenDoor,
+        PlaceableItemId = ItemId("wooden_door"),
         PlaceableItemExtra = 0,
     };
 
@@ -77,7 +80,7 @@ public class DoorMechanicsTests
 
         // Door should now be open (PlaceableItemExtra > 0 = ticks remaining)
         var tile = engine.WorldMap.GetTile(Position.FromCoords(doorX, doorY, Position.DefaultZ));
-        Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
+        Assert.Equal(ItemId("wooden_door"), tile.PlaceableItemId);
         Assert.True(PlaceableDefinitions.IsDoorOpen(tile.PlaceableItemId, tile.PlaceableItemExtra));
 
         // Player should NOT have moved (bumping opens door, doesn't move through)
@@ -180,7 +183,7 @@ public class DoorMechanicsTests
         var tile = new TileInfo
         {
             Type = TileType.Floor,
-            PlaceableItemId = ItemDefinitions.WoodenWindow,
+            PlaceableItemId = ItemId("wooden_window"),
         };
         Assert.False(tile.IsWalkable);
         Assert.True(tile.IsTransparent);

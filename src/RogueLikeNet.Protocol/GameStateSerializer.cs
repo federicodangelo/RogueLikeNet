@@ -1,6 +1,6 @@
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
@@ -178,7 +178,7 @@ public static class GameStateSerializer
                 var item = new ItemDataMsg
                 {
                     ItemTypeId = gi.Item.ItemTypeId,
-                    Category = ItemDefinitions.Get(gi.Item.ItemTypeId).Category,
+                    Category = GameData.Instance.Items.Get(gi.Item.ItemTypeId)?.CategoryInt ?? 0,
                     StackCount = gi.Item.StackCount,
                 };
                 ProcessEntity((long)gi.Id, gi.Position, gi.Appearance, 0, 0, 0, item);

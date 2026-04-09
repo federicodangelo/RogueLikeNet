@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
@@ -36,53 +37,56 @@ public class BiomeEnemySpawnTests
     }
 
     [Fact]
-    public void PickEnemy_LowDifficulty_NeverReturnsDragons()
+    public void PickEnemy_LowDifficulty_NeverReturnsHighAttackMonsters()
     {
         var rng = new SeededRandom(999);
         for (int i = 0; i < 200; i++)
         {
             var def = BiomeDefinitions.PickEnemy(BiomeType.Infernal, rng, 0);
-            // Difficulty 0 allows maxTypeId=1 (Goblin and Orc only)
-            Assert.True(def.TypeId <= NpcDefinitions.Orc,
-                $"Difficulty 0 should not produce {def.Name} (TypeId {def.TypeId})");
+            // Difficulty 0 gates by attack/4, so only NPCs with attack < 4 should appear
+            Assert.True(def.Attack < 4,
+                $"Difficulty 0 should not produce {def.Name} (Attack {def.Attack})");
         }
     }
 
     [Fact]
-    public void PickEnemy_HighDifficulty_CanReturnDragons()
+    public void PickEnemy_HighDifficulty_CanReturnStrongMonsters()
     {
         var rng = new SeededRandom(42);
-        bool foundDragon = false;
-        // Lava and Infernal have high dragon weights
+        bool foundStrong = false;
+        // High difficulty should allow NPCs with higher attack stats
         for (int i = 0; i < 200; i++)
         {
             var def = BiomeDefinitions.PickEnemy(BiomeType.Infernal, rng, 10);
-            if (def.TypeId == NpcDefinitions.Dragon) foundDragon = true;
+            if (def.Attack >= 8) foundStrong = true;
         }
-        Assert.True(foundDragon, "High difficulty in Infernal biome should sometimes produce dragons");
+        Assert.True(foundStrong, "High difficulty in Infernal biome should sometimes produce strong monsters");
     }
 
     [Fact]
     public void PickEnemy_BiomesHaveDifferentDistributions()
     {
-        // Forest should produce mostly goblins; Crypt should produce mostly skeletons
+        // Forest should produce mostly weak enemies; Crypt should produce mostly its signature enemies
         var forestRng = new SeededRandom(42);
         var cryptRng = new SeededRandom(42);
-        int forestGoblins = 0, cryptSkeletons = 0;
+        var forestNames = new Dictionary<string, int>();
+        var cryptNames = new Dictionary<string, int>();
         const int trials = 500;
 
         for (int i = 0; i < trials; i++)
         {
             var forestDef = BiomeDefinitions.PickEnemy(BiomeType.Forest, forestRng, 10);
-            if (forestDef.TypeId == NpcDefinitions.Goblin) forestGoblins++;
+            forestNames[forestDef.Name] = forestNames.GetValueOrDefault(forestDef.Name) + 1;
 
             var cryptDef = BiomeDefinitions.PickEnemy(BiomeType.Crypt, cryptRng, 10);
-            if (cryptDef.TypeId == NpcDefinitions.Skeleton) cryptSkeletons++;
+            cryptNames[cryptDef.Name] = cryptNames.GetValueOrDefault(cryptDef.Name) + 1;
         }
 
-        // Forest has 55% goblin weight, Crypt has 60% skeleton weight
-        Assert.True(forestGoblins > trials / 4, $"Forest should have many goblins but got {forestGoblins}/{trials}");
-        Assert.True(cryptSkeletons > trials / 4, $"Crypt should have many skeletons but got {cryptSkeletons}/{trials}");
+        // Both biomes should produce a dominant enemy type
+        var forestTop = forestNames.MaxBy(kv => kv.Value);
+        var cryptTop = cryptNames.MaxBy(kv => kv.Value);
+        Assert.True(forestTop.Value > trials / 4, $"Forest should have a dominant enemy but top is {forestTop.Key}={forestTop.Value}/{trials}");
+        Assert.True(cryptTop.Value > trials / 4, $"Crypt should have a dominant enemy but top is {cryptTop.Key}={cryptTop.Value}/{trials}");
     }
 
     [Theory]

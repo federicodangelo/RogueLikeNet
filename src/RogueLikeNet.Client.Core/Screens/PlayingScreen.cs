@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -215,7 +215,8 @@ public sealed class PlayingScreen : IScreen
         {
             int invIndex = ps.QuickSlotIndices[slotNum];
             if (invIndex >= 0 && invIndex < ps.InventoryItems.Length &&
-                ps.InventoryItems[invIndex].Category == ItemDefinitions.CategoryPlaceable)
+                ps.InventoryItems[invIndex].Category == (int)ItemCategory.Block ||
+                ps.InventoryItems[invIndex].Category == (int)ItemCategory.Furniture)
             {
                 _placingFromSlot = invIndex;
                 return null;

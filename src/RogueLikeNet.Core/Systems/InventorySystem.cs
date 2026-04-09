@@ -79,10 +79,10 @@ public class InventorySystem
 
         var drop = engine.FindDropPosition(player.Position);
 
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
-        int dropGlyph = def.Category == ItemDefinitions.CategoryPlaceable
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        int dropGlyph = def != null && def.IsPlaceable
             ? TileDefinitions.GlyphDroppedPlaceable
-            : def.GlyphId;
+            : def?.GlyphId ?? 0;
         engine.SpawnItemOnGround(itemData, drop);
     }
 
@@ -94,43 +94,42 @@ public class InventorySystem
         if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
-        var template = ItemDefinitions.Get(itemData.ItemTypeId);
+        var template = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (template == null) return;
 
         switch (template.Category)
         {
-            case ItemDefinitions.CategoryPotion:
+            case ItemCategory.Potion:
                 ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
                 break;
 
-            case ItemDefinitions.CategoryFood:
-                ApplyFood(ref player, itemData.ItemTypeId);
+            case ItemCategory.Food:
+                ApplyFood(ref player, template);
                 player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
                 break;
 
-            case ItemDefinitions.CategoryWeapon:
-            case ItemDefinitions.CategoryArmor:
-            case ItemDefinitions.CategoryTool:
+            case ItemCategory.Weapon:
+            case ItemCategory.Armor:
+            case ItemCategory.Tool:
                 EquipItem(ref player, slot);
                 break;
         }
     }
 
-    private static void ApplyFood(ref PlayerEntity player, int itemTypeId)
+    private static void ApplyFood(ref PlayerEntity player, ItemDefinition newDef)
     {
-        var newDef = LegacyItemBridge.GetNewDefinition(itemTypeId)
-                  ?? GameData.Instance.Items.Get(itemTypeId);
-        int healthRestore = newDef?.Food?.HealthRestore ?? 0;
+        int healthRestore = newDef.Food?.HealthRestore ?? 0;
         if (healthRestore > 0)
             player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + healthRestore);
-        int hungerRestore = newDef?.Food?.HungerRestore ?? 0;
+        int hungerRestore = newDef.Food?.HungerRestore ?? 0;
         if (hungerRestore > 0)
             player.Survival.Hunger = Math.Min(player.Survival.MaxHunger, player.Survival.Hunger + hungerRestore);
     }
 
-    private static void ApplyPotion(ref PlayerEntity player, Definitions.ItemDefinition def)
+    private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
     {
         if (def.BaseHealth > 0)
             player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.BaseHealth);
@@ -142,7 +141,8 @@ public class InventorySystem
 
     private static void ApplyItemStats(ref PlayerEntity player, ItemData item)
     {
-        var def = ItemDefinitions.Get(item.ItemTypeId);
+        var def = GameData.Instance.Items.Get(item.ItemTypeId);
+        if (def == null) return;
         player.CombatStats.Attack += def.BaseAttack;
         player.CombatStats.Defense += def.BaseDefense;
         player.Health.Max += def.BaseHealth;
@@ -151,35 +151,34 @@ public class InventorySystem
 
     private static void RemoveItemStats(ref PlayerEntity player, ItemData item)
     {
-        var def = ItemDefinitions.Get(item.ItemTypeId);
+        var def = GameData.Instance.Items.Get(item.ItemTypeId);
+        if (def == null) return;
         player.CombatStats.Attack -= def.BaseAttack;
         player.CombatStats.Defense -= def.BaseDefense;
         player.Health.Max -= def.BaseHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
 
-    private static int ResolveEquipSlot(Definitions.ItemDefinition def, int itemTypeId)
+    private static int ResolveEquipSlot(ItemDefinition def)
     {
-        // Try JSON registry for the real EquipSlot
-        var newDef = LegacyItemBridge.GetNewDefinition(itemTypeId)
-                  ?? GameData.Instance.Items.Get(itemTypeId);
-        if (newDef?.EquipSlot is { } slot)
+        if (def.EquipSlot is { } slot)
             return (int)slot;
 
         // Fallback: weapons/tools → Weapon slot, armor → Chest
-        return def.Category == ItemDefinitions.CategoryWeapon || def.Category == ItemDefinitions.CategoryTool
-            ? (int)EquipSlot.Weapon
-            : (int)EquipSlot.Chest;
+        return def.Category is ItemCategory.Weapon or ItemCategory.Tool
+            ? (int)Data.EquipSlot.Weapon
+            : (int)Data.EquipSlot.Chest;
     }
 
     private static void EquipItem(ref PlayerEntity player, int slot)
     {
         var newItem = player.Inventory.Items[slot];
-        var def = ItemDefinitions.Get(newItem.ItemTypeId);
+        var def = GameData.Instance.Items.Get(newItem.ItemTypeId);
+        if (def == null) return;
         player.Inventory.Items.RemoveAt(slot);
         player.QuickSlots.OnItemRemoved(slot);
 
-        int equipSlot = ResolveEquipSlot(def, newItem.ItemTypeId);
+        int equipSlot = ResolveEquipSlot(def);
 
         if (player.Equipment.HasItem(equipSlot))
         {
@@ -235,13 +234,14 @@ public class InventorySystem
         if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (def == null) return;
 
         switch (def.Category)
         {
-            case ItemDefinitions.CategoryWeapon:
-            case ItemDefinitions.CategoryArmor:
-            case ItemDefinitions.CategoryTool:
+            case ItemCategory.Weapon:
+            case ItemCategory.Armor:
+            case ItemCategory.Tool:
                 EquipItem(ref player, slot);
                 break;
         }
@@ -280,25 +280,26 @@ public class InventorySystem
         if (invIndex >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[invIndex];
-        var template = ItemDefinitions.Get(itemData.ItemTypeId);
+        var template = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (template == null) return;
 
         switch (template.Category)
         {
-            case ItemDefinitions.CategoryPotion:
+            case ItemCategory.Potion:
                 ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
                 break;
 
-            case ItemDefinitions.CategoryFood:
-                ApplyFood(ref player, itemData.ItemTypeId);
+            case ItemCategory.Food:
+                ApplyFood(ref player, template);
                 player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
                 break;
 
-            case ItemDefinitions.CategoryWeapon:
-            case ItemDefinitions.CategoryArmor:
-            case ItemDefinitions.CategoryTool:
+            case ItemCategory.Weapon:
+            case ItemCategory.Armor:
+            case ItemCategory.Tool:
                 EquipItem(ref player, invIndex);
                 break;
         }
@@ -310,7 +311,8 @@ public class InventorySystem
     /// </summary>
     public static bool AddItemToInventory(ref PlayerEntity player, ItemData itemData)
     {
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (def == null) return false;
 
         if (def.Stackable)
         {
@@ -351,13 +353,11 @@ public class InventorySystem
     {
         if (newIndex < 0 || newIndex >= player.Inventory.Items.Count) return;
         var itemData = player.Inventory.Items[newIndex];
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
-        if (def.Category != ItemDefinitions.CategoryWeapon &&
-            def.Category != ItemDefinitions.CategoryArmor &&
-            def.Category != ItemDefinitions.CategoryPotion &&
-            def.Category != ItemDefinitions.CategoryPlaceable &&
-            def.Category != ItemDefinitions.CategoryTool &&
-            def.Category != ItemDefinitions.CategoryFood)
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (def == null) return;
+        if (def.Category is not (ItemCategory.Weapon or ItemCategory.Armor
+            or ItemCategory.Potion or ItemCategory.Block or ItemCategory.Furniture
+            or ItemCategory.Tool or ItemCategory.Food))
             return;
         int emptySlot = player.QuickSlots.FirstEmptySlot();
         if (emptySlot >= 0)

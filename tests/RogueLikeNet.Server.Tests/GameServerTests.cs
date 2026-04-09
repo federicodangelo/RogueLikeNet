@@ -1,5 +1,6 @@
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -610,7 +611,7 @@ public class GameServerTests
 
         // Place an item at the player's position
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
-        var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion); // Health Potion
+        var template = GameData.Instance.Items.Get("health_potion_small")!; // Health Potion
         loop.Engine.SpawnItemOnGround(template, 0, Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ));
 
         messages.Clear();
@@ -628,7 +629,7 @@ public class GameServerTests
                 var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
                 foreach (var eu in delta.EntityUpdates)
                 {
-                    if (eu.Item?.ItemTypeId == template.TypeId)
+                    if (eu.Item?.ItemTypeId == template.NumericId)
                     {
                         hasItemEntity = true;
                         break;

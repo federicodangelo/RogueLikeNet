@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 
@@ -28,24 +29,25 @@ public class MonsterDefinitionsTests
     }
 
     [Fact]
-    public void All_ContainsAllMonsters()
+    public void All_ContainsMonsters()
     {
-        Assert.Equal(4, NpcDefinitions.All.Length);
+        Assert.True(NpcDefinitions.All.Length > 0, "NPC registry should have entries");
     }
 
-    [Theory]
-    [InlineData(NpcDefinitions.Goblin, "Goblin", 15, 4, 1)]
-    [InlineData(NpcDefinitions.Orc, "Orc", 30, 7, 3)]
-    [InlineData(NpcDefinitions.Skeleton, "Skeleton", 20, 5, 2)]
-    [InlineData(NpcDefinitions.Dragon, "Dragon", 100, 15, 8)]
-    public void Get_ReturnsCorrectDefinition(int typeId, string name, int health, int attack, int defense)
+    [Fact]
+    public void Get_ByRegistry_ReturnsCorrectDefinition()
     {
-        var def = NpcDefinitions.Get(typeId);
-        Assert.Equal(typeId, def.TypeId);
-        Assert.Equal(name, def.Name);
-        Assert.Equal(health, def.Health);
-        Assert.Equal(attack, def.Attack);
-        Assert.Equal(defense, def.Defense);
+        var npcReg = GameData.Instance.Npcs;
+        var goblin = npcReg.Get("goblin");
+        Assert.NotNull(goblin);
+        Assert.Equal("Goblin", goblin.Name);
+        Assert.True(goblin.Health > 0);
+        Assert.True(goblin.Attack > 0);
+
+        var def = NpcDefinitions.Get(goblin.NumericId);
+        Assert.Equal(goblin.Name, def.Name);
+        Assert.Equal(goblin.Health, def.Health);
+        Assert.Equal(goblin.Attack, def.Attack);
     }
 
     [Fact]

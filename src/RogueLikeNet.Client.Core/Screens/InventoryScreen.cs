@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -278,7 +278,8 @@ public sealed class InventoryScreen : IScreen
     {
         var hud = _ctx.GameState.PlayerState;
         if (hud == null || slot < 0 || slot >= hud.InventoryItems.Length) return;
-        if (hud.InventoryItems[slot].Category != ItemDefinitions.CategoryPlaceable) return;
+        var cat = hud.InventoryItems[slot].Category;
+        if (cat != (int)ItemCategory.Block && cat != (int)ItemCategory.Furniture) return;
         _placingSlot = slot;
     }
 

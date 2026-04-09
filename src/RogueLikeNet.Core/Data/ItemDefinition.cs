@@ -6,6 +6,13 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class ItemDefinition
 {
+    // Rarity constants (used across loot generation and display)
+    public const int RarityCommon = 0;
+    public const int RarityUncommon = 1;
+    public const int RarityRare = 2;
+    public const int RarityEpic = 3;
+    public const int RarityLegendary = 4;
+
     public string Id { get; set; } = "";
     public int NumericId { get; set; }
     public string Name { get; set; } = "";
@@ -27,6 +34,54 @@ public sealed class ItemDefinition
     public SeedData? Seed { get; set; }
     public FurnitureData? Furniture { get; set; }
     public AmmoData? Ammo { get; set; }
+
+    // Computed convenience properties for backward compatibility
+    public int BaseAttack => Weapon?.BaseDamage ?? Potion?.AttackBoost ?? 0;
+    public int BaseDefense => Armor?.BaseDefense ?? Potion?.DefenseBoost ?? 0;
+    public int BaseHealth => Potion?.HealthRestore ?? Food?.HealthRestore ?? 0;
+
+    /// <summary>True for items that can be placed on tiles (furniture, blocks).</summary>
+    public bool IsPlaceable => Category is ItemCategory.Furniture or ItemCategory.Block;
+
+    /// <summary>True for items that can be equipped.</summary>
+    public bool IsEquippable => Category is ItemCategory.Weapon or ItemCategory.Armor
+        or ItemCategory.Tool or ItemCategory.Accessory;
+
+    /// <summary>Returns the category as an int suitable for protocol messages.</summary>
+    public int CategoryInt => (int)Category;
+
+    public static string CategoryName(ItemCategory category) => category switch
+    {
+        ItemCategory.Weapon => "Weapons",
+        ItemCategory.Armor => "Armor",
+        ItemCategory.Potion => "Potions",
+        ItemCategory.Material => "Resources",
+        ItemCategory.Furniture or ItemCategory.Block => "Building",
+        ItemCategory.Tool => "Tools",
+        ItemCategory.Food => "Food",
+        ItemCategory.Misc => "Other",
+        ItemCategory.Accessory => "Accessories",
+        ItemCategory.Seed => "Seeds",
+        ItemCategory.Ammo => "Ammo",
+        ItemCategory.Magic => "Magic",
+        _ => "Other",
+    };
+
+    public static string CategoryTag(ItemCategory category) => category switch
+    {
+        ItemCategory.Weapon => "[Wpn]",
+        ItemCategory.Armor or ItemCategory.Accessory => "[Arm]",
+        ItemCategory.Potion => "[Pot]",
+        ItemCategory.Material => "[Res]",
+        ItemCategory.Furniture or ItemCategory.Block => "[Bld]",
+        ItemCategory.Tool => "[Tol]",
+        ItemCategory.Food => "[Fod]",
+        ItemCategory.Misc => "[Gld]",
+        ItemCategory.Seed => "[Res]",
+        ItemCategory.Ammo => "[Amm]",
+        ItemCategory.Magic => "[Mag]",
+        _ => "     ",
+    };
 }
 
 public sealed class WeaponData

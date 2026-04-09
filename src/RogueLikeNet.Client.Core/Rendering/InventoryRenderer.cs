@@ -3,7 +3,6 @@ using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Rendering;
@@ -199,29 +198,26 @@ public sealed class InventoryRenderer
         if (selIdx < 0 || selIdx >= hud.InventoryItems.Length) return;
 
         var item = hud.InventoryItems[selIdx];
-        var def = ItemDefinitions.Get(item.ItemTypeId);
+        var def = GameData.Instance.Items.Get(item.ItemTypeId);
+        if (def == null) return;
 
         // Only show preview for equippable items (weapons, armor, tools)
-        if (def.Category != ItemDefinitions.CategoryWeapon &&
-            def.Category != ItemDefinitions.CategoryArmor &&
-            def.Category != ItemDefinitions.CategoryTool)
+        if (!def.IsEquippable)
             return;
 
         // Resolve the correct equipment slot from JSON registry
         int targetSlot;
-        var newDef = LegacyItemBridge.GetNewDefinition(item.ItemTypeId)
-                  ?? GameData.Instance.Items.Get(item.ItemTypeId);
-        if (newDef?.EquipSlot is { } regSlot)
+        if (def.EquipSlot is { } regSlot)
             targetSlot = (int)regSlot;
         else
-            targetSlot = def.Category == ItemDefinitions.CategoryWeapon || def.Category == ItemDefinitions.CategoryTool
+            targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
                 ? (int)EquipSlot.Weapon : (int)EquipSlot.Chest;
         var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
 
-        var eqDef = equipped != null ? ItemDefinitions.Get(equipped.ItemTypeId) : default;
-        int eqAtk = equipped != null ? eqDef.BaseAttack : 0;
-        int eqDefVal = equipped != null ? eqDef.BaseDefense : 0;
-        int eqHp = equipped != null ? eqDef.BaseHealth : 0;
+        var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
+        int eqAtk = eqDef?.BaseAttack ?? 0;
+        int eqDefVal = eqDef?.BaseDefense ?? 0;
+        int eqHp = eqDef?.BaseHealth ?? 0;
 
         int diffAtk = def.BaseAttack - eqAtk;
         int diffDef = def.BaseDefense - eqDefVal;

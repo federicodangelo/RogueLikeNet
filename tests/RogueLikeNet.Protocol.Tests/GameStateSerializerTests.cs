@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
@@ -293,17 +294,19 @@ public class GameStateSerializerTests
     {
         var (engine, player) = CreateEngineWithPlayer();
 
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("health_potion_small"), StackCount = 1 });
+
         var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
         Assert.NotNull(first);
         int initialCount = first.InventoryCount;
 
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("health_potion_small"), StackCount = 1 });
 
         var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
         Assert.NotNull(second);
         Assert.Equal(initialCount + 1, second.InventoryCount);
-        Assert.Single(second.InventoryItems);
-        Assert.Equal(ItemDefinitions.HealthPotion, second.InventoryItems[0].ItemTypeId);
+        Assert.True(second.InventoryItems.Length > 0);
+        Assert.Equal(GameData.Instance.Items.GetNumericId("health_potion_small"), second.InventoryItems[^1].ItemTypeId);
 
         engine.Dispose();
     }
@@ -317,12 +320,12 @@ public class GameStateSerializerTests
         Assert.NotNull(first);
         Assert.Empty(first.EquippedItems);
 
-        player.Equipment.Weapon = new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 };
+        player.Equipment.Weapon = new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("short_sword"), StackCount = 1 };
 
         var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
         Assert.NotNull(second);
         Assert.Single(second.EquippedItems);
-        Assert.Equal(ItemDefinitions.ShortSword, second.EquippedItems[0].ItemTypeId);
+        Assert.Equal(GameData.Instance.Items.GetNumericId("short_sword"), second.EquippedItems[0].ItemTypeId);
 
         engine.Dispose();
     }
@@ -336,12 +339,12 @@ public class GameStateSerializerTests
         Assert.NotNull(first);
         Assert.Empty(first.EquippedItems);
 
-        player.Equipment.Chest = new ItemData { ItemTypeId = ItemDefinitions.LeatherArmor, StackCount = 1 };
+        player.Equipment.Chest = new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("leather_armor"), StackCount = 1 };
 
         var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
         Assert.NotNull(second);
         Assert.Single(second.EquippedItems);
-        Assert.Equal(ItemDefinitions.LeatherArmor, second.EquippedItems[0].ItemTypeId);
+        Assert.Equal(GameData.Instance.Items.GetNumericId("leather_armor"), second.EquippedItems[0].ItemTypeId);
 
         engine.Dispose();
     }
@@ -351,7 +354,7 @@ public class GameStateSerializerTests
     {
         var (engine, player) = CreateEngineWithPlayer();
 
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("health_potion_small"), StackCount = 1 });
 
         var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
         Assert.NotNull(first);

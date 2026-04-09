@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -250,22 +251,22 @@ internal static class TownGenerator
         int interiorH = house.Height - 2;
 
         // Try placing a table near center
-        PlaceBuildable(chunk, interiorX + interiorW / 2, interiorY + interiorH / 2, ItemDefinitions.WoodenTable);
+        PlaceBuildable(chunk, interiorX + interiorW / 2, interiorY + interiorH / 2, ItemId("wooden_table"));
 
         // Try placing chairs around the table
         if (interiorW >= 3 && interiorH >= 3)
         {
-            PlaceBuildable(chunk, interiorX + interiorW / 2 - 1, interiorY + interiorH / 2, ItemDefinitions.WoodenChair);
-            PlaceBuildable(chunk, interiorX + interiorW / 2 + 1, interiorY + interiorH / 2, ItemDefinitions.WoodenChair);
+            PlaceBuildable(chunk, interiorX + interiorW / 2 - 1, interiorY + interiorH / 2, ItemId("wooden_chair"));
+            PlaceBuildable(chunk, interiorX + interiorW / 2 + 1, interiorY + interiorH / 2, ItemId("wooden_chair"));
         }
 
         // Bed in a corner
-        PlaceBuildable(chunk, interiorX, interiorY, ItemDefinitions.WoodenBed);
+        PlaceBuildable(chunk, interiorX, interiorY, ItemId("wooden_bed"));
 
         // Bookshelf along a wall
         if (interiorW >= 3)
         {
-            PlaceBuildable(chunk, interiorX + interiorW - 1, interiorY, ItemDefinitions.WoodenBookshelf);
+            PlaceBuildable(chunk, interiorX + interiorW - 1, interiorY, ItemId("wooden_bookshelf"));
         }
 
         // Torch inside the house
@@ -316,18 +317,20 @@ internal static class TownGenerator
     private static TownMaterial GetMaterial(BiomeType biome) => biome switch
     {
         BiomeType.Forest or BiomeType.Fungal => new(
-            ItemDefinitions.WoodenWall, ItemDefinitions.WoodenDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.WoodenFloorTile),
+            ItemId("wooden_wall"), ItemId("wooden_door"), ItemId("wooden_window"), ItemId("wooden_floor_tile")),
         BiomeType.Ice => new(
-            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.IronFloorTile),
+            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("iron_floor_tile")),
         BiomeType.Lava or BiomeType.Infernal => new(
-            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.IronFloorTile),
+            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("iron_floor_tile")),
         BiomeType.Arcane or BiomeType.Sewer => new(
-            ItemDefinitions.CopperWall, ItemDefinitions.CopperDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.CopperFloorTile),
+            ItemId("copper_wall"), ItemId("copper_door"), ItemId("wooden_window"), ItemId("copper_floor_tile")),
         BiomeType.Crypt or BiomeType.Ruined => new(
-            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.StoneFloorTile),
+            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("stone_floor_tile")),
         _ => new(
-            ItemDefinitions.IronWall, ItemDefinitions.IronDoor, ItemDefinitions.WoodenWindow, ItemDefinitions.StoneFloorTile),
+            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("stone_floor_tile")),
     };
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
 
     private readonly record struct TownMaterial(int WallItemId, int DoorItemId, int WindowItemId, int FloorTileItemId);
 }

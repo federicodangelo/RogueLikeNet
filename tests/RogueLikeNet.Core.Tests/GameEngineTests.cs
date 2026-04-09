@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -9,6 +10,9 @@ namespace RogueLikeNet.Core.Tests;
 public class GameEngineTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
+    private static Data.ItemDefinition Item(string id) => GameData.Instance.Items.Get(id)!;
 
     [Fact]
     public void SpawnPlayer_CreatesEntity()
@@ -93,7 +97,7 @@ public class GameEngineTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up an item
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -103,7 +107,7 @@ public class GameEngineTests
         Assert.NotNull(hud);
         Assert.True(hud!.InventoryCount > 0);
         Assert.NotEmpty(hud.InventoryItems);
-        Assert.Equal(ItemDefinitions.ShortSword, hud.InventoryItems[0].ItemTypeId);
+        Assert.Equal(ItemId("short_sword"), hud.InventoryItems[0].ItemTypeId);
     }
 
     [Fact]
@@ -175,11 +179,11 @@ public class GameEngineTests
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
-        var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var template = Item("long_sword");
         var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(10, 10, Position.DefaultZ));
 
         Assert.False(item.IsDestroyed);
-        Assert.Equal(ItemDefinitions.LongSword, item.Item.ItemTypeId);
+        Assert.Equal(ItemId("long_sword"), item.Item.ItemTypeId);
         Assert.Equal(1, item.Item.StackCount);
     }
 
@@ -215,12 +219,12 @@ public class GameEngineTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Verify entity exists with ItemData at the expected position
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
-        int count = chunk.GroundItems.ToArray().Count(gi => gi.Position.X == sx && gi.Position.Y == sy && gi.Item.ItemTypeId == ItemDefinitions.ShortSword);
+        int count = chunk.GroundItems.ToArray().Count(gi => gi.Position.X == sx && gi.Position.Y == sy && gi.Item.ItemTypeId == ItemId("short_sword"));
         Assert.Equal(1, count);
     }
 
@@ -250,7 +254,7 @@ public class GameEngineTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Equip weapon
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -259,7 +263,7 @@ public class GameEngineTests
         engine.Tick();
 
         // Equip armor
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        var armorTemplate = Item("leather_armor");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -270,8 +274,8 @@ public class GameEngineTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Equal(2, hud!.EquippedItems.Length);
-        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.ShortSword);
-        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.LeatherArmor);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemId("short_sword"));
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemId("leather_armor"));
     }
 
     [Fact]
@@ -283,7 +287,7 @@ public class GameEngineTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -374,7 +378,7 @@ public class GameEngineTests
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var (sx, sy, _) = engine.FindSpawnPosition();
 
-        var template = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        var template = Item("health_potion_small");
         engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         var drop = engine.FindDropPosition(Position.FromCoords(sx, sy, Position.DefaultZ));
@@ -428,14 +432,14 @@ public class GameEngineTests
         Assert.NotNull(player.Inventory.Items);
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = 1,
         });
 
         var state = engine.GetPlayerStateData(player);
         Assert.NotNull(state);
         Assert.Single(state!.InventoryItems);
-        Assert.Equal(ItemDefinitions.CategoryPotion, state.InventoryItems[0].Category);
+        Assert.Equal((int)ItemCategory.Potion, state.InventoryItems[0].Category);
     }
 
     [Fact]
@@ -452,7 +456,7 @@ public class GameEngineTests
 
         Assert.NotNull(playerRef.Inventory.Items);
 
-        int[] expectedResources = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
+        int[] expectedResources = [ItemId("wood"), ItemId("copper_ore"), ItemId("iron_ore"), ItemId("gold_ore")];
         foreach (int resId in expectedResources)
         {
             var item = playerRef.Inventory.Items.Find(i => i.ItemTypeId == resId);
@@ -463,16 +467,16 @@ public class GameEngineTests
     [Fact]
     public void ResourceItems_UseDifferentGlyphs()
     {
-        var wood = ItemDefinitions.Get(ItemDefinitions.Wood);
+        var wood = Item("wood");
         Assert.Equal(TileDefinitions.GlyphLog, wood.GlyphId);
 
-        var copper = ItemDefinitions.Get(ItemDefinitions.CopperOre);
+        var copper = Item("copper_ore");
         Assert.Equal(TileDefinitions.GlyphOreNugget, copper.GlyphId);
 
-        var iron = ItemDefinitions.Get(ItemDefinitions.IronOre);
+        var iron = Item("iron_ore");
         Assert.Equal(TileDefinitions.GlyphOreNugget, iron.GlyphId);
 
-        var gold = ItemDefinitions.Get(ItemDefinitions.GoldOre);
+        var gold = Item("gold_ore");
         Assert.Equal(TileDefinitions.GlyphOreNugget, gold.GlyphId);
     }
 
@@ -508,7 +512,7 @@ public class GameEngineTests
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         chunk.ClearSaveFlag();
 
-        var itemData = new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 1 };
+        var itemData = new ItemData { ItemTypeId = ItemId("health_potion_small"), StackCount = 1 };
         engine.SpawnItemOnGround(itemData, Position.FromCoords(5, 5, Position.DefaultZ));
 
         Assert.True(chunk.IsModifiedSinceLastSave);
@@ -539,7 +543,7 @@ public class GameEngineTests
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         chunk.ClearSaveFlag();
 
-        engine.SpawnResourceNode(Position.FromCoords(5, 5, Position.DefaultZ), ResourceNodeDefinitions.Get(ResourceNodeDefinitions.Tree));
+        engine.SpawnResourceNode(Position.FromCoords(5, 5, Position.DefaultZ), ResourceNodeDefinitions.Get("tree"));
 
         Assert.True(chunk.IsModifiedSinceLastSave);
     }

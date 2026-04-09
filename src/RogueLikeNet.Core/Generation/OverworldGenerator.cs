@@ -198,7 +198,7 @@ public class OverworldGenerator : IDungeonGenerator
                     if (canBeResourceNode && rng.Next(100) < ResourceNodeDefinitions.BiomeTreeChance(biome))
                     {
                         result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
-                            ResourceNodeDefinitions.Get(ResourceNodeDefinitions.Tree)));
+                            ResourceNodeDefinitions.Get("tree")));
                     }
                     else
                     {
@@ -224,8 +224,8 @@ public class OverworldGenerator : IDungeonGenerator
                         }
                         else if (rng.Next(1000) < ItemChance1000)
                         {
-                            var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-                            var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
+                            var loot = LootGenerator.GenerateLoot(rng, difficulty);
+                            var itemData = LootGenerator.GenerateItemData(loot.Definition, loot.Rarity, rng);
                             result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), itemData));
                         }
                         else if (rng.Next(1000) < TorchChance1000)

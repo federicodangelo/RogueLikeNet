@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -8,6 +9,9 @@ namespace RogueLikeNet.Core.Tests;
 public class PlayerStateDataTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
+    private static Data.ItemDefinition Item(string id) => GameData.Instance.Items.Get(id)!;
 
     [Fact]
     public void GetPlayerStateData_ReturnsValidData()
@@ -52,7 +56,7 @@ public class PlayerStateDataTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var swordTemplate = Item("long_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -65,7 +69,7 @@ public class PlayerStateDataTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.NotEmpty(hud!.EquippedItems);
-        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.LongSword);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemId("long_sword"));
     }
 
     [Fact]
@@ -77,7 +81,7 @@ public class PlayerStateDataTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
+        var armorTemplate = Item("chain_mail");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -90,7 +94,7 @@ public class PlayerStateDataTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.NotEmpty(hud!.EquippedItems);
-        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemDefinitions.ChainMail);
+        Assert.Contains(hud.EquippedItems, e => e.ItemTypeId == ItemId("chain_mail"));
     }
 
     [Fact]
@@ -102,7 +106,7 @@ public class PlayerStateDataTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -123,7 +127,7 @@ public class PlayerStateDataTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -132,7 +136,7 @@ public class PlayerStateDataTests
         var hud = engine.GetPlayerStateData(player);
         Assert.NotNull(hud);
         Assert.Single(hud!.InventoryItems);
-        Assert.Equal(ItemDefinitions.CategoryWeapon, hud.InventoryItems[0].Category);
+        Assert.Equal((int)ItemCategory.Weapon, hud.InventoryItems[0].Category);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -8,6 +9,9 @@ namespace RogueLikeNet.Core.Tests;
 public class QuickSlotsTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static Data.ItemDefinition Item(string id) => GameData.Instance.Items.Get(id)!;
+    private static Data.ItemDefinition[] AllItems() => GameData.Instance.Items.All.ToArray();
 
     private GameEngine CreateEngine()
     {
@@ -92,8 +96,7 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn item at player's position
-        var template = ItemDefinitions.All[0]; // Short Sword
-        engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -112,11 +115,11 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up two items
-        engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        engine.SpawnItemOnGround(ItemDefinitions.All[1], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("long_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -132,16 +135,17 @@ public class QuickSlotsTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        // Fill all 4 quick slots
+        // Fill all 4 quick slots with distinct weapons
+        string[] weapons = ["short_sword", "long_sword", "dagger", "battle_axe"];
         for (int i = 0; i < 4; i++)
         {
-            engine.SpawnItemOnGround(ItemDefinitions.All[i % ItemDefinitions.All.Length], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+            engine.SpawnItemOnGround(Item(weapons[i]), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
             player.Input.ActionType = ActionTypes.PickUp;
             engine.Tick();
         }
 
         // Pick up a 5th item
-        engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("spear"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -161,12 +165,12 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up an item
-        engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         // Pick up another item
-        engine.SpawnItemOnGround(ItemDefinitions.All[1], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("long_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -188,7 +192,7 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up an item (auto-assigned to slot 0)
-        engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -212,9 +216,10 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up 3 items (auto-assigned to slots 0, 1, 2)
+        string[] weapons = ["short_sword", "long_sword", "dagger"];
         for (int i = 0; i < 3; i++)
         {
-            engine.SpawnItemOnGround(ItemDefinitions.All[i], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+            engine.SpawnItemOnGround(Item(weapons[i]), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
             player.Input.ActionType = ActionTypes.PickUp;
             engine.Tick();
         }
@@ -241,7 +246,7 @@ public class QuickSlotsTests
         player.Health.Current = 50;
 
         // Pick up a player.Health potion (auto-assigned to quick slot 0)
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -276,11 +281,11 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up 2 items (auto-assigned)
-        engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        engine.SpawnItemOnGround(ItemDefinitions.All[1], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(Item("long_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -302,7 +307,7 @@ public class QuickSlotsTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn a buildable item (Wooden Door) at player's position
-        var template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.WoodenDoor);
+        var template = Item("wooden_door");
         engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;

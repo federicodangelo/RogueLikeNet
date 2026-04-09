@@ -10,32 +10,16 @@ public sealed class ItemRegistry
 
     public IReadOnlyCollection<ItemDefinition> All => _byStringId.Values;
 
-    public void Register(IEnumerable<ItemDefinition> items, Func<string, int>? legacyIdProvider = null)
+    public void Register(IEnumerable<ItemDefinition> items)
     {
         // Sort by string ID for deterministic numeric ID assignment
         var sorted = items.OrderBy(i => i.Id, StringComparer.Ordinal).ToList();
 
-        // Phase 1: assign legacy IDs to items that have them
-        int maxReserved = 0;
-        if (legacyIdProvider != null)
-        {
-            foreach (var item in sorted)
-            {
-                int legacyId = legacyIdProvider(item.Id);
-                if (legacyId > 0)
-                {
-                    item.NumericId = legacyId;
-                    maxReserved = Math.Max(maxReserved, legacyId);
-                }
-            }
-        }
-
-        // Phase 2: assign new IDs to items without legacy mappings (starting above max legacy ID)
-        int nextId = maxReserved + 1;
+        // Assign sequential IDs starting from 1 (0 is reserved for None)
+        int nextId = 1;
         foreach (var item in sorted)
         {
-            if (item.NumericId == 0) // Not yet assigned
-                item.NumericId = nextId++;
+            item.NumericId = nextId++;
             _byStringId[item.Id] = item;
         }
 

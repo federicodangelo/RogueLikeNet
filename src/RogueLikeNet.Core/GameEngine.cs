@@ -164,12 +164,12 @@ public class GameEngine : IDisposable
     /// </summary>
     public void GiveDebugResources(ref PlayerEntity player)
     {
-        ReadOnlySpan<int> resourceIds = [ItemDefinitions.Wood, ItemDefinitions.CopperOre, ItemDefinitions.IronOre, ItemDefinitions.GoldOre];
-        foreach (int resId in resourceIds)
+        ReadOnlySpan<string> resourceIds = ["wood", "copper_ore", "iron_ore", "gold_ore"];
+        foreach (string resId in resourceIds)
         {
             player.Inventory.Items.Add(new ItemData
             {
-                ItemTypeId = resId,
+                ItemTypeId = GameData.Instance.Items.GetNumericId(resId),
                 StackCount = 9999,
             });
         }
@@ -200,9 +200,9 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public ref GroundItemEntity SpawnItemOnGround(Definitions.ItemDefinition def, int rarity, Position pos)
+    public ref GroundItemEntity SpawnItemOnGround(Data.ItemDefinition def, int rarity, Position pos)
     {
-        var itemData = ItemDefinitions.GenerateItemData(def, rarity, _worldRng);
+        var itemData = LootGenerator.GenerateItemData(def, rarity, _worldRng);
         return ref SpawnItemOnGround(itemData, pos);
     }
 
@@ -211,11 +211,11 @@ public class GameEngine : IDisposable
     /// </summary>
     public ref GroundItemEntity SpawnItemOnGround(ItemData itemData, Position pos)
     {
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
         var item = new GroundItemEntity(_worldMap.AllocateEntityId())
         {
             Position = pos,
-            Appearance = new TileAppearance(def.GlyphId, def.Color),
+            Appearance = new TileAppearance(def?.GlyphId ?? 0, def?.FgColor ?? 0),
             Item = itemData,
         };
 
@@ -242,7 +242,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
-    public ref ResourceNodeEntity SpawnResourceNode(Position pos, Definitions.ResourceNodeDefinition def)
+    public ref ResourceNodeEntity SpawnResourceNode(Position pos, ResourceNodeDef def)
     {
         // Try to get tool type from JSON registry
         var toolType = Data.ToolType.None;
@@ -353,9 +353,9 @@ public class GameEngine : IDisposable
             if (_worldRng.Next(100) < 60)
             {
                 int difficulty = typeId;
-                var (template, _) = ItemDefinitions.GenerateLoot(_worldRng, difficulty);
+                var loot = LootGenerator.GenerateLoot(_worldRng, difficulty);
                 var drop = FindDropPosition(pos);
-                SpawnItemOnGround(template, 0, drop);
+                SpawnItemOnGround(loot.Definition, 0, drop);
             }
         }
 
@@ -536,12 +536,12 @@ public class GameEngine : IDisposable
         var items = new List<InventoryItemData>();
         foreach (var item in player.Inventory.Items)
         {
-            var def = ItemDefinitions.Get(item.ItemTypeId);
+            var def = GameData.Instance.Items.Get(item.ItemTypeId);
             items.Add(new InventoryItemData
             {
                 ItemTypeId = item.ItemTypeId,
                 StackCount = item.StackCount,
-                Category = def.Category,
+                Category = def?.CategoryInt ?? 0,
             });
         }
         state.InventoryItems = items.ToArray();
@@ -552,12 +552,12 @@ public class GameEngine : IDisposable
             if (player.Equipment.HasItem(i))
             {
                 var eq = player.Equipment[i];
-                var eqDef = ItemDefinitions.Get(eq.ItemTypeId);
+                var eqDef = GameData.Instance.Items.Get(eq.ItemTypeId);
                 equippedItems.Add(new InventoryItemData
                 {
                     ItemTypeId = eq.ItemTypeId,
                     StackCount = eq.StackCount,
-                    Category = eqDef.Category,
+                    Category = eqDef?.CategoryInt ?? 0,
                     EquipSlot = i,
                 });
             }

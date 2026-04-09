@@ -215,12 +215,7 @@ public class CombatSystem
         var weaponItem = player.Equipment.Weapon;
         if (weaponItem.IsNone) return 0;
 
-        var itemDef = LegacyItemBridge.GetNewDefinition(weaponItem.ItemTypeId);
-        if (itemDef == null)
-        {
-            // Try direct registry lookup (for new items without legacy mapping)
-            itemDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);
-        }
+        var itemDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);
 
         if (itemDef?.Tool != null && itemDef.Tool.ToolType == requiredTool)
             return itemDef.Tool.MiningPower;

@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -98,8 +99,8 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
         // Items
 
-        var simpleItems = ItemDefinitions.All
-            .Where(d => d.Category != ItemDefinitions.CategoryPlaceable && d.Category != ItemDefinitions.CategoryResource)
+        var simpleItems = GameData.Instance.Items.All
+            .Where(d => !d.IsPlaceable && d.Category != ItemCategory.Material)
             .ToArray();
 
         for (int itemIdx = 0; itemIdx < simpleItems.Length; itemIdx++)
@@ -116,9 +117,9 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
                 result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
                 {
-                    ItemTypeId = def.TypeId,
+                    ItemTypeId = def.NumericId,
                     StackCount = def.Stackable
-                        ? (def.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
+                        ? (def.Category == ItemCategory.Misc ? 10 + rng.Next(50) : 1)
                         : 1,
                 }));
             }
@@ -163,7 +164,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
         // Resources
         startY += spacingY * ((ResourceNodeDefinitions.All.Length / 5) + 1);
-        var resouceItems = ItemDefinitions.All.Where(d => d.Category == ItemDefinitions.CategoryResource).ToArray();
+        var resouceItems = GameData.Instance.Items.All.Where(d => d.Category == ItemCategory.Material).ToArray();
         for (int resourceIdx = 0; resourceIdx < resouceItems.Length; resourceIdx++)
         {
             var def = resouceItems[resourceIdx];
@@ -177,7 +178,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
             int stackCount = 10 + rng.Next(50);
             result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
             {
-                ItemTypeId = def.TypeId,
+                ItemTypeId = def.NumericId,
                 StackCount = stackCount,
             }));
         }

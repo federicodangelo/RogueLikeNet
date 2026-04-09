@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -184,12 +185,12 @@ internal static class DungeonHelper
         {
             if (FindRandomRoomWalkableCoordinate(out var x, out var y))
             {
-                var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
+                var loot = LootGenerator.GenerateLoot(rng, difficulty);
                 result.Items.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, worldZ), new ItemData
                 {
-                    ItemTypeId = loot.Definition.TypeId,
+                    ItemTypeId = loot.Definition.NumericId,
                     StackCount = loot.Definition.Stackable
-                        ? (loot.Definition.Category == ItemDefinitions.CategoryGold ? 10 + rng.Next(50) : 1)
+                        ? (loot.Definition.Category == ItemCategory.Misc ? 10 + rng.Next(50) : 1)
                         : 1,
                 }));
             }

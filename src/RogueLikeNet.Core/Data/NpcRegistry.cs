@@ -10,32 +10,15 @@ public sealed class NpcRegistry
 
     public IReadOnlyCollection<NpcDefinition> All => _byStringId.Values;
 
-    public void Register(IEnumerable<NpcDefinition> npcs, Func<string, int>? legacyIdProvider = null)
+    public void Register(IEnumerable<NpcDefinition> npcs)
     {
         var sorted = npcs.OrderBy(n => n.Id, StringComparer.Ordinal).ToList();
 
-        // Phase 1: assign legacy IDs
-        int maxReserved = -1; // NPCs start from 0
-        if (legacyIdProvider != null)
-        {
-            foreach (var npc in sorted)
-            {
-                int legacyId = legacyIdProvider(npc.Id);
-                if (legacyId >= 0)
-                {
-                    npc.NumericId = legacyId;
-                    maxReserved = Math.Max(maxReserved, legacyId);
-                    npc.HasLegacyId = true;
-                }
-            }
-        }
-
-        // Phase 2: assign new IDs above legacy range
-        int nextId = maxReserved + 1;
+        // Assign sequential IDs starting from 0
+        int nextId = 0;
         foreach (var npc in sorted)
         {
-            if (!npc.HasLegacyId)
-                npc.NumericId = nextId++;
+            npc.NumericId = nextId++;
             _byStringId[npc.Id] = npc;
         }
 

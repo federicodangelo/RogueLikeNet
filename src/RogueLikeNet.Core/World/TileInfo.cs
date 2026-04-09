@@ -22,7 +22,7 @@ public struct TileInfo
     public int BgColor;
 
     /// <summary>
-    /// The placeable item on this tile. 0 (ItemDefinitions.None) means nothing is placed.
+    /// The placeable item on this tile. 0 means nothing is placed.
     /// The base tile (Type/GlyphId/FgColor/BgColor) represents the underlying terrain;
     /// the placed item's appearance is derived from PlaceableDefinitions at render time.
     /// </summary>

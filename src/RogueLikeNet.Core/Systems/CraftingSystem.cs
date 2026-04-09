@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
@@ -47,7 +48,8 @@ public class CraftingSystem
             }
 
             // Add crafted item
-            var resultDef = ItemDefinitions.Get(recipe.ResultItemTypeId);
+            var resultDef = GameData.Instance.Items.Get(recipe.ResultItemTypeId);
+            if (resultDef == null) return;
             var resultItem = new ItemData
             {
                 ItemTypeId = recipe.ResultItemTypeId,

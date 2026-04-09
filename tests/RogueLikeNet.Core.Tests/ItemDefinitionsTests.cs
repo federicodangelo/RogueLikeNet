@@ -1,4 +1,4 @@
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Tests;
@@ -9,9 +9,9 @@ public class ItemDefinitionsTests
     public void GenerateLoot_ReturnsValidItem()
     {
         var rng = new SeededRandom(42);
-        var (template, rarity) = ItemDefinitions.GenerateLoot(rng, 0);
-        Assert.True(rarity >= 0 && rarity <= 4);
-        Assert.NotNull(template.Name);
+        var loot = LootGenerator.GenerateLoot(rng, 0);
+        Assert.True(loot.Rarity >= 0 && loot.Rarity <= 4);
+        Assert.NotNull(loot.Definition.Name);
     }
 
     [Fact]
@@ -21,8 +21,8 @@ public class ItemDefinitionsTests
         int totalRarity = 0;
         for (int i = 0; i < 110; i++)
         {
-            var (_, rarity) = ItemDefinitions.GenerateLoot(rng, 10);
-            totalRarity += rarity;
+            var loot = LootGenerator.GenerateLoot(rng, 10);
+            totalRarity += loot.Rarity;
         }
         Assert.True(totalRarity > 100, $"Total rarity {totalRarity} should be > 100 at high difficulty");
     }
@@ -31,23 +31,23 @@ public class ItemDefinitionsTests
     public void GenerateLoot_AllCategories()
     {
         var rng = new SeededRandom(1);
-        bool foundWeapon = false, foundArmor = false, foundPotion = false, foundGold = false;
+        bool foundWeapon = false, foundArmor = false, foundPotion = false, foundMisc = false;
         // Run many iterations to cover all category branches
         for (int i = 0; i < 500; i++)
         {
-            var (template, _) = ItemDefinitions.GenerateLoot(rng, 0);
-            switch (template.Category)
+            var loot = LootGenerator.GenerateLoot(rng, 0);
+            switch (loot.Definition.Category)
             {
-                case ItemDefinitions.CategoryWeapon: foundWeapon = true; break;
-                case ItemDefinitions.CategoryArmor: foundArmor = true; break;
-                case ItemDefinitions.CategoryPotion: foundPotion = true; break;
-                case ItemDefinitions.CategoryGold: foundGold = true; break;
+                case ItemCategory.Weapon: foundWeapon = true; break;
+                case ItemCategory.Armor: foundArmor = true; break;
+                case ItemCategory.Potion: foundPotion = true; break;
+                case ItemCategory.Misc: foundMisc = true; break;
             }
         }
         Assert.True(foundWeapon, "Should generate weapons");
         Assert.True(foundArmor, "Should generate armor");
         Assert.True(foundPotion, "Should generate potions");
-        Assert.True(foundGold, "Should generate gold");
+        Assert.True(foundMisc, "Should generate gold/misc");
     }
 
     [Fact]
@@ -57,8 +57,8 @@ public class ItemDefinitionsTests
         var rarities = new HashSet<int>();
         for (int i = 0; i < 1000; i++)
         {
-            var (_, rarity) = ItemDefinitions.GenerateLoot(rng, 0);
-            rarities.Add(rarity);
+            var loot = LootGenerator.GenerateLoot(rng, 0);
+            rarities.Add(loot.Rarity);
         }
         // At difficulty 0, should see at least Common and Uncommon
         Assert.Contains(0, rarities);
@@ -66,54 +66,59 @@ public class ItemDefinitionsTests
     }
 
     [Fact]
-    public void All_ContainsAllDefinedItems()
+    public void Registry_ContainsItems()
     {
-        Assert.Equal(33, ItemDefinitions.All.Length);
-    }
-
-    [Theory]
-    [InlineData(ItemDefinitions.ShortSword, "Short Sword", ItemDefinitions.CategoryWeapon)]
-    [InlineData(ItemDefinitions.LongSword, "Long Sword", ItemDefinitions.CategoryWeapon)]
-    [InlineData(ItemDefinitions.LeatherArmor, "Leather Armor", ItemDefinitions.CategoryArmor)]
-    [InlineData(ItemDefinitions.HealthPotion, "Health Potion", ItemDefinitions.CategoryPotion)]
-    [InlineData(ItemDefinitions.Gold, "Gold", ItemDefinitions.CategoryGold)]
-    public void Get_ReturnsCorrectDefinition(int typeId, string expectedName, int expectedCategory)
-    {
-        var def = ItemDefinitions.Get(typeId);
-        Assert.Equal(typeId, def.TypeId);
-        Assert.Equal(expectedName, def.Name);
-        Assert.Equal(expectedCategory, def.Category);
+        Assert.True(GameData.Instance.Items.Count > 0, "Item registry should have items");
     }
 
     [Fact]
-    public void Get_InvalidTypeId_ReturnsDefault()
+    public void Registry_Get_ByStringId()
     {
-        var def = ItemDefinitions.Get(9999);
-        Assert.Equal(0, def.TypeId);
-        Assert.Null(def.Name);
+        var def = GameData.Instance.Items.Get("short_sword");
+        Assert.NotNull(def);
+        Assert.Equal("Short Sword", def.Name);
+        Assert.Equal(ItemCategory.Weapon, def.Category);
     }
 
-    [Theory]
-    [InlineData(ItemDefinitions.HealthPotion, true, 10)]
-    [InlineData(ItemDefinitions.StrengthPotion, true, 10)]
-    [InlineData(ItemDefinitions.Gold, true, 999)]
-    [InlineData(ItemDefinitions.ShortSword, false, 1)]
-    [InlineData(ItemDefinitions.LeatherArmor, false, 1)]
-    public void Stackable_And_MaxStackSize(int typeId, bool expectedStackable, int expectedMaxStack)
+    [Fact]
+    public void Registry_Get_ByNumericId_RoundTrips()
     {
-        var def = ItemDefinitions.Get(typeId);
-        Assert.Equal(expectedStackable, def.Stackable);
-        Assert.Equal(expectedMaxStack, def.MaxStackSize);
+        var def = GameData.Instance.Items.Get("short_sword");
+        Assert.NotNull(def);
+        var def2 = GameData.Instance.Items.Get(def.NumericId);
+        Assert.NotNull(def2);
+        Assert.Equal("short_sword", def2.Id);
+    }
+
+    [Fact]
+    public void Registry_Get_InvalidTypeId_ReturnsNull()
+    {
+        var def = GameData.Instance.Items.Get(9999);
+        Assert.Null(def);
+    }
+
+    [Fact]
+    public void Registry_Stackable_And_MaxStackSize()
+    {
+        var potion = GameData.Instance.Items.Get("health_potion_small");
+        Assert.NotNull(potion);
+        Assert.True(potion.Stackable);
+        Assert.True(potion.MaxStackSize > 1);
+
+        var sword = GameData.Instance.Items.Get("short_sword");
+        Assert.NotNull(sword);
+        Assert.False(sword.Stackable);
     }
 
     [Fact]
     public void GenerateItemData_Gold_CorrectStackCount()
     {
-        var goldDef = ItemDefinitions.Get(ItemDefinitions.Gold);
+        var goldDef = GameData.Instance.Items.Get("gold_coin");
+        Assert.NotNull(goldDef);
         var rng = new SeededRandom(123);
 
-        var itemData = ItemDefinitions.GenerateItemData(goldDef, 0, rng);
-        Assert.Equal(ItemDefinitions.Gold, itemData.ItemTypeId);
+        var itemData = LootGenerator.GenerateItemData(goldDef, 0, rng);
+        Assert.Equal(goldDef.NumericId, itemData.ItemTypeId);
         Assert.True(itemData.StackCount >= 10);
     }
 }

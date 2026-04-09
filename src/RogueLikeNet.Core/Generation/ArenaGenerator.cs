@@ -119,8 +119,8 @@ public class ArenaGenerator : IDungeonGenerator
             int y = 3 + rng.Next(Chunk.Size - 6);
             if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
 
-            var loot = ItemDefinitions.GenerateLoot(rng, difficulty);
-            var itemData = ItemDefinitions.GenerateItemData(loot.Definition, loot.Rarity, rng);
+            var loot = LootGenerator.GenerateLoot(rng, difficulty);
+            var itemData = LootGenerator.GenerateItemData(loot.Definition, loot.Rarity, rng);
             result.Items.Add((Position.FromCoords(worldOffsetX + x, worldOffsetY + y, chunkZ), itemData));
         }
 

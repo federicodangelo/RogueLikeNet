@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
@@ -9,6 +10,8 @@ namespace RogueLikeNet.Core.Tests;
 public class BuildingSystemTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
 
     private GameEngine CreateEngine()
     {
@@ -34,7 +37,7 @@ public class BuildingSystemTests
     public void PlaceItem_PlacesDoorClosed()
     {
         using var engine = CreateEngine();
-        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenDoor);
+        var _pid = SpawnPlayerWithItem(engine, ItemId("wooden_door"));
         ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
         int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
@@ -56,7 +59,7 @@ public class BuildingSystemTests
 
         var tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(TileType.Floor, tile.Type); // base tile unchanged
-        Assert.Equal(ItemDefinitions.WoodenDoor, tile.PlaceableItemId);
+        Assert.Equal(ItemId("wooden_door"), tile.PlaceableItemId);
         Assert.Equal(0, tile.PlaceableItemExtra); // closed
     }
 
@@ -64,7 +67,7 @@ public class BuildingSystemTests
     public void PlaceItem_PlacesWall()
     {
         using var engine = CreateEngine();
-        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
+        var _pid = SpawnPlayerWithItem(engine, ItemId("wooden_wall"));
         ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
         int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
@@ -85,14 +88,14 @@ public class BuildingSystemTests
 
         var tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(TileType.Floor, tile.Type);
-        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
+        Assert.Equal(ItemId("wooden_wall"), tile.PlaceableItemId);
     }
 
     [Fact]
     public void PickUpPlaced_ReturnsItemToInventory()
     {
         using var engine = CreateEngine();
-        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.WoodenWall);
+        var _pid = SpawnPlayerWithItem(engine, ItemId("wooden_wall"));
         ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
         int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
@@ -114,7 +117,7 @@ public class BuildingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(_pid);
         // Verify wall was placed and item removed
         var tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
-        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
+        Assert.Equal(ItemId("wooden_wall"), tile.PlaceableItemId);
         Assert.Empty(player.Inventory.Items);
 
         // Now pick it up
@@ -127,18 +130,18 @@ public class BuildingSystemTests
         // Tile should be floor again (placeable removed)
         tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(TileType.Floor, tile.Type);
-        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
+        Assert.Equal(0, tile.PlaceableItemId);
 
         // Item should be back in inventory
         Assert.Single(player.Inventory.Items);
-        Assert.Equal(ItemDefinitions.WoodenWall, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(ItemId("wooden_wall"), player.Inventory.Items[0].ItemTypeId);
     }
 
     [Fact]
     public void PickUpPlaced_DoorClosed_ReturnsItem()
     {
         using var engine = CreateEngine();
-        var _pid = SpawnPlayerWithItem(engine, ItemDefinitions.CopperDoor);
+        var _pid = SpawnPlayerWithItem(engine, ItemId("copper_door"));
         ref var player = ref engine.WorldMap.GetPlayerRef(_pid);
         int targetX = player.Position.X + 1, targetY = player.Position.Y;
 
@@ -159,7 +162,7 @@ public class BuildingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(_pid);
 
         var tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
-        Assert.Equal(ItemDefinitions.CopperDoor, tile.PlaceableItemId);
+        Assert.Equal(ItemId("copper_door"), tile.PlaceableItemId);
         Assert.Equal(0, tile.PlaceableItemExtra);
 
         // Pick it up
@@ -172,7 +175,7 @@ public class BuildingSystemTests
         tile = engine.WorldMap.GetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ));
         Assert.Equal(TileType.Floor, tile.Type);
         Assert.Single(player.Inventory.Items);
-        Assert.Equal(ItemDefinitions.CopperDoor, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(ItemId("copper_door"), player.Inventory.Items[0].ItemTypeId);
     }
 
     [Fact]
@@ -206,21 +209,21 @@ public class BuildingSystemTests
     [Fact]
     public void PlaceableItemId_SetOnPlacedTile()
     {
-        var tile = new TileInfo { Type = TileType.Floor, PlaceableItemId = ItemDefinitions.WoodenWall };
-        Assert.Equal(ItemDefinitions.WoodenWall, tile.PlaceableItemId);
+        var tile = new TileInfo { Type = TileType.Floor, PlaceableItemId = ItemId("wooden_wall") };
+        Assert.Equal(ItemId("wooden_wall"), tile.PlaceableItemId);
     }
 
     [Fact]
     public void PlaceableItemId_NoneForNaturalTile()
     {
         var tile = new TileInfo { Type = TileType.Blocked, GlyphId = TileDefinitions.GlyphWall, FgColor = TileDefinitions.ColorWallFg };
-        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
+        Assert.Equal(0, tile.PlaceableItemId);
     }
 
     [Fact]
     public void PlaceableItemId_NoneForFloor()
     {
         var tile = new TileInfo { Type = TileType.Floor, GlyphId = TileDefinitions.GlyphFloor, FgColor = TileDefinitions.ColorFloorFg };
-        Assert.Equal(ItemDefinitions.None, tile.PlaceableItemId);
+        Assert.Equal(0, tile.PlaceableItemId);
     }
 }

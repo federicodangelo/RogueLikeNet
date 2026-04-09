@@ -10,31 +10,15 @@ public sealed class ResourceNodeRegistry
 
     public IReadOnlyCollection<ResourceNodeDefinition> All => _byStringId.Values;
 
-    public void Register(IEnumerable<ResourceNodeDefinition> nodes, Func<string, int>? legacyIdProvider = null)
+    public void Register(IEnumerable<ResourceNodeDefinition> nodes)
     {
         var sorted = nodes.OrderBy(n => n.Id, StringComparer.Ordinal).ToList();
 
-        // Phase 1: assign legacy IDs
-        int maxReserved = 0; // 0 reserved for None
-        if (legacyIdProvider != null)
-        {
-            foreach (var node in sorted)
-            {
-                int legacyId = legacyIdProvider(node.Id);
-                if (legacyId > 0)
-                {
-                    node.NumericId = legacyId;
-                    maxReserved = Math.Max(maxReserved, legacyId);
-                }
-            }
-        }
-
-        // Phase 2: assign new IDs above legacy range
-        int nextId = maxReserved + 1;
+        // Assign sequential IDs starting from 1 (0 is reserved for None)
+        int nextId = 1;
         foreach (var node in sorted)
         {
-            if (node.NumericId == 0) // Not yet assigned
-                node.NumericId = nextId++;
+            node.NumericId = nextId++;
             _byStringId[node.Id] = node;
         }
 

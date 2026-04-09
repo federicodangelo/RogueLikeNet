@@ -1,5 +1,6 @@
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -15,7 +16,7 @@ public class WorldMapTests
         GlyphId = TileDefinitions.GlyphFloor,
         FgColor = TileDefinitions.ColorFloorFg,
         BgColor = TileDefinitions.ColorBlack,
-        PlaceableItemId = ItemDefinitions.WoodenDoor,
+        PlaceableItemId = GameData.Instance.Items.GetNumericId("wooden_door"),
         PlaceableItemExtra = 0,
     };
 

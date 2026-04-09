@@ -64,8 +64,8 @@ public static class BiomeDefinitions
     /// <summary>Decoration entry: glyph, fg color, chance (per-mille per floor tile).</summary>
     public readonly record struct DecorationDef(int GlyphId, int FgColor, int Chance1000);
 
-    /// <summary>Enemy spawn entry: NPC type ID and relative weight for biome spawning.</summary>
-    public readonly record struct EnemySpawnDef(int NpcTypeId, int Weight);
+    /// <summary>Enemy spawn entry: NPC string ID and relative weight for biome spawning.</summary>
+    public readonly record struct EnemySpawnDef(string NpcId, int Weight);
 
     /// <summary>Liquid feature: tile type, glyph, fg/bg colors, room fill chance (%).</summary>
     public readonly record struct LiquidDef(World.TileType Type, int GlyphId, int FgColor, int BgColor, int Chance100RoomBecomesLiquid);
@@ -120,38 +120,38 @@ public static class BiomeDefinitions
          new(TileDefinitions.GlyphBones, TileDefinitions.ColorBonesFg, 4)],
     ];
 
-    // Per-biome enemy spawn tables (NpcTypeId, relative weight)
+    // Per-biome enemy spawn tables (NpcId string, relative weight)
     private static readonly EnemySpawnDef[][] EnemySpawns =
     [
         // Stone — goblins and skeletons lurk in the caves
-        [new(NpcDefinitions.Goblin, 50), new(NpcDefinitions.Skeleton, 50)],
+        [new("goblin", 50), new("skeleton", 50)],
 
         // Lava — orcs and dragons thrive in the heat
-        [new(NpcDefinitions.Orc, 70), new(NpcDefinitions.Dragon, 30)],
+        [new("orc", 70), new("dragon", 30)],
 
         // Ice — skeletons and hardy orcs
-        [new(NpcDefinitions.Skeleton, 70), new(NpcDefinitions.Orc, 30)],
+        [new("skeleton", 70), new("orc", 30)],
 
         // Forest — goblins are most common
-        [new(NpcDefinitions.Goblin, 75), new(NpcDefinitions.Orc, 25)],
+        [new("goblin", 75), new("orc", 25)],
 
         // Arcane — balanced mix with more dragons
-        [new(NpcDefinitions.Skeleton, 30), new(NpcDefinitions.Orc, 25), new(NpcDefinitions.Goblin, 25), new(NpcDefinitions.Dragon, 20)],
+        [new("skeleton", 30), new("orc", 25), new("goblin", 25), new("dragon", 20)],
 
         // Crypt — undead-heavy
-        [new(NpcDefinitions.Skeleton, 70), new(NpcDefinitions.Goblin, 15), new(NpcDefinitions.Orc, 15)],
+        [new("skeleton", 70), new("goblin", 15), new("orc", 15)],
 
         // Sewer — goblins and orcs
-        [new(NpcDefinitions.Goblin, 65), new(NpcDefinitions.Orc, 35)],
+        [new("goblin", 65), new("orc", 35)],
 
         // Fungal — goblins and skeletons
-        [new(NpcDefinitions.Goblin, 65), new(NpcDefinitions.Skeleton, 35)],
+        [new("goblin", 65), new("skeleton", 35)],
 
         // Ruined — orcs and skeletons dominate
-        [new(NpcDefinitions.Orc, 50), new(NpcDefinitions.Skeleton, 50)],
+        [new("orc", 50), new("skeleton", 50)],
 
         // Infernal — dragons and orcs rule
-        [new(NpcDefinitions.Dragon, 50), new(NpcDefinitions.Orc, 50)],
+        [new("dragon", 50), new("orc", 50)],
     ];
 
     // Per-biome liquid features (null = no liquid in this biome)
@@ -195,15 +195,10 @@ public static class BiomeDefinitions
         var reg = GameData.Instance.Npcs;
         if (reg.Count == 0) return baseSpawns;
 
-        var slime = reg.Get("slime");
-        var wolf = reg.Get("wolf");
-        var spider = reg.Get("spider");
-        var zombie = reg.Get("zombie");
-
         var extended = new List<EnemySpawnDef>(baseSpawns);
 
         // Slime: weak, common early-game enemy for Forest/Fungal/Sewer
-        if (slime != null)
+        if (reg.Get("slime") != null)
         {
             int w = biome switch
             {
@@ -212,11 +207,11 @@ public static class BiomeDefinitions
                 BiomeType.Stone => 15,
                 _ => 0,
             };
-            if (w > 0) extended.Add(new(slime.NumericId, w));
+            if (w > 0) extended.Add(new("slime", w));
         }
 
         // Wolf: aggressive, Forest/Ice
-        if (wolf != null)
+        if (reg.Get("wolf") != null)
         {
             int w = biome switch
             {
@@ -225,11 +220,11 @@ public static class BiomeDefinitions
                 BiomeType.Fungal => 10,
                 _ => 0,
             };
-            if (w > 0) extended.Add(new(wolf.NumericId, w));
+            if (w > 0) extended.Add(new("wolf", w));
         }
 
         // Spider: moderate, dark areas
-        if (spider != null)
+        if (reg.Get("spider") != null)
         {
             int w = biome switch
             {
@@ -238,11 +233,11 @@ public static class BiomeDefinitions
                 BiomeType.Ruined => 10,
                 _ => 0,
             };
-            if (w > 0) extended.Add(new(spider.NumericId, w));
+            if (w > 0) extended.Add(new("spider", w));
         }
 
         // Zombie: tough, undead areas
-        if (zombie != null)
+        if (reg.Get("zombie") != null)
         {
             int w = biome switch
             {
@@ -252,7 +247,7 @@ public static class BiomeDefinitions
                 BiomeType.Infernal => 10,
                 _ => 0,
             };
-            if (w > 0) extended.Add(new(zombie.NumericId, w));
+            if (w > 0) extended.Add(new("zombie", w));
         }
 
         return extended.ToArray();
@@ -260,36 +255,48 @@ public static class BiomeDefinitions
 
     /// <summary>
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.
-    /// Higher difficulty unlocks harder monsters (same gating as NpcDefinitions.Pick).
+    /// Higher difficulty unlocks harder monsters (gated by NPC attack stat).
     /// </summary>
-    public static NpcDefinition PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
+    public static NpcDef PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
     {
         var spawns = GetEnemySpawns(biome);
         var npcReg = GameData.Instance.Npcs;
-        int maxTypeId = npcReg.Count > 0
-            ? Math.Min(difficulty + 1, npcReg.Count - 1)
-            : Math.Min(difficulty + 1, NpcDefinitions.All.Length - 1);
 
-        int totalWeight = 0;
-        foreach (var s in spawns)
-            if (s.NpcTypeId <= maxTypeId)
-                totalWeight += s.Weight;
-
-        if (totalWeight <= 0)
-            return NpcDefinitions.All[0];
-
-        int roll = rng.Next(totalWeight);
+        // Resolve spawns and filter by difficulty (attack-based gating)
+        var resolved = new List<(NpcDef Def, int Weight)>();
         foreach (var s in spawns)
         {
-            if (s.NpcTypeId <= maxTypeId)
-            {
-                roll -= s.Weight;
-                if (roll < 0)
-                    return NpcDefinitions.Get(s.NpcTypeId);
-            }
+            var npc = npcReg.Get(s.NpcId);
+            if (npc == null) continue;
+            // Higher attack NPCs require higher difficulty
+            int requiredDifficulty = npc.Attack / 4;
+            if (difficulty >= requiredDifficulty)
+                resolved.Add((new NpcDef(npc.NumericId, npc.Name, npc.GlyphId, npc.FgColor,
+                    npc.Health, npc.Attack, npc.Defense, npc.Speed), s.Weight));
         }
 
-        return NpcDefinitions.All[0];
+        if (resolved.Count == 0)
+        {
+            // Fallback: return weakest NPC
+            var weakest = npcReg.All.OrderBy(n => n.Attack).FirstOrDefault();
+            if (weakest != null)
+                return new NpcDef(weakest.NumericId, weakest.Name, weakest.GlyphId, weakest.FgColor,
+                    weakest.Health, weakest.Attack, weakest.Defense, weakest.Speed);
+            return default;
+        }
+
+        int totalWeight = 0;
+        foreach (var (_, w) in resolved) totalWeight += w;
+
+        int roll = rng.Next(totalWeight);
+        foreach (var (def, weight) in resolved)
+        {
+            roll -= weight;
+            if (roll < 0)
+                return def;
+        }
+
+        return resolved[^1].Def;
     }
 
     /// <summary>

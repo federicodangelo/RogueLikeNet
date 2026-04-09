@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
@@ -8,6 +9,9 @@ namespace RogueLikeNet.Core.Tests;
 public class InventorySystemTests
 {
     private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
+    private static Data.ItemDefinition Item(string id) => GameData.Instance.Items.Get(id)!;
 
     private GameEngine CreateEngine()
     {
@@ -25,7 +29,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn item at player's position
-        var template = ItemDefinitions.All[0]; // Short Sword
+        var template = Item("short_sword");
         var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Set pickup action
@@ -37,7 +41,7 @@ public class InventorySystemTests
         player = ref engine.WorldMap.GetPlayerRef(_p.Id);
         Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
-        Assert.Equal(template.TypeId, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(template.NumericId, player.Inventory.Items[0].ItemTypeId);
     }
 
     [Fact]
@@ -49,7 +53,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn and pick up an item
-        var template = ItemDefinitions.All[0];
+        var template = Item("short_sword");
         var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -80,7 +84,7 @@ public class InventorySystemTests
         player.Health.Current = 50;
 
         // Spawn a player.Health potion and pick it up
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -105,7 +109,7 @@ public class InventorySystemTests
         int baseAttack = player.CombatStats.Attack;
 
         // Spawn a sword and pick it up
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var swordTemplate = Item("long_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -130,7 +134,7 @@ public class InventorySystemTests
         int baseDef = player.CombatStats.Defense;
 
         // Spawn armor and pick it up
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        var armorTemplate = Item("leather_armor");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -155,10 +159,10 @@ public class InventorySystemTests
         // Fill inventory to capacity with ItemData
         int cap = player.Inventory.Capacity;
         for (int i = 0; i < cap; i++)
-            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword });
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword") });
 
         // Now spawn another item and try to pick it up
-        var extraItem = engine.SpawnItemOnGround(ItemDefinitions.All[0], 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var extraItem = engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -216,7 +220,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Spawn gold and pick it up
-        var goldTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.Gold);
+        var goldTemplate = Item("gold_coin");
         engine.SpawnItemOnGround(goldTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -242,7 +246,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first weapon
-        var sword1Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var sword1Template = Item("short_sword");
         engine.SpawnItemOnGround(sword1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -253,7 +257,7 @@ public class InventorySystemTests
         engine.Tick();
 
         // Pick up second weapon
-        var sword2Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var sword2Template = Item("long_sword");
         engine.SpawnItemOnGround(sword2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -276,7 +280,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first armor
-        var armor1Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        var armor1Template = Item("leather_armor");
         engine.SpawnItemOnGround(armor1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -289,7 +293,7 @@ public class InventorySystemTests
         int defWithFirstArmor = player.CombatStats.Defense;
 
         // Pick up second armor
-        var armor2Template = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
+        var armor2Template = Item("chain_mail");
         engine.SpawnItemOnGround(armor2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -317,7 +321,7 @@ public class InventorySystemTests
         int atkBefore = player.CombatStats.Attack;
 
         // Spawn a strength potion and pick it up
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.StrengthPotion);
+        var potionTemplate = Item("strength_potion");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -339,7 +343,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up first player.Health potion
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -366,12 +370,12 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up two different items
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ShortSword);
+        var swordTemplate = Item("short_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LeatherArmor);
+        var armorTemplate = Item("leather_armor");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -412,7 +416,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up and equip a weapon
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var swordTemplate = Item("long_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -434,7 +438,7 @@ public class InventorySystemTests
 
         Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
-        Assert.Equal(ItemDefinitions.LongSword, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(ItemId("long_sword"), player.Inventory.Items[0].ItemTypeId);
 
         Assert.True(player.CombatStats.Attack < atkWithWeapon);
     }
@@ -448,7 +452,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Pick up and equip armor
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
+        var armorTemplate = Item("chain_mail");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -470,7 +474,7 @@ public class InventorySystemTests
 
         Assert.Single(player.Inventory.Items);
         Assert.NotNull(player.Inventory.Items);
-        Assert.Equal(ItemDefinitions.ChainMail, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(ItemId("chain_mail"), player.Inventory.Items[0].ItemTypeId);
 
         Assert.True(player.CombatStats.Defense < defWithArmor);
     }
@@ -486,7 +490,7 @@ public class InventorySystemTests
         int baseAtk = player.CombatStats.Attack;
 
         // Pick up a weapon
-        var swordTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.LongSword);
+        var swordTemplate = Item("long_sword");
         engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -514,7 +518,7 @@ public class InventorySystemTests
         int baseDef = player.CombatStats.Defense;
 
         // Pick up armor
-        var armorTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.ChainMail);
+        var armorTemplate = Item("chain_mail");
         engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -540,15 +544,15 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Manually add a potion at max stack size to inventory
-        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        var potionDef = Item("health_potion_small");
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = potionDef.MaxStackSize // Full stack (10)
         });
 
         // Pickup another potion — can't merge into full stack, should go to new slot
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -567,34 +571,34 @@ public class InventorySystemTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        var potionDef = Item("health_potion_small");
 
         // Add a non-matching item, a FULL potion stack, and a partial potion stack
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.ShortSword, // Different item — forces "if" false branch
+            ItemTypeId = ItemId("short_sword"), // Different item — forces "if" false branch
             StackCount = 1
         });
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = potionDef.MaxStackSize // Full stack
         });
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = 3 // Partial stack
         });
 
         // Pickup another potion — should skip non-matching + full stack, merge into partial
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         Assert.Equal(3, player.Inventory.Items.Count);
-        Assert.Equal(ItemDefinitions.ShortSword, player.Inventory.Items[0].ItemTypeId);
+        Assert.Equal(ItemId("short_sword"), player.Inventory.Items[0].ItemTypeId);
         Assert.Equal(potionDef.MaxStackSize, player.Inventory.Items[1].StackCount);
         Assert.Equal(4, player.Inventory.Items[2].StackCount); // 3 + 1
     }
@@ -607,15 +611,15 @@ public class InventorySystemTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        var potionDef = ItemDefinitions.Get(ItemDefinitions.HealthPotion);
+        var potionDef = Item("health_potion_small");
         // MaxStackSize for potions is 10
 
         // Inventory: slot 0 has potion at 9 (can absorb 1 more), slot 1 has potion at 5
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 9 });
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.HealthPotion, StackCount = 5 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("health_potion_small"), StackCount = 9 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("health_potion_small"), StackCount = 5 });
 
         // Spawn potion and manually increase its StackCount to 3
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
         ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
         groundItem.Item.StackCount = 3; // Slot 0 absorbs 1 (9→10), leaves 2 → slot 1 absorbs 2 (5→7)
@@ -639,12 +643,12 @@ public class InventorySystemTests
         // Add a health potion to inventory
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = 3
         });
 
         // Spawn another health potion on the ground
-        var potionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.HealthPotion);
+        var potionTemplate = Item("health_potion_small");
         var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -667,12 +671,12 @@ public class InventorySystemTests
         // Add a health potion to inventory
         player.Inventory.Items.Add(new ItemData
         {
-            ItemTypeId = ItemDefinitions.HealthPotion,
+            ItemTypeId = ItemId("health_potion_small"),
             StackCount = 3
         });
 
         // Spawn a strength potion on the ground (different type)
-        var strPotionTemplate = Array.Find(ItemDefinitions.All, t => t.TypeId == ItemDefinitions.StrengthPotion);
+        var strPotionTemplate = Item("strength_potion");
         var _gi = engine.SpawnItemOnGround(strPotionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
@@ -694,7 +698,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Give player an item directly
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
 
         player.Input.ActionType = ActionTypes.Drop;
         player.Input.ItemSlot = 0;
@@ -715,7 +719,7 @@ public class InventorySystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Place an item on the ground at player's position
-        var template = ItemDefinitions.All[0];
+        var template = Item("short_sword");
         engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Count ground items before drop
@@ -723,7 +727,7 @@ public class InventorySystemTests
         int countBefore = chunk.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
 
         // Give player an item to drop
-        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
 
         player.Input.ActionType = ActionTypes.Drop;
         player.Input.ItemSlot = 0;
@@ -752,7 +756,7 @@ public class InventorySystemTests
         // Drop 3 items — each should land at a different position
         for (int i = 0; i < 3; i++)
         {
-            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemDefinitions.ShortSword, StackCount = 1 });
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
 
             player.Input.ActionType = ActionTypes.Drop;
             player.Input.ItemSlot = 0;
@@ -785,7 +789,7 @@ public class InventorySystemTests
         // LeatherArmor definition: BaseAttack=0, BaseDefense=2, BaseHealth=0
         var armor = new ItemData
         {
-            ItemTypeId = ItemDefinitions.LeatherArmor,
+            ItemTypeId = ItemId("leather_armor"),
             StackCount = 1,
         };
         Assert.NotNull(player.Inventory.Items);

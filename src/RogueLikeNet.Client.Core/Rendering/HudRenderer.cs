@@ -3,7 +3,6 @@ using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
@@ -280,7 +279,7 @@ public sealed class HudRenderer
         foreach (var (dx, dy) in offsets)
         {
             var tile = state.GetTile(px + dx, py + dy);
-            if (tile.PlaceableItemId != RogueLikeNet.Core.Definitions.ItemDefinitions.None)
+            if (tile.PlaceableItemId != 0)
                 return true;
         }
         return false;

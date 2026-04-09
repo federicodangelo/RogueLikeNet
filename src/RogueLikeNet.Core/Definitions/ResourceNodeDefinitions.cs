@@ -4,7 +4,7 @@ using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Definitions;
 
-public readonly record struct ResourceNodeDefinition(
+public readonly record struct ResourceNodeDef(
     int NodeTypeId, string Name, int GlyphId, int Color,
     int Health, int Defense,
     int ResourceItemTypeId, int MinDrop, int MaxDrop
@@ -12,81 +12,57 @@ public readonly record struct ResourceNodeDefinition(
 
 public static class ResourceNodeDefinitions
 {
-    public const int None = 0;
-    public const int CopperRock = 1;
-    public const int IronRock = 2;
-    public const int GoldRock = 3;
-    public const int Tree = 4;
-
-    public static readonly ResourceNodeDefinition[] All =
-    [
-        new(CopperRock, "Copper Rock", TileDefinitions.GlyphRock, TileDefinitions.ColorCopperFg, 8, 2, ItemDefinitions.CopperOre, 1, 3),
-        new(IronRock,   "Iron Rock",   TileDefinitions.GlyphRock, TileDefinitions.ColorIronFg,  12, 4, ItemDefinitions.IronOre,   1, 3),
-        new(GoldRock,   "Gold Rock",   TileDefinitions.GlyphRock, TileDefinitions.ColorGoldFg,  15, 6, ItemDefinitions.GoldOre,   1, 2),
-        new(Tree,       "Tree",        TileDefinitions.GlyphTree, TileDefinitions.ColorTreeFg,   5, 0, ItemDefinitions.Wood,      2, 4),
-    ];
-
-    // Maps old numeric NodeTypeId → new string ID for JSON lookup
-    // Index 0 = None (null)
-    private static readonly string?[] OldToNewNodeId = [null, "copper_rock", "iron_rock", "gold_rock", "tree"];
-
-    public static ResourceNodeDefinition Get(int nodeTypeId)
+    public static ResourceNodeDef[] All
     {
-        var reg = GameData.Instance.ResourceNodes;
-        if (reg.Count > 0 && nodeTypeId > 0)
+        get
         {
-            // Try legacy string ID lookup first
-            if (nodeTypeId < OldToNewNodeId.Length)
-            {
-                var newId = OldToNewNodeId[nodeTypeId];
-                if (newId != null)
-                {
-                    var d = reg.Get(newId);
-                    if (d != null)
-                        return ConvertFromData(nodeTypeId, d);
-                }
-            }
-            else
-            {
-                // Direct registry lookup by NumericId (for new nodes without legacy mapping)
-                var d = reg.Get(nodeTypeId);
-                if (d != null)
-                    return ConvertFromData(nodeTypeId, d);
-            }
+            var reg = GameData.Instance.ResourceNodes;
+            if (reg.Count == 0) return [];
+            return reg.All.Select(ConvertFromData).ToArray();
         }
-
-        return nodeTypeId > 0 && nodeTypeId < _byId.Length ? _byId[nodeTypeId] : default;
     }
 
-    private static ResourceNodeDefinition ConvertFromData(int nodeTypeId, Data.ResourceNodeDefinition d)
+    public static ResourceNodeDef Get(int nodeTypeId)
     {
-        int resItemId = LegacyItemBridge.GetLegacyId(d.DropItemId);
-        if (resItemId == 0)
-            resItemId = GameData.Instance.Items.GetNumericId(d.DropItemId);
-        return new ResourceNodeDefinition(nodeTypeId, d.Name, d.GlyphId, d.FgColor,
+        var d = GameData.Instance.ResourceNodes.Get(nodeTypeId);
+        if (d != null)
+            return ConvertFromData(d);
+        return default;
+    }
+
+    public static ResourceNodeDef Get(string nodeId)
+    {
+        var d = GameData.Instance.ResourceNodes.Get(nodeId);
+        if (d != null)
+            return ConvertFromData(d);
+        return default;
+    }
+
+    private static ResourceNodeDef ConvertFromData(Data.ResourceNodeDefinition d)
+    {
+        int resItemId = GameData.Instance.Items.GetNumericId(d.DropItemId);
+        return new ResourceNodeDef(d.NumericId, d.Name, d.GlyphId, d.FgColor,
             d.Health, d.Defense, resItemId, d.MinDrop, d.MaxDrop);
     }
 
     /// <summary>
     /// Returns an array of (NodeDefinition, Weight) pairs for the given biome.
-    /// When GameData is loaded, includes new node types (coal, sand, clay, mithril, adamantite).
     /// </summary>
-    public static (ResourceNodeDefinition Def, int Weight)[] GetForBiome(BiomeType biome)
+    public static (ResourceNodeDef Def, int Weight)[] GetForBiome(BiomeType biome)
     {
         var baseList = GetBaseForBiome(biome);
         var reg = GameData.Instance.ResourceNodes;
         if (reg.Count == 0) return baseList;
 
-        // Look up new node types by string ID → NumericId
+        // Look up new node types by string ID
         var coal = reg.Get("coal_deposit");
         var sand = reg.Get("sand_deposit");
         var clay = reg.Get("clay_deposit");
         var mithril = reg.Get("mithril_rock");
         var adamantite = reg.Get("adamantite_rock");
 
-        var extended = new List<(ResourceNodeDefinition, int)>(baseList);
+        var extended = new List<(ResourceNodeDef, int)>(baseList);
 
-        // Add coal to most biomes
         if (coal != null)
         {
             int coalWeight = biome switch
@@ -97,10 +73,9 @@ public static class ResourceNodeDefinitions
                 BiomeType.Forest or BiomeType.Fungal or BiomeType.Sewer => 8,
                 _ => 10,
             };
-            extended.Add((Get(coal.NumericId), coalWeight));
+            extended.Add((ConvertFromData(coal), coalWeight));
         }
 
-        // Add sand/clay to surface-like biomes
         if (sand != null)
         {
             int sandWeight = biome switch
@@ -109,7 +84,7 @@ public static class ResourceNodeDefinitions
                 BiomeType.Forest or BiomeType.Fungal => 5,
                 _ => 3,
             };
-            extended.Add((Get(sand.NumericId), sandWeight));
+            extended.Add((ConvertFromData(sand), sandWeight));
         }
         if (clay != null)
         {
@@ -119,10 +94,9 @@ public static class ResourceNodeDefinitions
                 BiomeType.Stone => 5,
                 _ => 3,
             };
-            extended.Add((Get(clay.NumericId), clayWeight));
+            extended.Add((ConvertFromData(clay), clayWeight));
         }
 
-        // Add rare ores to harder biomes
         if (mithril != null)
         {
             int mithrilWeight = biome switch
@@ -132,7 +106,7 @@ public static class ResourceNodeDefinitions
                 BiomeType.Crypt or BiomeType.Ice => 3,
                 _ => 0,
             };
-            if (mithrilWeight > 0) extended.Add((Get(mithril.NumericId), mithrilWeight));
+            if (mithrilWeight > 0) extended.Add((ConvertFromData(mithril), mithrilWeight));
         }
         if (adamantite != null)
         {
@@ -143,65 +117,57 @@ public static class ResourceNodeDefinitions
                 BiomeType.Arcane => 2,
                 _ => 0,
             };
-            if (adamantiteWeight > 0) extended.Add((Get(adamantite.NumericId), adamantiteWeight));
+            if (adamantiteWeight > 0) extended.Add((ConvertFromData(adamantite), adamantiteWeight));
         }
 
         return extended.ToArray();
     }
 
-    private static (ResourceNodeDefinition Def, int Weight)[] GetBaseForBiome(BiomeType biome) => biome switch
+    private static (ResourceNodeDef Def, int Weight)[] GetBaseForBiome(BiomeType biome) => biome switch
     {
-        BiomeType.Forest => [(Get(Tree), 60), (Get(CopperRock), 20), (Get(IronRock), 10), (Get(GoldRock), 5)],
-        BiomeType.Fungal => [(Get(Tree), 40), (Get(CopperRock), 25), (Get(IronRock), 15), (Get(GoldRock), 5)],
-        BiomeType.Stone => [(Get(CopperRock), 50), (Get(IronRock), 25), (Get(Tree), 10), (Get(GoldRock), 5)],
-        BiomeType.Arcane => [(Get(CopperRock), 30), (Get(IronRock), 30), (Get(GoldRock), 15), (Get(Tree), 10)],
-        BiomeType.Ice => [(Get(IronRock), 50), (Get(CopperRock), 20), (Get(GoldRock), 10)],
-        BiomeType.Lava => [(Get(GoldRock), 40), (Get(IronRock), 30), (Get(CopperRock), 15)],
-        BiomeType.Infernal => [(Get(GoldRock), 35), (Get(IronRock), 35), (Get(CopperRock), 15)],
-        BiomeType.Crypt => [(Get(IronRock), 35), (Get(CopperRock), 25), (Get(GoldRock), 10)],
-        BiomeType.Sewer => [(Get(CopperRock), 40), (Get(IronRock), 20), (Get(Tree), 10)],
-        BiomeType.Ruined => [(Get(CopperRock), 30), (Get(IronRock), 30), (Get(GoldRock), 10), (Get(Tree), 10)],
-        _ => [(Get(CopperRock), 30), (Get(IronRock), 20), (Get(Tree), 20), (Get(GoldRock), 10)],
+        BiomeType.Forest => [(Get("tree"), 60), (Get("copper_rock"), 20), (Get("iron_rock"), 10), (Get("gold_rock"), 5)],
+        BiomeType.Fungal => [(Get("tree"), 40), (Get("copper_rock"), 25), (Get("iron_rock"), 15), (Get("gold_rock"), 5)],
+        BiomeType.Stone => [(Get("copper_rock"), 50), (Get("iron_rock"), 25), (Get("tree"), 10), (Get("gold_rock"), 5)],
+        BiomeType.Arcane => [(Get("copper_rock"), 30), (Get("iron_rock"), 30), (Get("gold_rock"), 15), (Get("tree"), 10)],
+        BiomeType.Ice => [(Get("iron_rock"), 50), (Get("copper_rock"), 20), (Get("gold_rock"), 10)],
+        BiomeType.Lava => [(Get("gold_rock"), 40), (Get("iron_rock"), 30), (Get("copper_rock"), 15)],
+        BiomeType.Infernal => [(Get("gold_rock"), 35), (Get("iron_rock"), 35), (Get("copper_rock"), 15)],
+        BiomeType.Crypt => [(Get("iron_rock"), 35), (Get("copper_rock"), 25), (Get("gold_rock"), 10)],
+        BiomeType.Sewer => [(Get("copper_rock"), 40), (Get("iron_rock"), 20), (Get("tree"), 10)],
+        BiomeType.Ruined => [(Get("copper_rock"), 30), (Get("iron_rock"), 30), (Get("gold_rock"), 10), (Get("tree"), 10)],
+        _ => [(Get("copper_rock"), 30), (Get("iron_rock"), 20), (Get("tree"), 20), (Get("gold_rock"), 10)],
     };
 
-    private static readonly int[] _biomeTreeChances;
-    private static readonly ResourceNodeDefinition[] _byId;
+    private static int[] _biomeTreeChances = [];
 
-    static ResourceNodeDefinitions()
+    public static void InitBiomeTreeChances()
     {
-
-        int maxId = All.Max(t => t.NodeTypeId);
-
-        // Validate that all IDs are correct
-        _byId = new ResourceNodeDefinition[maxId + 1];
-        foreach (var def in All)
-        {
-            _byId[def.NodeTypeId] = def;
-        }
-
         _biomeTreeChances = new int[Enum.GetValues<BiomeType>().Length];
         for (int i = 0; i < _biomeTreeChances.Length; i++)
         {
             var biome = (BiomeType)i;
             int chance = 0;
-            foreach (var (def, w) in GetForBiome(biome))
-                if (def.NodeTypeId == Tree)
-                    chance = w;
-
+            var treeNode = GameData.Instance.ResourceNodes.Get("tree");
+            if (treeNode != null)
+            {
+                foreach (var (def, w) in GetForBiome(biome))
+                    if (def.NodeTypeId == treeNode.NumericId)
+                        chance = w;
+            }
             _biomeTreeChances[i] = chance;
         }
-
     }
 
     public static int BiomeTreeChance(BiomeType biome)
     {
+        if (_biomeTreeChances.Length == 0) InitBiomeTreeChances();
         return _biomeTreeChances[(int)biome];
     }
 
     /// <summary>
     /// Picks a random resource node definition weighted by biome distribution.
     /// </summary>
-    public static ResourceNodeDefinition Pick(SeededRandom rng, BiomeType biome)
+    public static ResourceNodeDef Pick(SeededRandom rng, BiomeType biome)
     {
         var options = GetForBiome(biome);
         int totalWeight = 0;
@@ -217,26 +183,28 @@ public static class ResourceNodeDefinitions
         return options[^1].Def;
     }
 
-    public static ResourceNodeDefinition PickRock(SeededRandom rng, BiomeType biome)
+    public static ResourceNodeDef PickRock(SeededRandom rng, BiomeType biome)
     {
+        var treeNode = GameData.Instance.ResourceNodes.Get("tree");
+        int treeId = treeNode?.NumericId ?? -1;
         var options = GetForBiome(biome);
         int totalWeight = 0;
         foreach (var (def, w) in options)
-            if (def.NodeTypeId != Tree)
+            if (def.NodeTypeId != treeId)
                 totalWeight += w;
 
         if (totalWeight == 0)
-            return Get(CopperRock);
+            return Get("copper_rock");
 
         int roll = rng.Next(totalWeight);
         int cumulative = 0;
         foreach (var (def, w) in options)
         {
-            if (def.NodeTypeId == Tree) continue;
+            if (def.NodeTypeId == treeId) continue;
             cumulative += w;
             if (roll < cumulative) return def;
         }
-        return Get(CopperRock);
+        return Get("copper_rock");
     }
 
 }

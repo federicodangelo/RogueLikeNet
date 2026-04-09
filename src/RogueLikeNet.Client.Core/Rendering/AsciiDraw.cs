@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Engine.Core;
 using Engine.Platform;
 using Engine.Rendering.Base;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -98,43 +98,33 @@ public static class AsciiDraw
         return brightness;
     }
 
-    public static string CategoryTag(int category) => category switch
-    {
-        ItemDefinitions.CategoryWeapon => "[Wpn]",
-        ItemDefinitions.CategoryArmor => "[Arm]",
-        ItemDefinitions.CategoryPotion => "[Pot]",
-        ItemDefinitions.CategoryGold => "[Gld]",
-        ItemDefinitions.CategoryResource => "[Res]",
-        ItemDefinitions.CategoryPlaceable => "[Plc]",
-        ItemDefinitions.CategoryTool => "[Tol]",
-        ItemDefinitions.CategoryFood => "[Fod]",
-        _ => "     ",
-    };
+    public static string CategoryTag(int category) =>
+        ItemDefinition.CategoryTag((ItemCategory)category);
 
     public static string RarityTag(int rarity) => rarity switch
     {
-        ItemDefinitions.RarityCommon => "",
-        ItemDefinitions.RarityUncommon => "Uncommon ",
-        ItemDefinitions.RarityRare => "Rare ",
-        ItemDefinitions.RarityEpic => "Epic ",
-        ItemDefinitions.RarityLegendary => "Legendary ",
+        ItemDefinition.RarityCommon => "",
+        ItemDefinition.RarityUncommon => "Uncommon ",
+        ItemDefinition.RarityRare => "Rare ",
+        ItemDefinition.RarityEpic => "Epic ",
+        ItemDefinition.RarityLegendary => "Legendary ",
         _ => "",
     };
 
     public static Color4 RarityColor(int rarity) => rarity switch
     {
-        ItemDefinitions.RarityCommon => RenderingTheme.RarityCommon,
-        ItemDefinitions.RarityUncommon => RenderingTheme.RarityUncommon,
-        ItemDefinitions.RarityRare => RenderingTheme.RarityRare,
-        ItemDefinitions.RarityEpic => RenderingTheme.RarityEpic,
-        ItemDefinitions.RarityLegendary => RenderingTheme.RarityLegendary,
+        ItemDefinition.RarityCommon => RenderingTheme.RarityCommon,
+        ItemDefinition.RarityUncommon => RenderingTheme.RarityUncommon,
+        ItemDefinition.RarityRare => RenderingTheme.RarityRare,
+        ItemDefinition.RarityEpic => RenderingTheme.RarityEpic,
+        ItemDefinition.RarityLegendary => RenderingTheme.RarityLegendary,
         _ => RenderingTheme.RarityCommon,
     };
 
     public static string ItemDisplayName(int itemTypeId, int rarity)
     {
-        var def = ItemDefinitions.Get(itemTypeId);
-        string name = def.Name ?? "Unknown";
+        var def = GameData.Instance.Items.Get(itemTypeId);
+        string name = def?.Name ?? "Unknown";
         string tag = RarityTag(rarity);
         return tag.Length > 0 ? $"{tag}{name}" : name;
     }

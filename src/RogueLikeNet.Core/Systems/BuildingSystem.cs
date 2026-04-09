@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.World;
@@ -43,8 +44,8 @@ public class BuildingSystem
         if (slot < 0 || slot >= player.Inventory.Items.Count) return;
 
         var itemData = player.Inventory.Items[slot];
-        var def = ItemDefinitions.Get(itemData.ItemTypeId);
-        if (def.Category != ItemDefinitions.CategoryPlaceable) return;
+        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
+        if (def == null || !def.IsPlaceable) return;
 
         int dx = target.X - player.Position.X;
         int dy = target.Y - player.Position.Y;
