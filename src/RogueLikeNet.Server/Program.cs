@@ -1,8 +1,13 @@
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Server;
 using RogueLikeNet.Server.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
+
+// Load game data from JSON files
+var dataDir = DataDirectory.FindOrThrow();
+DataLoader.Load(dataDir);
 
 // Create game loop with SQLite persistence
 long worldSeed = 12345; // TODO: configurable

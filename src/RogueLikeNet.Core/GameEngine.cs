@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
@@ -39,6 +40,7 @@ public class GameEngine : IDisposable
     public long CurrentTick => _tick;
     public CombatSystem Combat => _combatSystem;
     public InventorySystem Inventory => _inventorySystem;
+    public GameData GameData { get; }
 
     /// <summary>Debug: when true, player movement ignores tile collision.</summary>
     public bool DebugNoCollision { get; set; }
@@ -57,6 +59,7 @@ public class GameEngine : IDisposable
 
     public GameEngine(long worldSeed, IDungeonGenerator? generator = null)
     {
+        GameData = GameData.Instance;
         _worldMap = new WorldMap(worldSeed);
         _generator = generator ?? new OverworldGenerator(worldSeed);
         _movementSystem = new MovementSystem();
@@ -193,7 +196,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public ref GroundItemEntity SpawnItemOnGround(ItemDefinition def, int rarity, Position pos)
+    public ref GroundItemEntity SpawnItemOnGround(Definitions.ItemDefinition def, int rarity, Position pos)
     {
         var itemData = ItemDefinitions.GenerateItemData(def, rarity, _worldRng);
         return ref SpawnItemOnGround(itemData, pos);
@@ -235,7 +238,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a resource node (tree, ore rock) that can be mined.
     /// </summary>
-    public ref ResourceNodeEntity SpawnResourceNode(Position pos, ResourceNodeDefinition def)
+    public ref ResourceNodeEntity SpawnResourceNode(Position pos, Definitions.ResourceNodeDefinition def)
     {
         var node = new ResourceNodeEntity(_worldMap.AllocateEntityId())
         {

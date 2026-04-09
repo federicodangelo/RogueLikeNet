@@ -1,6 +1,7 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Screens;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;
 using RogueLikeNet.Server;
@@ -20,6 +21,14 @@ public abstract class BaseProgram
 
     protected void InitializeGame(IPlatform platform)
     {
+        // Load game data from JSON if not already loaded
+        if (GameData.Instance.Items.Count == 0)
+        {
+            var dataDir = DataDirectory.Find();
+            if (dataDir != null)
+                DataLoader.Load(dataDir);
+        }
+
         Game.Initialize(platform);
 
         Game.PlayOfflineRequested += OnPlayOffline;
