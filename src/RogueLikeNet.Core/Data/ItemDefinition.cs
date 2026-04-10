@@ -8,13 +8,6 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class ItemDefinition : BaseDefinition
 {
-    // Rarity constants (used across loot generation and display)
-    public const int RarityCommon = 0;
-    public const int RarityUncommon = 1;
-    public const int RarityRare = 2;
-    public const int RarityEpic = 3;
-    public const int RarityLegendary = 4;
-
     public ItemCategory Category { get; set; }
     public int GlyphId { get; set; }
     public int FgColor { get; set; }

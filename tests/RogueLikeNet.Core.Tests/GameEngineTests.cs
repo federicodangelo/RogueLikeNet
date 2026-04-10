@@ -98,7 +98,7 @@ public class GameEngineTests
 
         // Pick up an item
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -180,7 +180,7 @@ public class GameEngineTests
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         var template = Item("long_sword");
-        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(10, 10, Position.DefaultZ));
+        var item = engine.SpawnItemOnGround(template, Position.FromCoords(10, 10, Position.DefaultZ));
 
         Assert.False(item.IsDestroyed);
         Assert.Equal(ItemId("long_sword"), item.Item.ItemTypeId);
@@ -220,7 +220,7 @@ public class GameEngineTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Verify entity exists with ItemData at the expected position
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
@@ -255,7 +255,7 @@ public class GameEngineTests
 
         // Equip weapon
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
         player.Input.ActionType = ActionTypes.UseItem;
@@ -264,7 +264,7 @@ public class GameEngineTests
 
         // Equip armor
         var armorTemplate = Item("leather_armor");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
         player.Input.ActionType = ActionTypes.UseItem;
@@ -288,7 +288,7 @@ public class GameEngineTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -379,7 +379,7 @@ public class GameEngineTests
         var (sx, sy, _) = engine.FindSpawnPosition();
 
         var template = Item("health_potion_small");
-        engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(template, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         var drop = engine.FindDropPosition(Position.FromCoords(sx, sy, Position.DefaultZ));
         Assert.True(drop.X != sx || drop.Y != sy, "Should find a different position when origin is occupied");

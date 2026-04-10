@@ -612,7 +612,7 @@ public class GameServerTests
         // Place an item at the player's position
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
         var template = GameData.Instance.Items.Get("health_potion_small")!; // Health Potion
-        loop.Engine.SpawnItemOnGround(template, 0, Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ));
+        loop.Engine.SpawnItemOnGround(template, Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ));
 
         messages.Clear();
         loop.Start();

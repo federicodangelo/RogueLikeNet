@@ -160,7 +160,7 @@ public sealed class HudRenderer
                                 EquipSlot.Belt => "T",
                                 _ => "?"
                             };
-                            parts.Append($"{slotPrefix}:{AsciiDraw.ItemDisplayName(eq.ItemTypeId, 0)}");
+                            parts.Append($"{slotPrefix}:{AsciiDraw.ItemDisplayName(eq.ItemTypeId)}");
                         }
                         if (row < maxRow)
                         {
@@ -205,7 +205,7 @@ public sealed class HudRenderer
             if (invIdx >= 0 && invIdx < hud.InventoryItems.Length)
             {
                 var item = hud.InventoryItems[invIdx];
-                string name = AsciiDraw.ItemDisplayName(item.ItemTypeId, 0);
+                string name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
                 int stack = item.StackCount;
                 string stackStr = stack > 1 ? $"x{stack}" : "";
                 Ds(r, col, row, $"[{i + 1}]{name}{stackStr}", RenderingTheme.Item);
@@ -234,9 +234,9 @@ public sealed class HudRenderer
         int floorToShow = Math.Min(floorItems.Length, 4);
         for (int i = 0; i < floorToShow && row < maxRow; i++)
         {
-            var (itemTypeId, rarity) = floorItems[i];
-            string name = AsciiDraw.ItemDisplayName(itemTypeId, rarity);
-            Ds(r, col, row, $"  {name}", AsciiDraw.RarityColor(rarity));
+            var itemTypeId = floorItems[i];
+            string name = AsciiDraw.ItemDisplayName(itemTypeId);
+            Ds(r, col, row, $"  {name}", RenderingTheme.RarityCommon);
             row++;
         }
         if (row < maxRow)

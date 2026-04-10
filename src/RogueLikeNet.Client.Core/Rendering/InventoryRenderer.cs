@@ -159,7 +159,7 @@ public sealed class InventoryRenderer
             if (i < hud.InventoryItems.Length)
             {
                 var item = hud.InventoryItems[i];
-                name = AsciiDraw.ItemDisplayName(item.ItemTypeId, 0);
+                name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
             }
             else
             {
@@ -262,7 +262,7 @@ public sealed class InventoryRenderer
             bool sel = focused && section.SelectedIndex == i;
             string prefix = sel ? "\u25ba" : " ";
             var eqItem = Array.Find(hud.EquippedItems, e => e.EquipSlot == i);
-            string name = eqItem != null ? AsciiDraw.ItemDisplayName(eqItem.ItemTypeId, 0) : "---";
+            string name = eqItem != null ? AsciiDraw.ItemDisplayName(eqItem.ItemTypeId) : "---";
             string label = i < SlotLabels.Length ? SlotLabels[i] : "?";
             string text = $"{prefix}{label}: {name}";
             if (text.Length > innerW) text = text[..innerW];

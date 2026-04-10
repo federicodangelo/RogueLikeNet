@@ -10,21 +10,7 @@ public class ItemDefinitionsTests
     {
         var rng = new SeededRandom(42);
         var loot = LootGenerator.GenerateLoot(rng, 0);
-        Assert.True(loot.Rarity >= 0 && loot.Rarity <= 4);
         Assert.NotNull(loot.Definition.Name);
-    }
-
-    [Fact]
-    public void HighDifficulty_BoostsRarity()
-    {
-        var rng = new SeededRandom(42);
-        int totalRarity = 0;
-        for (int i = 0; i < 110; i++)
-        {
-            var loot = LootGenerator.GenerateLoot(rng, 10);
-            totalRarity += loot.Rarity;
-        }
-        Assert.True(totalRarity > 100, $"Total rarity {totalRarity} should be > 100 at high difficulty");
     }
 
     [Fact]
@@ -48,21 +34,6 @@ public class ItemDefinitionsTests
         Assert.True(foundArmor, "Should generate armor");
         Assert.True(foundPotion, "Should generate potions");
         Assert.True(foundMisc, "Should generate gold/misc");
-    }
-
-    [Fact]
-    public void GenerateLoot_AllRarities()
-    {
-        var rng = new SeededRandom(1);
-        var rarities = new HashSet<int>();
-        for (int i = 0; i < 1000; i++)
-        {
-            var loot = LootGenerator.GenerateLoot(rng, 0);
-            rarities.Add(loot.Rarity);
-        }
-        // At difficulty 0, should see at least Common and Uncommon
-        Assert.Contains(0, rarities);
-        Assert.Contains(1, rarities);
     }
 
     [Fact]
@@ -117,7 +88,7 @@ public class ItemDefinitionsTests
         Assert.NotNull(goldDef);
         var rng = new SeededRandom(123);
 
-        var itemData = LootGenerator.GenerateItemData(goldDef, 0, rng);
+        var itemData = LootGenerator.GenerateItemData(goldDef, rng);
         Assert.Equal(goldDef.NumericId, itemData.ItemTypeId);
         Assert.True(itemData.StackCount >= 10);
     }

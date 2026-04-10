@@ -57,7 +57,7 @@ public class PlayerStateDataTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Item("long_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -82,7 +82,7 @@ public class PlayerStateDataTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var armorTemplate = Item("chain_mail");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -107,7 +107,7 @@ public class PlayerStateDataTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var potionTemplate = Item("health_potion_small");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -128,7 +128,7 @@ public class PlayerStateDataTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();

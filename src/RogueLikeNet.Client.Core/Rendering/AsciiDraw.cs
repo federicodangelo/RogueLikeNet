@@ -98,34 +98,12 @@ public static class AsciiDraw
         return brightness;
     }
 
-    public static string CategoryTag(int category) =>
-        ItemDefinition.CategoryTag((ItemCategory)category);
+    public static string CategoryTag(int category) => ItemDefinition.CategoryTag((ItemCategory)category);
 
-    public static string RarityTag(int rarity) => rarity switch
-    {
-        ItemDefinition.RarityCommon => "",
-        ItemDefinition.RarityUncommon => "Uncommon ",
-        ItemDefinition.RarityRare => "Rare ",
-        ItemDefinition.RarityEpic => "Epic ",
-        ItemDefinition.RarityLegendary => "Legendary ",
-        _ => "",
-    };
-
-    public static Color4 RarityColor(int rarity) => rarity switch
-    {
-        ItemDefinition.RarityCommon => RenderingTheme.RarityCommon,
-        ItemDefinition.RarityUncommon => RenderingTheme.RarityUncommon,
-        ItemDefinition.RarityRare => RenderingTheme.RarityRare,
-        ItemDefinition.RarityEpic => RenderingTheme.RarityEpic,
-        ItemDefinition.RarityLegendary => RenderingTheme.RarityLegendary,
-        _ => RenderingTheme.RarityCommon,
-    };
-
-    public static string ItemDisplayName(int itemTypeId, int rarity)
+    public static string ItemDisplayName(int itemTypeId)
     {
         var def = GameData.Instance.Items.Get(itemTypeId);
         string name = def?.Name ?? "Unknown";
-        string tag = RarityTag(rarity);
-        return tag.Length > 0 ? $"{tag}{name}" : name;
+        return name;
     }
 }

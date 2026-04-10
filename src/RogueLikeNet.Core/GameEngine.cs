@@ -200,9 +200,9 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Creates an item entity lying on the ground.
     /// </summary>
-    public ref GroundItemEntity SpawnItemOnGround(Data.ItemDefinition def, int rarity, Position pos)
+    public ref GroundItemEntity SpawnItemOnGround(Data.ItemDefinition def, Position pos)
     {
-        var itemData = LootGenerator.GenerateItemData(def, rarity, _worldRng);
+        var itemData = LootGenerator.GenerateItemData(def, _worldRng);
         return ref SpawnItemOnGround(itemData, pos);
     }
 
@@ -341,7 +341,7 @@ public class GameEngine : IDisposable
                 int difficulty = typeId;
                 var loot = LootGenerator.GenerateLoot(_worldRng, difficulty);
                 var drop = FindDropPosition(pos);
-                SpawnItemOnGround(loot.Definition, 0, drop);
+                SpawnItemOnGround(loot.Definition, drop);
             }
         }
 

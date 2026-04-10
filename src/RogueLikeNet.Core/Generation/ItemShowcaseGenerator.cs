@@ -6,7 +6,7 @@ using RogueLikeNet.Core.World;
 namespace RogueLikeNet.Core.Generation;
 
 /// <summary>
-/// Generates a showcase room containing every item type at every rarity.
+/// Generates a showcase room containing every item type
 /// Only chunk (0,0) has content; all other chunks are empty floors.
 /// Layout: a large room with items arranged in a grid — rows = item types, columns = rarities.
 /// </summary>
@@ -72,29 +72,6 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         int spacingX = 2;
         int spacingY = 2;
 
-        string[] rarityNames = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
-
-        // Place rarity labels as torches (visual markers) along the top
-        for (int r = 0; r <= 4; r++)
-        {
-            int wx = worldOffsetX + startX + r * spacingX;
-            int wy = worldOffsetY + startY - 2;
-            // Use colored torches as column markers
-            int color = r switch
-            {
-                0 => TileDefinitions.ColorWhite,
-                1 => TileDefinitions.ColorGreen,
-                2 => TileDefinitions.ColorBlue,
-                3 => TileDefinitions.ColorMagenta,
-                4 => TileDefinitions.ColorYellow,
-                _ => TileDefinitions.ColorWhite,
-            };
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(wx, wy, chunkZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, color),
-                new LightSource(4, color)));
-        }
-
         var rng = new SeededRandom(_seed);
 
         // Items
@@ -107,22 +84,19 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         {
             var def = simpleItems[itemIdx];
 
-            for (int rarity = 0; rarity <= 4; rarity++)
+            int lx = startX + 0 * spacingX;
+            int ly = startY + itemIdx * spacingY;
+
+            if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
+                continue;
+
+            result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
             {
-                int lx = startX + rarity * spacingX;
-                int ly = startY + itemIdx * spacingY;
-
-                if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
-                    continue;
-
-                result.Items.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), new ItemData
-                {
-                    ItemTypeId = def.NumericId,
-                    StackCount = def.Stackable
-                        ? (def.Category == ItemCategory.Misc ? 10 + rng.Next(50) : 1)
-                        : 1,
-                }));
-            }
+                ItemTypeId = def.NumericId,
+                StackCount = def.Stackable
+                    ? (def.Category == ItemCategory.Misc ? 10 + rng.Next(50) : 1)
+                    : 1,
+            }));
         }
 
         startX += 6 * spacingX; // Shift right for placeables and resource nodes

@@ -3,7 +3,7 @@ using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Core.Generation;
 
-public readonly record struct Loot(ItemDefinition Definition, int Rarity);
+public readonly record struct Loot(ItemDefinition Definition);
 
 /// <summary>
 /// Generates random loot from the item registry.
@@ -11,7 +11,7 @@ public readonly record struct Loot(ItemDefinition Definition, int Rarity);
 public static class LootGenerator
 {
     /// <summary>
-    /// Generates a random item with optional rarity bonus.
+    /// Generates a random item.
     /// Uses items from the GameData registry.
     /// </summary>
     public static Loot GenerateLoot(SeededRandom rng, int difficulty)
@@ -29,20 +29,7 @@ public static class LootGenerator
         var candidates = GetItemsByCategory(category);
         var def = candidates[rng.Next(candidates.Length)];
 
-        // Rarity roll: 0=Common(60%), 1=Uncommon(25%), 2=Rare(10%), 3=Epic(4%), 4=Legendary(1%)
-        int rarityRoll = rng.Next(100);
-        int rarity;
-        if (rarityRoll < 60) rarity = 0;
-        else if (rarityRoll < 85) rarity = 1;
-        else if (rarityRoll < 95) rarity = 2;
-        else if (rarityRoll < 99) rarity = 3;
-        else rarity = 4;
-
-        // Higher difficulty slightly boosts rarity
-        rarity = Math.Min(4, rarity + difficulty / 3);
-        rarity = CapRarity(def.Category, rarity);
-
-        return new Loot(def, rarity);
+        return new Loot(def);
     }
 
     private static ItemDefinition[] GetItemsByCategory(ItemCategory category)
@@ -52,16 +39,7 @@ public static class LootGenerator
             .ToArray();
     }
 
-    public static int CapRarity(ItemCategory itemCategory, int rarity)
-    {
-        // Gold, resources, and placeables are always Common rarity
-        if (itemCategory is ItemCategory.Misc or ItemCategory.Material
-            or ItemCategory.Block or ItemCategory.Furniture)
-            return ItemDefinition.RarityCommon;
-        return rarity;
-    }
-
-    public static ItemData GenerateItemData(ItemDefinition def, int rarity, SeededRandom rng)
+    public static ItemData GenerateItemData(ItemDefinition def, SeededRandom rng)
     {
         return new ItemData
         {

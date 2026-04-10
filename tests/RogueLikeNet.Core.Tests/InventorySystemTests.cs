@@ -30,7 +30,7 @@ public class InventorySystemTests
 
         // Spawn item at player's position
         var template = Item("short_sword");
-        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var item = engine.SpawnItemOnGround(template, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Set pickup action
         player.Input.ActionType = ActionTypes.PickUp;
@@ -54,7 +54,7 @@ public class InventorySystemTests
 
         // Spawn and pick up an item
         var template = Item("short_sword");
-        var item = engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var item = engine.SpawnItemOnGround(template, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -85,7 +85,7 @@ public class InventorySystemTests
 
         // Spawn a player.Health potion and pick it up
         var potionTemplate = Item("health_potion_small");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -110,7 +110,7 @@ public class InventorySystemTests
 
         // Spawn a sword and pick it up
         var swordTemplate = Item("long_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -135,7 +135,7 @@ public class InventorySystemTests
 
         // Spawn armor and pick it up
         var armorTemplate = Item("leather_armor");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -162,7 +162,7 @@ public class InventorySystemTests
             player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword") });
 
         // Now spawn another item and try to pick it up
-        var extraItem = engine.SpawnItemOnGround(Item("short_sword"), 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var extraItem = engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -221,7 +221,7 @@ public class InventorySystemTests
 
         // Spawn gold and pick it up
         var goldTemplate = Item("gold_coin");
-        engine.SpawnItemOnGround(goldTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(goldTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -247,7 +247,7 @@ public class InventorySystemTests
 
         // Pick up first weapon
         var sword1Template = Item("short_sword");
-        engine.SpawnItemOnGround(sword1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(sword1Template, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -258,7 +258,7 @@ public class InventorySystemTests
 
         // Pick up second weapon
         var sword2Template = Item("long_sword");
-        engine.SpawnItemOnGround(sword2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(sword2Template, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -281,7 +281,7 @@ public class InventorySystemTests
 
         // Pick up first armor
         var armor1Template = Item("leather_armor");
-        engine.SpawnItemOnGround(armor1Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armor1Template, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -294,7 +294,7 @@ public class InventorySystemTests
 
         // Pick up second armor
         var armor2Template = Item("chain_mail");
-        engine.SpawnItemOnGround(armor2Template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armor2Template, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -322,7 +322,7 @@ public class InventorySystemTests
 
         // Spawn a strength potion and pick it up
         var potionTemplate = Item("strength_potion");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -344,13 +344,13 @@ public class InventorySystemTests
 
         // Pick up first player.Health potion
         var potionTemplate = Item("health_potion_small");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         // Pick up second player.Health potion (should auto-stack)
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -371,12 +371,12 @@ public class InventorySystemTests
 
         // Pick up two different items
         var swordTemplate = Item("short_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
         var armorTemplate = Item("leather_armor");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -417,7 +417,7 @@ public class InventorySystemTests
 
         // Pick up and equip a weapon
         var swordTemplate = Item("long_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -453,7 +453,7 @@ public class InventorySystemTests
 
         // Pick up and equip armor
         var armorTemplate = Item("chain_mail");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -491,7 +491,7 @@ public class InventorySystemTests
 
         // Pick up a weapon
         var swordTemplate = Item("long_sword");
-        engine.SpawnItemOnGround(swordTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(swordTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -519,7 +519,7 @@ public class InventorySystemTests
 
         // Pick up armor
         var armorTemplate = Item("chain_mail");
-        engine.SpawnItemOnGround(armorTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(armorTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
@@ -553,7 +553,7 @@ public class InventorySystemTests
 
         // Pickup another potion — can't merge into full stack, should go to new slot
         var potionTemplate = Item("health_potion_small");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -592,7 +592,7 @@ public class InventorySystemTests
 
         // Pickup another potion — should skip non-matching + full stack, merge into partial
         var potionTemplate = Item("health_potion_small");
-        engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -620,7 +620,7 @@ public class InventorySystemTests
 
         // Spawn potion and manually increase its StackCount to 3
         var potionTemplate = Item("health_potion_small");
-        var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var _gi = engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
         ref var groundItem = ref engine.WorldMap.GetGroundItemRef(_gi.Id);
         groundItem.Item.StackCount = 3; // Slot 0 absorbs 1 (9→10), leaves 2 → slot 1 absorbs 2 (5→7)
 
@@ -649,7 +649,7 @@ public class InventorySystemTests
 
         // Spawn another health potion on the ground
         var potionTemplate = Item("health_potion_small");
-        var _gi = engine.SpawnItemOnGround(potionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var _gi = engine.SpawnItemOnGround(potionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -677,7 +677,7 @@ public class InventorySystemTests
 
         // Spawn a strength potion on the ground (different type)
         var strPotionTemplate = Item("strength_potion");
-        var _gi = engine.SpawnItemOnGround(strPotionTemplate, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        var _gi = engine.SpawnItemOnGround(strPotionTemplate, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -720,7 +720,7 @@ public class InventorySystemTests
 
         // Place an item on the ground at player's position
         var template = Item("short_sword");
-        engine.SpawnItemOnGround(template, 0, Position.FromCoords(sx, sy, Position.DefaultZ));
+        engine.SpawnItemOnGround(template, Position.FromCoords(sx, sy, Position.DefaultZ));
 
         // Count ground items before drop
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
