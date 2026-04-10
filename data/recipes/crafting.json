@@ -1,5 +1,54 @@
 [
     {
+        "id": "craft_crafting_bench",
+        "name": "Crafting Bench",
+        "station": "hand",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "crafting_bench",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_torch",
+        "name": "Torch x5",
+        "station": "hand",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 1
+            },
+            {
+                "itemId": "fiber",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "torch_material",
+            "count": 5
+        }
+    },
+    {
+        "id": "craft_rope",
+        "name": "Rope",
+        "station": "hand",
+        "ingredients": [
+            {
+                "itemId": "fiber",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "rope",
+            "count": 1
+        }
+    },
+    {
         "id": "craft_wooden_pickaxe",
         "name": "Wooden Pickaxe",
         "station": "workbench",
@@ -34,63 +83,6 @@
         ],
         "result": {
             "itemId": "stone_pickaxe",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_copper_pickaxe",
-        "name": "Copper Pickaxe",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 3
-            },
-            {
-                "itemId": "copper_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "copper_pickaxe",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_iron_pickaxe",
-        "name": "Iron Pickaxe",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 3
-            },
-            {
-                "itemId": "iron_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "iron_pickaxe",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_steel_pickaxe",
-        "name": "Steel Pickaxe",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 3
-            },
-            {
-                "itemId": "steel_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "steel_pickaxe",
             "count": 1
         }
     },
@@ -133,25 +125,6 @@
         }
     },
     {
-        "id": "craft_iron_axe",
-        "name": "Iron Axe",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 3
-            },
-            {
-                "itemId": "iron_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "iron_axe",
-            "count": 1
-        }
-    },
-    {
         "id": "craft_wooden_shovel",
         "name": "Wooden Shovel",
         "station": "workbench",
@@ -171,21 +144,21 @@
         }
     },
     {
-        "id": "craft_iron_shovel",
-        "name": "Iron Shovel",
-        "station": "anvil",
+        "id": "craft_stone_shovel",
+        "name": "Stone Shovel",
+        "station": "workbench",
         "ingredients": [
             {
                 "itemId": "wood",
-                "count": 2
+                "count": 3
             },
             {
-                "itemId": "iron_ingot",
+                "itemId": "stone",
                 "count": 3
             }
         ],
         "result": {
-            "itemId": "iron_shovel",
+            "itemId": "stone_shovel",
             "count": 1
         }
     },
@@ -209,21 +182,78 @@
         }
     },
     {
-        "id": "craft_iron_hoe",
-        "name": "Iron Hoe",
-        "station": "anvil",
+        "id": "craft_stone_hoe",
+        "name": "Stone Hoe",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "stone",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "stone_hoe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_hammer",
+        "name": "Hammer",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 5
+            },
+            {
+                "itemId": "stone",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_knife",
+        "name": "Knife",
+        "station": "workbench",
         "ingredients": [
             {
                 "itemId": "wood",
                 "count": 2
             },
             {
-                "itemId": "iron_ingot",
+                "itemId": "stone",
                 "count": 3
             }
         ],
         "result": {
-            "itemId": "iron_hoe",
+            "itemId": "knife",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_fishing_rod",
+        "name": "Fishing Rod",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 4
+            },
+            {
+                "itemId": "fiber",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "fishing_rod",
             "count": 1
         }
     },
@@ -262,63 +292,6 @@
         }
     },
     {
-        "id": "craft_copper_sword",
-        "name": "Copper Sword",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 2
-            },
-            {
-                "itemId": "copper_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "copper_sword",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_iron_sword",
-        "name": "Iron Sword",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 2
-            },
-            {
-                "itemId": "iron_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "iron_sword",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_steel_sword",
-        "name": "Steel Sword",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 2
-            },
-            {
-                "itemId": "steel_ingot",
-                "count": 5
-            }
-        ],
-        "result": {
-            "itemId": "steel_sword",
-            "count": 1
-        }
-    },
-    {
         "id": "craft_wooden_bow",
         "name": "Wooden Bow",
         "station": "workbench",
@@ -334,6 +307,283 @@
         ],
         "result": {
             "itemId": "wooden_bow",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_spear",
+        "name": "Spear",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 5
+            },
+            {
+                "itemId": "stone",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "spear",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_wand",
+        "name": "Wand",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 4
+            },
+            {
+                "itemId": "gem_emerald",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "wand",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_magic_staff",
+        "name": "Magic Staff",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 6
+            },
+            {
+                "itemId": "gem_sapphire",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "magic_staff",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_fire_staff",
+        "name": "Fire Staff",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 6
+            },
+            {
+                "itemId": "gem_ruby",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "fire_staff",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_ice_staff",
+        "name": "Ice Staff",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 6
+            },
+            {
+                "itemId": "gem_sapphire",
+                "count": 1
+            },
+            {
+                "itemId": "gem_emerald",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "ice_staff",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_bow",
+        "name": "Iron Bow",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 5
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            },
+            {
+                "itemId": "fiber",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_bow",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_bow",
+        "name": "Copper Bow",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 5
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            },
+            {
+                "itemId": "fiber",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_bow",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_crossbow",
+        "name": "Crossbow",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 5
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            },
+            {
+                "itemId": "fiber",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "crossbow",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_armor",
+        "name": "Leather Armor",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "leather_armor",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_helmet",
+        "name": "Leather Helmet",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "leather_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_boots",
+        "name": "Leather Boots",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "leather_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_leggings",
+        "name": "Leather Leggings",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "leather_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_gloves",
+        "name": "Leather Gloves",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "leather_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_leather_belt",
+        "name": "Leather Belt",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "leather_belt",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_shield",
+        "name": "Shield",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            },
+            {
+                "itemId": "wood",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "shield",
             "count": 1
         }
     },
@@ -354,93 +604,6 @@
         "result": {
             "itemId": "wooden_arrow",
             "count": 10
-        }
-    },
-    {
-        "id": "craft_iron_arrow",
-        "name": "Iron Arrow x10",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 2
-            },
-            {
-                "itemId": "iron_ingot",
-                "count": 1
-            },
-            {
-                "itemId": "feather",
-                "count": 1
-            }
-        ],
-        "result": {
-            "itemId": "iron_arrow",
-            "count": 10
-        }
-    },
-    {
-        "id": "craft_leather_armor",
-        "name": "Leather Armor",
-        "station": "workbench",
-        "ingredients": [
-            {
-                "itemId": "leather",
-                "count": 8
-            }
-        ],
-        "result": {
-            "itemId": "leather_armor",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_chain_mail",
-        "name": "Chain Mail",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "iron_ingot",
-                "count": 10
-            }
-        ],
-        "result": {
-            "itemId": "chain_mail",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_plate_armor",
-        "name": "Plate Armor",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "steel_ingot",
-                "count": 15
-            }
-        ],
-        "result": {
-            "itemId": "plate_armor",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_shield",
-        "name": "Shield",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "iron_ingot",
-                "count": 5
-            },
-            {
-                "itemId": "wood",
-                "count": 3
-            }
-        ],
-        "result": {
-            "itemId": "shield",
-            "count": 1
         }
     },
     {
@@ -489,44 +652,6 @@
         ],
         "result": {
             "itemId": "wooden_window",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_copper_door",
-        "name": "Copper Door",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "copper_ingot",
-                "count": 5
-            },
-            {
-                "itemId": "wood",
-                "count": 2
-            }
-        ],
-        "result": {
-            "itemId": "copper_door",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_iron_door",
-        "name": "Iron Door",
-        "station": "anvil",
-        "ingredients": [
-            {
-                "itemId": "iron_ingot",
-                "count": 5
-            },
-            {
-                "itemId": "wood",
-                "count": 2
-            }
-        ],
-        "result": {
-            "itemId": "iron_door",
             "count": 1
         }
     },
@@ -625,17 +750,17 @@
         }
     },
     {
-        "id": "craft_crafting_bench",
-        "name": "Crafting Bench",
-        "station": "hand",
+        "id": "craft_stone_wall",
+        "name": "Stone Wall",
+        "station": "workbench",
         "ingredients": [
             {
-                "itemId": "wood",
-                "count": 8
+                "itemId": "stone",
+                "count": 4
             }
         ],
         "result": {
-            "itemId": "crafting_bench",
+            "itemId": "stone_wall",
             "count": 1
         }
     },
@@ -735,6 +860,63 @@
         }
     },
     {
+        "id": "craft_tanning_rack",
+        "name": "Tanning Rack",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 6
+            },
+            {
+                "itemId": "leather",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "tanning_rack",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_stone_cutter",
+        "name": "Stone Cutter",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "stone",
+                "count": 8
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "stone_cutter",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_sawmill",
+        "name": "Sawmill",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 8
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "sawmill",
+            "count": 1
+        }
+    },
+    {
         "id": "craft_chest",
         "name": "Chest",
         "station": "workbench",
@@ -754,36 +936,1608 @@
         }
     },
     {
-        "id": "craft_torch",
-        "name": "Torch x5",
-        "station": "hand",
+        "id": "craft_torch_placeable",
+        "name": "Wall Torch",
+        "station": "workbench",
+        "ingredients": [
+            {
+                "itemId": "torch_material",
+                "count": 1
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "torch_placeable",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_pickaxe",
+        "name": "Copper Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "copper_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_pickaxe",
+        "name": "Iron Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "iron_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_pickaxe",
+        "name": "Steel Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "steel_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_pickaxe",
+        "name": "Gold Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "gold_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_pickaxe",
+        "name": "Mithril Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "mithril_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "mithril_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_pickaxe",
+        "name": "Adamantite Pickaxe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "adamantite_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_pickaxe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_axe",
+        "name": "Iron Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "iron_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_axe",
+        "name": "Copper Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "copper_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_axe",
+        "name": "Steel Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "steel_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_axe",
+        "name": "Gold Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "gold_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_axe",
+        "name": "Mithril Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "mithril_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "mithril_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_axe",
+        "name": "Adamantite Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "adamantite_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_shovel",
+        "name": "Iron Shovel",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_shovel",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_shovel",
+        "name": "Copper Shovel",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_shovel",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_shovel",
+        "name": "Steel Shovel",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "steel_shovel",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_shovel",
+        "name": "Gold Shovel",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "gold_shovel",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_hoe",
+        "name": "Iron Hoe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_hoe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_hoe",
+        "name": "Copper Hoe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_hoe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_hoe",
+        "name": "Steel Hoe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "steel_hoe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_hoe",
+        "name": "Gold Hoe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "gold_hoe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_hammer",
+        "name": "Iron Hammer",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "iron_hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_hammer",
+        "name": "Copper Hammer",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "copper_hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_hammer",
+        "name": "Steel Hammer",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "steel_hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_hammer",
+        "name": "Gold Hammer",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "gold_hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_sword",
+        "name": "Copper Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "copper_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_sword",
+        "name": "Iron Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "iron_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_sword",
+        "name": "Steel Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "steel_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_sword",
+        "name": "Gold Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "gold_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "gold_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_sword",
+        "name": "Mithril Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "mithril_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "mithril_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_sword",
+        "name": "Adamantite Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "adamantite_ingot",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_short_sword",
+        "name": "Short Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "short_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_long_sword",
+        "name": "Long Sword",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "long_sword",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_battle_axe",
+        "name": "Battle Axe",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "battle_axe",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_dagger",
+        "name": "Dagger",
+        "station": "anvil",
         "ingredients": [
             {
                 "itemId": "wood",
                 "count": 1
             },
             {
-                "itemId": "fiber",
-                "count": 1
+                "itemId": "iron_ingot",
+                "count": 2
             }
         ],
         "result": {
-            "itemId": "torch_material",
-            "count": 5
+            "itemId": "dagger",
+            "count": 1
         }
     },
     {
-        "id": "craft_rope",
-        "name": "Rope",
-        "station": "hand",
+        "id": "craft_iron_spear",
+        "name": "Iron Spear",
+        "station": "anvil",
         "ingredients": [
             {
-                "itemId": "fiber",
+                "itemId": "wood",
+                "count": 4
+            },
+            {
+                "itemId": "iron_ingot",
                 "count": 3
             }
         ],
         "result": {
-            "itemId": "rope",
+            "itemId": "iron_spear",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_spear",
+        "name": "Copper Spear",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 4
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_spear",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_spear",
+        "name": "Steel Spear",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 4
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "steel_spear",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mace",
+        "name": "Mace",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "mace",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_mace",
+        "name": "Copper Mace",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "copper_mace",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_mace",
+        "name": "Steel Mace",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "steel_mace",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_war_hammer",
+        "name": "War Hammer",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 3
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "war_hammer",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_chain_mail",
+        "name": "Chain Mail",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 10
+            }
+        ],
+        "result": {
+            "itemId": "chain_mail",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_plate_armor",
+        "name": "Plate Armor",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 15
+            }
+        ],
+        "result": {
+            "itemId": "plate_armor",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_helmet",
+        "name": "Iron Helmet",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "iron_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_helmet",
+        "name": "Steel Helmet",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "steel_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_helmet",
+        "name": "Copper Helmet",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "copper_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_boots",
+        "name": "Iron Boots",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "iron_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_boots",
+        "name": "Steel Boots",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "steel_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_boots",
+        "name": "Copper Boots",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "copper_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_leggings",
+        "name": "Iron Leggings",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "iron_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_leggings",
+        "name": "Steel Leggings",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 7
+            }
+        ],
+        "result": {
+            "itemId": "steel_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_leggings",
+        "name": "Copper Leggings",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "copper_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_gloves",
+        "name": "Iron Gloves",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "iron_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_gloves",
+        "name": "Steel Gloves",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "steel_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_gloves",
+        "name": "Copper Gloves",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_armor",
+        "name": "Copper Armor",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "copper_armor",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_shield",
+        "name": "Iron Shield",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 6
+            },
+            {
+                "itemId": "wood",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_shield",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_steel_shield",
+        "name": "Steel Shield",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "steel_ingot",
+                "count": 7
+            },
+            {
+                "itemId": "wood",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "steel_shield",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_helmet",
+        "name": "Mithril Helmet",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "mithril_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_armor",
+        "name": "Mithril Armor",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 12
+            }
+        ],
+        "result": {
+            "itemId": "mithril_armor",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_boots",
+        "name": "Mithril Boots",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "mithril_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_leggings",
+        "name": "Mithril Leggings",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 7
+            }
+        ],
+        "result": {
+            "itemId": "mithril_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_gloves",
+        "name": "Mithril Gloves",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "mithril_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_shield",
+        "name": "Mithril Shield",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 8
+            },
+            {
+                "itemId": "wood",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "mithril_shield",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_helmet",
+        "name": "Adamantite Helmet",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 7
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_helmet",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_armor",
+        "name": "Adamantite Armor",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 15
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_armor",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_boots",
+        "name": "Adamantite Boots",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_boots",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_leggings",
+        "name": "Adamantite Leggings",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_leggings",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_gloves",
+        "name": "Adamantite Gloves",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_gloves",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_adamantite_shield",
+        "name": "Adamantite Shield",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 10
+            },
+            {
+                "itemId": "wood",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "adamantite_shield",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_ring_of_strength",
+        "name": "Ring of Strength",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            },
+            {
+                "itemId": "gem_ruby",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "ring_of_strength",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_amulet_of_protection",
+        "name": "Amulet of Protection",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            },
+            {
+                "itemId": "gem_sapphire",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "amulet_of_protection",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_arrow",
+        "name": "Iron Arrow x10",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 1
+            },
+            {
+                "itemId": "feather",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "iron_arrow",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_steel_arrow",
+        "name": "Steel Arrow x10",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "steel_ingot",
+                "count": 1
+            },
+            {
+                "itemId": "feather",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "steel_arrow",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_copper_arrow",
+        "name": "Copper Arrow x10",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "copper_ingot",
+                "count": 1
+            },
+            {
+                "itemId": "feather",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "copper_arrow",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_mithril_arrow",
+        "name": "Mithril Arrow x10",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "mithril_ingot",
+                "count": 1
+            },
+            {
+                "itemId": "feather",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "mithril_arrow",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_bolt",
+        "name": "Crossbow Bolt x10",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 2
+            },
+            {
+                "itemId": "feather",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "bolt",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_fire_arrow",
+        "name": "Fire Arrow x5",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_arrow",
+                "count": 5
+            },
+            {
+                "itemId": "coal",
+                "count": 2
+            },
+            {
+                "itemId": "slime_gel",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "fire_arrow",
+            "count": 5
+        }
+    },
+    {
+        "id": "craft_ice_arrow",
+        "name": "Ice Arrow x5",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_arrow",
+                "count": 5
+            },
+            {
+                "itemId": "gem_sapphire",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "ice_arrow",
+            "count": 5
+        }
+    },
+    {
+        "id": "craft_copper_door",
+        "name": "Copper Door",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 5
+            },
+            {
+                "itemId": "wood",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "copper_door",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_door",
+        "name": "Iron Door",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 5
+            },
+            {
+                "itemId": "wood",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "iron_door",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_door",
+        "name": "Gold Door",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 5
+            },
+            {
+                "itemId": "wood",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "gold_door",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_wall",
+        "name": "Copper Wall",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "copper_wall",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_wall",
+        "name": "Iron Wall",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_wall",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_wall",
+        "name": "Gold Wall",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "gold_wall",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_copper_floor",
+        "name": "Copper Floor x4",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "copper_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "copper_floor_tile",
+            "count": 4
+        }
+    },
+    {
+        "id": "craft_iron_floor",
+        "name": "Iron Floor x4",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "iron_floor_tile",
+            "count": 4
+        }
+    },
+    {
+        "id": "craft_gold_floor",
+        "name": "Gold Floor x4",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "gold_floor_tile",
+            "count": 4
+        }
+    },
+    {
+        "id": "craft_iron_chain",
+        "name": "Iron Chain",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "iron_chain",
             "count": 1
         }
     },
@@ -799,6 +2553,311 @@
         ],
         "result": {
             "itemId": "cloth",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_cloth_bulk",
+        "name": "Cloth x3",
+        "station": "loom",
+        "ingredients": [
+            {
+                "itemId": "fiber",
+                "count": 10
+            }
+        ],
+        "result": {
+            "itemId": "cloth",
+            "count": 3
+        }
+    },
+    {
+        "id": "craft_cured_leather",
+        "name": "Cured Leather",
+        "station": "tanningRack",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 2
+            },
+            {
+                "itemId": "coal",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "cured_leather",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_stone_brick",
+        "name": "Stone Brick x2",
+        "station": "stoneCutter",
+        "ingredients": [
+            {
+                "itemId": "stone",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "stone_brick",
+            "count": 2
+        }
+    },
+    {
+        "id": "craft_planks",
+        "name": "Planks x4",
+        "station": "sawmill",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "planks",
+            "count": 4
+        }
+    },
+    {
+        "id": "craft_hardened_leather",
+        "name": "Hardened Leather",
+        "station": "tanningRack",
+        "ingredients": [
+            {
+                "itemId": "cured_leather",
+                "count": 2
+            },
+            {
+                "itemId": "iron_ingot",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "hardened_leather",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_cured_leather_bulk",
+        "name": "Cured Leather x3",
+        "station": "tanningRack",
+        "ingredients": [
+            {
+                "itemId": "leather",
+                "count": 5
+            },
+            {
+                "itemId": "coal",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "cured_leather",
+            "count": 3
+        }
+    },
+    {
+        "id": "craft_silk_cloth",
+        "name": "Silk Cloth",
+        "station": "loom",
+        "ingredients": [
+            {
+                "itemId": "fiber",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "silk_cloth",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_rope_loom",
+        "name": "Rope x3",
+        "station": "loom",
+        "ingredients": [
+            {
+                "itemId": "fiber",
+                "count": 5
+            }
+        ],
+        "result": {
+            "itemId": "rope",
+            "count": 3
+        }
+    },
+    {
+        "id": "craft_refined_planks",
+        "name": "Refined Planks x2",
+        "station": "sawmill",
+        "ingredients": [
+            {
+                "itemId": "planks",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "refined_planks",
+            "count": 2
+        }
+    },
+    {
+        "id": "craft_planks_bulk",
+        "name": "Planks x10",
+        "station": "sawmill",
+        "ingredients": [
+            {
+                "itemId": "wood",
+                "count": 6
+            }
+        ],
+        "result": {
+            "itemId": "planks",
+            "count": 10
+        }
+    },
+    {
+        "id": "craft_polished_stone",
+        "name": "Polished Stone x2",
+        "station": "stoneCutter",
+        "ingredients": [
+            {
+                "itemId": "stone_brick",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "polished_stone",
+            "count": 2
+        }
+    },
+    {
+        "id": "craft_stone_brick_bulk",
+        "name": "Stone Brick x5",
+        "station": "stoneCutter",
+        "ingredients": [
+            {
+                "itemId": "stone",
+                "count": 8
+            }
+        ],
+        "result": {
+            "itemId": "stone_brick",
+            "count": 5
+        }
+    },
+    {
+        "id": "craft_gold_chain",
+        "name": "Gold Chain",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "gold_chain",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_mithril_chain",
+        "name": "Mithril Chain",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "mithril_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "mithril_chain",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_ring",
+        "name": "Ring of Strength (alt)",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_chain",
+                "count": 1
+            },
+            {
+                "itemId": "gem_ruby",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "ring_of_strength",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_gold_amulet",
+        "name": "Amulet of Protection (alt)",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "gold_chain",
+                "count": 1
+            },
+            {
+                "itemId": "gem_sapphire",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "amulet_of_protection",
+            "count": 1
+        }
+    },
+    {
+        "id": "craft_iron_chain_anvil",
+        "name": "Iron Chain (Anvil)",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "iron_ingot",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "iron_chain",
+            "count": 2
+        }
+    },
+    {
+        "id": "craft_adamantite_chain",
+        "name": "Adamantite Chain",
+        "station": "anvil",
+        "ingredients": [
+            {
+                "itemId": "adamantite_ingot",
+                "count": 3
+            }
+        ],
+        "result": {
+            "itemId": "iron_chain",
+            "count": 3
+        }
+    },
+    {
+        "id": "craft_rope_hand",
+        "name": "Rope (Hand)",
+        "station": "hand",
+        "ingredients": [
+            {
+                "itemId": "fiber",
+                "count": 4
+            }
+        ],
+        "result": {
+            "itemId": "rope",
             "count": 1
         }
     }

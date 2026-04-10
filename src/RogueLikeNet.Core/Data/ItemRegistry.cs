@@ -68,4 +68,10 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
         if (def?.Placeable != null) return def.Placeable.StateType != PlaceableStateType.None;
         return false;
     }
+
+    public CraftingStationType? GetPlaceableCraftingStationType(int itemTypeId)
+    {
+        var def = Get(itemTypeId);
+        return def?.Placeable?.CraftingStationType;
+    }
 }

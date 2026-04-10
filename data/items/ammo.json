@@ -82,5 +82,33 @@
             "damage": 6,
             "damageType": "ice"
         }
+    },
+    {
+        "id": "copper_arrow",
+        "name": "Copper Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "copper",
+        "ammo": {
+            "damage": 3,
+            "damageType": "physical"
+        }
+    },
+    {
+        "id": "mithril_arrow",
+        "name": "Mithril Arrow",
+        "category": "ammo",
+        "glyphId": 47,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 50,
+        "materialTier": "mithril",
+        "ammo": {
+            "damage": 8,
+            "damageType": "physical"
+        }
     }
 ]

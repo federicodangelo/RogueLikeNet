@@ -134,5 +134,56 @@
             "speedBoost": 0,
             "duration": 0
         }
+    },
+    {
+        "id": "fire_resistance_potion",
+        "name": "Fire Resistance Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 0,
+            "defenseBoost": 3,
+            "speedBoost": 0,
+            "duration": 300
+        }
+    },
+    {
+        "id": "regeneration_potion",
+        "name": "Regeneration Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16711935,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 10,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 0,
+            "duration": 300
+        }
+    },
+    {
+        "id": "night_vision_potion",
+        "name": "Night Vision Potion",
+        "category": "potion",
+        "glyphId": 173,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "none",
+        "potion": {
+            "healthRestore": 0,
+            "attackBoost": 0,
+            "defenseBoost": 0,
+            "speedBoost": 1,
+            "duration": 300
+        }
     }
 ]

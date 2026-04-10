@@ -412,5 +412,95 @@
             "range": 3,
             "twoHanded": false
         }
+    },
+    {
+        "id": "copper_spear",
+        "name": "Copper Spear",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 5,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 2,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "steel_spear",
+        "name": "Steel Spear",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 7,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 2,
+            "twoHanded": true
+        }
+    },
+    {
+        "id": "copper_mace",
+        "name": "Copper Mace",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 3,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "steel_mace",
+        "name": "Steel Mace",
+        "category": "weapon",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 8,
+            "attackSpeed": 3,
+            "damageType": "physical",
+            "range": 1,
+            "twoHanded": false
+        }
+    },
+    {
+        "id": "copper_bow",
+        "name": "Copper Bow",
+        "category": "weapon",
+        "glyphId": 41,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 4,
+            "damageType": "physical",
+            "range": 5,
+            "twoHanded": true
+        }
     }
 ]

@@ -18,4 +18,5 @@ public class PlayerStateData
     public InventoryItemData[] InventoryItems = [];
     public InventoryItemData[] EquippedItems = [];
     public int[] QuickSlotIndices = [];
+    public int[] NearbyStationsTypes = [];
 }

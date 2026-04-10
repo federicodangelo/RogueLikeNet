@@ -270,5 +270,293 @@
             "miningPower": 0,
             "durability": 100
         }
+    },
+    {
+        "id": "stone_shovel",
+        "name": "Stone Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8947848,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "stone",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 2,
+            "durability": 120
+        }
+    },
+    {
+        "id": "copper_axe",
+        "name": "Copper Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 3,
+            "durability": 180
+        }
+    },
+    {
+        "id": "steel_axe",
+        "name": "Steel Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 5,
+            "durability": 400
+        }
+    },
+    {
+        "id": "gold_axe",
+        "name": "Gold Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 3,
+            "durability": 50
+        }
+    },
+    {
+        "id": "mithril_axe",
+        "name": "Mithril Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 6,
+            "durability": 500
+        }
+    },
+    {
+        "id": "adamantite_axe",
+        "name": "Adamantite Axe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "axe",
+            "miningPower": 7,
+            "durability": 600
+        }
+    },
+    {
+        "id": "copper_shovel",
+        "name": "Copper Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 3,
+            "durability": 180
+        }
+    },
+    {
+        "id": "steel_shovel",
+        "name": "Steel Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 5,
+            "durability": 400
+        }
+    },
+    {
+        "id": "gold_shovel",
+        "name": "Gold Shovel",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "shovel",
+            "miningPower": 3,
+            "durability": 50
+        }
+    },
+    {
+        "id": "stone_hoe",
+        "name": "Stone Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8947848,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "stone",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 2,
+            "durability": 120
+        }
+    },
+    {
+        "id": "copper_hoe",
+        "name": "Copper Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 3,
+            "durability": 180
+        }
+    },
+    {
+        "id": "steel_hoe",
+        "name": "Steel Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 5,
+            "durability": 400
+        }
+    },
+    {
+        "id": "gold_hoe",
+        "name": "Gold Hoe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hoe",
+            "miningPower": 3,
+            "durability": 50
+        }
+    },
+    {
+        "id": "copper_hammer",
+        "name": "Copper Hammer",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hammer",
+            "miningPower": 3,
+            "durability": 180
+        }
+    },
+    {
+        "id": "steel_hammer",
+        "name": "Steel Hammer",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hammer",
+            "miningPower": 5,
+            "durability": 400
+        }
+    },
+    {
+        "id": "gold_hammer",
+        "name": "Gold Hammer",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 16766720,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "hammer",
+            "miningPower": 3,
+            "durability": 50
+        }
+    },
+    {
+        "id": "mithril_pickaxe",
+        "name": "Mithril Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 6,
+            "durability": 500
+        }
+    },
+    {
+        "id": "adamantite_pickaxe",
+        "name": "Adamantite Pickaxe",
+        "category": "tool",
+        "glyphId": 47,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "pickaxe",
+            "miningPower": 7,
+            "durability": 600
+        }
     }
 ]

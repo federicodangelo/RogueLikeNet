@@ -1,14 +1,18 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
 /// Processes crafting requests: validates ingredients, removes them from inventory, and adds the crafted item.
+/// Validates that the player is near the required crafting station.
 /// </summary>
 public class CraftingSystem
 {
+    public const int StationRange = 5;
+
     public void Update(WorldMap map)
     {
         foreach (ref var player in map.Players)
@@ -22,6 +26,10 @@ public class CraftingSystem
             var recipe = GameData.Instance.Recipes.Get(recipeId);
             if (recipe == null) continue;
             if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items)) continue;
+
+            // Validate crafting station proximity
+            if (recipe.Station != CraftingStationType.Hand && !IsNearStation(map, player.Position, recipe.Station))
+                continue;
 
             // Remove ingredients
             foreach (var ingredient in recipe.Ingredients)
@@ -79,5 +87,21 @@ public class CraftingSystem
                 player.Inventory.Items.Add(resultItem);
             }
         }
+    }
+
+    private static bool IsNearStation(WorldMap map, Position playerPos, CraftingStationType requiredStation)
+    {
+        foreach (var point in PointsAtDistance.GetPoints(StationRange))
+        {
+            var pos = Position.FromCoords(playerPos.X + point.X, playerPos.Y + point.Y, playerPos.Z);
+            var tile = map.GetTile(pos);
+            if (tile.PlaceableItemId != 0)
+            {
+                var stationType = GameData.Instance.Items.GetPlaceableCraftingStationType(tile.PlaceableItemId);
+                if (stationType == requiredStation)
+                    return true;
+            }
+        }
+        return false;
     }
 }

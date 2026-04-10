@@ -263,5 +263,215 @@
             "thirstRestore": 25,
             "healthRestore": 0
         }
+    },
+    {
+        "id": "mushroom_soup",
+        "name": "Mushroom Soup",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 11173350,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 35,
+            "thirstRestore": 10,
+            "healthRestore": 3
+        }
+    },
+    {
+        "id": "fish_stew",
+        "name": "Fish Stew",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 40,
+            "thirstRestore": 10,
+            "healthRestore": 5
+        }
+    },
+    {
+        "id": "corn_bread",
+        "name": "Corn Bread",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 25,
+            "thirstRestore": 0,
+            "healthRestore": 0
+        }
+    },
+    {
+        "id": "pumpkin_pie",
+        "name": "Pumpkin Pie",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 35,
+            "thirstRestore": 5,
+            "healthRestore": 3
+        }
+    },
+    {
+        "id": "grilled_corn",
+        "name": "Grilled Corn",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 20,
+            "thirstRestore": 0,
+            "healthRestore": 0
+        }
+    },
+    {
+        "id": "fruit_salad",
+        "name": "Fruit Salad",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 65280,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 15,
+            "thirstRestore": 10,
+            "healthRestore": 2
+        }
+    },
+    {
+        "id": "herb_tea",
+        "name": "Herb Tea",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 65280,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 0,
+            "thirstRestore": 35,
+            "healthRestore": 5
+        }
+    },
+    {
+        "id": "meat_skewer",
+        "name": "Meat Skewer",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 11162880,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 30,
+            "thirstRestore": 0,
+            "healthRestore": 3
+        }
+    },
+    {
+        "id": "carrot_soup",
+        "name": "Carrot Soup",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 30,
+            "thirstRestore": 15,
+            "healthRestore": 2
+        }
+    },
+    {
+        "id": "apple_pie",
+        "name": "Apple Pie",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16711680,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 35,
+            "thirstRestore": 0,
+            "healthRestore": 3
+        }
+    },
+    {
+        "id": "mushroom_stew",
+        "name": "Mushroom Stew",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 11173350,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 35,
+            "thirstRestore": 10,
+            "healthRestore": 5
+        }
+    },
+    {
+        "id": "fish_pie",
+        "name": "Fish Pie",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 35,
+            "thirstRestore": 0,
+            "healthRestore": 3
+        }
+    },
+    {
+        "id": "corn_stew",
+        "name": "Corn Stew",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 30,
+            "thirstRestore": 10,
+            "healthRestore": 2
+        }
+    },
+    {
+        "id": "roasted_pumpkin",
+        "name": "Roasted Pumpkin",
+        "category": "food",
+        "glyphId": 37,
+        "fgColor": 16744448,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 25,
+            "thirstRestore": 5,
+            "healthRestore": 2
+        }
     }
 ]

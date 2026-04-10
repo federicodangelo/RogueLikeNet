@@ -121,6 +121,200 @@
         }
     },
     {
+        "id": "cook_mushroom_soup",
+        "name": "Mushroom Soup",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 3
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "mushroom_soup",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_fish_stew",
+        "name": "Fish Stew",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_fish",
+                "count": 2
+            },
+            {
+                "itemId": "potato",
+                "count": 1
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "fish_stew",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_corn_bread",
+        "name": "Corn Bread",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "corn",
+                "count": 2
+            },
+            {
+                "itemId": "wheat",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "corn_bread",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_pumpkin_pie",
+        "name": "Pumpkin Pie",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "pumpkin",
+                "count": 1
+            },
+            {
+                "itemId": "wheat",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "pumpkin_pie",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_grilled_corn",
+        "name": "Grilled Corn",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "corn",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "grilled_corn",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_fruit_salad",
+        "name": "Fruit Salad",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "apple",
+                "count": 1
+            },
+            {
+                "itemId": "berry",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "fruit_salad",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_herb_tea",
+        "name": "Herb Tea",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 1
+            },
+            {
+                "itemId": "berry",
+                "count": 1
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "herb_tea",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_meat_skewer",
+        "name": "Meat Skewer",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_meat",
+                "count": 2
+            },
+            {
+                "itemId": "wood",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "meat_skewer",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_carrot_soup",
+        "name": "Carrot Soup",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "carrot",
+                "count": 3
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "carrot_soup",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_apple_pie",
+        "name": "Apple Pie",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "apple",
+                "count": 2
+            },
+            {
+                "itemId": "wheat",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "apple_pie",
+            "count": 1
+        }
+    },
+    {
         "id": "brew_health_small",
         "name": "Small Health Potion",
         "station": "alchemy",
@@ -159,6 +353,33 @@
         ],
         "result": {
             "itemId": "health_potion_medium",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_health_large",
+        "name": "Large Health Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 5
+            },
+            {
+                "itemId": "berry",
+                "count": 3
+            },
+            {
+                "itemId": "gem_ruby",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "health_potion_large",
             "count": 1
         }
     },
@@ -228,6 +449,201 @@
         ],
         "result": {
             "itemId": "speed_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_antidote",
+        "name": "Antidote",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 2
+            },
+            {
+                "itemId": "slime_gel",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "antidote",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_mana",
+        "name": "Mana Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "gem_sapphire",
+                "count": 1
+            },
+            {
+                "itemId": "berry",
+                "count": 2
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "mana_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_fire_resistance",
+        "name": "Fire Resistance Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "slime_gel",
+                "count": 2
+            },
+            {
+                "itemId": "gem_ruby",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "fire_resistance_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_regeneration",
+        "name": "Regeneration Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 3
+            },
+            {
+                "itemId": "gem_emerald",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "regeneration_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "brew_night_vision",
+        "name": "Night Vision Potion",
+        "station": "alchemy",
+        "ingredients": [
+            {
+                "itemId": "carrot",
+                "count": 3
+            },
+            {
+                "itemId": "gem_emerald",
+                "count": 1
+            },
+            {
+                "itemId": "glass",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "night_vision_potion",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_mushroom_stew",
+        "name": "Mushroom Stew",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "mushroom",
+                "count": 3
+            },
+            {
+                "itemId": "potato",
+                "count": 1
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "mushroom_stew",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_fish_pie",
+        "name": "Fish Pie",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "raw_fish",
+                "count": 1
+            },
+            {
+                "itemId": "wheat",
+                "count": 2
+            }
+        ],
+        "result": {
+            "itemId": "fish_pie",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_corn_stew",
+        "name": "Corn Stew",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "corn",
+                "count": 2
+            },
+            {
+                "itemId": "carrot",
+                "count": 1
+            },
+            {
+                "itemId": "water_flask",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "corn_stew",
+            "count": 1
+        }
+    },
+    {
+        "id": "cook_roasted_pumpkin",
+        "name": "Roasted Pumpkin",
+        "station": "cookingPot",
+        "ingredients": [
+            {
+                "itemId": "pumpkin",
+                "count": 1
+            }
+        ],
+        "result": {
+            "itemId": "roasted_pumpkin",
             "count": 1
         }
     }

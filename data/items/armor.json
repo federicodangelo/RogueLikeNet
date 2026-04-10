@@ -250,5 +250,285 @@
         "armor": {
             "baseDefense": 1
         }
+    },
+    {
+        "id": "copper_helmet",
+        "name": "Copper Helmet",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "head",
+        "armor": {
+            "baseDefense": 2
+        }
+    },
+    {
+        "id": "copper_armor",
+        "name": "Copper Armor",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "chest",
+        "armor": {
+            "baseDefense": 3
+        }
+    },
+    {
+        "id": "copper_boots",
+        "name": "Copper Boots",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "boots",
+        "armor": {
+            "baseDefense": 1
+        }
+    },
+    {
+        "id": "copper_leggings",
+        "name": "Copper Leggings",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "legs",
+        "armor": {
+            "baseDefense": 2
+        }
+    },
+    {
+        "id": "copper_gloves",
+        "name": "Copper Gloves",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12092211,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "copper",
+        "equipSlot": "gloves",
+        "armor": {
+            "baseDefense": 1
+        }
+    },
+    {
+        "id": "steel_boots",
+        "name": "Steel Boots",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "boots",
+        "armor": {
+            "baseDefense": 3
+        }
+    },
+    {
+        "id": "steel_leggings",
+        "name": "Steel Leggings",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "legs",
+        "armor": {
+            "baseDefense": 4
+        }
+    },
+    {
+        "id": "steel_gloves",
+        "name": "Steel Gloves",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 12632256,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "steel",
+        "equipSlot": "gloves",
+        "armor": {
+            "baseDefense": 2
+        }
+    },
+    {
+        "id": "mithril_helmet",
+        "name": "Mithril Helmet",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "head",
+        "armor": {
+            "baseDefense": 5
+        }
+    },
+    {
+        "id": "mithril_armor",
+        "name": "Mithril Armor",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "chest",
+        "armor": {
+            "baseDefense": 8
+        }
+    },
+    {
+        "id": "mithril_boots",
+        "name": "Mithril Boots",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "boots",
+        "armor": {
+            "baseDefense": 4
+        }
+    },
+    {
+        "id": "mithril_leggings",
+        "name": "Mithril Leggings",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "legs",
+        "armor": {
+            "baseDefense": 5
+        }
+    },
+    {
+        "id": "mithril_gloves",
+        "name": "Mithril Gloves",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "gloves",
+        "armor": {
+            "baseDefense": 3
+        }
+    },
+    {
+        "id": "mithril_shield",
+        "name": "Mithril Shield",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 6737151,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "offhand",
+        "armor": {
+            "baseDefense": 8
+        }
+    },
+    {
+        "id": "adamantite_helmet",
+        "name": "Adamantite Helmet",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "head",
+        "armor": {
+            "baseDefense": 6
+        }
+    },
+    {
+        "id": "adamantite_armor",
+        "name": "Adamantite Armor",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "chest",
+        "armor": {
+            "baseDefense": 10
+        }
+    },
+    {
+        "id": "adamantite_boots",
+        "name": "Adamantite Boots",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "boots",
+        "armor": {
+            "baseDefense": 5
+        }
+    },
+    {
+        "id": "adamantite_leggings",
+        "name": "Adamantite Leggings",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "legs",
+        "armor": {
+            "baseDefense": 6
+        }
+    },
+    {
+        "id": "adamantite_gloves",
+        "name": "Adamantite Gloves",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "gloves",
+        "armor": {
+            "baseDefense": 4
+        }
+    },
+    {
+        "id": "adamantite_shield",
+        "name": "Adamantite Shield",
+        "category": "armor",
+        "glyphId": 91,
+        "fgColor": 8388736,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "adamantite",
+        "equipSlot": "offhand",
+        "armor": {
+            "baseDefense": 10
+        }
     }
 ]

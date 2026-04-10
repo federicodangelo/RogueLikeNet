@@ -266,6 +266,7 @@ public static class GameStateSerializer
             EquippedItems = stateData.EquippedItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category, EquipSlot = i.EquipSlot }).ToArray(),
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = (long)player.Id,
+            NearbyStationsTypes = stateData.NearbyStationsTypes,
         };
     }
 

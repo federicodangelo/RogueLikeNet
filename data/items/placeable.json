@@ -409,6 +409,7 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "workbench",
             "placedGlyphId": 209,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -430,6 +431,7 @@
         "materialTier": "stone",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "furnace",
             "placedGlyphId": 232,
             "placedFgColor": 16744448,
             "walkable": true,
@@ -451,6 +453,7 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "anvil",
             "placedGlyphId": 234,
             "placedFgColor": 11053176,
             "walkable": true,
@@ -472,6 +475,7 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "cookingPot",
             "placedGlyphId": 232,
             "placedFgColor": 11162880,
             "walkable": true,
@@ -493,6 +497,7 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "alchemy",
             "placedGlyphId": 209,
             "placedFgColor": 8388736,
             "walkable": true,
@@ -514,8 +519,75 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "craftingStation",
+            "craftingStationType": "loom",
             "placedGlyphId": 222,
             "placedFgColor": 9136404,
+            "walkable": true,
+            "transparent": true,
+            "stateType": "none",
+            "alternateGlyphId": 0,
+            "alternateWalkable": false,
+            "alternateTransparent": false
+        }
+    },
+    {
+        "id": "tanning_rack",
+        "name": "Tanning Rack",
+        "category": "placeable",
+        "glyphId": 209,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "tanningRack",
+            "placedGlyphId": 209,
+            "placedFgColor": 9136404,
+            "walkable": true,
+            "transparent": true,
+            "stateType": "none",
+            "alternateGlyphId": 0,
+            "alternateWalkable": false,
+            "alternateTransparent": false
+        }
+    },
+    {
+        "id": "stone_cutter",
+        "name": "Stone Cutter",
+        "category": "placeable",
+        "glyphId": 234,
+        "fgColor": 8947848,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "stone",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "stoneCutter",
+            "placedGlyphId": 234,
+            "placedFgColor": 8947848,
+            "walkable": true,
+            "transparent": true,
+            "stateType": "none",
+            "alternateGlyphId": 0,
+            "alternateWalkable": false,
+            "alternateTransparent": false
+        }
+    },
+    {
+        "id": "sawmill",
+        "name": "Sawmill",
+        "category": "placeable",
+        "glyphId": 222,
+        "fgColor": 7032338,
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "sawmill",
+            "placedGlyphId": 222,
+            "placedFgColor": 7032338,
             "walkable": true,
             "transparent": true,
             "stateType": "none",

@@ -220,6 +220,7 @@ public enum PlaceableStateType
 public sealed class PlaceableData
 {
     public PlaceableType PlaceableType { get; set; }
+    public CraftingStationType? CraftingStationType { get; set; }
     public int PlacedGlyphId { get; set; }
     public int PlacedFgColor { get; set; }
     public bool Walkable { get; set; } = true;

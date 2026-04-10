@@ -1,0 +1,425 @@
+using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.World;
+
+namespace RogueLikeNet.Core.Tests;
+
+public class CraftingSystemTests
+{
+    private static readonly BspDungeonGenerator _gen = new(42);
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
+    private static int RecipeId(string id) => GameData.Instance.Recipes.GetNumericId(id);
+
+    private GameEngine CreateEngine()
+    {
+        var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        return engine;
+    }
+
+    private int SpawnPlayerWithItems(GameEngine engine, params (string itemId, int count)[] items)
+    {
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+        foreach (var (itemId, count) in items)
+        {
+            player.Inventory.Items.Add(new ItemData
+            {
+                ItemTypeId = ItemId(itemId),
+                StackCount = count,
+            });
+        }
+        return p.Id;
+    }
+
+    private void PlaceStation(GameEngine engine, Position near, string stationItemId)
+    {
+        var pos = Position.FromCoords(near.X + 1, near.Y, near.Z);
+        var tile = engine.WorldMap.GetTile(pos);
+        tile.PlaceableItemId = ItemId(stationItemId);
+        engine.WorldMap.SetTile(pos, tile);
+    }
+
+    private static TileInfo FloorTile() => new()
+    {
+        Type = TileType.Floor,
+        GlyphId = TileDefinitions.GlyphFloor,
+        FgColor = TileDefinitions.ColorFloorFg,
+        BgColor = TileDefinitions.ColorBlack,
+    };
+
+    // ──────────────────────────────────────────────────────────────
+    //  Hand recipes: no station required
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void HandRecipe_CraftsWithoutStation()
+    {
+        // craft_crafting_bench: 8 wood → 1 crafting_bench (hand recipe)
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 8));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("wood"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Workbench recipes: require nearby crafting_bench
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void WorkbenchRecipe_FailsWithoutStation()
+    {
+        // craft_wooden_pickaxe: 5 wood + 2 fiber → wooden_pickaxe (workbench)
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 5), ("fiber", 2));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_wooden_pickaxe");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        // Should NOT have crafted — no workbench nearby
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("wooden_pickaxe"));
+        // Ingredients should remain
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wood") && i.StackCount == 5);
+    }
+
+    [Fact]
+    public void WorkbenchRecipe_SucceedsWithStation()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 5), ("fiber", 2));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "crafting_bench");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_wooden_pickaxe");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wooden_pickaxe"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Anvil recipes
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void AnvilRecipe_FailsWithoutAnvil()
+    {
+        // craft_iron_sword: 2 wood + 5 iron_ingot → iron_sword (anvil)
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 2), ("iron_ingot", 5));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_iron_sword");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("iron_sword"));
+    }
+
+    [Fact]
+    public void AnvilRecipe_SucceedsWithAnvil()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 2), ("iron_ingot", 5));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "anvil");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_iron_sword");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("iron_sword"));
+    }
+
+    [Fact]
+    public void AnvilRecipe_FailsWithWrongStation()
+    {
+        // Place a furnace instead of anvil — should not satisfy anvil requirement
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 2), ("iron_ingot", 5));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "furnace");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_iron_sword");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("iron_sword"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Furnace (smelting) recipes
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void FurnaceRecipe_SucceedsWithFurnace()
+    {
+        // smelt_copper_ingot: 3 copper_ore + 1 coal → copper_ingot (furnace)
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("copper_ore", 3), ("coal", 1));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "furnace");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("smelt_copper_ingot");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("copper_ingot"));
+    }
+
+    [Fact]
+    public void FurnaceRecipe_FailsWithoutFurnace()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("copper_ore", 3), ("coal", 1));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("smelt_copper_ingot");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("copper_ingot"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Cooking pot recipes
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void CookingRecipe_SucceedsWithCookingPot()
+    {
+        // cook_meat: 1 raw_meat → cooked_meat (cookingPot)
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("raw_meat", 1));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "cooking_pot");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("cook_meat");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("cooked_meat"));
+    }
+
+    [Fact]
+    public void CookingRecipe_FailsWithoutCookingPot()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("raw_meat", 1));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("cook_meat");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("cooked_meat"));
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("raw_meat"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Station range boundary
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void StationWithinRange_AllowsCrafting()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 5), ("fiber", 2));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Place station exactly at range boundary (dx=5, dy=0)
+        var stationPos = Position.FromCoords(player.Position.X + 5, player.Position.Y, player.Position.Z);
+        var tile = FloorTile();
+        tile.PlaceableItemId = ItemId("crafting_bench");
+        engine.WorldMap.SetTile(stationPos, tile);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_wooden_pickaxe");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wooden_pickaxe"));
+    }
+
+    [Fact]
+    public void StationOutOfRange_BlocksCrafting()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 5), ("fiber", 2));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Place station just beyond range (dx=6, dy=0)
+        var stationPos = Position.FromCoords(player.Position.X + 6, player.Position.Y, player.Position.Z);
+        var tile = FloorTile();
+        tile.PlaceableItemId = ItemId("crafting_bench");
+        engine.WorldMap.SetTile(stationPos, tile);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_wooden_pickaxe");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("wooden_pickaxe"));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Ingredients still required even with station
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void StationPresent_ButMissingIngredients_DoesNotCraft()
+    {
+        using var engine = CreateEngine();
+        // Only 2 wood instead of required 5
+        var pid = SpawnPlayerWithItems(engine, ("wood", 2), ("fiber", 2));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "crafting_bench");
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_wooden_pickaxe");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("wooden_pickaxe"));
+        // Wood should not be consumed
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wood") && i.StackCount == 2);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  NearbyStations in player state data
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void GetPlayerStateData_IncludesNearbyStations()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        PlaceStation(engine, player.Position, "crafting_bench");
+
+        // Tick to generate player state
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        // Should always contain Hand (0)
+        Assert.Contains((int)CraftingStationType.Hand, state.NearbyStationsTypes);
+        // Should contain Workbench since crafting_bench is nearby
+        Assert.Contains((int)CraftingStationType.Workbench, state.NearbyStationsTypes);
+    }
+
+    [Fact]
+    public void GetPlayerStateData_NoStations_OnlyHand()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine);
+
+        engine.Tick();
+
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        Assert.Contains((int)CraftingStationType.Hand, state.NearbyStationsTypes);
+        // Only Hand should be present (no stations nearby in most spawn positions)
+        // We can't guarantee no stations exist near spawn, but Hand must be there
+        Assert.True(state.NearbyStationsTypes.Length >= 1);
+    }
+
+    [Fact]
+    public void GetPlayerStateData_MultipleStations()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Place two different stations nearby
+        var pos1 = Position.FromCoords(player.Position.X + 1, player.Position.Y, player.Position.Z);
+        var tile1 = engine.WorldMap.GetTile(pos1);
+        tile1.PlaceableItemId = ItemId("crafting_bench");
+        engine.WorldMap.SetTile(pos1, tile1);
+
+        var pos2 = Position.FromCoords(player.Position.X - 1, player.Position.Y, player.Position.Z);
+        var tile2 = engine.WorldMap.GetTile(pos2);
+        tile2.PlaceableItemId = ItemId("anvil");
+        engine.WorldMap.SetTile(pos2, tile2);
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        Assert.Contains((int)CraftingStationType.Hand, state.NearbyStationsTypes);
+        Assert.Contains((int)CraftingStationType.Workbench, state.NearbyStationsTypes);
+        Assert.Contains((int)CraftingStationType.Anvil, state.NearbyStationsTypes);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  RecipeRegistry station lookup
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void RecipeRegistry_GetByStation_ReturnsCorrectRecipes()
+    {
+        var handRecipes = GameData.Instance.Recipes.GetByStation(CraftingStationType.Hand);
+        Assert.NotEmpty(handRecipes);
+        Assert.All(handRecipes, r => Assert.Equal(CraftingStationType.Hand, r.Station));
+
+        var anvilRecipes = GameData.Instance.Recipes.GetByStation(CraftingStationType.Anvil);
+        Assert.NotEmpty(anvilRecipes);
+        Assert.All(anvilRecipes, r => Assert.Equal(CraftingStationType.Anvil, r.Station));
+    }
+
+    [Fact]
+    public void ItemRegistry_CraftingStationItems_HaveCorrectType()
+    {
+        var bench = GameData.Instance.Items.Get("crafting_bench");
+        Assert.NotNull(bench);
+        Assert.NotNull(bench.Placeable);
+        Assert.Equal(CraftingStationType.Workbench, bench.Placeable.CraftingStationType);
+
+        var anvil = GameData.Instance.Items.Get("anvil");
+        Assert.NotNull(anvil);
+        Assert.NotNull(anvil.Placeable);
+        Assert.Equal(CraftingStationType.Anvil, anvil.Placeable.CraftingStationType);
+
+        var furnace = GameData.Instance.Items.Get("furnace");
+        Assert.NotNull(furnace);
+        Assert.NotNull(furnace.Placeable);
+        Assert.Equal(CraftingStationType.Furnace, furnace.Placeable.CraftingStationType);
+
+        var cookingPot = GameData.Instance.Items.Get("cooking_pot");
+        Assert.NotNull(cookingPot);
+        Assert.NotNull(cookingPot.Placeable);
+        Assert.Equal(CraftingStationType.CookingPot, cookingPot.Placeable.CraftingStationType);
+    }
+}

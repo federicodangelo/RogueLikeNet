@@ -386,9 +386,29 @@ public sealed class CraftingScreen : IScreen
         if (row < maxRow)
         {
             bool canCraft = CanCraftRecipe(recipe, hud);
-            var statusColor = canCraft ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            string status = canCraft ? ">> Ready to craft" : ">> Missing resources";
-            AsciiDraw.DrawString(r, col, row, status, statusColor);
+            bool hasStation = HasNearbyStation(recipe, hud);
+            if (!hasStation)
+            {
+                string stationText = $">> Need: {StationName(recipe.Station)}";
+                AsciiDraw.DrawString(r, col, row, stationText, RenderingTheme.StatNegative);
+            }
+            else
+            {
+                var statusColor = canCraft ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+                string status = canCraft ? ">> Ready to craft" : ">> Missing resources";
+                AsciiDraw.DrawString(r, col, row, status, statusColor);
+            }
+            row++;
+        }
+
+        if (row < maxRow && recipe.Station != CraftingStationType.Hand)
+        {
+            bool hasStation = HasNearbyStation(recipe, hud);
+            var stationColor = hasStation ? RenderingTheme.Stats : RenderingTheme.Dim;
+            string stationLabel = $"  Station: {StationName(recipe.Station)}";
+            if (hasStation) stationLabel += " \u2713";
+            if (stationLabel.Length > innerW) stationLabel = stationLabel[..innerW];
+            AsciiDraw.DrawString(r, col, row, stationLabel, stationColor);
         }
     }
 
@@ -421,7 +441,7 @@ public sealed class CraftingScreen : IScreen
 
     private void RebuildCategoryOrder()
     {
-        var hud = _ctx.GameState.PlayerState;
+        var playerState = _ctx.GameState.PlayerState;
         var recipes = GameData.Instance.Recipes.All;
 
         // Collect unique categories
@@ -436,8 +456,8 @@ public sealed class CraftingScreen : IScreen
         var sorted = categories.ToList();
         sorted.Sort((a, b) =>
         {
-            bool aCraft = hud != null && CategoryHasCraftable(a, hud);
-            bool bCraft = hud != null && CategoryHasCraftable(b, hud);
+            bool aCraft = playerState != null && CategoryHasCraftable(a, playerState);
+            bool bCraft = playerState != null && CategoryHasCraftable(b, playerState);
             if (aCraft != bCraft) return aCraft ? -1 : 1;
             return a.CompareTo(b);
         });
@@ -468,12 +488,12 @@ public sealed class CraftingScreen : IScreen
         _filteredRecipes = filtered.ToArray();
     }
 
-    private bool CategoryHasCraftable(int category, PlayerStateMsg hud)
+    private bool CategoryHasCraftable(int category, PlayerStateMsg playerState)
     {
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, hud))
+            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState))
                 return true;
         }
         return false;
@@ -490,31 +510,61 @@ public sealed class CraftingScreen : IScreen
         return count;
     }
 
-    private static int CountCraftableInCategory(int category, PlayerStateMsg hud)
+    private static int CountCraftableInCategory(int category, PlayerStateMsg playerState)
     {
         int count = 0;
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, hud)) count++;
+            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState)) count++;
         }
         return count;
     }
 
-    private static bool CanCraftRecipe(RecipeDefinition recipe, PlayerStateMsg hud)
+    private static bool CanCraftRecipe(RecipeDefinition recipe, PlayerStateMsg playerState)
     {
+        // Check station availability
+        if (!HasNearbyStation(recipe, playerState))
+            return false;
+
         foreach (var ingredient in recipe.Ingredients)
         {
-            if (CountItem(hud, ingredient.NumericItemId) < ingredient.Count)
+            if (CountItem(playerState, ingredient.NumericItemId) < ingredient.Count)
                 return false;
         }
         return true;
     }
 
-    private static int CountItem(PlayerStateMsg hud, int itemTypeId)
+    private static bool HasNearbyStation(RecipeDefinition recipe, PlayerStateMsg playerState)
+    {
+        int stationId = (int)recipe.Station;
+        foreach (var s in playerState.NearbyStationsTypes)
+        {
+            if (s == stationId) return true;
+        }
+        return false;
+    }
+
+    private static string StationName(CraftingStationType station) => station switch
+    {
+        CraftingStationType.Hand => "Hand",
+        CraftingStationType.Workbench => "Workbench",
+        CraftingStationType.Forge => "Forge",
+        CraftingStationType.Anvil => "Anvil",
+        CraftingStationType.Furnace => "Furnace",
+        CraftingStationType.CookingPot => "Cooking Pot",
+        CraftingStationType.Alchemy => "Alchemy Table",
+        CraftingStationType.Loom => "Loom",
+        CraftingStationType.TanningRack => "Tanning Rack",
+        CraftingStationType.StoneCutter => "Stone Cutter",
+        CraftingStationType.Sawmill => "Sawmill",
+        _ => "Unknown",
+    };
+
+    private static int CountItem(PlayerStateMsg playerState, int itemTypeId)
     {
         int count = 0;
-        foreach (var item in hud.InventoryItems)
+        foreach (var item in playerState.InventoryItems)
         {
             if (item.ItemTypeId == itemTypeId)
                 count += item.StackCount;

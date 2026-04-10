@@ -564,6 +564,22 @@ public class GameEngine : IDisposable
             new SkillSlotData { Id = player.Skills.Skill3, Cooldown = player.Skills.Cooldown3, Name = SkillDefinitions.GetName(player.Skills.Skill3) },
         ];
 
+        // Scan nearby tiles for crafting stations
+        var nearbyStationsTypes = new HashSet<int>();
+        nearbyStationsTypes.Add((int)CraftingStationType.Hand); // Hand is always available
+        foreach (var point in PointsAtDistance.GetPoints(CraftingSystem.StationRange))
+        {
+            var pos = Position.FromCoords(player.Position.X + point.X, player.Position.Y + point.Y, player.Position.Z);
+            var tile = _worldMap.GetTile(pos);
+            if (tile.PlaceableItemId != 0)
+            {
+                var stationType = GameData.Instance.Items.GetPlaceableCraftingStationType(tile.PlaceableItemId);
+                if (stationType != null)
+                    nearbyStationsTypes.Add((int)stationType.Value);
+            }
+        }
+        state.NearbyStationsTypes = nearbyStationsTypes.OrderBy(s => s).ToArray();
+
         return state;
     }
 }

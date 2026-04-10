@@ -278,5 +278,105 @@
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
+    },
+    {
+        "id": "planks",
+        "name": "Planks",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood"
+    },
+    {
+        "id": "stone_brick",
+        "name": "Stone Brick",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 8947848,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "stone"
+    },
+    {
+        "id": "cured_leather",
+        "name": "Cured Leather",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 11173350,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "iron_chain",
+        "name": "Iron Chain",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 11053176,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron"
+    },
+    {
+        "id": "hardened_leather",
+        "name": "Hardened Leather",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 7032338,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "silk_cloth",
+        "name": "Silk Cloth",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 15790320,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "refined_planks",
+        "name": "Refined Planks",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 14329120,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood"
+    },
+    {
+        "id": "polished_stone",
+        "name": "Polished Stone",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 12632256,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "stone"
+    },
+    {
+        "id": "gold_chain",
+        "name": "Gold Chain",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 16766720,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "gold"
+    },
+    {
+        "id": "mithril_chain",
+        "name": "Mithril Chain",
+        "category": "material",
+        "glyphId": 35,
+        "fgColor": 6737151,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "mithril"
     }
 ]
