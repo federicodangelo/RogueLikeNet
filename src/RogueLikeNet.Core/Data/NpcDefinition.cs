@@ -5,12 +5,8 @@ namespace RogueLikeNet.Core.Data;
 /// <summary>
 /// Defines a monster/NPC type. Loaded from JSON data files.
 /// </summary>
-public sealed class NpcDefinition
+public sealed class NpcDefinition : BaseDefinition
 {
-    public string Id { get; set; } = "";
-    [JsonIgnore]
-    public int NumericId { get; set; }
-    public string Name { get; set; } = "";
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Health { get; set; }

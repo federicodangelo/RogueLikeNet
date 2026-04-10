@@ -51,7 +51,7 @@ public static class DataLoader
                     recipes.AddRange(loaded);
             }
         }
-        data.Recipes.Register(recipes, data.Items);
+        data.Recipes.Register(recipes);
 
         // Load resource nodes
         var nodesFile = Path.Combine(dataDir, "entities", "resource_nodes.json");
@@ -110,7 +110,7 @@ public static class DataLoader
         {
             var recipes = JsonSerializer.Deserialize<RecipeDefinition[]>(recipesJson, JsonOptions);
             if (recipes != null)
-                data.Recipes.Register(recipes, data.Items);
+                data.Recipes.Register(recipes);
         }
 
         if (resourceNodesJson != null)

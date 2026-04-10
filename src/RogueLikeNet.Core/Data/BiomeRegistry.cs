@@ -8,52 +8,22 @@ namespace RogueLikeNet.Core.Data;
 /// Holds all loaded biome definitions with lookup by numeric ID.
 /// Provides biome palette data, decoration tables, enemy spawn tables, and tinting logic.
 /// </summary>
-public sealed class BiomeRegistry
+public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
 {
     public const int BiomeCount = 10;
 
-    // ===== Registry instance members =====
-
-    private readonly Dictionary<string, BiomeDefinition> _byStringId = new();
-    private readonly Dictionary<int, BiomeDefinition> _byNumericId = new();
     private readonly BiomeDefinition?[] _byBiomeType = new BiomeDefinition?[BiomeCount];
 
-    public IReadOnlyCollection<BiomeDefinition> All => _byStringId.Values;
-    public int Count => _byStringId.Count;
-
-    public void Register(IEnumerable<BiomeDefinition> biomes)
+    protected override void ExtraRegister(BiomeDefinition biome)
     {
-        var errors = new List<string>();
+        // Map string Id to BiomeType enum for fast lookup by enum value
+        if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
+            _byBiomeType[(int)biomeType] = biome;
 
-        foreach (var biome in biomes)
-        {
-            biome.NumericId = DefinitionIdHash.Compute(biome.Id);
-
-            if (!_byStringId.TryAdd(biome.Id, biome))
-                errors.Add($"Biome: duplicate string ID '{biome.Id}'.");
-
-            if (!_byNumericId.TryAdd(biome.NumericId, biome))
-                errors.Add($"Biome '{biome.Id}': hash collision on NumericId {biome.NumericId}.");
-
-            // Map string Id to BiomeType enum for fast lookup by enum value
-            if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
-                _byBiomeType[(int)biomeType] = biome;
-
-            // Resolve liquid tile type from string
-            if (biome.Liquid != null)
-                biome.Liquid.ResolvedTileType = Enum.Parse<TileType>(biome.Liquid.TileType, ignoreCase: true);
-        }
-
-        if (errors.Count > 0)
-            throw new InvalidOperationException(
-                $"BiomeRegistry validation failed:\n" + string.Join("\n", errors));
+        // Resolve liquid tile type from string
+        if (biome.Liquid != null)
+            biome.Liquid.ResolvedTileType = Enum.Parse<TileType>(biome.Liquid.TileType, ignoreCase: true);
     }
-
-    public BiomeDefinition? Get(string id) =>
-        _byStringId.GetValueOrDefault(id);
-
-    public BiomeDefinition? Get(int numericId) =>
-        _byNumericId.GetValueOrDefault(numericId);
 
     public BiomeDefinition? Get(BiomeType biome) =>
         _byBiomeType[(int)biome];

@@ -7,41 +7,8 @@ namespace RogueLikeNet.Core.Data;
 /// <summary>
 /// Holds all loaded resource node definitions with O(1) lookup by numeric ID.
 /// </summary>
-public sealed class ResourceNodeRegistry
+public sealed class ResourceNodeRegistry : BaseRegistry<ResourceNodeDefinition>
 {
-    private readonly Dictionary<string, ResourceNodeDefinition> _byStringId = new();
-    private readonly Dictionary<int, ResourceNodeDefinition> _byNumericId = new();
-
-    public IReadOnlyCollection<ResourceNodeDefinition> All => _byStringId.Values;
-
-    public void Register(IEnumerable<ResourceNodeDefinition> nodes)
-    {
-        var errors = new List<string>();
-
-        foreach (var node in nodes)
-        {
-            node.NumericId = DefinitionIdHash.Compute(node.Id);
-
-            if (!_byStringId.TryAdd(node.Id, node))
-                errors.Add($"ResourceNode: duplicate string ID '{node.Id}'.");
-
-            if (!_byNumericId.TryAdd(node.NumericId, node))
-                errors.Add($"ResourceNode '{node.Id}': hash collision on NumericId {node.NumericId}.");
-        }
-
-        if (errors.Count > 0)
-            throw new InvalidOperationException(
-                $"ResourceNodeRegistry validation failed:\n" + string.Join("\n", errors));
-    }
-
-    public ResourceNodeDefinition? Get(string id) =>
-        _byStringId.GetValueOrDefault(id);
-
-    public ResourceNodeDefinition? Get(int numericId) =>
-        _byNumericId.GetValueOrDefault(numericId);
-
-    public int Count => _byStringId.Count;
-
     // ── Biome helpers ────────────────────────────────────────────────
 
     /// <summary>

@@ -3,49 +3,13 @@ namespace RogueLikeNet.Core.Data;
 /// <summary>
 /// Holds all loaded item definitions and provides O(1) lookup by numeric ID or string ID.
 /// </summary>
-public sealed class ItemRegistry
+public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
 {
     public const int PlaceableCategoryNone = 0;
     public const int PlaceableCategoryDoor = 1;
     public const int PlaceableCategoryWall = 2;
     public const int PlaceableCategoryDecoration = 3;
     public const int PlaceableCategoryFloorTile = 4;
-
-    private readonly Dictionary<string, ItemDefinition> _byStringId = new();
-    private readonly Dictionary<int, ItemDefinition> _byNumericId = new();
-
-    public IReadOnlyCollection<ItemDefinition> All => _byStringId.Values;
-
-    public void Register(IEnumerable<ItemDefinition> items)
-    {
-        var errors = new List<string>();
-
-        foreach (var item in items)
-        {
-            item.NumericId = DefinitionIdHash.Compute(item.Id);
-
-            if (!_byStringId.TryAdd(item.Id, item))
-                errors.Add($"Item: duplicate string ID '{item.Id}'.");
-
-            if (!_byNumericId.TryAdd(item.NumericId, item))
-                errors.Add($"Item '{item.Id}': hash collision on NumericId {item.NumericId}.");
-        }
-
-        if (errors.Count > 0)
-            throw new InvalidOperationException(
-                $"ItemRegistry validation failed:\n" + string.Join("\n", errors));
-    }
-
-    public ItemDefinition? Get(string id) =>
-        _byStringId.GetValueOrDefault(id);
-
-    public ItemDefinition? Get(int numericId) =>
-        _byNumericId.GetValueOrDefault(numericId);
-
-    public int GetNumericId(string id) =>
-        _byStringId.TryGetValue(id, out var def) ? def.NumericId : 0;
-
-    public int Count => _byStringId.Count;
 
     // ── Placeable helpers ────────────────────────────────────────────
 

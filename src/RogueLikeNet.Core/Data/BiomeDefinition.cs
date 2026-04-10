@@ -7,12 +7,8 @@ namespace RogueLikeNet.Core.Data;
 /// Defines a biome with its terrain, decorations, enemies, and liquid features.
 /// Loaded from JSON data files.
 /// </summary>
-public sealed class BiomeDefinition
+public sealed class BiomeDefinition : BaseDefinition
 {
-    public string Id { get; set; } = "";
-    [JsonIgnore]
-    public int NumericId { get; set; }
-    public string Name { get; set; } = "";
     public int FloorColor { get; set; }
     public int TintR { get; set; } = 100;
     public int TintG { get; set; } = 100;

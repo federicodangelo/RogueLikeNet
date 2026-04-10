@@ -131,7 +131,7 @@ public class WorldMap
                 refs.Add(new EntityRef(p.Id, EntityType.Player));
 
         var chunk = GetChunkForWorldPos(pos);
-        if (chunk == null) return refs.Count > 0 ? refs.ToArray() : null;
+        if (chunk == null) return refs.Count > 0 ? refs.ToArray() : [];
 
         foreach (var m in chunk.Monsters)
             if (!m.IsDead && m.Position == pos)

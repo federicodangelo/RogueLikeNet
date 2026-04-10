@@ -6,11 +6,16 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class GameData
 {
-    public ItemRegistry Items { get; } = new();
-    public RecipeRegistry Recipes { get; } = new();
-    public ResourceNodeRegistry ResourceNodes { get; } = new();
-    public NpcRegistry Npcs { get; } = new();
-    public BiomeRegistry Biomes { get; } = new();
+    public readonly ItemRegistry Items = new();
+    public readonly RecipeRegistry Recipes;
+    public readonly ResourceNodeRegistry ResourceNodes = new();
+    public readonly NpcRegistry Npcs = new();
+    public readonly BiomeRegistry Biomes = new();
+
+    public GameData()
+    {
+        Recipes = new RecipeRegistry(Items);
+    }
 
     /// <summary>
     /// Global singleton instance. Set by DataLoader.Load().

@@ -5,12 +5,8 @@ namespace RogueLikeNet.Core.Data;
 /// <summary>
 /// Defines a resource node type (tree, ore rock, etc.). Loaded from JSON data files.
 /// </summary>
-public sealed class ResourceNodeDefinition
+public sealed class ResourceNodeDefinition : BaseDefinition
 {
-    public string Id { get; set; } = "";
-    [JsonIgnore]
-    public int NumericId { get; set; }
-    public string Name { get; set; } = "";
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Health { get; set; }

@@ -6,7 +6,7 @@ namespace RogueLikeNet.Core.Data;
 /// Defines a single item type. Loaded from JSON data files.
 /// Category-specific data is stored in the optional sub-structs.
 /// </summary>
-public sealed class ItemDefinition
+public sealed class ItemDefinition : BaseDefinition
 {
     // Rarity constants (used across loot generation and display)
     public const int RarityCommon = 0;
@@ -15,10 +15,6 @@ public sealed class ItemDefinition
     public const int RarityEpic = 3;
     public const int RarityLegendary = 4;
 
-    public string Id { get; set; } = "";
-    [JsonIgnore]
-    public int NumericId { get; set; }
-    public string Name { get; set; } = "";
     public ItemCategory Category { get; set; }
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
