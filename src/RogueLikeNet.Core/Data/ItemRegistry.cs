@@ -22,7 +22,6 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
             bool hasState = def.Placeable.StateType != PlaceableStateType.None;
             return hasState && extra != 0 ? def.Placeable.AlternateWalkable : def.Placeable.Walkable;
         }
-        if (def.Block != null) return false;
         return true; // decoration
     }
 
@@ -35,7 +34,6 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
             bool hasState = def.Placeable.StateType != PlaceableStateType.None;
             return hasState && extra != 0 ? def.Placeable.AlternateTransparent : def.Placeable.Transparent;
         }
-        if (def.Block != null) return false;
         return true; // decoration
     }
 
@@ -62,7 +60,7 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     public bool IsPlaceableDoor(int itemTypeId) => Get(itemTypeId)?.Placeable?.PlaceableType == PlaceableType.Door;
     public bool IsPlaceableDoorOpen(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra != 0;
     public bool IsPlaceableDoorClosed(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra == 0;
-    public bool IsPlaceableWall(int itemTypeId) => Get(itemTypeId) is { Category: ItemCategory.Placeable, Placeable.PlaceableType: PlaceableType.Wall } or { Category: ItemCategory.Block };
+    public bool IsPlaceableWall(int itemTypeId) => Get(itemTypeId) is { Category: ItemCategory.Placeable, Placeable.PlaceableType: PlaceableType.Wall };
 
     public bool IsPlaceableHasState(int itemTypeId)
     {

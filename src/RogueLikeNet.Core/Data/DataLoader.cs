@@ -270,8 +270,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -290,8 +288,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -310,8 +306,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -330,8 +324,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -350,28 +342,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
                     if (item.Food != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
-                    if (item.Seed != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
-                    if (item.Placeable != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
-                    if (item.Ammo != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
-                    break;
-                case ItemCategory.Block:
-                    if (item.Block == null)
-                        errors.Add($"Item '{item.Id}': category is Block but Block data is missing.");
-                    if (item.Weapon != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
-                    if (item.Armor != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
-                    if (item.Tool != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
-                    if (item.Food != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
-                    if (item.Potion != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -392,8 +362,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Placeable != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
                     if (item.Ammo != null)
@@ -412,8 +380,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Ammo != null)
@@ -432,8 +398,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)
@@ -453,8 +417,6 @@ public static class DataLoader
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
                     if (item.Potion != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
-                    if (item.Block != null)
-                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
                     if (item.Seed != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
                     if (item.Placeable != null)

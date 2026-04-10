@@ -322,33 +322,6 @@ public class DataLoaderTests
     }
 
     [Fact]
-    public void LoadFromJson_BlockData_ParsesCorrectly()
-    {
-        var json = """
-        [
-          {
-            "id": "stone_block",
-            "name": "Stone Block",
-            "category": "block",
-            "glyphId": 219,
-            "fgColor": 8947848,
-            "stackable": true,
-            "maxStackSize": 99,
-            "materialTier": "stone",
-            "block": { "hardness": 3, "toolRequired": "pickaxe" }
-          }
-        ]
-        """;
-
-        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
-        var block = data.Items.Get("stone_block");
-        Assert.NotNull(block);
-        Assert.NotNull(block.Block);
-        Assert.Equal(3, block.Block.Hardness);
-        Assert.Equal(ToolType.Pickaxe, block.Block.ToolRequired);
-    }
-
-    [Fact]
     public void MaterialTiers_GetMultiplier_ReturnsExpectedValues()
     {
         Assert.Equal(100, MaterialTiers.GetMultiplier(MaterialTier.Wood));

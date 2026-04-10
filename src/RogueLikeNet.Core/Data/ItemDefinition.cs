@@ -11,7 +11,6 @@ public enum ItemCategory
     Potion = 4,
     Material = 5,
     Seed = 6,
-    Block = 7,
     Placeable = 8,
     Accessory = 9,
     Ammo = 10,
@@ -66,7 +65,6 @@ public sealed class ItemDefinition : BaseDefinition
     public ToolData? Tool { get; set; }
     public FoodData? Food { get; set; }
     public PotionData? Potion { get; set; }
-    public BlockData? Block { get; set; }
     public SeedData? Seed { get; set; }
     public PlaceableData? Placeable { get; set; }
     public AmmoData? Ammo { get; set; }
@@ -79,8 +77,8 @@ public sealed class ItemDefinition : BaseDefinition
     public int ThirstReduction => Food?.ThirstRestore ?? 0;
     public int HealthRestore => Food?.HealthRestore ?? Potion?.HealthRestore ?? 0;
 
-    /// <summary>True for items that can be placed on tiles (furniture, blocks).</summary>
-    public bool IsPlaceable => Category is ItemCategory.Placeable or ItemCategory.Block;
+    /// <summary>True for items that can be placed on tiles </summary>
+    public bool IsPlaceable => Category is ItemCategory.Placeable;
 
     /// <summary>True for items that can be equipped.</summary>
     public bool IsEquippable => Category is ItemCategory.Weapon or ItemCategory.Armor or ItemCategory.Tool or ItemCategory.Accessory;
@@ -97,7 +95,6 @@ public sealed class ItemDefinition : BaseDefinition
         ItemCategory.Potion => "Potions",
         ItemCategory.Material => "Resources",
         ItemCategory.Placeable => "Placeables",
-        ItemCategory.Block => "Blocks",
         ItemCategory.Tool => "Tools",
         ItemCategory.Food => "Food",
         ItemCategory.Misc => "Other",
@@ -116,7 +113,6 @@ public sealed class ItemDefinition : BaseDefinition
         ItemCategory.Potion => "[Pot]",
         ItemCategory.Material => "[Res]",
         ItemCategory.Placeable => "[Plc]",
-        ItemCategory.Block => "[Blk]",
         ItemCategory.Tool => "[Tol]",
         ItemCategory.Food => "[Fod]",
         ItemCategory.Misc => "[Gld]",
@@ -186,12 +182,6 @@ public sealed class PotionData
     public int DefenseBoost { get; set; }
     public int SpeedBoost { get; set; }
     public int Duration { get; set; }
-}
-
-public sealed class BlockData
-{
-    public int Hardness { get; set; }
-    public ToolType ToolRequired { get; set; } = ToolType.None;
 }
 
 public sealed class SeedData

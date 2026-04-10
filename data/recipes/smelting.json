@@ -131,24 +131,5 @@
             "itemId": "glass",
             "count": 1
         }
-    },
-    {
-        "id": "smelt_brick",
-        "name": "Brick Block",
-        "station": "furnace",
-        "ingredients": [
-            {
-                "itemId": "clay",
-                "count": 4
-            },
-            {
-                "itemId": "coal",
-                "count": 1
-            }
-        ],
-        "result": {
-            "itemId": "brick_block",
-            "count": 1
-        }
     }
 ]

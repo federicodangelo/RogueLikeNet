@@ -279,7 +279,7 @@ public sealed class InventoryScreen : IScreen
         var hud = _ctx.GameState.PlayerState;
         if (hud == null || slot < 0 || slot >= hud.InventoryItems.Length) return;
         var cat = hud.InventoryItems[slot].Category;
-        if (cat != (int)ItemCategory.Block && cat != (int)ItemCategory.Placeable) return;
+        if (cat != (int)ItemCategory.Placeable) return;
         _placingSlot = slot;
     }
 
