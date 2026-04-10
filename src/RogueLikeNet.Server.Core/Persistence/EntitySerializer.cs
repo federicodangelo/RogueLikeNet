@@ -15,6 +15,7 @@ namespace RogueLikeNet.Server.Persistence;
 [JsonSerializable(typeof(List<Dictionary<string, JsonElement>>))]
 [JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(bool))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
 internal partial class EntityJsonContext : JsonSerializerContext;
 
