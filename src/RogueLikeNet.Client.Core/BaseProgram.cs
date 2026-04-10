@@ -21,23 +21,24 @@ public abstract class BaseProgram
 
     protected void InitializeGame(IPlatform platform)
     {
-        // Load game data from JSON if not already loaded
-        if (GameData.Instance.Items.Count == 0)
-        {
-            var dataDir = DataDirectory.Find();
-            if (dataDir != null)
-                DataLoader.Load(dataDir);
-        }
+        // Load game data
+        var dataDir = DataDirectory.Find();
+        if (dataDir != null)
+            GameData.Instance = DataLoader.Load(dataDir);
+        else
+            GameData.Instance = DataLoader.LoadFromEmbeddedResources();
+
+        GameData.Instance.LogLoadedData(Console.Out);
 
         Game.Initialize(platform);
 
         Game.PlayOfflineRequested += OnPlayOffline;
         Game.StartOfflineRequested += OnStartOffline;
-        Game.StartOnlineRequested += (classId, playerName) => OnStartOnline(classId, playerName);
+        Game.StartOnlineRequested += OnStartOnline;
         Game.ReturnToMenuRequested += OnReturnToMenu;
         Game.DebugSyncRequested += OnDebugSync;
-        Game.NewOfflineGameRequested += slotName => OnNewOfflineGame(slotName);
-        Game.LoadSlotRequested += slotId => OnLoadSlot(slotId);
+        Game.NewOfflineGameRequested += OnNewOfflineGame;
+        Game.LoadSlotRequested += OnLoadSlot;
         Game.AdminOnlineRequested += OnAdminOnline;
         Game.QuitRequested += () => _quitRequested = true;
     }

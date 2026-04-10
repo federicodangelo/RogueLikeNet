@@ -84,8 +84,8 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         {
             var def = simpleItems[itemIdx];
 
-            int lx = startX + 0 * spacingX;
-            int ly = startY + itemIdx * spacingY;
+            int lx = startX + itemIdx % 5 * spacingX;
+            int ly = startY + itemIdx / 5 * spacingY;
 
             if (lx >= Chunk.Size - 2 || ly >= Chunk.Size - 2)
                 continue;

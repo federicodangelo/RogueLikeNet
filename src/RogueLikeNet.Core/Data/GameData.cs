@@ -21,4 +21,13 @@ public sealed class GameData
     /// Global singleton instance. Set by DataLoader.Load().
     /// </summary>
     public static GameData Instance { get; set; } = new();
+
+    public void LogLoadedData(TextWriter output)
+    {
+        output.WriteLine($"[GameData] Loaded {Items.Count} items");
+        output.WriteLine($"[GameData] Loaded {Recipes.Count} recipes");
+        output.WriteLine($"[GameData] Loaded {ResourceNodes.Count} resource nodes");
+        output.WriteLine($"[GameData] Loaded {Npcs.Count} NPCs");
+        output.WriteLine($"[GameData] Loaded {Biomes.Count} biomes");
+    }
 }

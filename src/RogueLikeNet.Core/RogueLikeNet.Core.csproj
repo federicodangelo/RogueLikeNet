@@ -14,4 +14,11 @@
     <PackageReference Include="murmurhash" Version="1.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\biomes\*.json" LogicalName="data/biomes/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\entities\*.json" LogicalName="data/entities/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\items\*.json" LogicalName="data/items/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\recipes\*.json" LogicalName="data/recipes/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

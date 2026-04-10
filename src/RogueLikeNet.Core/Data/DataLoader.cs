@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,12 +20,10 @@ public static class DataLoader
     };
 
     /// <summary>
-    /// Loads all data from JSON files in the given base directory and populates GameData.Instance.
+    /// Loads all data from JSON files in the given base directory
     /// </summary>
     public static GameData Load(string dataDir)
     {
-        var data = new GameData();
-
         // Load items from all JSON files in data/items/
         var items = new List<ItemDefinition>();
         var itemsDir = Path.Combine(dataDir, "items");
@@ -37,7 +36,6 @@ public static class DataLoader
                     items.AddRange(loaded);
             }
         }
-        data.Items.Register(items);
 
         // Load recipes from all JSON files in data/recipes/
         var recipes = new List<RecipeDefinition>();
@@ -51,46 +49,99 @@ public static class DataLoader
                     recipes.AddRange(loaded);
             }
         }
-        data.Recipes.Register(recipes);
 
         // Load resource nodes
         var nodesFile = Path.Combine(dataDir, "entities", "resource_nodes.json");
+        var nodes = Array.Empty<ResourceNodeDefinition>();
         if (File.Exists(nodesFile))
         {
-            var nodes = DeserializeFile<ResourceNodeDefinition[]>(nodesFile);
-            if (nodes != null)
-                data.ResourceNodes.Register(nodes);
+            nodes = DeserializeFile<ResourceNodeDefinition[]>(nodesFile);
         }
 
         // Load NPCs/monsters
         var monstersFile = Path.Combine(dataDir, "entities", "monsters.json");
+        var npcs = Array.Empty<NpcDefinition>();
         if (File.Exists(monstersFile))
         {
-            var npcs = DeserializeFile<NpcDefinition[]>(monstersFile);
-            if (npcs != null)
-                data.Npcs.Register(npcs);
+            npcs = DeserializeFile<NpcDefinition[]>(monstersFile);
         }
 
         // Load biomes
         var biomesFile = Path.Combine(dataDir, "biomes", "biomes.json");
+        var biomes = Array.Empty<BiomeDefinition>();
         if (File.Exists(biomesFile))
         {
-            var biomes = DeserializeFile<BiomeDefinition[]>(biomesFile);
-            if (biomes != null)
-                data.Biomes.Register(biomes);
+            biomes = DeserializeFile<BiomeDefinition[]>(biomesFile);
         }
+
+        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? []);
+    }
+
+
+    /// <summary>
+    /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
+    /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
+    /// </summary>
+    public static GameData LoadFromEmbeddedResources()
+    {
+        var assembly = typeof(DataLoader).Assembly;
+        var resourceNames = assembly.GetManifestResourceNames();
+
+        // Load items from all data/items/*.json resources
+        var items = new List<ItemDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/items/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<ItemDefinition[]>(assembly, name);
+                if (loaded != null)
+                    items.AddRange(loaded);
+            }
+        }
+
+        // Load recipes from all data/recipes/*.json resources
+        var recipes = new List<RecipeDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/recipes/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<RecipeDefinition[]>(assembly, name);
+                if (loaded != null)
+                    recipes.AddRange(loaded);
+            }
+        }
+
+        // Load resource nodes
+        var nodes = DeserializeResource<ResourceNodeDefinition[]>(assembly, "data/entities/resource_nodes.json");
+
+        // Load NPCs/monsters
+        var npcs = DeserializeResource<NpcDefinition[]>(assembly, "data/entities/monsters.json");
+
+        // Load biomes
+        var biomes = DeserializeResource<BiomeDefinition[]>(assembly, "data/biomes/biomes.json");
+
+        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? []);
+    }
+
+    private static GameData Load(IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes)
+    {
+        var data = new GameData();
+
+        data.Items.Register(items);
+        data.Recipes.Register(recipes);
+        data.ResourceNodes.Register(nodes);
+        data.Npcs.Register(npcs);
+        data.Biomes.Register(biomes);
 
         Validate(data);
 
-        GameData.Instance = data;
         return data;
     }
 
     /// <summary>
     /// Loads data from in-memory JSON strings (for testing or embedded resources).
-    /// Does NOT set GameData.Instance — caller is responsible if needed.
     /// </summary>
-    public static GameData LoadFromJson(
+    public static GameData LoadFromJsonForTests(
         string? itemsJson = null,
         string? recipesJson = null,
         string? resourceNodesJson = null,
@@ -137,10 +188,11 @@ public static class DataLoader
         return data;
     }
 
+
     /// <summary>
     /// Validates the consistency of all loaded data. Throws if any referenced ID is missing.
     /// </summary>
-    public static void Validate(GameData data)
+    private static void Validate(GameData data)
     {
         var errors = new List<string>();
 
@@ -421,6 +473,15 @@ public static class DataLoader
     private static T? DeserializeFile<T>(string path)
     {
         var json = File.ReadAllText(path);
+        return JsonSerializer.Deserialize<T>(json, JsonOptions);
+    }
+
+    private static T? DeserializeResource<T>(Assembly assembly, string resourceName)
+    {
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return default;
+        using var reader = new StreamReader(stream);
+        var json = reader.ReadToEnd();
         return JsonSerializer.Deserialize<T>(json, JsonOptions);
     }
 }

@@ -36,7 +36,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
 
         Assert.Equal(2, data.Items.Count);
         var sword = data.Items.Get("test_sword");
@@ -65,7 +65,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
 
         var a = data.Items.Get("a_item");
         var z = data.Items.Get("z_item");
@@ -100,7 +100,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: itemsJson, recipesJson: recipesJson);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: itemsJson, recipesJson: recipesJson);
 
         Assert.Equal(1, data.Recipes.Count);
         var recipe = data.Recipes.Get("craft_door");
@@ -134,7 +134,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(resourceNodesJson: json);
+        var data = DataLoader.LoadFromJsonForTests(resourceNodesJson: json);
 
         Assert.Equal(1, data.ResourceNodes.Count);
         var tree = data.ResourceNodes.Get("tree");
@@ -166,7 +166,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(monstersJson: json);
+        var data = DataLoader.LoadFromJsonForTests(monstersJson: json);
 
         Assert.Equal(1, data.Npcs.Count);
         var goblin = data.Npcs.Get("goblin");
@@ -210,7 +210,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(biomesJson: json);
+        var data = DataLoader.LoadFromJsonForTests(biomesJson: json);
 
         Assert.Equal(1, data.Biomes.Count);
         var forest = data.Biomes.Get("forest");
@@ -245,7 +245,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var pick = data.Items.Get("iron_pickaxe");
         Assert.NotNull(pick);
         Assert.NotNull(pick.Tool);
@@ -283,7 +283,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var door = data.Items.Get("wooden_door");
         Assert.NotNull(door);
         Assert.NotNull(door.Furniture);
@@ -312,7 +312,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var seeds = data.Items.Get("wheat_seeds");
         Assert.NotNull(seeds);
         Assert.NotNull(seeds.Seed);
@@ -340,7 +340,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var block = data.Items.Get("stone_block");
         Assert.NotNull(block);
         Assert.NotNull(block.Block);
@@ -376,7 +376,7 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJson(itemsJson: json);
+        var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var arrow = data.Items.Get("fire_arrow");
         Assert.NotNull(arrow);
         Assert.NotNull(arrow.Ammo);
