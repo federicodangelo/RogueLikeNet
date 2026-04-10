@@ -5,31 +5,12 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
 {
-    public const int PlaceableCategoryNone = 0;
-    public const int PlaceableCategoryDoor = 1;
-    public const int PlaceableCategoryWall = 2;
-    public const int PlaceableCategoryDecoration = 3;
-    public const int PlaceableCategoryFloorTile = 4;
-
     // ── Placeable helpers ────────────────────────────────────────────
 
     public ItemDefinition[] GetAllPlaceables()
     {
         if (Count == 0) return [];
         return All.Where(d => d.IsPlaceable).ToArray();
-    }
-
-    public int GetPlaceableCategory(int itemTypeId)
-    {
-        var def = Get(itemTypeId);
-        if (def == null) return PlaceableCategoryNone;
-        if (def.Furniture != null)
-            return FurnitureCategoryFromData(def.Furniture.FurnitureType);
-        if (def.Block != null)
-            return PlaceableCategoryWall;
-        if (def.IsPlaceable)
-            return PlaceableCategoryDecoration;
-        return PlaceableCategoryNone;
     }
 
     public bool IsPlaceableWalkable(int itemTypeId, int extra)
@@ -78,10 +59,10 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
         return def.FgColor;
     }
 
-    public bool IsPlaceableDoor(int itemTypeId) => GetPlaceableCategory(itemTypeId) == PlaceableCategoryDoor;
+    public bool IsPlaceableDoor(int itemTypeId) => Get(itemTypeId)?.Furniture?.FurnitureType == FurnitureType.Door;
     public bool IsPlaceableDoorOpen(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra != 0;
     public bool IsPlaceableDoorClosed(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra == 0;
-    public bool IsPlaceableWall(int itemTypeId) => GetPlaceableCategory(itemTypeId) == PlaceableCategoryWall;
+    public bool IsPlaceableWall(int itemTypeId) => Get(itemTypeId) is { Category: ItemCategory.Furniture, Furniture.FurnitureType: FurnitureType.Wall } or { Category: ItemCategory.Block };
 
     public bool IsPlaceableHasState(int itemTypeId)
     {
@@ -89,12 +70,4 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
         if (def?.Furniture != null) return def.Furniture.StateType != PlaceableStateType.None;
         return false;
     }
-
-    private static int FurnitureCategoryFromData(FurnitureType t) => t switch
-    {
-        FurnitureType.Door => PlaceableCategoryDoor,
-        FurnitureType.Wall or FurnitureType.Window => PlaceableCategoryWall,
-        FurnitureType.FloorTile => PlaceableCategoryFloorTile,
-        _ => PlaceableCategoryDecoration,
-    };
 }

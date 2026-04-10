@@ -202,6 +202,215 @@ public static class DataLoader
                 if (data.Items.Get(item.Seed.HarvestItemId) == null)
                     errors.Add($"Item '{item.Id}': seed harvest item '{item.Seed.HarvestItemId}' not found.");
             }
+
+            // The category of each item must be consistent with its given properties (e.g. placeable, furniture, block)
+            switch (item.Category)
+            {
+                case ItemCategory.Weapon:
+                    if (item.Weapon == null)
+                        errors.Add($"Item '{item.Id}': category is Weapon but Weapon data is missing.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Armor:
+                    if (item.Armor == null)
+                        errors.Add($"Item '{item.Id}': category is Armor but Armor data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Tool:
+                    if (item.Tool == null)
+                        errors.Add($"Item '{item.Id}': category is Tool but Tool data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Food:
+                    if (item.Food == null)
+                        errors.Add($"Item '{item.Id}': category is Food but Food data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Potion:
+                    if (item.Potion == null)
+                        errors.Add($"Item '{item.Id}': category is Potion but Potion data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Block:
+                    if (item.Block == null)
+                        errors.Add($"Item '{item.Id}': category is Block but Block data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Seed:
+                    if (item.Seed == null)
+                        errors.Add($"Item '{item.Id}': category is Seed but Seed data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Furniture:
+                    if (item.Furniture == null)
+                        errors.Add($"Item '{item.Id}': category is Furniture but Furniture data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+                case ItemCategory.Ammo:
+                    if (item.Ammo == null)
+                        errors.Add($"Item '{item.Id}': category is Ammo but Ammo data is missing.");
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    break;
+
+                case ItemCategory.Magic:
+                case ItemCategory.Misc:
+                    // All category-specific data should be null for these categories
+                    if (item.Weapon != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Weapon data is present.");
+                    if (item.Armor != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
+                    if (item.Tool != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Tool data is present.");
+                    if (item.Food != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Food data is present.");
+                    if (item.Potion != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Potion data is present.");
+                    if (item.Block != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Block data is present.");
+                    if (item.Seed != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Seed data is present.");
+                    if (item.Furniture != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Furniture data is present.");
+                    if (item.Ammo != null)
+                        errors.Add($"Item '{item.Id}': category is {item.Category} but Ammo data is present.");
+                    break;
+            }
+
         }
 
         if (errors.Count > 0)
