@@ -159,7 +159,8 @@ public class AnimalSystemTests
             if (!animal.IsDead && animal.Position == animalPos)
             {
                 // Set production ticks just before threshold
-                animal.AnimalData.ProduceTicksCurrent = animal.AnimalData.ProduceIntervalTicks - 1;
+                var chickenDef = GameData.Instance.Animals.Get(animal.AnimalData.AnimalTypeId)!;
+                animal.AnimalData.ProduceTicksCurrent = chickenDef.ProduceIntervalTicks - 1;
                 break;
             }
         }
@@ -201,7 +202,8 @@ public class AnimalSystemTests
             if (!animal.IsDead && animal.Position == animalPos)
             {
                 // Set production ticks high, but not fed
-                animal.AnimalData.ProduceTicksCurrent = animal.AnimalData.ProduceIntervalTicks + 10;
+                var chickenDef = GameData.Instance.Animals.Get(animal.AnimalData.AnimalTypeId)!;
+                animal.AnimalData.ProduceTicksCurrent = chickenDef.ProduceIntervalTicks + 10;
                 break;
             }
         }
@@ -405,17 +407,20 @@ public class AnimalSystemTests
     {
         var data = new AnimalData
         {
-            ProduceIntervalTicks = 100,
             ProduceTicksCurrent = 99,
             IsFed = true,
         };
-        Assert.False(data.CanProduce);
+        var def = new AnimalDefinition
+        {
+            ProduceIntervalTicks = 100,
+        };
+        Assert.False(data.CanProduce(def));
 
         data.ProduceTicksCurrent = 100;
-        Assert.True(data.CanProduce);
+        Assert.True(data.CanProduce(def));
 
         data.IsFed = false;
-        Assert.False(data.CanProduce);
+        Assert.False(data.CanProduce(def));
     }
 
     [Fact]
@@ -442,5 +447,195 @@ public class AnimalSystemTests
         foreach (var animal in chunk.Animals)
             if (!animal.IsDead) count++;
         return count;
+    }
+
+    // ── Interact (context-sensitive) tests ──
+
+    [Fact]
+    public void Interact_OnAnimalWithFeed_FeedsAnimal()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                Assert.True(animal.AnimalData.IsFed, "Animal should be fed via Interact");
+                Assert.True(animal.AnimalData.FedTicksRemaining > 0);
+                return;
+            }
+        }
+        Assert.Fail("Expected a fed animal at position");
+    }
+
+    [Fact]
+    public void Interact_OnAnimalWithFeed_ConsumesFeedItem()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Equal(9, player.Inventory.Items[0].StackCount);
+    }
+
+    [Fact]
+    public void Interact_OnAnimalWithoutFeed_DoesNotFeed()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Remove all feed from inventory
+        player.Inventory.Items.Clear();
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                Assert.False(animal.AnimalData.IsFed, "Animal should not be fed without feed item");
+                return;
+            }
+        }
+    }
+
+    [Fact]
+    public void Interact_OnAnimalWithWrongItem_DoesNotFeed()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Replace feed with a non-feed item
+        player.Inventory.Items[0] = new ItemData
+        {
+            ItemTypeId = ItemId("wood"),
+            StackCount = 5,
+        };
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                Assert.False(animal.AnimalData.IsFed, "Animal should not be fed with wrong item");
+                return;
+            }
+        }
+    }
+
+    [Fact]
+    public void Interact_NonAdjacentAnimal_DoesNotFeed()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Target non-adjacent
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 2;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Feed should not be consumed
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Equal(10, player.Inventory.Items[0].StackCount);
+
+        // Animal should not be fed
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                Assert.False(animal.AnimalData.IsFed);
+                return;
+            }
+        }
+    }
+
+    [Fact]
+    public void Interact_OnDeadAnimal_DoesNotFeed()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+
+        // Kill the animal
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (ref var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                animal.Health.Current = 0;
+                break;
+            }
+        }
+
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Feed should not be consumed
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Equal(10, player.Inventory.Items[0].StackCount);
+    }
+
+    [Fact]
+    public void Interact_FindsFeedInInventory_AutomaticallySelectsSlot()
+    {
+        using var engine = CreateEngine();
+        var (pid, animalPos) = SpawnPlayerAndAnimal(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Add a non-feed item first, then feed (to test slot auto-selection)
+        player.Inventory.Items.Clear();
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("wood"), StackCount = 5 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("animal_feed"), StackCount = 3 });
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(animalPos)!;
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == animalPos)
+            {
+                Assert.True(animal.AnimalData.IsFed, "Interact should find feed in inventory and auto-select slot");
+                return;
+            }
+        }
+        Assert.Fail("Expected animal at position");
+
+        // Feed consumed from slot 1, wood untouched
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Equal(5, player.Inventory.Items[0].StackCount); // wood unchanged
+        Assert.Equal(2, player.Inventory.Items[1].StackCount); // feed decremented
     }
 }

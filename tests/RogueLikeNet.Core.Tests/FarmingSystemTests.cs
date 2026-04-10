@@ -803,4 +803,354 @@ public class FarmingSystemTests
             }
         }
     }
+
+    // ── Interact priority tests ──
+
+    [Fact]
+    public void Interact_HarvestTakesPriorityOverWater()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Till + plant
+        player.Input.ActionType = ActionTypes.Till;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Plant;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Force crop mature (not watered)
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        ref var crop = ref GetCropAt(chunk, target);
+        var wheatSeed = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+        crop.CropData.GrowthTicksCurrent = wheatSeed.GrowthTicks;
+
+        // Equip watering can — both harvest and water could apply
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData
+        {
+            ItemTypeId = ItemId("watering_can"),
+            StackCount = 1,
+        };
+
+        // Interact should harvest (priority over water)
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var hasCrop = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == target && !c.IsDestroyed) hasCrop = true;
+        Assert.False(hasCrop, "Harvest should take priority over water — crop should be destroyed");
+    }
+
+    [Fact]
+    public void Interact_WaterTakesPriorityOverPlant()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Till + plant
+        player.Input.ActionType = ActionTypes.Till;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Plant;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Equip watering can (player still has seeds)
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData
+        {
+            ItemTypeId = ItemId("watering_can"),
+            StackCount = 1,
+        };
+
+        // Crop exists and is unwatered → Water should take priority over Plant
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        ref var crop = ref GetCropAt(chunk, target);
+        Assert.True(crop.CropData.IsWatered, "Water should take priority over plant when crop exists and is unwatered");
+    }
+
+    [Fact]
+    public void Interact_PlantTakesPriorityOverTill()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Till to create tilled soil
+        player.Input.ActionType = ActionTypes.Till;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Player has hoe equipped AND seeds — Interact should plant (not re-till)
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        var hasCrop = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == target && !c.IsDestroyed) hasCrop = true;
+        Assert.True(hasCrop, "Plant should take priority over till on tilled soil with seeds");
+    }
+
+    [Fact]
+    public void Interact_HarvestTakesPriorityOverTill()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Till + plant
+        player.Input.ActionType = ActionTypes.Till;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Plant;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Force crop mature
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        ref var crop = ref GetCropAt(chunk, target);
+        var wheatSeed = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+        crop.CropData.GrowthTicksCurrent = wheatSeed.GrowthTicks;
+
+        // Player has hoe equipped — Interact should harvest (not till)
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var hasCrop = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == target && !c.IsDestroyed) hasCrop = true;
+        Assert.False(hasCrop, "Harvest should take priority over till — crop should be destroyed");
+    }
+
+    // ── Interact edge-case tests ──
+
+    [Fact]
+    public void Interact_NonAdjacentTarget_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (pid, _) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Target 2 tiles away (non-adjacent)
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 2;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Floor tile 2 tiles away should remain untouched
+        var farTarget = Position.FromCoords(player.Position.X + 2, player.Position.Y, player.Position.Z);
+        var tile = engine.WorldMap.GetTile(farTarget);
+        Assert.NotEqual(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
+    }
+
+    [Fact]
+    public void Interact_NoValidAction_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        // No tools, no seeds, target is wall
+        var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
+        engine.WorldMap.SetTile(targetPos, new TileInfo
+        {
+            Type = TileType.Blocked,
+            GlyphId = TileDefinitions.GlyphWall,
+        });
+
+        int inventoryCountBefore = player.Inventory.Items.Count;
+
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Nothing should change
+        player = ref engine.WorldMap.GetPlayerRef(p.Id);
+        Assert.Equal(inventoryCountBefore, player.Inventory.Items.Count);
+        var tile = engine.WorldMap.GetTile(targetPos);
+        Assert.Equal(TileType.Blocked, tile.Type);
+    }
+
+    [Fact]
+    public void Interact_AlreadyWateredCrop_SkipsWater_FallsToNothing()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Till + plant
+        player.Input.ActionType = ActionTypes.Till;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Plant;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Mark crop as already watered
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        ref var crop = ref GetCropAt(chunk, target);
+        crop.CropData.IsWatered = true;
+
+        // Equip watering can, remove hoe/seeds so no other action applies
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData
+        {
+            ItemTypeId = ItemId("watering_can"),
+            StackCount = 1,
+        };
+        player.Inventory.Items.Clear();
+
+        int seedCount = 0;
+        foreach (var item in player.Inventory.Items)
+        {
+            var def = GameData.Instance.Items.Get(item.ItemTypeId);
+            if (def?.Category == ItemCategory.Seed) seedCount++;
+        }
+
+        // Interact should do nothing (crop already watered, no seeds, can't till)
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Crop should still be watered and not harvested
+        crop = ref GetCropAt(chunk, target);
+        Assert.True(crop.CropData.IsWatered);
+        Assert.Equal(0, seedCount);
+    }
+
+    [Fact]
+    public void Interact_PlantsFromInventory_WhenNotInQuickSlot()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        // Set up target as tilled soil
+        var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
+        engine.WorldMap.SetTile(targetPos, new TileInfo
+        {
+            Type = TileType.Floor,
+            GlyphId = FarmingSystem.TilledSoilGlyphId,
+            FgColor = TileDefinitions.ColorTilledSoil,
+            BgColor = TileDefinitions.ColorBlack,
+        });
+
+        // Add some non-seed items first, then seeds — seeds NOT in quick slot
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("wood"), StackCount = 5 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("wheat_seeds"), StackCount = 3 });
+        // Quick slots are empty (no seed assigned)
+
+        // Interact should find seeds in inventory even without quick slot
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(targetPos)!;
+        var hasCrop = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == targetPos && !c.IsDestroyed) hasCrop = true;
+        Assert.True(hasCrop, "Interact should plant from inventory when no seeds in quick slots");
+
+        // Seed count should decrease
+        player = ref engine.WorldMap.GetPlayerRef(p.Id);
+        Assert.Equal(2, player.Inventory.Items[1].StackCount);
+    }
+
+    [Fact]
+    public void Interact_FullFarmingCycle_TillPlantWaterHarvest()
+    {
+        using var engine = CreateEngine();
+        var (pid, target) = SpawnPlayerWithHoeAndSeeds(engine);
+
+        // Step 1: Interact on floor with hoe → tills
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        Assert.Equal(FarmingSystem.TilledSoilGlyphId, engine.WorldMap.GetTile(target).GlyphId);
+
+        // Step 2: Interact on tilled soil with seeds → plants
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Equipment[(int)EquipSlot.Hand] = default; // unequip hoe
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
+        var hasCrop = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == target && !c.IsDestroyed) hasCrop = true;
+        Assert.True(hasCrop, "Step 2: Should plant via Interact");
+
+        // Step 3: Interact with watering can → waters
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData
+        {
+            ItemTypeId = ItemId("watering_can"),
+            StackCount = 1,
+        };
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        ref var crop = ref GetCropAt(chunk, target);
+        Assert.True(crop.CropData.IsWatered, "Step 3: Should water via Interact");
+
+        // Force crop mature
+        var wheatSeed = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+        crop.CropData.GrowthTicksCurrent = wheatSeed.GrowthTicks;
+
+        // Step 4: Interact on mature crop → harvests
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        player.Input.ActionType = ActionTypes.Interact;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        var hasCropAfter = false;
+        foreach (var c in chunk.Crops)
+            if (c.Position == target && !c.IsDestroyed) hasCropAfter = true;
+        Assert.False(hasCropAfter, "Step 4: Should harvest via Interact");
+    }
 }

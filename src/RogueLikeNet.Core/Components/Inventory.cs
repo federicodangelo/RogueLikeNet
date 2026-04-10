@@ -17,4 +17,18 @@ public struct Inventory
     }
 
     public readonly bool IsFull => Items.Count >= Capacity;
+
+    public bool FindSlotWithItem(int itemTypeId, out int slotIndex)
+    {
+        for (int i = 0; i < Items.Count; i++)
+        {
+            if (Items[i].ItemTypeId == itemTypeId)
+            {
+                slotIndex = i;
+                return true;
+            }
+        }
+        slotIndex = -1;
+        return false;
+    }
 }

@@ -318,8 +318,6 @@ public class GameEngine : IDisposable
     /// </summary>
     public ref AnimalEntity SpawnAnimal(Position pos, Data.AnimalDefinition def)
     {
-        int produceItemId = GameData.Instance.Items.GetNumericId(def.ProduceItemId);
-
         var animal = new AnimalEntity(_worldMap.AllocateEntityId())
         {
             Position = pos,
@@ -328,12 +326,9 @@ public class GameEngine : IDisposable
             AnimalData = new AnimalData
             {
                 AnimalTypeId = def.NumericId,
-                ProduceItemTypeId = produceItemId,
-                ProduceIntervalTicks = def.ProduceIntervalTicks,
                 ProduceTicksCurrent = 0,
                 IsFed = false,
                 FedTicksRemaining = 0,
-                BreedCooldownTicks = def.BreedCooldownTicks,
                 BreedCooldownCurrent = def.BreedCooldownTicks,
             },
             AI = new AIState { StateId = AIStates.Idle },

@@ -18,9 +18,6 @@ public class FarmingSystem
     /// <summary>Glyph ID used for tilled soil tiles.</summary>
     public const int TilledSoilGlyphId = 126; // ~ (tilde, tilled appearance)
 
-    private static readonly (int DX, int DY)[] AdjacentOffsets =
-        [(0, -1), (0, 1), (-1, 0), (1, 0)];
-
     public void Update(WorldMap map)
     {
         ProcessPlayerActions(map);
@@ -65,7 +62,7 @@ public class FarmingSystem
 
             if (player.Input.ActionType == ActionTypes.Interact)
                 if (!ResolveInteract(ref player, map))
-                    continue; // No valid interact action, skip processing other actions this tick
+                    continue; // No valid interact action
 
             switch (player.Input.ActionType)
             {
@@ -81,8 +78,8 @@ public class FarmingSystem
                 case ActionTypes.Harvest:
                     ProcessHarvest(ref player, map);
                     break;
-                case ActionTypes.Interact:
-                    ResolveInteract(ref player, map);
+                case ActionTypes.FeedAnimal:
+                    // Handled in AnimalSystem, no additional processing needed here
                     break;
             }
         }
@@ -269,9 +266,7 @@ public class FarmingSystem
 
     private static bool IsAdjacent(int dx, int dy)
     {
-        foreach (var (ox, oy) in AdjacentOffsets)
-            if (dx == ox && dy == oy) return true;
-        return false;
+        return Math.Abs(dx) + Math.Abs(dy) == 1;
     }
 
     private static bool HasEquippedToolType(ref PlayerEntity player, ToolType toolType)
@@ -319,33 +314,7 @@ public class FarmingSystem
             }
         }
 
-        // 2. Feed animal: target has an animal and player has feed in the selected slot
-        foreach (var animal in chunk.Animals)
-        {
-            if (!animal.IsDead && animal.Position == target)
-            {
-                // Find a valid feed item in inventory
-                var animalDef = GameData.Instance.Animals.Get(animal.AnimalData.AnimalTypeId);
-                if (animalDef != null)
-                {
-                    int feedItemId = GameData.Instance.Items.GetNumericId(animalDef.FeedItemId);
-                    if (feedItemId != 0)
-                    {
-                        for (int i = 0; i < player.Inventory.Items.Count; i++)
-                        {
-                            if (player.Inventory.Items[i].ItemTypeId == feedItemId)
-                            {
-                                player.Input.ActionType = ActionTypes.FeedAnimal;
-                                player.Input.ItemSlot = i;
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 3. Water: target has a crop and player has watering can
+        // 2. Water: target has a crop and player has watering can
         if (HasEquippedToolType(ref player, ToolType.WateringCan))
         {
             foreach (var crop in chunk.Crops)
@@ -358,9 +327,11 @@ public class FarmingSystem
             }
         }
 
-        // 4. Plant: target is tilled soil and player has seeds in quick slot
+        // 3. Plant: target is tilled soil and player has seeds in quick slot or inventory
         if (tile.Type == TileType.Floor && tile.GlyphId == TilledSoilGlyphId)
         {
+            int seedInventoryIndex = -1;
+
             for (int i = 0; i < player.QuickSlots.Count; i++)
             {
                 int inventoryIndex = player.QuickSlots[i];
@@ -368,16 +339,36 @@ public class FarmingSystem
 
                 var itemData = player.Inventory.Items[inventoryIndex];
                 var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
-                if (def?.Category == ItemCategory.Seed && def.Seed != null)
+                if (def?.Category == ItemCategory.Seed)
                 {
-                    player.Input.ItemSlot = inventoryIndex;
-                    player.Input.ActionType = ActionTypes.Plant;
-                    return true;
+                    seedInventoryIndex = inventoryIndex;
+                    break;
                 }
+            }
+
+            if (seedInventoryIndex == -1)
+            {
+                var inventoryIndex = player.Inventory.Items.FindIndex(item =>
+                {
+                    var def = GameData.Instance.Items.Get(item.ItemTypeId);
+                    return def?.Category == ItemCategory.Seed;
+                });
+
+                if (inventoryIndex != -1)
+                {
+                    seedInventoryIndex = inventoryIndex;
+                }
+            }
+
+            if (seedInventoryIndex != -1)
+            {
+                player.Input.ItemSlot = seedInventoryIndex;
+                player.Input.ActionType = ActionTypes.Plant;
+                return true;
             }
         }
 
-        // 5. Till: target is a regular floor and player has a hoe
+        // 4. Till: target is a regular floor and player has a hoe
         if (HasEquippedToolType(ref player, ToolType.Hoe) &&
             tile.Type == TileType.Floor &&
             tile.GlyphId != TilledSoilGlyphId)

@@ -17,15 +17,20 @@ public class AnimalSystem
 
     public void Update(WorldMap map)
     {
-        // Process player feeding actions
-        foreach (ref var player in map.Players)
-        {
-            if (player.IsDead) continue;
-            if (player.Input.ActionType == ActionTypes.FeedAnimal)
-                ProcessFeed(ref player, map);
-        }
+        ProcessPlayerActions(map);
 
         // Update all animals: production timers, fed status decay, breeding
+        ProcessTimers(map);
+
+        // Process production (drops item on ground next to animal)
+        ProcessProduction(map);
+
+        // Process breeding
+        ProcessBreeding(map);
+    }
+
+    private static void ProcessTimers(WorldMap map)
+    {
         foreach (var chunk in map.LoadedChunks)
         {
             foreach (ref var animal in chunk.Animals)
@@ -54,14 +59,27 @@ public class AnimalSystem
                     animal.AnimalData.BreedCooldownCurrent--;
             }
         }
-
-        // Process production (drops item on ground next to animal)
-        ProcessProduction(map);
-
-        // Process breeding
-        ProcessBreeding(map);
     }
 
+    private static void ProcessPlayerActions(WorldMap map)
+    {
+        foreach (ref var player in map.Players)
+        {
+            if (player.IsDead) continue;
+
+            if (player.Input.ActionType == ActionTypes.Interact)
+                if (!ResolveInteract(ref player, map))
+                    continue; // No valid interact action
+
+            if (player.Input.ActionType == ActionTypes.FeedAnimal)
+                ProcessFeed(ref player, map);
+        }
+    }
+
+    private static bool IsAdjacent(int dx, int dy)
+    {
+        return Math.Abs(dx) + Math.Abs(dy) == 1;
+    }
     private static void ProcessFeed(ref PlayerEntity player, WorldMap map)
     {
         int slot = player.Input.ItemSlot;
@@ -76,7 +94,7 @@ public class AnimalSystem
         // Must be adjacent
         int dx = target.X - player.Position.X;
         int dy = target.Y - player.Position.Y;
-        if (Math.Abs(dx) + Math.Abs(dy) != 1) return;
+        if (!IsAdjacent(dx, dy)) return;
 
         // Find animal at target
         var chunk = map.GetChunkForWorldPos(target);
@@ -125,9 +143,13 @@ public class AnimalSystem
             foreach (ref var animal in chunk.Animals)
             {
                 if (animal.IsDead) continue;
-                if (!animal.AnimalData.CanProduce) continue;
 
-                productions.Add((animal.Position, animal.AnimalData.ProduceItemTypeId));
+                var animalDef = GameData.Instance.Animals.Get(animal.AnimalData.AnimalTypeId);
+                if (animalDef == null) continue;
+                if (!animal.AnimalData.CanProduce(animalDef)) continue;
+
+                int produceItemId = GameData.Instance.Items.GetNumericId(animalDef.ProduceItemId);
+                productions.Add((animal.Position, produceItemId));
                 animal.AnimalData.ProduceTicksCurrent = 0;
             }
         }
@@ -186,8 +208,10 @@ public class AnimalSystem
                     newAnimals.Add((spawnPos, a.AnimalData.AnimalTypeId));
 
                     // Apply breed cooldown to both parents
-                    a.AnimalData.BreedCooldownCurrent = a.AnimalData.BreedCooldownTicks;
-                    b.AnimalData.BreedCooldownCurrent = b.AnimalData.BreedCooldownTicks;
+                    var breedDef = GameData.Instance.Animals.Get(a.AnimalData.AnimalTypeId);
+                    int breedCooldown = breedDef?.BreedCooldownTicks ?? 2400;
+                    a.AnimalData.BreedCooldownCurrent = breedCooldown;
+                    b.AnimalData.BreedCooldownCurrent = breedCooldown;
                     break; // Each animal can only breed once per tick
                 }
             }
@@ -199,7 +223,6 @@ public class AnimalSystem
             var def = GameData.Instance.Animals.Get(typeId);
             if (def == null) continue;
 
-            int produceItemId = GameData.Instance.Items.GetNumericId(def.ProduceItemId);
             var baby = new AnimalEntity(map.AllocateEntityId())
             {
                 Position = pos,
@@ -208,12 +231,9 @@ public class AnimalSystem
                 AnimalData = new AnimalData
                 {
                     AnimalTypeId = typeId,
-                    ProduceItemTypeId = produceItemId,
-                    ProduceIntervalTicks = def.ProduceIntervalTicks,
                     ProduceTicksCurrent = 0,
                     IsFed = false,
                     FedTicksRemaining = 0,
-                    BreedCooldownTicks = def.BreedCooldownTicks,
                     BreedCooldownCurrent = def.BreedCooldownTicks,
                 },
                 AI = new AIState { StateId = AIStates.Idle },
@@ -235,5 +255,54 @@ public class AnimalSystem
                 return pos;
         }
         return origin;
+    }
+
+    /// <summary>
+    /// Context-sensitive interact: resolves to the most appropriate farming action
+    /// based on equipped item, target tile, and target entities.
+    /// Priority: Harvest > FeedAnimal > Water > Plant > Till
+    /// </summary>
+    private static bool ResolveInteract(ref PlayerEntity player, WorldMap map)
+    {
+        int targetX = player.Position.X + player.Input.TargetX;
+        int targetY = player.Position.Y + player.Input.TargetY;
+        var target = Position.FromCoords(targetX, targetY, player.Position.Z);
+
+        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY))
+        {
+            return false;
+        }
+
+        var chunk = map.GetChunkForWorldPos(target);
+
+        if (chunk == null)
+        {
+            return false;
+        }
+
+        // 1. Feed animal: target has an animal and player has feed in the selected slot
+        foreach (var animal in chunk.Animals)
+        {
+            if (!animal.IsDead && animal.Position == target)
+            {
+                // Find a valid feed item in inventory
+                var animalDef = GameData.Instance.Animals.Get(animal.AnimalData.AnimalTypeId);
+                if (animalDef != null)
+                {
+                    int feedItemId = GameData.Instance.Items.GetNumericId(animalDef.FeedItemId);
+                    if (feedItemId != 0)
+                    {
+                        if (player.Inventory.FindSlotWithItem(feedItemId, out var slotIndex))
+                        {
+                            player.Input.ActionType = ActionTypes.FeedAnimal;
+                            player.Input.ItemSlot = slotIndex;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
