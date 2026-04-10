@@ -3,6 +3,7 @@ using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Client.Core.Rendering;
@@ -268,6 +269,11 @@ public sealed class HudRenderer
             if (row >= maxRow) return;
             Ds(r, col, row, "[>] Use stairs", RenderingTheme.Stats);
         }
+        else if (HasAdjacentAnimalOrCrop(state))
+        {
+            if (row >= maxRow) return;
+            Ds(r, col, row, "[E] Interact with animal/crop", RenderingTheme.Stats);
+        }
     }
 
     private static bool HasAdjacentPickableTile(ClientGameState state)
@@ -279,6 +285,28 @@ public sealed class HudRenderer
             var tile = state.GetTile(px + dx, py + dy);
             if (tile.PlaceableItemId != 0)
                 return true;
+        }
+        return false;
+    }
+
+    private static bool HasAdjacentAnimalOrCrop(ClientGameState state)
+    {
+        int px = state.PlayerX, py = state.PlayerY, pz = state.PlayerZ;
+        ReadOnlySpan<(int, int)> offsets = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+        foreach (var (dx, dy) in offsets)
+        {
+            var x = px + dx;
+            var y = py + dy;
+            var z = pz;
+
+            foreach (var entity in state.Entities.Values)
+            {
+                if (entity.X == x && entity.Y == y && entity.Z == z &&
+                    (entity.EntityType == EntityType.Animal || entity.EntityType == EntityType.Crop))
+                {
+                    return true;
+                }
+            }
         }
         return false;
     }

@@ -117,7 +117,7 @@ public static class GameStateSerializer
         var removals = new List<EntityRemovedMsg>();
         var currentIds = new HashSet<long>();
 
-        void ProcessEntity(long id, Position pos, TileAppearance appearance,
+        void ProcessEntity(long id, EntityType entityType, Position pos, TileAppearance appearance,
             int hp, int maxHp, int lightRadius, ItemDataMsg? item)
         {
             if (!debugVisibilityOff && !fov.IsVisible(pos)) return;
@@ -127,6 +127,7 @@ public static class GameStateSerializer
             var current = new EntityUpdateMsg
             {
                 Id = id,
+                EntityType = (int)entityType,
                 X = pos.X,
                 Y = pos.Y,
                 Z = pos.Z,
@@ -160,7 +161,7 @@ public static class GameStateSerializer
         foreach (var p in map.Players)
         {
             if (p.IsDead) continue;
-            ProcessEntity((long)p.Id, p.Position, p.Appearance, p.Health.Current, p.Health.Max, 0, null);
+            ProcessEntity((long)p.Id, EntityType.Player, p.Position, p.Appearance, p.Health.Current, p.Health.Max, 0, null);
         }
 
         // Iterate loaded chunks
@@ -169,7 +170,7 @@ public static class GameStateSerializer
             foreach (var m in chunk.Monsters)
             {
                 if (m.IsDead) continue;
-                ProcessEntity((long)m.Id, m.Position, m.Appearance, m.Health.Current, m.Health.Max, 0, null);
+                ProcessEntity((long)m.Id, EntityType.Monster, m.Position, m.Appearance, m.Health.Current, m.Health.Max, 0, null);
             }
 
             foreach (var gi in chunk.GroundItems)
@@ -181,37 +182,37 @@ public static class GameStateSerializer
                     Category = GameData.Instance.Items.Get(gi.Item.ItemTypeId)?.CategoryInt ?? 0,
                     StackCount = gi.Item.StackCount,
                 };
-                ProcessEntity((long)gi.Id, gi.Position, gi.Appearance, 0, 0, 0, item);
+                ProcessEntity((long)gi.Id, EntityType.GroundItem, gi.Position, gi.Appearance, 0, 0, 0, item);
             }
 
             foreach (var r in chunk.ResourceNodes)
             {
                 if (r.IsDead) continue;
-                ProcessEntity((long)r.Id, r.Position, r.Appearance, r.Health.Current, r.Health.Max, 0, null);
+                ProcessEntity((long)r.Id, EntityType.ResourceNode, r.Position, r.Appearance, r.Health.Current, r.Health.Max, 0, null);
             }
 
             foreach (var n in chunk.TownNpcs)
             {
                 if (n.IsDead) continue;
-                ProcessEntity((long)n.Id, n.Position, n.Appearance, n.Health.Current, n.Health.Max, 0, null);
+                ProcessEntity((long)n.Id, EntityType.TownNpc, n.Position, n.Appearance, n.Health.Current, n.Health.Max, 0, null);
             }
 
             foreach (var e in chunk.Elements)
             {
                 int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
-                ProcessEntity((long)e.Id, e.Position, e.Appearance, 0, 0, lightRadius, null);
+                ProcessEntity((long)e.Id, EntityType.Element, e.Position, e.Appearance, 0, 0, lightRadius, null);
             }
 
             foreach (var c in chunk.Crops)
             {
                 if (c.IsDestroyed) continue;
-                ProcessEntity((long)c.Id, c.Position, c.Appearance, 0, 0, 0, null);
+                ProcessEntity((long)c.Id, EntityType.Crop, c.Position, c.Appearance, 0, 0, 0, null);
             }
 
             foreach (var a in chunk.Animals)
             {
                 if (a.IsDead) continue;
-                ProcessEntity((long)a.Id, a.Position, a.Appearance, a.Health.Current, a.Health.Max, 0, null);
+                ProcessEntity((long)a.Id, EntityType.Animal, a.Position, a.Appearance, a.Health.Current, a.Health.Max, 0, null);
             }
         }
 

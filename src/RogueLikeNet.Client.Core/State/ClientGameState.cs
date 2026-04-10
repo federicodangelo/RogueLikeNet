@@ -2,6 +2,7 @@ using System.Collections;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
@@ -107,6 +108,7 @@ public class ClientGameState
                 _entities[entityUpdate.Id] = entity;
             }
 
+            entity.EntityType = (EntityType)entityUpdate.EntityType;
             entity.X = entityUpdate.X;
             entity.Y = entityUpdate.Y;
             entity.Z = entityUpdate.Z;
@@ -384,6 +386,7 @@ public class ClientGameState
 public class ClientEntity
 {
     public long Id { get; set; }
+    public EntityType EntityType { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
     public int Z { get; set; }
