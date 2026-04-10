@@ -19,7 +19,7 @@ public class DataLoaderTests
             "stackable": false,
             "maxStackSize": 1,
             "materialTier": "iron",
-            "equipSlot": "weapon",
+            "equipSlot": "hand",
             "weapon": { "baseDamage": 10, "attackSpeed": 3, "damageType": "physical", "range": 1, "twoHanded": false }
           },
           {
@@ -44,7 +44,7 @@ public class DataLoaderTests
         Assert.Equal("Test Sword", sword.Name);
         Assert.Equal(ItemCategory.Weapon, sword.Category);
         Assert.Equal(MaterialTier.Iron, sword.MaterialTier);
-        Assert.Equal(EquipSlot.Weapon, sword.EquipSlot);
+        Assert.Equal(EquipSlot.Hand, sword.EquipSlot);
         Assert.NotNull(sword.Weapon);
         Assert.Equal(10, sword.Weapon.BaseDamage);
         Assert.Equal(DamageType.Physical, sword.Weapon.DamageType);
@@ -85,7 +85,7 @@ public class DataLoaderTests
         var itemsJson = """
         [
           { "id": "wood", "name": "Wood", "category": "material", "glyphId": 0, "fgColor": 0, "stackable": true, "maxStackSize": 99, "materialTier": "wood" },
-          { "id": "wooden_door", "name": "Door", "category": "furniture", "glyphId": 0, "fgColor": 0, "stackable": true, "maxStackSize": 10, "materialTier": "wood" }
+          { "id": "wooden_door", "name": "Door", "category": "placeable", "glyphId": 0, "fgColor": 0, "stackable": true, "maxStackSize": 10, "materialTier": "wood" }
         ]
         """;
         var recipesJson = """
@@ -262,14 +262,14 @@ public class DataLoaderTests
           {
             "id": "wooden_door",
             "name": "Wooden Door",
-            "category": "furniture",
+            "category": "placeable",
             "glyphId": 197,
             "fgColor": 9136404,
             "stackable": true,
             "maxStackSize": 10,
             "materialTier": "wood",
-            "furniture": {
-              "furnitureType": "door",
+            "placeable": {
+              "placeableType": "door",
               "placedGlyphId": 197,
               "placedFgColor": 9136404,
               "walkable": false,
@@ -286,11 +286,11 @@ public class DataLoaderTests
         var data = DataLoader.LoadFromJsonForTests(itemsJson: json);
         var door = data.Items.Get("wooden_door");
         Assert.NotNull(door);
-        Assert.NotNull(door.Furniture);
-        Assert.Equal(FurnitureType.Door, door.Furniture.FurnitureType);
-        Assert.Equal(PlaceableStateType.OpenClose, door.Furniture.StateType);
-        Assert.False(door.Furniture.Walkable);
-        Assert.True(door.Furniture.AlternateWalkable);
+        Assert.NotNull(door.Placeable);
+        Assert.Equal(PlaceableType.Door, door.Placeable.PlaceableType);
+        Assert.Equal(PlaceableStateType.OpenClose, door.Placeable.StateType);
+        Assert.False(door.Placeable.Walkable);
+        Assert.True(door.Placeable.AlternateWalkable);
     }
 
     [Fact]
@@ -345,7 +345,7 @@ public class DataLoaderTests
         Assert.NotNull(block);
         Assert.NotNull(block.Block);
         Assert.Equal(3, block.Block.Hardness);
-        Assert.Equal("pickaxe", block.Block.ToolRequired);
+        Assert.Equal(ToolType.Pickaxe, block.Block.ToolRequired);
     }
 
     [Fact]

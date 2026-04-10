@@ -148,7 +148,7 @@ public sealed class HudRenderer
                             if (parts.Length > 0) parts.Append(' ');
                             string slotPrefix = ((EquipSlot)eq.EquipSlot) switch
                             {
-                                EquipSlot.Weapon => "W",
+                                EquipSlot.Hand => "W",
                                 EquipSlot.Chest => "A",
                                 EquipSlot.Head => "H",
                                 EquipSlot.Legs => "L",

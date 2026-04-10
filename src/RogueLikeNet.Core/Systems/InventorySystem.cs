@@ -166,7 +166,7 @@ public class InventorySystem
 
         // Fallback: weapons/tools → Weapon slot, armor → Chest
         return def.Category is ItemCategory.Weapon or ItemCategory.Tool
-            ? (int)Data.EquipSlot.Weapon
+            ? (int)Data.EquipSlot.Hand
             : (int)Data.EquipSlot.Chest;
     }
 
@@ -356,7 +356,7 @@ public class InventorySystem
         var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
         if (def == null) return;
         if (def.Category is not (ItemCategory.Weapon or ItemCategory.Armor
-            or ItemCategory.Potion or ItemCategory.Block or ItemCategory.Furniture
+            or ItemCategory.Potion or ItemCategory.Block or ItemCategory.Placeable
             or ItemCategory.Tool or ItemCategory.Food))
             return;
         int emptySlot = player.QuickSlots.FirstEmptySlot();

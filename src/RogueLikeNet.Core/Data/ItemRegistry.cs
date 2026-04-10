@@ -17,10 +17,10 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null || !def.IsPlaceable) return true; // unknown → don't block
-        if (def.Furniture != null)
+        if (def.Placeable != null)
         {
-            bool hasState = def.Furniture.StateType != PlaceableStateType.None;
-            return hasState && extra != 0 ? def.Furniture.AlternateWalkable : def.Furniture.Walkable;
+            bool hasState = def.Placeable.StateType != PlaceableStateType.None;
+            return hasState && extra != 0 ? def.Placeable.AlternateWalkable : def.Placeable.Walkable;
         }
         if (def.Block != null) return false;
         return true; // decoration
@@ -30,10 +30,10 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null || !def.IsPlaceable) return true;
-        if (def.Furniture != null)
+        if (def.Placeable != null)
         {
-            bool hasState = def.Furniture.StateType != PlaceableStateType.None;
-            return hasState && extra != 0 ? def.Furniture.AlternateTransparent : def.Furniture.Transparent;
+            bool hasState = def.Placeable.StateType != PlaceableStateType.None;
+            return hasState && extra != 0 ? def.Placeable.AlternateTransparent : def.Placeable.Transparent;
         }
         if (def.Block != null) return false;
         return true; // decoration
@@ -43,10 +43,10 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null) return 0;
-        if (def.Furniture != null)
+        if (def.Placeable != null)
         {
-            bool hasState = def.Furniture.StateType != PlaceableStateType.None;
-            return hasState && extra != 0 ? def.Furniture.AlternateGlyphId : def.Furniture.PlacedGlyphId;
+            bool hasState = def.Placeable.StateType != PlaceableStateType.None;
+            return hasState && extra != 0 ? def.Placeable.AlternateGlyphId : def.Placeable.PlacedGlyphId;
         }
         return def.GlyphId;
     }
@@ -55,19 +55,19 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null) return 0;
-        if (def.Furniture != null) return def.Furniture.PlacedFgColor;
+        if (def.Placeable != null) return def.Placeable.PlacedFgColor;
         return def.FgColor;
     }
 
-    public bool IsPlaceableDoor(int itemTypeId) => Get(itemTypeId)?.Furniture?.FurnitureType == FurnitureType.Door;
+    public bool IsPlaceableDoor(int itemTypeId) => Get(itemTypeId)?.Placeable?.PlaceableType == PlaceableType.Door;
     public bool IsPlaceableDoorOpen(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra != 0;
     public bool IsPlaceableDoorClosed(int itemTypeId, int extra) => IsPlaceableDoor(itemTypeId) && extra == 0;
-    public bool IsPlaceableWall(int itemTypeId) => Get(itemTypeId) is { Category: ItemCategory.Furniture, Furniture.FurnitureType: FurnitureType.Wall } or { Category: ItemCategory.Block };
+    public bool IsPlaceableWall(int itemTypeId) => Get(itemTypeId) is { Category: ItemCategory.Placeable, Placeable.PlaceableType: PlaceableType.Wall } or { Category: ItemCategory.Block };
 
     public bool IsPlaceableHasState(int itemTypeId)
     {
         var def = Get(itemTypeId);
-        if (def?.Furniture != null) return def.Furniture.StateType != PlaceableStateType.None;
+        if (def?.Placeable != null) return def.Placeable.StateType != PlaceableStateType.None;
         return false;
     }
 }

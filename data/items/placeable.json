@@ -2,14 +2,14 @@
     {
         "id": "wooden_door",
         "name": "Wooden Door",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 197,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "door",
+        "placeable": {
+            "placeableType": "door",
             "placedGlyphId": 197,
             "placedFgColor": 9136404,
             "walkable": false,
@@ -23,14 +23,14 @@
     {
         "id": "copper_door",
         "name": "Copper Door",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 197,
         "fgColor": 12092211,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "copper",
-        "furniture": {
-            "furnitureType": "door",
+        "placeable": {
+            "placeableType": "door",
             "placedGlyphId": 197,
             "placedFgColor": 12092211,
             "walkable": false,
@@ -44,14 +44,14 @@
     {
         "id": "iron_door",
         "name": "Iron Door",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 197,
         "fgColor": 11053176,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "door",
+        "placeable": {
+            "placeableType": "door",
             "placedGlyphId": 197,
             "placedFgColor": 11053176,
             "walkable": false,
@@ -65,14 +65,14 @@
     {
         "id": "gold_door",
         "name": "Gold Door",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 197,
         "fgColor": 16766720,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "gold",
-        "furniture": {
-            "furnitureType": "door",
+        "placeable": {
+            "placeableType": "door",
             "placedGlyphId": 197,
             "placedFgColor": 16766720,
             "walkable": false,
@@ -86,14 +86,14 @@
     {
         "id": "wooden_wall",
         "name": "Wooden Wall",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 219,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 219,
             "placedFgColor": 9136404,
             "walkable": false,
@@ -107,14 +107,14 @@
     {
         "id": "copper_wall",
         "name": "Copper Wall",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 219,
         "fgColor": 12092211,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "copper",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 219,
             "placedFgColor": 12092211,
             "walkable": false,
@@ -128,14 +128,14 @@
     {
         "id": "iron_wall",
         "name": "Iron Wall",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 219,
         "fgColor": 11053176,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 219,
             "placedFgColor": 11053176,
             "walkable": false,
@@ -149,14 +149,14 @@
     {
         "id": "gold_wall",
         "name": "Gold Wall",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 219,
         "fgColor": 16766720,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "gold",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 219,
             "placedFgColor": 16766720,
             "walkable": false,
@@ -170,14 +170,14 @@
     {
         "id": "stone_wall",
         "name": "Stone Wall",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 219,
         "fgColor": 8947848,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "stone",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 219,
             "placedFgColor": 8947848,
             "walkable": false,
@@ -191,14 +191,14 @@
     {
         "id": "wooden_window",
         "name": "Wooden Window",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 176,
         "fgColor": 8956620,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "wall",
+        "placeable": {
+            "placeableType": "wall",
             "placedGlyphId": 176,
             "placedFgColor": 8956620,
             "walkable": false,
@@ -212,14 +212,14 @@
     {
         "id": "wooden_table",
         "name": "Wooden Table",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 209,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "table",
+        "placeable": {
+            "placeableType": "table",
             "placedGlyphId": 209,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -233,14 +233,14 @@
     {
         "id": "wooden_chair",
         "name": "Wooden Chair",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 210,
         "fgColor": 8019984,
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "chair",
+        "placeable": {
+            "placeableType": "chair",
             "placedGlyphId": 210,
             "placedFgColor": 8019984,
             "walkable": true,
@@ -254,14 +254,14 @@
     {
         "id": "wooden_bed",
         "name": "Wooden Bed",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 235,
         "fgColor": 13386820,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "bed",
+        "placeable": {
+            "placeableType": "bed",
             "placedGlyphId": 235,
             "placedFgColor": 13386820,
             "walkable": true,
@@ -275,14 +275,14 @@
     {
         "id": "wooden_bookshelf",
         "name": "Wooden Bookshelf",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 222,
         "fgColor": 7032338,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "storage",
+        "placeable": {
+            "placeableType": "storage",
             "placedGlyphId": 222,
             "placedFgColor": 7032338,
             "walkable": true,
@@ -296,14 +296,14 @@
     {
         "id": "wooden_floor_tile",
         "name": "Wooden Floor Tile",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 249,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "floorTile",
+        "placeable": {
+            "placeableType": "floorTile",
             "placedGlyphId": 249,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -317,14 +317,14 @@
     {
         "id": "stone_floor_tile",
         "name": "Stone Floor Tile",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 249,
         "fgColor": 8947848,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "stone",
-        "furniture": {
-            "furnitureType": "floorTile",
+        "placeable": {
+            "placeableType": "floorTile",
             "placedGlyphId": 249,
             "placedFgColor": 8947848,
             "walkable": true,
@@ -338,14 +338,14 @@
     {
         "id": "copper_floor_tile",
         "name": "Copper Floor Tile",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 249,
         "fgColor": 12092211,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "copper",
-        "furniture": {
-            "furnitureType": "floorTile",
+        "placeable": {
+            "placeableType": "floorTile",
             "placedGlyphId": 249,
             "placedFgColor": 12092211,
             "walkable": true,
@@ -359,14 +359,14 @@
     {
         "id": "iron_floor_tile",
         "name": "Iron Floor Tile",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 249,
         "fgColor": 11053176,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "floorTile",
+        "placeable": {
+            "placeableType": "floorTile",
             "placedGlyphId": 249,
             "placedFgColor": 11053176,
             "walkable": true,
@@ -380,14 +380,14 @@
     {
         "id": "gold_floor_tile",
         "name": "Gold Floor Tile",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 249,
         "fgColor": 16766720,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "gold",
-        "furniture": {
-            "furnitureType": "floorTile",
+        "placeable": {
+            "placeableType": "floorTile",
             "placedGlyphId": 249,
             "placedFgColor": 16766720,
             "walkable": true,
@@ -401,14 +401,14 @@
     {
         "id": "crafting_bench",
         "name": "Crafting Bench",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 209,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 209,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -422,14 +422,14 @@
     {
         "id": "furnace",
         "name": "Furnace",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 232,
         "fgColor": 16744448,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "stone",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 232,
             "placedFgColor": 16744448,
             "walkable": true,
@@ -443,14 +443,14 @@
     {
         "id": "anvil",
         "name": "Anvil",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 234,
         "fgColor": 11053176,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 234,
             "placedFgColor": 11053176,
             "walkable": true,
@@ -464,14 +464,14 @@
     {
         "id": "cooking_pot",
         "name": "Cooking Pot",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 232,
         "fgColor": 11162880,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 232,
             "placedFgColor": 11162880,
             "walkable": true,
@@ -485,14 +485,14 @@
     {
         "id": "alchemy_table",
         "name": "Alchemy Table",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 209,
         "fgColor": 8388736,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "iron",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 209,
             "placedFgColor": 8388736,
             "walkable": true,
@@ -506,14 +506,14 @@
     {
         "id": "loom",
         "name": "Loom",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 222,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "craftingStation",
+        "placeable": {
+            "placeableType": "craftingStation",
             "placedGlyphId": 222,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -527,14 +527,14 @@
     {
         "id": "chest",
         "name": "Chest",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 232,
         "fgColor": 9136404,
         "stackable": true,
         "maxStackSize": 5,
         "materialTier": "wood",
-        "furniture": {
-            "furnitureType": "storage",
+        "placeable": {
+            "placeableType": "storage",
             "placedGlyphId": 232,
             "placedFgColor": 9136404,
             "walkable": true,
@@ -548,14 +548,14 @@
     {
         "id": "torch_placeable",
         "name": "Wall Torch",
-        "category": "furniture",
+        "category": "placeable",
         "glyphId": 15,
         "fgColor": 16764006,
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none",
-        "furniture": {
-            "furnitureType": "decoration",
+        "placeable": {
+            "placeableType": "decoration",
             "placedGlyphId": 15,
             "placedFgColor": 16764006,
             "walkable": true,

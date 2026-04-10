@@ -320,7 +320,7 @@ public class GameStateSerializerTests
         Assert.NotNull(first);
         Assert.Empty(first.EquippedItems);
 
-        player.Equipment.Weapon = new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("short_sword"), StackCount = 1 };
+        player.Equipment.Hand = new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("short_sword"), StackCount = 1 };
 
         var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
         Assert.NotNull(second);

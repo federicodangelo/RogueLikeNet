@@ -8,6 +8,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 1,
@@ -23,6 +24,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "stone",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 2,
@@ -38,6 +40,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "copper",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 3,
@@ -53,6 +56,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 4,
@@ -68,6 +72,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "steel",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 5,
@@ -83,6 +88,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "gold",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "pickaxe",
             "miningPower": 3,
@@ -98,6 +104,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "axe",
             "miningPower": 1,
@@ -113,6 +120,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "stone",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "axe",
             "miningPower": 2,
@@ -128,6 +136,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "axe",
             "miningPower": 4,
@@ -143,6 +152,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "shovel",
             "miningPower": 1,
@@ -158,6 +168,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "shovel",
             "miningPower": 4,
@@ -173,6 +184,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "hoe",
             "miningPower": 1,
@@ -188,6 +200,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "hoe",
             "miningPower": 4,
@@ -203,6 +216,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "hammer",
             "miningPower": 1,
@@ -218,6 +232,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "hammer",
             "miningPower": 4,
@@ -233,6 +248,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "iron",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "knife",
             "miningPower": 1,
@@ -248,6 +264,7 @@
         "stackable": false,
         "maxStackSize": 1,
         "materialTier": "wood",
+        "equipSlot": "hand",
         "tool": {
             "toolType": "fishingRod",
             "miningPower": 0,

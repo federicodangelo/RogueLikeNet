@@ -2,6 +2,21 @@ using System.Text.Json.Serialization;
 
 namespace RogueLikeNet.Core.Data;
 
+public enum CraftingStationType
+{
+    Hand = 0,
+    Workbench = 1,
+    Forge = 2,
+    Anvil = 3,
+    Furnace = 4,
+    CookingPot = 5,
+    Alchemy = 6,
+    Loom = 7,
+    TanningRack = 8,
+    StoneCutter = 9,
+    Sawmill = 10,
+}
+
 /// <summary>
 /// Defines a crafting recipe. Loaded from JSON data files.
 /// </summary>

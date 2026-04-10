@@ -2,6 +2,50 @@ using System.Text.Json.Serialization;
 
 namespace RogueLikeNet.Core.Data;
 
+public enum ItemCategory
+{
+    Weapon = 0,
+    Armor = 1,
+    Tool = 2,
+    Food = 3,
+    Potion = 4,
+    Material = 5,
+    Seed = 6,
+    Block = 7,
+    Placeable = 8,
+    Accessory = 9,
+    Ammo = 10,
+    Magic = 11,
+    Misc = 12,
+}
+
+public enum MaterialTier
+{
+    None = 0,
+    Wood = 1,
+    Stone = 2,
+    Copper = 3,
+    Iron = 4,
+    Steel = 5,
+    Gold = 6,
+    Mithril = 7,
+    Adamantite = 8,
+}
+
+public enum EquipSlot
+{
+    Head = 0,
+    Chest = 1,
+    Legs = 2,
+    Boots = 3,
+    Gloves = 4,
+    Hand = 5,
+    Offhand = 6,
+    Ring = 7,
+    Necklace = 8,
+    Belt = 9,
+}
+
 /// <summary>
 /// Defines a single item type. Loaded from JSON data files.
 /// Category-specific data is stored in the optional sub-structs.
@@ -24,7 +68,7 @@ public sealed class ItemDefinition : BaseDefinition
     public PotionData? Potion { get; set; }
     public BlockData? Block { get; set; }
     public SeedData? Seed { get; set; }
-    public FurnitureData? Furniture { get; set; }
+    public PlaceableData? Placeable { get; set; }
     public AmmoData? Ammo { get; set; }
 
     // Computed convenience properties for backward compatibility
@@ -36,7 +80,7 @@ public sealed class ItemDefinition : BaseDefinition
     public int HealthRestore => Food?.HealthRestore ?? Potion?.HealthRestore ?? 0;
 
     /// <summary>True for items that can be placed on tiles (furniture, blocks).</summary>
-    public bool IsPlaceable => Category is ItemCategory.Furniture or ItemCategory.Block;
+    public bool IsPlaceable => Category is ItemCategory.Placeable or ItemCategory.Block;
 
     /// <summary>True for items that can be equipped.</summary>
     public bool IsEquippable => Category is ItemCategory.Weapon or ItemCategory.Armor or ItemCategory.Tool or ItemCategory.Accessory;
@@ -52,7 +96,8 @@ public sealed class ItemDefinition : BaseDefinition
         ItemCategory.Armor => "Armor",
         ItemCategory.Potion => "Potions",
         ItemCategory.Material => "Resources",
-        ItemCategory.Furniture or ItemCategory.Block => "Building",
+        ItemCategory.Placeable => "Placeables",
+        ItemCategory.Block => "Blocks",
         ItemCategory.Tool => "Tools",
         ItemCategory.Food => "Food",
         ItemCategory.Misc => "Other",
@@ -66,10 +111,12 @@ public sealed class ItemDefinition : BaseDefinition
     public static string CategoryTag(ItemCategory category) => category switch
     {
         ItemCategory.Weapon => "[Wpn]",
-        ItemCategory.Armor or ItemCategory.Accessory => "[Arm]",
+        ItemCategory.Armor => "[Arm]",
+        ItemCategory.Accessory => "[Acc]",
         ItemCategory.Potion => "[Pot]",
         ItemCategory.Material => "[Res]",
-        ItemCategory.Furniture or ItemCategory.Block => "[Bld]",
+        ItemCategory.Placeable => "[Plc]",
+        ItemCategory.Block => "[Blk]",
         ItemCategory.Tool => "[Tol]",
         ItemCategory.Food => "[Fod]",
         ItemCategory.Misc => "[Gld]",
@@ -78,6 +125,16 @@ public sealed class ItemDefinition : BaseDefinition
         ItemCategory.Magic => "[Mag]",
         _ => "     ",
     };
+}
+
+public enum DamageType
+{
+    Physical = 0,
+    Fire = 1,
+    Ice = 2,
+    Lightning = 3,
+    Poison = 4,
+    Magic = 5,
 }
 
 public sealed class WeaponData
@@ -92,6 +149,18 @@ public sealed class WeaponData
 public sealed class ArmorData
 {
     public int BaseDefense { get; set; }
+}
+
+public enum ToolType
+{
+    None = 0,
+    Pickaxe = 1,
+    Axe = 2,
+    Shovel = 3,
+    Hoe = 4,
+    Hammer = 5,
+    Knife = 6,
+    FishingRod = 7,
 }
 
 public sealed class ToolData
@@ -122,7 +191,7 @@ public sealed class PotionData
 public sealed class BlockData
 {
     public int Hardness { get; set; }
-    public string ToolRequired { get; set; } = "none";
+    public ToolType ToolRequired { get; set; } = ToolType.None;
 }
 
 public sealed class SeedData
@@ -133,9 +202,30 @@ public sealed class SeedData
     public int HarvestMax { get; set; } = 1;
 }
 
-public sealed class FurnitureData
+public enum PlaceableType
 {
-    public FurnitureType FurnitureType { get; set; }
+    Decoration = 0,
+    CraftingStation = 1,
+    Storage = 2,
+    Lighting = 3,
+    Door = 4,
+    Wall = 5,
+    FloorTile = 6,
+    Window = 7,
+    Table = 8,
+    Chair = 9,
+    Bed = 10,
+}
+
+public enum PlaceableStateType
+{
+    None = 0,
+    OpenClose = 1,
+}
+
+public sealed class PlaceableData
+{
+    public PlaceableType PlaceableType { get; set; }
     public int PlacedGlyphId { get; set; }
     public int PlacedFgColor { get; set; }
     public bool Walkable { get; set; } = true;

@@ -55,7 +55,7 @@ public static class LootGenerator
                     ? def.Category switch
                     {
                         ItemCategory.Misc => 10 + rng.Next(50),
-                        ItemCategory.Material or ItemCategory.Block or ItemCategory.Furniture => 1,
+                        ItemCategory.Material or ItemCategory.Block or ItemCategory.Placeable => 1,
                         _ => 1,
                     }
                     : 1,

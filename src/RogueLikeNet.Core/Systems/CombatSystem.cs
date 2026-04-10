@@ -212,7 +212,7 @@ public class CombatSystem
         if (requiredTool == ToolType.None) return 0;
 
         // Check weapon slot for a matching tool
-        var weaponItem = player.Equipment.Weapon;
+        var weaponItem = player.Equipment.Hand;
         if (weaponItem.IsNone) return 0;
 
         var itemDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);

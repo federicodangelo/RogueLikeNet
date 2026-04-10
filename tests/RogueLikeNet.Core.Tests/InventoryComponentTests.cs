@@ -30,7 +30,7 @@ public class InventoryComponentTests
     [Fact]
     public void Equipment_HasWeapon_ReturnsFalseWhenNull()
     {
-        var equip = new Equipment { Weapon = ItemData.None };
+        var equip = new Equipment { Hand = ItemData.None };
         Assert.False(equip.HasWeapon);
     }
 
@@ -44,7 +44,7 @@ public class InventoryComponentTests
     [Fact]
     public void Equipment_HasWeapon_ReturnsTrueWhenSet()
     {
-        var equip = new Equipment { Weapon = new ItemData { ItemTypeId = 1, StackCount = 1 } };
+        var equip = new Equipment { Hand = new ItemData { ItemTypeId = 1, StackCount = 1 } };
         Assert.True(equip.HasWeapon);
     }
 

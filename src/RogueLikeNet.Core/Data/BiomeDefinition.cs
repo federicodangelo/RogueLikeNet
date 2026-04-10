@@ -3,6 +3,20 @@ using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Data;
 
+public enum BiomeType
+{
+    Stone,
+    Lava,
+    Ice,
+    Forest,
+    Arcane,
+    Crypt,
+    Sewer,
+    Fungal,
+    Ruined,
+    Infernal,
+}
+
 /// <summary>
 /// Defines a biome with its terrain, decorations, enemies, and liquid features.
 /// Loaded from JSON data files.

@@ -213,7 +213,7 @@ public sealed class InventoryRenderer
             targetSlot = (int)regSlot;
         else
             targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
-                ? (int)EquipSlot.Weapon : (int)EquipSlot.Chest;
+                ? (int)EquipSlot.Hand : (int)EquipSlot.Chest;
         var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
 
         var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
