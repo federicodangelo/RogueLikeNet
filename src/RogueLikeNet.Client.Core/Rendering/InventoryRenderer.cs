@@ -38,7 +38,7 @@ public sealed class InventoryRenderer
         AsciiDraw.DrawChar(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
 
         int col = hudStartCol + 1;
-        int innerW = AsciiDraw.HudColumns - 2;
+        int innerW = AsciiDraw.HudColumns - 1;
 
         var hud = state.PlayerState;
         if (hud == null)

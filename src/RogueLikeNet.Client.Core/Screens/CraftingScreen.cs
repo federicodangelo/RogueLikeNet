@@ -184,7 +184,7 @@ public sealed class CraftingScreen : IScreen
         AsciiDraw.DrawChar(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
 
         int col = hudStartCol + 1;
-        int innerW = AsciiDraw.HudColumns - 2;
+        int innerW = AsciiDraw.HudColumns - 1;
 
         var hud = _ctx.GameState.PlayerState;
         if (hud == null)

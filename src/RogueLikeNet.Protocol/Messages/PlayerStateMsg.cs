@@ -20,6 +20,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(12)] public long PlayerEntityId { get; set; }
     [Key(13)] public int Hunger { get; set; }
     [Key(14)] public int MaxHunger { get; set; }
+    [Key(15)] public int Thirst { get; set; }
+    [Key(16)] public int MaxThirst { get; set; }
 
     public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
     {
@@ -40,6 +42,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (a.PlayerEntityId != b.PlayerEntityId) return false;
         if (a.Hunger != b.Hunger) return false;
         if (a.MaxHunger != b.MaxHunger) return false;
+        if (a.Thirst != b.Thirst) return false;
+        if (a.MaxThirst != b.MaxThirst) return false;
 
         return true;
     }

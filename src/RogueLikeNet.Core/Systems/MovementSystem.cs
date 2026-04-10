@@ -40,7 +40,7 @@ public class MovementSystem
                     if (newStairsPosition.Z >= 0 && newStairsPosition.Z <= 255 && map.IsWalkable(newStairsPosition))
                     {
                         player.Position = newStairsPosition;
-                        delay.Current = delay.Interval;
+                        delay.Current = GetEffectiveDelay(ref player);
                     }
                 }
                 input.ActionType = ActionTypes.None;
@@ -66,7 +66,7 @@ public class MovementSystem
                 {
                     map.OpenDoor(newPosition);
                     input.ActionType = ActionTypes.None;
-                    delay.Current = delay.Interval;
+                    delay.Current = GetEffectiveDelay(ref player);
                     continue;
                 }
             }
@@ -86,7 +86,31 @@ public class MovementSystem
 
             player.Position = newPosition;
             input.ActionType = ActionTypes.None;
-            delay.Current = delay.Interval;
+            delay.Current = GetEffectiveDelay(ref player);
         }
+    }
+
+    /// <summary>
+    /// Computes the effective move delay, applying any speed multiplier from active effects.
+    /// A speed multiplier of 100 = normal, 50 = half speed (double delay), etc.
+    /// </summary>
+    private static int GetEffectiveDelay(ref Entities.PlayerEntity player)
+    {
+        int baseDelay = player.MoveDelay.Interval;
+        int speedMult = player.ActiveEffects.CombinedSpeedMultiplierBase100;
+
+        if (speedMult < 100 && speedMult > 0)
+        {
+            // Slowdown: e.g. 50% speed means double delay, with a value of 1 at least
+            return Math.Max((baseDelay + 1) * 100 / speedMult - 1, 1);
+        }
+
+        if (speedMult > 100)
+        {
+            // Speedup: e.g. 200% speed means half delay, with a value of at least 0
+            return Math.Max(baseDelay * 100 / speedMult, 0);
+        }
+
+        return baseDelay;
     }
 }

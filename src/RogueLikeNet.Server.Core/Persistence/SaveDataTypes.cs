@@ -46,4 +46,6 @@ public class PlayerSaveData
     public string QuickSlotsJson { get; set; } = "{}";
     public int Hunger { get; set; } = 100;
     public int MaxHunger { get; set; } = 100;
+    public int Thirst { get; set; } = 100;
+    public int MaxThirst { get; set; } = 100;
 }

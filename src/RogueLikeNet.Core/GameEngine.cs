@@ -34,6 +34,7 @@ public class GameEngine : IDisposable
     private readonly CraftingSystem _craftingSystem;
     private readonly BuildingSystem _buildingSystem;
     private readonly SurvivalSystem _survivalSystem;
+    private readonly ActiveEffectsSystem _activeEffectsSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private Position? _generatorSpawnHint;
@@ -74,6 +75,7 @@ public class GameEngine : IDisposable
         _craftingSystem = new CraftingSystem();
         _buildingSystem = new BuildingSystem();
         _survivalSystem = new SurvivalSystem();
+        _activeEffectsSystem = new ActiveEffectsSystem();
         _worldRng = new SeededRandom(worldSeed);
     }
 
@@ -303,13 +305,14 @@ public class GameEngine : IDisposable
     /// </summary>
     public void Tick()
     {
+        _survivalSystem.Update(_worldMap, DebugInvulnerable);
+        _activeEffectsSystem.Update(_worldMap);
         _movementSystem.Update(_worldMap, DebugNoCollision, DebugMaxSpeed);
         _combatSystem.Update(_worldMap, DebugInvulnerable);
         _aiSystem.Update(_worldMap);
         _inventorySystem.Update(_worldMap, this);
         _craftingSystem.Update(_worldMap);
         _buildingSystem.Update(_worldMap);
-        _survivalSystem.Update(_worldMap, DebugInvulnerable);
         _skillSystem.Update(_worldMap);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
@@ -515,6 +518,8 @@ public class GameEngine : IDisposable
             Experience = player.ClassData.Experience,
             Hunger = player.Survival.Hunger,
             MaxHunger = player.Survival.MaxHunger,
+            Thirst = player.Survival.Thirst,
+            MaxThirst = player.Survival.MaxThirst,
             InventoryCount = player.Inventory.Items.Count,
             InventoryCapacity = player.Inventory.Capacity
         };

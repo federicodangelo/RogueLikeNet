@@ -21,6 +21,7 @@ public struct PlayerEntity
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
     public Survival Survival;
+    public ActiveEffects ActiveEffects;
     public bool IsDead => !Health.IsAlive;
 
     public PlayerEntity()

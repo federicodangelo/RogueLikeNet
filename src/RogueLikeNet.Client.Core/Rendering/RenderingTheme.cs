@@ -27,6 +27,11 @@ public static class RenderingTheme
     public static readonly Color4 HungerWarn = new(220, 180, 50, 255);
     public static readonly Color4 HungerCritical = new(255, 60, 60, 255);
 
+    // Thirst bar
+    public static readonly Color4 ThirstFill = new(50, 150, 220, 255);
+    public static readonly Color4 ThirstWarn = new(100, 180, 220, 255);
+    public static readonly Color4 ThirstCritical = new(255, 60, 60, 255);
+
     // Stats / Level
     public static readonly Color4 Stats = new(200, 200, 200, 255);
     public static readonly Color4 Level = new(255, 255, 100, 255);

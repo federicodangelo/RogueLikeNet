@@ -33,10 +33,10 @@ public sealed class HudRenderer
     {
         var layout = new HudLayout();
         layout.AddSection(new HudSection { Name = "HP", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
-        layout.AddSection(new HudSection { Name = "Hunger", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
+        layout.AddSection(new HudSection { Name = "Survival", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Skills", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
-        layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
         layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 5 });
@@ -60,10 +60,10 @@ public sealed class HudRenderer
         Dc(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
 
         int col = hudStartCol + 1;
-        int innerW = AsciiDraw.HudColumns - 2;
+        int innerW = AsciiDraw.HudColumns - 1;
 
-        var hud = state.PlayerState;
-        if (hud == null)
+        var playerState = state.PlayerState;
+        if (playerState == null)
         {
             Ds(r, col, 1, "No data", RenderingTheme.Dim);
             return;
@@ -84,37 +84,53 @@ public sealed class HudRenderer
                     row++;
                     if (row >= maxRow) break;
                     int barW = innerW;
-                    float hpRatio = hud.MaxHealth > 0 ? (float)hud.Health / hud.MaxHealth : 0;
+                    float hpRatio = playerState.MaxHealth > 0 ? (float)playerState.Health / playerState.MaxHealth : 0;
                     int filled = (int)(barW * hpRatio);
                     for (int i = 0; i < barW; i++)
                         Dc(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? RenderingTheme.HpFill : RenderingTheme.HpBar);
                     row++;
                     if (row >= maxRow) break;
-                    string hpText = $"{hud.Health}/{hud.MaxHealth}";
+                    string hpText = $"{playerState.Health}/{playerState.MaxHealth}";
                     Ds(r, col, row, hpText, RenderingTheme.HpText);
                     break;
 
-                case "Hunger":
+                case "Survival":
                     if (row >= maxRow) break;
-                    int hungerBarW = innerW;
-                    float hungerRatio = hud.MaxHunger > 0 ? (float)hud.Hunger / hud.MaxHunger : 0;
+
+                    // Hunger bar on the left
+                    int hungerBarW = innerW / 2;
+                    int hungerCol = col;
+                    float hungerRatio = playerState.MaxHunger > 0 ? (float)playerState.Hunger / playerState.MaxHunger : 0;
                     int hungerFilled = (int)(hungerBarW * hungerRatio);
                     var hungerFillColor = hungerRatio > 0.5f ? RenderingTheme.HungerFill
                         : hungerRatio > 0.2f ? RenderingTheme.HungerWarn : RenderingTheme.HungerCritical;
                     for (int i = 0; i < hungerBarW; i++)
-                        Dc(r, col + i, row, i < hungerFilled ? '\u2588' : '\u2591', i < hungerFilled ? hungerFillColor : RenderingTheme.HpBar);
+                        Dc(r, hungerCol + i, row, i < hungerFilled ? '\u2588' : '\u2591', i < hungerFilled ? hungerFillColor : RenderingTheme.HpBar);
+
+                    // Thirst bar on the right
+                    int thirstBarW = innerW / 2;
+                    int thirstCol = col + innerW / 2 + 1;
+                    float thirstRatio = playerState.MaxThirst > 0 ? (float)playerState.Thirst / playerState.MaxThirst : 0;
+                    int thirstFilled = (int)(thirstBarW * thirstRatio);
+                    var thirstFillColor = thirstRatio > 0.5f ? RenderingTheme.ThirstFill
+                        : thirstRatio > 0.2f ? RenderingTheme.ThirstWarn : RenderingTheme.ThirstCritical;
+                    for (int i = 0; i < thirstBarW; i++)
+                        Dc(r, thirstCol + i, row, i < thirstFilled ? '\u2588' : '\u2591', i < thirstFilled ? thirstFillColor : RenderingTheme.HpBar);
+
                     row++;
+
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"Food {hud.Hunger}/{hud.MaxHunger}", hungerFillColor);
+                    Ds(r, hungerCol, row, $"Food {playerState.Hunger}/{playerState.MaxHunger}", hungerFillColor);
+                    Ds(r, thirstCol, row, $"Water {playerState.Thirst}/{playerState.MaxThirst}", thirstFillColor);
                     break;
 
                 case "Stats":
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"ATK: {hud.Attack}", RenderingTheme.Stats); row++;
+                    Ds(r, col, row, $"ATK: {playerState.Attack}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"DEF: {hud.Defense}", RenderingTheme.Stats); row++;
+                    Ds(r, col, row, $"DEF: {playerState.Defense}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"Lv:  {hud.Level}", RenderingTheme.Level);
+                    Ds(r, col, row, $"Lv:  {playerState.Level}", RenderingTheme.Level);
                     break;
 
                 case "Skills":
@@ -122,13 +138,13 @@ public sealed class HudRenderer
                     Ds(r, col, row, "Skills", RenderingTheme.Title); row++;
                     if (row >= maxRow) break;
                     Sep(r, col, row, innerW); row++;
-                    for (int i = 0; i < Math.Min(hud.Skills.Length, 2) && row < maxRow; i++)
+                    for (int i = 0; i < Math.Min(playerState.Skills.Length, 2) && row < maxRow; i++)
                     {
-                        if (hud.Skills[i].Id == 0) continue;
+                        if (playerState.Skills[i].Id == 0) continue;
                         string key = i == 0 ? "Q" : "E";
-                        string name = !string.IsNullOrEmpty(hud.Skills[i].Name)
-                            ? hud.Skills[i].Name : $"Skill {i + 1}";
-                        int cd = hud.Skills[i].Cooldown;
+                        string name = !string.IsNullOrEmpty(playerState.Skills[i].Name)
+                            ? playerState.Skills[i].Name : $"Skill {i + 1}";
+                        int cd = playerState.Skills[i].Cooldown;
                         string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
                         Ds(r, col, row, text, cd > 0 ? RenderingTheme.SkillCd : RenderingTheme.SkillReady);
                         row++;
@@ -141,38 +157,39 @@ public sealed class HudRenderer
                     if (row >= maxRow) break;
                     Sep(r, col, row, innerW); row++;
                     {
-                        // Compact view: show all equipped items in a single summary line
-                        var parts = new System.Text.StringBuilder();
-                        foreach (var eq in hud.EquippedItems)
-                        {
-                            if (parts.Length > 0) parts.Append(' ');
-                            string slotPrefix = ((EquipSlot)eq.EquipSlot) switch
-                            {
-                                EquipSlot.Hand => "W",
-                                EquipSlot.Chest => "A",
-                                EquipSlot.Head => "H",
-                                EquipSlot.Legs => "L",
-                                EquipSlot.Boots => "B",
-                                EquipSlot.Gloves => "G",
-                                EquipSlot.Offhand => "O",
-                                EquipSlot.Ring => "R",
-                                EquipSlot.Necklace => "N",
-                                EquipSlot.Belt => "T",
-                                _ => "?"
-                            };
-                            parts.Append($"{slotPrefix}:{AsciiDraw.ItemDisplayName(eq.ItemTypeId)}");
-                        }
+                        // Compact view: show only item equipped in hand in one line, and amount of other equipped items, e.g. "W:Sword A:3 more" in the other line.
+                        // User can view details of all equipped items in the inventory screen, and this keeps the HUD cleaner.
+                        var handItem = playerState.EquippedItems.FirstOrDefault(eq => eq.EquipSlot == (int)EquipSlot.Hand);
+
                         if (row < maxRow)
                         {
-                            string equipText = parts.Length > 0 ? parts.ToString() : "---";
-                            if (equipText.Length > innerW) equipText = equipText[..innerW];
-                            Ds(r, col, row, equipText, RenderingTheme.Item);
+                            if (handItem != null)
+                            {
+                                string name = AsciiDraw.ItemDisplayName(handItem.ItemTypeId);
+                                int stack = handItem.StackCount;
+                                string stackStr = stack > 1 ? $"x{stack}" : "";
+
+                                Ds(r, col, row, $"HAND: {name}{stackStr}", RenderingTheme.Item);
+                            }
+                            else
+                            {
+                                Ds(r, col, row, "HAND: ---", RenderingTheme.Dim);
+                            }
+                            row++;
+                        }
+
+                        if (row < maxRow)
+                        {
+                            // Count other equipped items (except hand) and show as "A:3 more"
+                            int otherEquippedCount = playerState.EquippedItems.Count(eq => eq.EquipSlot != (int)EquipSlot.Hand);
+                            Ds(r, col, row, $"OTHER: {otherEquippedCount} item{(otherEquippedCount == 1 ? "" : "s")}", RenderingTheme.Item);
+                            row++;
                         }
                     }
                     break;
 
                 case "QuickSlots":
-                    RenderQuickSlotsSection(r, col, innerW, row, maxRow, hud, _layout);
+                    RenderQuickSlotsSection(r, col, innerW, row, maxRow, playerState, _layout);
                     break;
 
                 case "FloorItems":

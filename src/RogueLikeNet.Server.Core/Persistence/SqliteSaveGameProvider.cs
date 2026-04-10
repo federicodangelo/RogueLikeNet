@@ -77,7 +77,9 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 SkillsJson TEXT NOT NULL DEFAULT '{}',
                 QuickSlotsJson TEXT NOT NULL DEFAULT '{}',
                 Hunger INTEGER NOT NULL DEFAULT 100,
-                MaxHunger INTEGER NOT NULL DEFAULT 100
+                MaxHunger INTEGER NOT NULL DEFAULT 100,
+                Thirst INTEGER NOT NULL DEFAULT 100,
+                MaxThirst INTEGER NOT NULL DEFAULT 100
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_Players_Slot_Name ON Players(SlotId, PlayerName);
             """;
@@ -86,6 +88,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         // Migrate: add Hunger column to older databases
         MigrateAddColumn("Players", "Hunger", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "MaxHunger", "INTEGER NOT NULL DEFAULT 100");
+        MigrateAddColumn("Players", "Thirst", "INTEGER NOT NULL DEFAULT 100");
+        MigrateAddColumn("Players", "MaxThirst", "INTEGER NOT NULL DEFAULT 100");
     }
 
     private void MigrateAddColumn(string table, string column, string columnDef)
@@ -255,15 +259,16 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson, Hunger, MaxHunger)
-                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots, $hunger, $maxHunger)
+                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst)
+                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst)
                 ON CONFLICT(SlotId, PlayerName) DO UPDATE SET
                     ClassId=$classId, Level=$level, Experience=$exp,
                     PositionX=$px, PositionY=$py, PositionZ=$pz,
                     HealthCurrent=$hpCur, HealthMax=$hpMax,
                     Attack=$atk, Defense=$def, Speed=$spd,
                     InventoryJson=$inv, EquipmentJson=$equip, SkillsJson=$skills, QuickSlotsJson=$quickSlots,
-                    Hunger=$hunger, MaxHunger=$maxHunger
+                    Hunger=$hunger, MaxHunger=$maxHunger,
+                    Thirst=$thirst, MaxThirst=$maxThirst
                 """;
             cmd.Parameters.AddWithValue("$slotId", slotId);
             cmd.Parameters.AddWithValue("$name", p.PlayerName);
@@ -284,6 +289,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             cmd.Parameters.AddWithValue("$quickSlots", p.QuickSlotsJson);
             cmd.Parameters.AddWithValue("$hunger", p.Hunger);
             cmd.Parameters.AddWithValue("$maxHunger", p.MaxHunger);
+            cmd.Parameters.AddWithValue("$thirst", p.Thirst);
+            cmd.Parameters.AddWithValue("$maxThirst", p.MaxThirst);
             cmd.ExecuteNonQuery();
         }
         transaction.Commit();
@@ -332,16 +339,13 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             EquipmentJson = reader.GetString(reader.GetOrdinal("EquipmentJson")),
             SkillsJson = reader.GetString(reader.GetOrdinal("SkillsJson")),
             QuickSlotsJson = reader.GetString(reader.GetOrdinal("QuickSlotsJson")),
-        };
-        // Hunger / MaxHunger column may not exist in older save files
-        try
-        {
-            data.Hunger = reader.GetInt32(reader.GetOrdinal("Hunger"));
-            data.MaxHunger = reader.GetInt32(reader.GetOrdinal("MaxHunger"));
-        }
-        catch { }
-        return data;
+            Hunger = reader.GetInt32(reader.GetOrdinal("Hunger")),
+            MaxHunger = reader.GetInt32(reader.GetOrdinal("MaxHunger")),
+            Thirst = reader.GetInt32(reader.GetOrdinal("Thirst")),
+            MaxThirst = reader.GetInt32(reader.GetOrdinal("MaxThirst")),
 
+        };
+        return data;
     }
 
     private void Execute(string sql, params (string name, object value)[] parameters)

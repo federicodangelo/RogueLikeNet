@@ -44,6 +44,8 @@ public static class PlayerSerializer
             Speed = player.CombatStats.Speed,
             Hunger = player.Survival.Hunger,
             MaxHunger = player.Survival.MaxHunger,
+            Thirst = player.Survival.Thirst,
+            MaxThirst = player.Survival.MaxThirst,
         };
 
         // Inventory
@@ -115,6 +117,8 @@ public static class PlayerSerializer
         // Restore survival
         player.Survival.Hunger = data.Hunger;
         player.Survival.MaxHunger = data.MaxHunger;
+        player.Survival.Thirst = data.Thirst;
+        player.Survival.MaxThirst = data.MaxThirst;
 
         // Restore inventory
         if (!string.IsNullOrEmpty(data.InventoryJson) && data.InventoryJson != "[]")

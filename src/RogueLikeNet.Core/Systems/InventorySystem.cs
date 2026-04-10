@@ -127,6 +127,9 @@ public class InventorySystem
         int hungerRestore = newDef.Food?.HungerRestore ?? 0;
         if (hungerRestore > 0)
             player.Survival.Hunger = Math.Min(player.Survival.MaxHunger, player.Survival.Hunger + hungerRestore);
+        int thirstRestore = newDef.Food?.ThirstRestore ?? 0;
+        if (thirstRestore > 0)
+            player.Survival.Thirst = Math.Min(player.Survival.MaxThirst, player.Survival.Thirst + thirstRestore);
     }
 
     private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
