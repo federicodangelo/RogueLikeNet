@@ -132,22 +132,6 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void GetPlayerStateData_ReturnsSkillData()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
-        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-
-        var hud = engine.GetPlayerStateData(player);
-        Assert.NotNull(hud);
-        Assert.Equal(4, hud!.Skills.Length);
-        Assert.Equal(SkillDefinitions.PowerStrike, hud.Skills[0].Id);
-        Assert.Equal(SkillDefinitions.ShieldBash, hud.Skills[1].Id);
-    }
-
-    [Fact]
     public void GetPlayerStateData_ReturnsClassInfo()
     {
         using var engine = new GameEngine(42, _gen);
@@ -226,22 +210,6 @@ public class GameEngineTests
         var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
         int count = chunk.GroundItems.ToArray().Count(gi => gi.Position.X == sx && gi.Position.Y == sy && gi.Item.ItemTypeId == ItemId("short_sword"));
         Assert.Equal(1, count);
-    }
-
-    [Fact]
-    public void GetPlayerStateData_SkillNames_MatchSkillDefinitions()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Mage);
-        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-
-        var hud = engine.GetPlayerStateData(player);
-        Assert.NotNull(hud);
-        Assert.Equal(4, hud!.Skills.Length);
-        Assert.Equal(SkillDefinitions.GetName(hud.Skills[0].Id), hud.Skills[0].Name);
-        Assert.Equal(SkillDefinitions.GetName(hud.Skills[1].Id), hud.Skills[1].Name);
     }
 
     [Fact]

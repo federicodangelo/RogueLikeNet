@@ -3,7 +3,7 @@ using RogueLikeNet.Core.Components;
 namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
-/// Class-specific stat bonuses and starting skill loadouts.
+/// Class-specific stat bonuses
 /// </summary>
 public static class ClassDefinitions
 {
@@ -27,7 +27,7 @@ public static class ClassDefinitions
     public static readonly ClassDefinition[] All =
     [
         // Warrior - sword and shield
-        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0), SkillDefinitions.PowerStrike, SkillDefinitions.ShieldBash,
+        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0),
         [
             @"    O/  ",
             @"   /[+] ",
@@ -36,7 +36,7 @@ public static class ClassDefinitions
             @"  _/ \_ ",
         ]),
         // Rogue - dual daggers
-        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4), SkillDefinitions.Backstab, SkillDefinitions.Dodge,
+        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4),
         [
             @"   _O_  ",
             @"  /- -\ ",
@@ -45,7 +45,7 @@ public static class ClassDefinitions
             @"  _/ \_ ",
         ]),
         // Mage - staff and spell
-        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2), SkillDefinitions.Fireball, SkillDefinitions.Heal,
+        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2),
         [
             @"   \O/  ",
             @"  .*|*. ",
@@ -54,7 +54,7 @@ public static class ClassDefinitions
             @"  _/ \_ ",
         ]),
         // Ranger - bow
-        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2), SkillDefinitions.PowerShot, SkillDefinitions.Trap,
+        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2),
         [
             @"    O}  ",
             @"   )|}  ",
@@ -87,6 +87,4 @@ public readonly record struct ClassStats(int Attack, int Defense, int Health, in
         new(a.Attack + b.Attack, a.Defense + b.Defense, a.Health + b.Health, a.Speed + b.Speed);
 };
 
-public readonly record struct ClassDefinition(
-    int ClassId, string Name, ClassStats StartingStats, int StartingSkill0, int StartingSkill1, string[] AsciiArt
-);
+public readonly record struct ClassDefinition(int ClassId, string Name, ClassStats StartingStats, string[] AsciiArt);

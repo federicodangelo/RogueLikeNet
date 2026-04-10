@@ -42,8 +42,7 @@ public sealed class MenuRenderer
         "F        Attack nearest",
         "G        Pick up item",
         "1-4      Use quick slot",
-        "Q        Use skill 1",
-        "E        Use skill 2",
+        "E        Interact",
         "X        Drop item",
         "I        Inventory",
         "Tab      Switch section",
@@ -160,12 +159,6 @@ public sealed class MenuRenderer
             AsciiDraw.DrawStatLine(r, cx + 2, statsY + 1, "DEF", stats.Defense, cardW - 4);
             AsciiDraw.DrawStatLine(r, cx + 2, statsY + 2, "HP", stats.Health, cardW - 4);
             AsciiDraw.DrawStatLine(r, cx + 2, statsY + 3, "SPD", stats.Speed, cardW - 4);
-
-            int skillY = statsY + 5;
-            var skill0 = SkillDefinitions.Get(classDef.StartingSkill0);
-            var skill1 = SkillDefinitions.Get(classDef.StartingSkill1);
-            AsciiDraw.DrawString(r, cx + 2, skillY, skill0.Name, RenderingTheme.SkillName);
-            AsciiDraw.DrawString(r, cx + 2, skillY + 1, skill1.Name, RenderingTheme.SkillName);
 
             if (selected)
             {

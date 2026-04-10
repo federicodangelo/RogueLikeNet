@@ -75,7 +75,15 @@ public static class DataLoader
             biomes = DeserializeFile<BiomeDefinition[]>(biomesFile);
         }
 
-        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? []);
+        // Load animals
+        var animalsFile = Path.Combine(dataDir, "entities", "animals.json");
+        var animals = Array.Empty<AnimalDefinition>();
+        if (File.Exists(animalsFile))
+        {
+            animals = DeserializeFile<AnimalDefinition[]>(animalsFile);
+        }
+
+        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
     }
 
 
@@ -121,10 +129,13 @@ public static class DataLoader
         // Load biomes
         var biomes = DeserializeResource<BiomeDefinition[]>(assembly, "data/biomes/biomes.json");
 
-        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? []);
+        // Load animals
+        var animals = DeserializeResource<AnimalDefinition[]>(assembly, "data/entities/animals.json");
+
+        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
     }
 
-    private static GameData Load(IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes)
+    private static GameData Load(IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals)
     {
         var data = new GameData();
 
@@ -133,6 +144,7 @@ public static class DataLoader
         data.ResourceNodes.Register(nodes);
         data.Npcs.Register(npcs);
         data.Biomes.Register(biomes);
+        data.Animals.Register(animals);
 
         Validate(data);
 
@@ -147,7 +159,8 @@ public static class DataLoader
         string? recipesJson = null,
         string? resourceNodesJson = null,
         string? monstersJson = null,
-        string? biomesJson = null)
+        string? biomesJson = null,
+        string? animalsJson = null)
     {
         var data = new GameData();
 
@@ -184,6 +197,13 @@ public static class DataLoader
             var biomes = JsonSerializer.Deserialize<BiomeDefinition[]>(biomesJson, JsonOptions);
             if (biomes != null)
                 data.Biomes.Register(biomes);
+        }
+
+        if (animalsJson != null)
+        {
+            var animals = JsonSerializer.Deserialize<AnimalDefinition[]>(animalsJson, JsonOptions);
+            if (animals != null)
+                data.Animals.Register(animals);
         }
 
         return data;
@@ -245,6 +265,15 @@ public static class DataLoader
                         errors.Add($"Biome '{biome.Id}': resource node '{rw.NodeId}' not found.");
                 }
             }
+        }
+
+        // Validate animals
+        foreach (var animal in data.Animals.All)
+        {
+            if (!string.IsNullOrEmpty(animal.ProduceItemId) && data.Items.Get(animal.ProduceItemId) == null)
+                errors.Add($"Animal '{animal.Id}': produce item '{animal.ProduceItemId}' not found.");
+            if (!string.IsNullOrEmpty(animal.FeedItemId) && data.Items.Get(animal.FeedItemId) == null)
+                errors.Add($"Animal '{animal.Id}': feed item '{animal.FeedItemId}' not found.");
         }
 
         // Validate seed harvest items

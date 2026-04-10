@@ -1,0 +1,38 @@
+[
+    {
+        "id": "chicken",
+        "name": "Chicken",
+        "glyphId": 99,
+        "fgColor": 16763972,
+        "health": 10,
+        "produceItemId": "egg",
+        "produceIntervalTicks": 600,
+        "feedItemId": "animal_feed",
+        "fedDurationTicks": 1200,
+        "breedCooldownTicks": 2400
+    },
+    {
+        "id": "cow",
+        "name": "Cow",
+        "glyphId": 67,
+        "fgColor": 10052403,
+        "health": 30,
+        "produceItemId": "milk",
+        "produceIntervalTicks": 800,
+        "feedItemId": "animal_feed",
+        "fedDurationTicks": 1200,
+        "breedCooldownTicks": 3600
+    },
+    {
+        "id": "sheep",
+        "name": "Sheep",
+        "glyphId": 83,
+        "fgColor": 15658717,
+        "health": 20,
+        "produceItemId": "wool",
+        "produceIntervalTicks": 1000,
+        "feedItemId": "animal_feed",
+        "fedDurationTicks": 1200,
+        "breedCooldownTicks": 3000
+    }
+]

@@ -14,7 +14,6 @@ public class PlayerStateData
     public int MaxThirst;
     public int InventoryCount;
     public int InventoryCapacity;
-    public SkillSlotData[] Skills = [];
     public InventoryItemData[] InventoryItems = [];
     public InventoryItemData[] EquippedItems = [];
     public int[] QuickSlotIndices = [];

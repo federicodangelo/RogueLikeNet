@@ -13,7 +13,6 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(5)] public int Experience { get; set; }
     [Key(6)] public int InventoryCount { get; set; }
     [Key(7)] public int InventoryCapacity { get; set; }
-    [Key(8)] public SkillSlotMsg[] Skills { get; set; } = [];
     [Key(9)] public ItemDataMsg[] InventoryItems { get; set; } = [];
     [Key(10)] public ItemDataMsg[] EquippedItems { get; set; } = [];
     [Key(11)] public int[] QuickSlotIndices { get; set; } = [];
@@ -36,7 +35,6 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (a.Experience != b.Experience) return false;
         if (a.InventoryCount != b.InventoryCount) return false;
         if (a.InventoryCapacity != b.InventoryCapacity) return false;
-        if (!a.Skills.SequenceEqual(b.Skills)) return false;
         if (!a.InventoryItems.SequenceEqual(b.InventoryItems)) return false;
         if (!a.EquippedItems.SequenceEqual(b.EquippedItems)) return false;
         if (!a.QuickSlotIndices.SequenceEqual(b.QuickSlotIndices)) return false;

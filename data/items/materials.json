@@ -378,5 +378,30 @@
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "mithril"
+    },
+    {
+        "id": "wool",
+        "name": "Wool",
+        "category": "material",
+        "glyphId": 176,
+        "fgColor": 15658734,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none"
+    },
+    {
+        "id": "animal_feed",
+        "name": "Animal Feed",
+        "category": "food",
+        "glyphId": 44,
+        "fgColor": 11173350,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 5,
+            "thirstRestore": 0,
+            "healthRestore": 0
+        }
     }
 ]

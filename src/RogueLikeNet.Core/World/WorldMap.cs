@@ -116,6 +116,14 @@ public class WorldMap
             if (!g.IsDestroyed && g.Position == pos)
                 return new EntityRef(g.Id, EntityType.GroundItem);
 
+        foreach (var c in chunk.Crops)
+            if (!c.IsDestroyed && c.Position == pos)
+                return new EntityRef(c.Id, EntityType.Crop);
+
+        foreach (var a in chunk.Animals)
+            if (!a.IsDead && a.Position == pos)
+                return new EntityRef(a.Id, EntityType.Animal);
+
         return default;
     }
 
@@ -148,6 +156,14 @@ public class WorldMap
         foreach (var g in chunk.GroundItems)
             if (!g.IsDestroyed && g.Position == pos)
                 refs.Add(new EntityRef(g.Id, EntityType.GroundItem));
+
+        foreach (var c in chunk.Crops)
+            if (!c.IsDestroyed && c.Position == pos)
+                refs.Add(new EntityRef(c.Id, EntityType.Crop));
+
+        foreach (var a in chunk.Animals)
+            if (!a.IsDead && a.Position == pos)
+                refs.Add(new EntityRef(a.Id, EntityType.Animal));
 
         return refs.Count > 0 ? refs.ToArray() : [];
     }
@@ -288,6 +304,34 @@ public class WorldMap
         }
 
         Debug.Assert(false, $"NPC entity {entityId} not found in old chunk at {oldC} when moving.");
+    }
+
+    /// <summary>Moves an animal to a new position, migrating between chunks if needed.</summary>
+    public void MoveAnimalEntity(int entityId, Position from, Position to)
+    {
+        var oldC = Chunk.WorldToChunkCoord(from);
+        var newC = Chunk.WorldToChunkCoord(to);
+
+        var oldChunk = TryGetChunk(oldC);
+        var newChunk = TryGetChunk(newC);
+
+        Debug.Assert(oldChunk != null, $"Old chunk at {oldC} not found when moving Animal entity {entityId}.");
+
+        foreach (ref var animal in oldChunk.Animals)
+        {
+            if (animal.Id == entityId)
+            {
+                animal.Position = to;
+                if (oldChunk != newChunk)
+                {
+                    newChunk?.AddEntity(animal);
+                    oldChunk.RemoveEntity(animal);
+                }
+                return;
+            }
+        }
+
+        Debug.Assert(false, $"Animal entity {entityId} not found in old chunk at {oldC} when moving.");
     }
 
     public bool ExistsChunk(ChunkPosition chunkPos, Generation.IDungeonGenerator generator)

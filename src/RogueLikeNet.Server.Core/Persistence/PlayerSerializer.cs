@@ -12,7 +12,6 @@ namespace RogueLikeNet.Server.Persistence;
 [JsonSerializable(typeof(PlayerSerializer.EquipmentJson))]
 [JsonSerializable(typeof(PlayerSerializer.EquipSlotJson))]
 [JsonSerializable(typeof(List<PlayerSerializer.EquipSlotJson>))]
-[JsonSerializable(typeof(PlayerSerializer.SkillSlotsJson))]
 [JsonSerializable(typeof(PlayerSerializer.QuickSlotsJson))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
 internal partial class PlayerJsonContext : JsonSerializerContext;
@@ -66,20 +65,6 @@ public static class PlayerSerializer
         }
         var equipData = new EquipmentJson { Slots = equipSlots };
         data.EquipmentJson = JsonSerializer.Serialize(equipData, PlayerJsonContext.Default.EquipmentJson);
-
-        // Skills
-        var skillData = new SkillSlotsJson
-        {
-            Skill0 = player.Skills.Skill0,
-            Skill1 = player.Skills.Skill1,
-            Skill2 = player.Skills.Skill2,
-            Skill3 = player.Skills.Skill3,
-            Cooldown0 = player.Skills.Cooldown0,
-            Cooldown1 = player.Skills.Cooldown1,
-            Cooldown2 = player.Skills.Cooldown2,
-            Cooldown3 = player.Skills.Cooldown3,
-        };
-        data.SkillsJson = JsonSerializer.Serialize(skillData, PlayerJsonContext.Default.SkillSlotsJson);
 
         // QuickSlots
         var qsData = new QuickSlotsJson
@@ -163,23 +148,6 @@ public static class PlayerSerializer
             }
         }
 
-        // Restore skills
-        if (!string.IsNullOrEmpty(data.SkillsJson) && data.SkillsJson != "{}")
-        {
-            var skillData = JsonSerializer.Deserialize(data.SkillsJson, PlayerJsonContext.Default.SkillSlotsJson);
-            if (skillData != null)
-            {
-                player.Skills.Skill0 = skillData.Skill0;
-                player.Skills.Skill1 = skillData.Skill1;
-                player.Skills.Skill2 = skillData.Skill2;
-                player.Skills.Skill3 = skillData.Skill3;
-                player.Skills.Cooldown0 = skillData.Cooldown0;
-                player.Skills.Cooldown1 = skillData.Cooldown1;
-                player.Skills.Cooldown2 = skillData.Cooldown2;
-                player.Skills.Cooldown3 = skillData.Cooldown3;
-            }
-        }
-
         // Restore quickslots
         if (!string.IsNullOrEmpty(data.QuickSlotsJson) && data.QuickSlotsJson != "{}")
         {
@@ -239,18 +207,6 @@ public static class PlayerSerializer
     public class EquipmentJson
     {
         public List<EquipSlotJson>? Slots { get; set; }
-    }
-
-    public class SkillSlotsJson
-    {
-        public int Skill0 { get; set; }
-        public int Skill1 { get; set; }
-        public int Skill2 { get; set; }
-        public int Skill3 { get; set; }
-        public int Cooldown0 { get; set; }
-        public int Cooldown1 { get; set; }
-        public int Cooldown2 { get; set; }
-        public int Cooldown3 { get; set; }
     }
 
     public class QuickSlotsJson

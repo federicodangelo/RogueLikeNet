@@ -8,7 +8,7 @@ using RogueLikeNet.Core.World;
 namespace RogueLikeNet.Client.Core.Rendering;
 
 /// <summary>
-/// Renders the in-game HUD panel (HP, stats, skills, equipment, quick slots, floor items, controls).
+/// Renders the in-game HUD panel (HP, stats, equipment, quick slots, floor items, controls).
 /// </summary>
 public sealed class HudRenderer
 {
@@ -35,7 +35,6 @@ public sealed class HudRenderer
         layout.AddSection(new HudSection { Name = "HP", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Survival", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
-        layout.AddSection(new HudSection { Name = "Skills", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
@@ -131,24 +130,6 @@ public sealed class HudRenderer
                     Ds(r, col, row, $"DEF: {playerState.Defense}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
                     Ds(r, col, row, $"Lv:  {playerState.Level}", RenderingTheme.Level);
-                    break;
-
-                case "Skills":
-                    if (row >= maxRow) break;
-                    Ds(r, col, row, "Skills", RenderingTheme.Title); row++;
-                    if (row >= maxRow) break;
-                    Sep(r, col, row, innerW); row++;
-                    for (int i = 0; i < Math.Min(playerState.Skills.Length, 2) && row < maxRow; i++)
-                    {
-                        if (playerState.Skills[i].Id == 0) continue;
-                        string key = i == 0 ? "Q" : "E";
-                        string name = !string.IsNullOrEmpty(playerState.Skills[i].Name)
-                            ? playerState.Skills[i].Name : $"Skill {i + 1}";
-                        int cd = playerState.Skills[i].Cooldown;
-                        string text = cd > 0 ? $"[{key}]{name} cd:{cd}" : $"[{key}]{name}";
-                        Ds(r, col, row, text, cd > 0 ? RenderingTheme.SkillCd : RenderingTheme.SkillReady);
-                        row++;
-                    }
                     break;
 
                 case "Equipment":

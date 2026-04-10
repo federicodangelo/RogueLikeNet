@@ -22,6 +22,7 @@ public static class GeneratorRegistry
         new("arena", "Arena", seed => new ArenaGenerator(seed)),
         new("towns-showcase", "Towns Showcase", seed => new TownsShowcaseGenerator(seed)),
         new("multilevel-showcase", "MultiLevel Showcase", seed => new MultiLevelDungeonGenerator(seed)),
+        new("farming-showcase", "Farming Showcase", seed => new FarmingShowcaseGenerator(seed)),
     ];
 
     public static int Count => All.Length;

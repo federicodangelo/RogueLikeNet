@@ -76,8 +76,6 @@ public class SdlInputManager : BaseInputManager
         [InputAction.UseItem2] = [InputBinding.Key(SDL.Scancode.Alpha2)],
         [InputAction.UseItem3] = [InputBinding.Key(SDL.Scancode.Alpha3)],
         [InputAction.UseItem4] = [InputBinding.Key(SDL.Scancode.Alpha4)],
-        [InputAction.UseSkill1] = [InputBinding.Key(SDL.Scancode.Q), InputBinding.Axis(SDL.GamepadAxis.LeftTrigger)],
-        [InputAction.UseSkill2] = [InputBinding.Key(SDL.Scancode.E), InputBinding.Axis(SDL.GamepadAxis.LeftTrigger)],
         [InputAction.Drop] = [InputBinding.Key(SDL.Scancode.X)],
         [InputAction.Equip] = [InputBinding.Key(SDL.Scancode.E)],
         [InputAction.UnequipSlot1] = [InputBinding.Key(SDL.Scancode.U)],

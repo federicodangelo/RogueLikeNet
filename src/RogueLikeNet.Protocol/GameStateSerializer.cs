@@ -201,6 +201,18 @@ public static class GameStateSerializer
                 int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
                 ProcessEntity((long)e.Id, e.Position, e.Appearance, 0, 0, lightRadius, null);
             }
+
+            foreach (var c in chunk.Crops)
+            {
+                if (c.IsDestroyed) continue;
+                ProcessEntity((long)c.Id, c.Position, c.Appearance, 0, 0, 0, null);
+            }
+
+            foreach (var a in chunk.Animals)
+            {
+                if (a.IsDead) continue;
+                ProcessEntity((long)a.Id, a.Position, a.Appearance, a.Health.Current, a.Health.Max, 0, null);
+            }
         }
 
         // Entities that were visible last tick but are no longer → removed
@@ -261,7 +273,6 @@ public static class GameStateSerializer
             MaxThirst = stateData.MaxThirst,
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
-            Skills = stateData.Skills.Select(s => new SkillSlotMsg { Id = s.Id, Cooldown = s.Cooldown, Name = s.Name }).ToArray(),
             InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category }).ToArray(),
             EquippedItems = stateData.EquippedItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category, EquipSlot = i.EquipSlot }).ToArray(),
             QuickSlotIndices = stateData.QuickSlotIndices,

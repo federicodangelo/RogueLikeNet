@@ -9,4 +9,6 @@ public enum EntityType
     ResourceNode,
     TownNpc,
     Element,
+    Crop,
+    Animal,
 }

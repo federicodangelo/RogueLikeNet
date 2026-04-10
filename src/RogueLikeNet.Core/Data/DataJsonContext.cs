@@ -14,4 +14,5 @@ namespace RogueLikeNet.Core.Data;
 [JsonSerializable(typeof(ResourceNodeDefinition[]))]
 [JsonSerializable(typeof(NpcDefinition[]))]
 [JsonSerializable(typeof(BiomeDefinition[]))]
+[JsonSerializable(typeof(AnimalDefinition[]))]
 internal partial class DataJsonContext : JsonSerializerContext;

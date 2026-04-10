@@ -161,6 +161,7 @@ public enum ToolType
     Hammer = 5,
     Knife = 6,
     FishingRod = 7,
+    WateringCan = 8,
 }
 
 public sealed class ToolData
@@ -194,6 +195,8 @@ public sealed class SeedData
     public string HarvestItemId { get; set; } = "";
     public int HarvestMin { get; set; } = 1;
     public int HarvestMax { get; set; } = 1;
+    public double SeedReturnChance { get; set; } = 0.5;
+    public int WateredGrowthMultiplierBase100 { get; set; } = 150;
 }
 
 public enum PlaceableType

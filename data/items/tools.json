@@ -558,5 +558,21 @@
             "miningPower": 7,
             "durability": 600
         }
+    },
+    {
+        "id": "watering_can",
+        "name": "Watering Can",
+        "category": "tool",
+        "glyphId": 232,
+        "fgColor": 4488191,
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "iron",
+        "equipSlot": "hand",
+        "tool": {
+            "toolType": "wateringCan",
+            "miningPower": 0,
+            "durability": 200
+        }
     }
 ]

@@ -30,6 +30,10 @@ public sealed class PlayingScreen : IScreen
     private int _placingFromSlot = -1;
     public bool IsPlacingFromSlot => _placingFromSlot >= 0;
 
+    // Farming interact direction selection mode
+    private bool _interacting;
+    public bool IsInteracting => _interacting;
+
     public ScreenState ScreenState => ScreenState.Playing;
 
     public PlayingScreen(ScreenContext ctx, GameWorldRenderer worldRenderer, HudRenderer hudRenderer,
@@ -100,6 +104,33 @@ public sealed class PlayingScreen : IScreen
                     Tick = _ctx.GameState.WorldTick
                 });
                 _placingFromSlot = -1;
+            }
+            return;
+        }
+
+        // Direction selection mode for farming interact (context-sensitive)
+        if (_interacting)
+        {
+            if (input.IsActionPressed(InputAction.MenuBack))
+            {
+                _interacting = false;
+                return;
+            }
+            int dx = 0, dy = 0;
+            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+            if (dx != 0 || dy != 0)
+            {
+                SendInput(new ClientInputMsg
+                {
+                    ActionType = ActionTypes.Interact,
+                    TargetX = dx,
+                    TargetY = dy,
+                    Tick = _ctx.GameState.WorldTick
+                });
+                _interacting = false;
             }
             return;
         }
@@ -190,12 +221,10 @@ public sealed class PlayingScreen : IScreen
                 msg = TryQuickSlotAction(2);
             else if (input.IsActionPressed(InputAction.UseItem4))
                 msg = TryQuickSlotAction(3);
-            else if (input.IsActionPressed(InputAction.UseSkill1))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 0, TargetX = 1, TargetY = 0 };
-            else if (input.IsActionPressed(InputAction.UseSkill2))
-                msg = new ClientInputMsg { ActionType = ActionTypes.UseSkill, ItemSlot = 1, TargetX = 1, TargetY = 0 };
             else if (input.IsActionPressed(InputAction.Place))
                 _pickingUpPlaced = true;
+            else if (input.IsActionPressed(InputAction.Interact))
+                _interacting = true;
             else if (input.IsActionPressed(InputAction.UseStairs))
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseStairs };
         }
@@ -260,7 +289,7 @@ public sealed class PlayingScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, isPickingUpPlaced: _pickingUpPlaced || _placingFromSlot >= 0);
+        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, isPickingUpPlaced: _pickingUpPlaced || _placingFromSlot >= 0 || _interacting);
 
         // Render particles
         int halfW = zoomedGameCols / 2;

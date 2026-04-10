@@ -11,6 +11,7 @@ public sealed class GameData
     public readonly ResourceNodeRegistry ResourceNodes = new();
     public readonly NpcRegistry Npcs = new();
     public readonly BiomeRegistry Biomes = new();
+    public readonly AnimalRegistry Animals = new();
 
     public GameData()
     {
@@ -29,5 +30,6 @@ public sealed class GameData
         output.WriteLine($"[GameData] Loaded {ResourceNodes.Count} resource nodes");
         output.WriteLine($"[GameData] Loaded {Npcs.Count} NPCs");
         output.WriteLine($"[GameData] Loaded {Biomes.Count} biomes");
+        output.WriteLine($"[GameData] Loaded {Animals.Count} animals");
     }
 }

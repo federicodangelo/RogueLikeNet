@@ -74,7 +74,6 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 Speed INTEGER NOT NULL DEFAULT 0,
                 InventoryJson TEXT NOT NULL DEFAULT '[]',
                 EquipmentJson TEXT NOT NULL DEFAULT '{}',
-                SkillsJson TEXT NOT NULL DEFAULT '{}',
                 QuickSlotsJson TEXT NOT NULL DEFAULT '{}',
                 Hunger INTEGER NOT NULL DEFAULT 100,
                 MaxHunger INTEGER NOT NULL DEFAULT 100,
@@ -90,6 +89,18 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         MigrateAddColumn("Players", "MaxHunger", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "Thirst", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "MaxThirst", "INTEGER NOT NULL DEFAULT 100");
+        MigrateRemoveColumn("Players", "SkillsJson");
+    }
+
+    private void MigrateRemoveColumn(string table, string column)
+    {
+        try
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = $"ALTER TABLE {table} DROP COLUMN {column}";
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqliteException) { /* Column doesn't exist */ }
     }
 
     private void MigrateAddColumn(string table, string column, string columnDef)
@@ -259,14 +270,14 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, SkillsJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst)
-                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $skills, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst)
+                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst)
+                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst)
                 ON CONFLICT(SlotId, PlayerName) DO UPDATE SET
                     ClassId=$classId, Level=$level, Experience=$exp,
                     PositionX=$px, PositionY=$py, PositionZ=$pz,
                     HealthCurrent=$hpCur, HealthMax=$hpMax,
                     Attack=$atk, Defense=$def, Speed=$spd,
-                    InventoryJson=$inv, EquipmentJson=$equip, SkillsJson=$skills, QuickSlotsJson=$quickSlots,
+                    InventoryJson=$inv, EquipmentJson=$equip, QuickSlotsJson=$quickSlots,
                     Hunger=$hunger, MaxHunger=$maxHunger,
                     Thirst=$thirst, MaxThirst=$maxThirst
                 """;
@@ -285,7 +296,6 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             cmd.Parameters.AddWithValue("$spd", p.Speed);
             cmd.Parameters.AddWithValue("$inv", p.InventoryJson);
             cmd.Parameters.AddWithValue("$equip", p.EquipmentJson);
-            cmd.Parameters.AddWithValue("$skills", p.SkillsJson);
             cmd.Parameters.AddWithValue("$quickSlots", p.QuickSlotsJson);
             cmd.Parameters.AddWithValue("$hunger", p.Hunger);
             cmd.Parameters.AddWithValue("$maxHunger", p.MaxHunger);
@@ -337,7 +347,6 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             Speed = reader.GetInt32(reader.GetOrdinal("Speed")),
             InventoryJson = reader.GetString(reader.GetOrdinal("InventoryJson")),
             EquipmentJson = reader.GetString(reader.GetOrdinal("EquipmentJson")),
-            SkillsJson = reader.GetString(reader.GetOrdinal("SkillsJson")),
             QuickSlotsJson = reader.GetString(reader.GetOrdinal("QuickSlotsJson")),
             Hunger = reader.GetInt32(reader.GetOrdinal("Hunger")),
             MaxHunger = reader.GetInt32(reader.GetOrdinal("MaxHunger")),

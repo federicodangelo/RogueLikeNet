@@ -91,8 +91,6 @@ public class WebInputManager : BaseInputManager
         [InputAction.UseItem2] = [InputBinding.Key("Digit2")],
         [InputAction.UseItem3] = [InputBinding.Key("Digit3")],
         [InputAction.UseItem4] = [InputBinding.Key("Digit4")],
-        [InputAction.UseSkill1] = [InputBinding.Key("KeyQ"), InputBinding.Btn(GpBtnLTrigger)],
-        [InputAction.UseSkill2] = [InputBinding.Key("KeyE"), InputBinding.Btn(GpBtnLTrigger)],
         [InputAction.Drop] = [InputBinding.Key("KeyX")],
         [InputAction.Equip] = [InputBinding.Key("KeyE")],
         [InputAction.UnequipSlot1] = [InputBinding.Key("KeyU")],

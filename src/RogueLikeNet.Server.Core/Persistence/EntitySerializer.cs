@@ -3,7 +3,9 @@ using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Server.Persistence;
@@ -28,6 +30,8 @@ public static class EntitySerializer
     private const string TypeResourceNode = "ResourceNode";
     private const string TypeElement = "Element";
     private const string TypeTownNpc = "TownNpc";
+    private const string TypeCrop = "Crop";
+    private const string TypeAnimal = "Animal";
 
     // ── Serialization helpers ──────────────────────────────────────────
 
@@ -174,6 +178,41 @@ public static class EntitySerializer
             entities.Add(dict);
         }
 
+        // Crops
+        foreach (var c in chunk.Crops)
+        {
+            if (c.IsDestroyed) continue;
+            var dict = new Dictionary<string, object> { ["Type"] = TypeCrop };
+            SerializePosition(dict, c.Position);
+            dict["SeedItemTypeId"] = c.CropData.SeedItemTypeId;
+            dict["HarvestItemTypeId"] = c.CropData.HarvestItemTypeId;
+            dict["HarvestMin"] = c.CropData.HarvestMin;
+            dict["HarvestMax"] = c.CropData.HarvestMax;
+            dict["GrowthTicksRequired"] = c.CropData.GrowthTicksRequired;
+            dict["GrowthTicksCurrent"] = c.CropData.GrowthTicksCurrent;
+            dict["IsWatered"] = c.CropData.IsWatered;
+            dict["WateredGrowthMultiplierBase100"] = c.CropData.WateredGrowthMultiplierBase100;
+            dict["SeedReturnChanceBase100"] = c.CropData.SeedReturnChanceBase100;
+            entities.Add(dict);
+        }
+
+        // Animals
+        foreach (var a in chunk.Animals)
+        {
+            if (a.IsDead) continue;
+            var dict = new Dictionary<string, object> { ["Type"] = TypeAnimal };
+            SerializePosition(dict, a.Position);
+            dict["AnimalTypeId"] = a.AnimalData.AnimalTypeId;
+            SerializeHealth(dict, a.Health);
+            dict["ProduceTicksCurrent"] = a.AnimalData.ProduceTicksCurrent;
+            dict["IsFed"] = a.AnimalData.IsFed;
+            dict["FedTicksRemaining"] = a.AnimalData.FedTicksRemaining;
+            dict["BreedCooldownCurrent"] = a.AnimalData.BreedCooldownCurrent;
+            SerializeAIState(dict, a.AI);
+            SerializeMoveDelay(dict, a.MoveDelay);
+            entities.Add(dict);
+        }
+
         return JsonSerializer.Serialize(entities, EntityJsonContext.Default.ListDictionaryStringObject);
     }
 
@@ -201,6 +240,8 @@ public static class EntitySerializer
                 case TypeResourceNode: DeserializeResourceNode(dict, engine); break;
                 case TypeElement: DeserializeElement(dict, engine); break;
                 case TypeTownNpc: DeserializeTownNpc(dict, engine); break;
+                case TypeCrop: DeserializeCrop(dict, engine); break;
+                case TypeAnimal: DeserializeAnimal(dict, engine); break;
             }
         }
     }
@@ -309,6 +350,54 @@ public static class EntitySerializer
         npc.AttackDelay.Current = GetInt(dict, "AttackCurrent");
     }
 
+    private static void DeserializeCrop(Dictionary<string, JsonElement> dict, GameEngine engine)
+    {
+        int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
+        var pos = Position.FromCoords(x, y, z);
+
+        var cropData = new CropData
+        {
+            SeedItemTypeId = GetInt(dict, "SeedItemTypeId"),
+            HarvestItemTypeId = GetInt(dict, "HarvestItemTypeId"),
+            HarvestMin = GetInt(dict, "HarvestMin", 1),
+            HarvestMax = GetInt(dict, "HarvestMax", 1),
+            GrowthTicksRequired = GetInt(dict, "GrowthTicksRequired"),
+            GrowthTicksCurrent = GetInt(dict, "GrowthTicksCurrent"),
+            IsWatered = GetBool(dict, "IsWatered"),
+            WateredGrowthMultiplierBase100 = GetInt(dict, "WateredGrowthMultiplierBase100", 150),
+            SeedReturnChanceBase100 = GetInt(dict, "SeedReturnChanceBase100", 50),
+        };
+
+        var crop = new CropEntity(engine.WorldMap.AllocateEntityId())
+        {
+            Position = pos,
+            Appearance = FarmingSystem.GetCropAppearance(cropData.GrowthStage),
+            CropData = cropData,
+        };
+
+        var chunk = engine.WorldMap.GetChunkForWorldPos(pos);
+        chunk?.AddEntity(crop);
+    }
+
+    private static void DeserializeAnimal(Dictionary<string, JsonElement> dict, GameEngine engine)
+    {
+        int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
+        int animalTypeId = GetInt(dict, "AnimalTypeId");
+        var def = GameData.Instance.Animals.Get(animalTypeId);
+        if (def == null) return;
+
+        ref var animal = ref engine.SpawnAnimal(Position.FromCoords(x, y, z), def);
+
+        // Restore runtime state
+        animal.Health.Current = GetInt(dict, "HealthCurrent", animal.Health.Current);
+        animal.AnimalData.ProduceTicksCurrent = GetInt(dict, "ProduceTicksCurrent");
+        animal.AnimalData.IsFed = GetBool(dict, "IsFed");
+        animal.AnimalData.FedTicksRemaining = GetInt(dict, "FedTicksRemaining");
+        animal.AnimalData.BreedCooldownCurrent = GetInt(dict, "BreedCooldownCurrent");
+        animal.AI.StateId = GetInt(dict, "AIStateId");
+        animal.MoveDelay.Current = GetInt(dict, "MoveCurrent");
+    }
+
     // ── JSON helpers ──────────────────────────────────────────────────
 
     private static int GetInt(Dictionary<string, JsonElement> dict, string key, int defaultValue = 0)
@@ -322,6 +411,16 @@ public static class EntitySerializer
     {
         if (dict.TryGetValue(key, out var elem) && elem.ValueKind == JsonValueKind.String)
             return elem.GetString() ?? defaultValue;
+        return defaultValue;
+    }
+
+    private static bool GetBool(Dictionary<string, JsonElement> dict, string key, bool defaultValue = false)
+    {
+        if (dict.TryGetValue(key, out var elem))
+        {
+            if (elem.ValueKind == JsonValueKind.True) return true;
+            if (elem.ValueKind == JsonValueKind.False) return false;
+        }
         return defaultValue;
     }
 }

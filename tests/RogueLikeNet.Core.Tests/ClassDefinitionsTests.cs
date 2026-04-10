@@ -34,19 +34,6 @@ public class ClassDefinitionsTests
     [InlineData(ClassDefinitions.Rogue)]
     [InlineData(ClassDefinitions.Mage)]
     [InlineData(ClassDefinitions.Ranger)]
-    public void GetStartingSkills_ReturnsTwoSkills(int classId)
-    {
-        var skill0 = ClassDefinitions.Get(classId).StartingSkill0;
-        var skill1 = ClassDefinitions.Get(classId).StartingSkill1;
-        Assert.NotEqual(SkillDefinitions.None, skill0);
-        Assert.NotEqual(SkillDefinitions.None, skill1);
-    }
-
-    [Theory]
-    [InlineData(ClassDefinitions.Warrior)]
-    [InlineData(ClassDefinitions.Rogue)]
-    [InlineData(ClassDefinitions.Mage)]
-    [InlineData(ClassDefinitions.Ranger)]
     public void GetAsciiArt_ReturnsFiveLines(int classId)
     {
         var art = ClassDefinitions.GetAsciiArt(classId);

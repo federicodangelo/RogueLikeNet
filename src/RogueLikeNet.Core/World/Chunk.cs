@@ -52,6 +52,8 @@ public class Chunk
     public Span<ResourceNodeEntity> ResourceNodes => CollectionsMarshal.AsSpan(_resourceNodes);
     public Span<TownNpcEntity> TownNpcs => CollectionsMarshal.AsSpan(_townNpcs);
     public Span<ElementEntity> Elements => CollectionsMarshal.AsSpan(_elements);
+    public Span<CropEntity> Crops => CollectionsMarshal.AsSpan(_crops);
+    public Span<AnimalEntity> Animals => CollectionsMarshal.AsSpan(_animals);
 
     public ref struct SolidEntityWithHealth
     {
@@ -93,6 +95,7 @@ public class Chunk
                     0 => _chunk._monsters.Count,
                     1 => _chunk._resourceNodes.Count,
                     2 => _chunk._townNpcs.Count,
+                    3 => _chunk._animals.Count,
                     _ => 0
                 };
                 if (_index < count) return true;
@@ -116,6 +119,10 @@ public class Chunk
                 new EntityRef(_chunk._townNpcs[_index].Id, EntityType.TownNpc),
                 ref _chunk.TownNpcs[_index].Position,
                 ref _chunk.TownNpcs[_index].Health),
+            3 => new SolidEntityWithHealth(
+                new EntityRef(_chunk._animals[_index].Id, EntityType.Animal),
+                ref _chunk.Animals[_index].Position,
+                ref _chunk.Animals[_index].Health),
             _ => throw new InvalidOperationException()
         };
     }
@@ -128,6 +135,8 @@ public class Chunk
     private readonly List<ResourceNodeEntity> _resourceNodes = [];
     private readonly List<TownNpcEntity> _townNpcs = [];
     private readonly List<ElementEntity> _elements = [];
+    private readonly List<CropEntity> _crops = [];
+    private readonly List<AnimalEntity> _animals = [];
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
     private readonly List<Position> _dirtyTiles = new();
@@ -216,6 +225,12 @@ public class Chunk
             case EntityType.Element:
                 _elements.RemoveAll(e => e.Id == entity.Id);
                 break;
+            case EntityType.Crop:
+                _crops.RemoveAll(c => c.Id == entity.Id);
+                break;
+            case EntityType.Animal:
+                _animals.RemoveAll(a => a.Id == entity.Id);
+                break;
         }
         MarkModified();
     }
@@ -225,12 +240,16 @@ public class Chunk
     public void RemoveEntity(ResourceNodeEntity entity) { _resourceNodes.RemoveAll(r => r.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(TownNpcEntity entity) { _townNpcs.RemoveAll(n => n.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(ElementEntity entity) { _elements.RemoveAll(e => e.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(CropEntity entity) { _crops.RemoveAll(c => c.Id == entity.Id); MarkModified(); }
+    public void RemoveEntity(AnimalEntity entity) { _animals.RemoveAll(a => a.Id == entity.Id); MarkModified(); }
 
     public ref MonsterEntity AddEntity(MonsterEntity entity) { _monsters.Add(entity); MarkModified(); return ref Monsters[^1]; }
     public ref GroundItemEntity AddEntity(GroundItemEntity entity) { _groundItems.Add(entity); MarkModified(); return ref GroundItems[^1]; }
     public ref ResourceNodeEntity AddEntity(ResourceNodeEntity entity) { _resourceNodes.Add(entity); MarkModified(); return ref ResourceNodes[^1]; }
     public ref TownNpcEntity AddEntity(TownNpcEntity entity) { _townNpcs.Add(entity); MarkModified(); return ref TownNpcs[^1]; }
     public ref ElementEntity AddEntity(ElementEntity entity) { _elements.Add(entity); MarkModified(); return ref Elements[^1]; }
+    public ref CropEntity AddEntity(CropEntity entity) { _crops.Add(entity); MarkModified(); return ref Crops[^1]; }
+    public ref AnimalEntity AddEntity(AnimalEntity entity) { _animals.Add(entity); MarkModified(); return ref Animals[^1]; }
 
     // ── Ref getters for in-place mutation ─────────────────────────────
 
@@ -274,6 +293,22 @@ public class Chunk
         throw new KeyNotFoundException($"Element entity {entityId} not found in chunk.");
     }
 
+    public ref CropEntity GetCropRef(int entityId)
+    {
+        var span = Crops;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Crop entity {entityId} not found in chunk.");
+    }
+
+    public ref AnimalEntity GetAnimalRef(int entityId)
+    {
+        var span = Animals;
+        for (int i = 0; i < span.Length; i++)
+            if (span[i].Id == entityId) return ref span[i];
+        throw new KeyNotFoundException($"Animal entity {entityId} not found in chunk.");
+    }
+
     public void ResetLight()
     {
         Array.Clear(LightLevels, 0, LightLevels.Length);
@@ -286,6 +321,8 @@ public class Chunk
         if (_groundItems.RemoveAll(i => i.IsDestroyed) != 0) MarkModified();
         if (_resourceNodes.RemoveAll(r => r.IsDead) != 0) MarkModified();
         if (_townNpcs.RemoveAll(n => n.IsDead) != 0) MarkModified();
+        if (_crops.RemoveAll(c => c.IsDestroyed) != 0) MarkModified();
+        if (_animals.RemoveAll(a => a.IsDead) != 0) MarkModified();
     }
 
     /// <summary>Clears all entity lists (used when unloading a chunk).</summary>
@@ -296,6 +333,8 @@ public class Chunk
         _resourceNodes.Clear();
         _townNpcs.Clear();
         _elements.Clear();
+        _crops.Clear();
+        _animals.Clear();
     }
 
     internal void FlushDirtyTiles(List<(Position, TileInfo)> result)

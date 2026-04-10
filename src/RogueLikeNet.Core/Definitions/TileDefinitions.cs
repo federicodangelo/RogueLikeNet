@@ -123,6 +123,28 @@ public static class TileDefinitions
     public const int GlyphTownNpc = 2;     // ☻ (smiling face)
     public const int ColorTownNpcFg = 0x44AAFF;
 
+    // Crop growth stage glyphs (CP437)
+    public const int GlyphCropStage0 = 250; // · (seedling, same as floor dot)
+    public const int GlyphCropStage1 = 44;  // , (small sprout)
+    public const int GlyphCropStage2 = 244; // ⌠ (growing plant)
+    public const int GlyphCropStage3 = 157; // Ø (mature crop, ready to harvest)
+
+    public const int ColorCropSeedling = 0x665533;
+    public const int ColorCropGrowing = 0x44AA22;
+    public const int ColorCropMature = 0xDDAA00;
+    public const int ColorTilledSoil = 0x553311;
+
+    // Animal glyphs (CP437 lowercase letters)
+    public const int GlyphChicken = 99;  // c
+    public const int GlyphCow = 67;      // C
+    public const int GlyphSheep = 83;    // S
+    public const int GlyphPig = 112;     // p
+
+    public const int ColorChickenFg = 0xFFCC44;
+    public const int ColorCowFg = 0x996633;
+    public const int ColorSheepFg = 0xEEEEDD;
+    public const int ColorPigFg = 0xFFAAAA;
+
     public const int ColorLavaBg = 0x331100;
     public const int ColorWaterBg = 0x001133;
     public const int ColorIceBg = 0x0A1122;

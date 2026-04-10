@@ -27,6 +27,7 @@ public class AISystem
 
     private readonly List<(int Id, Position From, Position To)> _pendingMonsterMoves = new();
     private readonly List<(int Id, Position From, Position To)> _pendingNpcMoves = new();
+    private readonly List<(int Id, Position From, Position To)> _pendingAnimalMoves = new();
     private readonly List<Position> _playerPositions = new();
     private readonly HashSet<long> _entitiesPositions = new();
     private readonly AStarPathfinder _pathfinder = new();
@@ -35,39 +36,122 @@ public class AISystem
     public void Update(WorldMap map)
     {
         // Collect player positions
+        CollectPlayerPositions(map);
+
+        // Collect all actor positions (alive) for collision
+        CollectEntitiesPositions(map);
+
+        // Tick down all move and attack delays directly on chunk entities
+        TickDownAttackAndMoveDelays(map);
+
+        // Process monster AI directly on chunk entities
+        ProcessMonstersAI(map);
+
+        // Process town NPC wandering directly on chunk entities
+        ProcessNpcsAI(map);
+
+        // Process animal AI
+        ProcessAnimalsAI(map);
+    }
+
+    private void CollectEntitiesPositions(WorldMap map)
+    {
+        _entitiesPositions.Clear();
+        map.CollectEntitiesPositions(_entitiesPositions);
+    }
+
+    private void CollectPlayerPositions(WorldMap map)
+    {
         _playerPositions.Clear();
         foreach (ref var p in map.Players)
             if (!p.IsDead) _playerPositions.Add(p.Position);
+    }
 
-        if (_playerPositions.Count == 0) return;
-
-        // Collect all actor positions (alive) for collision
-        _entitiesPositions.Clear();
-        map.CollectEntitiesPositions(_entitiesPositions);
-
-        // Tick down all move and attack delays directly on chunk entities
+    private void ProcessAnimalsAI(WorldMap map)
+    {
+        _pendingAnimalMoves.Clear();
         foreach (var chunk in map.LoadedChunks)
         {
-            foreach (ref var m in chunk.Monsters)
+            foreach (ref var animal in chunk.Animals)
             {
-                if (m.MoveDelay.Current > 0) m.MoveDelay.Current--;
-                if (m.AttackDelay.Current > 0) m.AttackDelay.Current--;
-            }
-            foreach (ref var n in chunk.TownNpcs)
-            {
-                if (n.MoveDelay.Current > 0) n.MoveDelay.Current--;
-                if (n.AttackDelay.Current > 0) n.AttackDelay.Current--;
+                if (animal.IsDead) continue;
+
+                if (animal.MoveDelay.Current > 0) continue;
+
+                int dir = _rng.Next(4);
+                var nextPosition = Position.FromCoords(
+                    animal.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),
+                    animal.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0),
+                    animal.Position.Z
+                );
+
+                if (!map.IsWalkable(nextPosition)) continue;
+                long nextKey = nextPosition.Pack();
+                if (_entitiesPositions.Contains(nextKey)) continue;
+
+                _entitiesPositions.Remove(Position.PackCoord(animal.Position.X, animal.Position.Y, animal.Position.Z));
+                _entitiesPositions.Add(nextKey);
+                animal.MoveDelay.Current = animal.MoveDelay.Interval;
+                _pendingAnimalMoves.Add((animal.Id, animal.Position, nextPosition));
             }
         }
 
-        // Tick down player delays too
-        foreach (ref var p in map.Players)
+        // Apply deferred NPC moves
+        foreach (var (id, from, to) in _pendingAnimalMoves)
+            map.MoveAnimalEntity(id, from, to);
+    }
+
+    private void ProcessNpcsAI(WorldMap map)
+    {
+        _pendingNpcMoves.Clear();
+        foreach (var chunk in map.LoadedChunks)
         {
-            if (p.MoveDelay.Current > 0) p.MoveDelay.Current--;
-            if (p.AttackDelay.Current > 0) p.AttackDelay.Current--;
+            foreach (ref var npc in chunk.TownNpcs)
+            {
+                if (npc.IsDead) continue;
+
+                if (npc.NpcData.TalkTimer > 0)
+                    npc.NpcData.TalkTimer--;
+
+                if (npc.MoveDelay.Current > 0) continue;
+
+                int dir = _rng.Next(4);
+                var nextPosition = Position.FromCoords(
+                    npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),
+                    npc.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0),
+                    npc.Position.Z
+                );
+
+                if (Math.Abs(nextPosition.X - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
+                    Math.Abs(nextPosition.Y - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
+                    continue;
+
+                var targetTile = map.GetTile(nextPosition);
+                if (GameData.Instance.Items.IsPlaceableDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
+                {
+                    map.OpenDoor(nextPosition);
+                    npc.MoveDelay.Current = npc.MoveDelay.Interval;
+                    continue;
+                }
+
+                if (!map.IsWalkable(nextPosition)) continue;
+                long nextKey = nextPosition.Pack();
+                if (_entitiesPositions.Contains(nextKey)) continue;
+
+                _entitiesPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
+                _entitiesPositions.Add(nextKey);
+                npc.MoveDelay.Current = npc.MoveDelay.Interval;
+                _pendingNpcMoves.Add((npc.Id, npc.Position, nextPosition));
+            }
         }
 
-        // Process monster AI directly on chunk entities, defer moves
+        // Apply deferred NPC moves
+        foreach (var (id, from, to) in _pendingNpcMoves)
+            map.MoveNpcEntity(id, from, to);
+    }
+
+    private void ProcessMonstersAI(WorldMap map)
+    {
         _pendingMonsterMoves.Clear();
         foreach (var chunk in map.LoadedChunks)
         {
@@ -172,52 +256,32 @@ public class AISystem
         // Apply deferred monster moves
         foreach (var (id, from, to) in _pendingMonsterMoves)
             map.MoveMonsterEntity(id, from, to);
+    }
 
-        // Process town NPC wandering directly on chunk entities, defer moves
-        _pendingNpcMoves.Clear();
+    private static void TickDownAttackAndMoveDelays(WorldMap map)
+    {
         foreach (var chunk in map.LoadedChunks)
         {
-            foreach (ref var npc in chunk.TownNpcs)
+            foreach (ref var m in chunk.Monsters)
             {
-                if (npc.IsDead) continue;
-
-                if (npc.NpcData.TalkTimer > 0)
-                    npc.NpcData.TalkTimer--;
-
-                if (npc.MoveDelay.Current > 0) continue;
-
-                int dir = _rng.Next(4);
-                var nextPosition = Position.FromCoords(
-                    npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),
-                    npc.Position.Y + (dir == 2 ? 1 : dir == 3 ? -1 : 0),
-                    npc.Position.Z
-                );
-
-                if (Math.Abs(nextPosition.X - npc.NpcData.TownCenterX) > npc.NpcData.WanderRadius ||
-                    Math.Abs(nextPosition.Y - npc.NpcData.TownCenterY) > npc.NpcData.WanderRadius)
-                    continue;
-
-                var targetTile = map.GetTile(nextPosition);
-                if (GameData.Instance.Items.IsPlaceableDoor(targetTile.PlaceableItemId) && targetTile.PlaceableItemExtra == 0)
-                {
-                    map.OpenDoor(nextPosition);
-                    npc.MoveDelay.Current = npc.MoveDelay.Interval;
-                    continue;
-                }
-
-                if (!map.IsWalkable(nextPosition)) continue;
-                long nextKey = nextPosition.Pack();
-                if (_entitiesPositions.Contains(nextKey)) continue;
-
-                _entitiesPositions.Remove(Position.PackCoord(npc.Position.X, npc.Position.Y, npc.Position.Z));
-                _entitiesPositions.Add(nextKey);
-                npc.MoveDelay.Current = npc.MoveDelay.Interval;
-                _pendingNpcMoves.Add((npc.Id, npc.Position, nextPosition));
+                if (m.MoveDelay.Current > 0) m.MoveDelay.Current--;
+                if (m.AttackDelay.Current > 0) m.AttackDelay.Current--;
+            }
+            foreach (ref var n in chunk.TownNpcs)
+            {
+                if (n.MoveDelay.Current > 0) n.MoveDelay.Current--;
+                if (n.AttackDelay.Current > 0) n.AttackDelay.Current--;
+            }
+            foreach (ref var a in chunk.Animals)
+            {
+                if (a.MoveDelay.Current > 0) a.MoveDelay.Current--;
             }
         }
 
-        // Apply deferred NPC moves
-        foreach (var (id, from, to) in _pendingNpcMoves)
-            map.MoveNpcEntity(id, from, to);
+        foreach (ref var p in map.Players)
+        {
+            if (p.MoveDelay.Current > 0) p.MoveDelay.Current--;
+            if (p.AttackDelay.Current > 0) p.AttackDelay.Current--;
+        }
     }
 }

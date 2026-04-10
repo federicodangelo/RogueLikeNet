@@ -473,5 +473,35 @@
             "thirstRestore": 5,
             "healthRestore": 2
         }
+    },
+    {
+        "id": "egg",
+        "name": "Egg",
+        "category": "food",
+        "glyphId": 111,
+        "fgColor": 16777184,
+        "stackable": true,
+        "maxStackSize": 20,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 8,
+            "thirstRestore": 2,
+            "healthRestore": 0
+        }
+    },
+    {
+        "id": "milk",
+        "name": "Milk",
+        "category": "food",
+        "glyphId": 173,
+        "fgColor": 16777215,
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "food": {
+            "hungerRestore": 10,
+            "thirstRestore": 15,
+            "healthRestore": 0
+        }
     }
 ]

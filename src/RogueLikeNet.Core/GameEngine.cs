@@ -9,7 +9,6 @@ using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 using PlayerStateData = RogueLikeNet.Core.Data.PlayerStateData;
 using InventoryItemData = RogueLikeNet.Core.Data.InventoryItemData;
-using SkillSlotData = RogueLikeNet.Core.Data.SkillSlotData;
 using RogueLikeNet.Core.Utilities;
 
 namespace RogueLikeNet.Core;
@@ -30,11 +29,12 @@ public class GameEngine : IDisposable
     private readonly CombatSystem _combatSystem;
     private readonly AISystem _aiSystem;
     private readonly InventorySystem _inventorySystem;
-    private readonly SkillSystem _skillSystem;
     private readonly CraftingSystem _craftingSystem;
     private readonly BuildingSystem _buildingSystem;
     private readonly SurvivalSystem _survivalSystem;
     private readonly ActiveEffectsSystem _activeEffectsSystem;
+    private readonly FarmingSystem _farmingSystem;
+    private readonly AnimalSystem _animalSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private Position? _generatorSpawnHint;
@@ -74,11 +74,12 @@ public class GameEngine : IDisposable
         _combatSystem = new CombatSystem();
         _aiSystem = new AISystem(worldSeed);
         _inventorySystem = new InventorySystem();
-        _skillSystem = new SkillSystem();
         _craftingSystem = new CraftingSystem();
         _buildingSystem = new BuildingSystem();
         _survivalSystem = new SurvivalSystem();
         _activeEffectsSystem = new ActiveEffectsSystem();
+        _farmingSystem = new FarmingSystem();
+        _animalSystem = new AnimalSystem();
         _worldRng = new SeededRandom(worldSeed);
     }
 
@@ -125,6 +126,9 @@ public class GameEngine : IDisposable
         foreach (var (pos, nodeDef) in result.ResourceNodes)
             SpawnResourceNode(pos, nodeDef);
 
+        foreach (var (pos, animalDef) in result.Animals)
+            SpawnAnimal(pos, animalDef);
+
         foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
             SpawnTownNpc(pos, name, tcx, tcy, radius);
     }
@@ -153,7 +157,6 @@ public class GameEngine : IDisposable
             Appearance = new TileAppearance(TileDefinitions.GlyphPlayer, TileDefinitions.ColorWhite),
             Input = new PlayerInput(),
             ClassData = new ClassData { ClassId = classId, Level = 1 },
-            Skills = new SkillSlots { Skill0 = def.StartingSkill0, Skill1 = def.StartingSkill1 },
             Inventory = new Inventory(ClassDefinitions.InventorySlots),
             Equipment = new Equipment(),
             QuickSlots = new QuickSlots(),
@@ -301,6 +304,37 @@ public class GameEngine : IDisposable
         return ref _worldMap.GetChunk(c).AddEntity(npc);
     }
 
+    /// <summary>
+    /// Spawns a farm animal at the given position using an animal definition.
+    /// </summary>
+    public ref AnimalEntity SpawnAnimal(Position pos, Data.AnimalDefinition def)
+    {
+        int produceItemId = GameData.Instance.Items.GetNumericId(def.ProduceItemId);
+
+        var animal = new AnimalEntity(_worldMap.AllocateEntityId())
+        {
+            Position = pos,
+            Health = new Health(def.Health),
+            Appearance = new TileAppearance(def.GlyphId, def.FgColor),
+            AnimalData = new AnimalData
+            {
+                AnimalTypeId = def.NumericId,
+                ProduceItemTypeId = produceItemId,
+                ProduceIntervalTicks = def.ProduceIntervalTicks,
+                ProduceTicksCurrent = 0,
+                IsFed = false,
+                FedTicksRemaining = 0,
+                BreedCooldownTicks = def.BreedCooldownTicks,
+                BreedCooldownCurrent = def.BreedCooldownTicks,
+            },
+            AI = new AIState { StateId = AIStates.Idle },
+            MoveDelay = new MoveDelay(5),
+        };
+
+        var c = Chunk.WorldToChunkCoord(pos);
+        return ref _worldMap.GetChunk(c).AddEntity(animal);
+    }
+
     // ── Tick ──────────────────────────────────────────────────────────
 
     /// <summary>
@@ -316,7 +350,8 @@ public class GameEngine : IDisposable
         _inventorySystem.Update(_worldMap, this);
         _craftingSystem.Update(_worldMap, DebugFreeCrafting);
         _buildingSystem.Update(_worldMap);
-        _skillSystem.Update(_worldMap);
+        _farmingSystem.Update(_worldMap);
+        _animalSystem.Update(_worldMap);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
         _lightingSystem.Update(_worldMap);
@@ -559,13 +594,6 @@ public class GameEngine : IDisposable
         state.EquippedItems = equippedItems.ToArray();
 
         state.QuickSlotIndices = [player.QuickSlots.Slot0, player.QuickSlots.Slot1, player.QuickSlots.Slot2, player.QuickSlots.Slot3];
-
-        state.Skills = [
-            new SkillSlotData { Id = player.Skills.Skill0, Cooldown = player.Skills.Cooldown0, Name = SkillDefinitions.GetName(player.Skills.Skill0) },
-            new SkillSlotData { Id = player.Skills.Skill1, Cooldown = player.Skills.Cooldown1, Name = SkillDefinitions.GetName(player.Skills.Skill1) },
-            new SkillSlotData { Id = player.Skills.Skill2, Cooldown = player.Skills.Cooldown2, Name = SkillDefinitions.GetName(player.Skills.Skill2) },
-            new SkillSlotData { Id = player.Skills.Skill3, Cooldown = player.Skills.Cooldown3, Name = SkillDefinitions.GetName(player.Skills.Skill3) },
-        ];
 
         // Scan nearby tiles for crafting stations
         var nearbyStationsTypes = new HashSet<int>();

@@ -290,8 +290,7 @@ Platform-specific scripts are provided in the `scripts/` folder:
 | `F`       | Attack nearest enemy |
 | `G`       | Pick up item         |
 | `1`-`4`   | Use item in slot     |
-| `Q`       | Use skill 1          |
-| `E`       | Use skill 2          |
+| `E`       | Interact             |
 | `X`       | Drop item            |
 | `I`       | Open inventory       |
 | `Escape`  | Pause / Back         |

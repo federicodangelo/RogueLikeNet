@@ -671,7 +671,6 @@ public class GameServerTests
         Assert.True(hudMsg!.MaxHealth > 0);
         Assert.True(hudMsg.Attack > 0);
         Assert.True(hudMsg.Defense > 0);
-        Assert.Equal(4, hudMsg.Skills.Length);
         Assert.Empty(hudMsg!.EquippedItems); // Nothing equipped yet
         Assert.Empty(hudMsg.InventoryItems);
     }

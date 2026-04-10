@@ -55,11 +55,6 @@ public class WorldDeltaMsgTests
             Experience = 500,
             InventoryCount = 3,
             InventoryCapacity = 20,
-            Skills = [
-                new SkillSlotMsg { Id = 1, Cooldown = 0, Name = "" },
-                new SkillSlotMsg { Id = 2, Cooldown = 5, Name = "" },
-                new SkillSlotMsg { Id = 3, Cooldown = 10, Name = "" },
-            ],
             InventoryItems = [
                 new ItemDataMsg { ItemTypeId = 1, StackCount = 1, Category = 0 },
                 new ItemDataMsg { ItemTypeId = 2, StackCount = 1, Category = 1 },
@@ -76,9 +71,6 @@ public class WorldDeltaMsgTests
         Assert.Equal(500, result.Experience);
         Assert.Equal(3, result.InventoryCount);
         Assert.Equal(20, result.InventoryCapacity);
-        Assert.Equal(3, result.Skills.Length);
-        Assert.Equal(1, result.Skills[0].Id);
-        Assert.Equal(5, result.Skills[1].Cooldown);
         Assert.Equal(3, result.InventoryItems.Length);
         Assert.Equal(1, result.InventoryItems[0].ItemTypeId);
         Assert.Equal(1, result.InventoryItems[1].Category);
@@ -96,7 +88,6 @@ public class WorldDeltaMsgTests
         Assert.Equal(0, msg.Experience);
         Assert.Equal(0, msg.InventoryCount);
         Assert.Equal(0, msg.InventoryCapacity);
-        Assert.Empty(msg.Skills);
         Assert.Empty(msg.InventoryItems);
     }
 
@@ -237,12 +228,6 @@ public class WorldDeltaMsgTests
             Experience = 500,
             InventoryCount = 2,
             InventoryCapacity = 20,
-            Skills = [
-                new SkillSlotMsg { Id = 1, Cooldown = 0, Name = "Power Strike" },
-                new SkillSlotMsg { Id = 2, Cooldown = 5, Name = "Shield Bash" },
-                new SkillSlotMsg { Id = 3, Cooldown = 10, Name = "Backstab" },
-                new SkillSlotMsg { Id = 4, Cooldown = 0, Name = "Dodge" },
-            ],
             InventoryItems = [
                 new ItemDataMsg { ItemTypeId = 10, StackCount = 1, Category = 0 },
                 new ItemDataMsg { ItemTypeId = 11, StackCount = 5, Category = 4 },
@@ -254,9 +239,6 @@ public class WorldDeltaMsgTests
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<PlayerStateMsg>(data);
-        Assert.Equal(4, result.Skills.Length);
-        Assert.Equal("Power Strike", result.Skills[0].Name);
-        Assert.Equal("Dodge", result.Skills[3].Name);
         Assert.Equal(2, result.EquippedItems.Length);
         Assert.Equal(10, result.EquippedItems[0].ItemTypeId);
         Assert.Equal(12, result.EquippedItems[1].ItemTypeId);
@@ -269,7 +251,6 @@ public class WorldDeltaMsgTests
     public void PlayerStateMsg_NewFields_DefaultValues()
     {
         var msg = new PlayerStateMsg();
-        Assert.Empty(msg.Skills);
         Assert.Empty(msg.EquippedItems);
         Assert.Empty(msg.InventoryItems);
     }

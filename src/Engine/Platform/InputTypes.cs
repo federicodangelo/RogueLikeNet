@@ -35,8 +35,6 @@ public enum InputAction
     UseItem2,
     UseItem3,
     UseItem4,
-    UseSkill1,
-    UseSkill2,
     Drop,
     Equip,
     UnequipSlot1,

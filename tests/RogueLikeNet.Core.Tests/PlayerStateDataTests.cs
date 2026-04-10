@@ -28,23 +28,6 @@ public class PlayerStateDataTests
         Assert.Equal(hud.Health, hud.MaxHealth);
         Assert.True(hud.Attack > 0);
         Assert.True(hud.Defense > 0);
-        Assert.Equal(4, hud.Skills.Length);
-    }
-
-    [Fact]
-    public void GetPlayerStateData_SkillNames_Populated()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        var (sx, sy, _) = engine.FindSpawnPosition();
-        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
-        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-
-        var hud = engine.GetPlayerStateData(player);
-        Assert.NotNull(hud);
-        Assert.Equal(4, hud!.Skills.Length);
-        Assert.Equal("Power Strike", hud.Skills[0].Name);
-        Assert.Equal("Shield Bash", hud.Skills[1].Name);
     }
 
     [Fact]

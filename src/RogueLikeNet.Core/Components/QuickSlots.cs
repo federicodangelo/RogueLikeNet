@@ -21,6 +21,8 @@ public struct QuickSlots
         Slot3 = -1;
     }
 
+    public int Count => SlotCount;
+
     public int this[int index]
     {
         readonly get => index switch { 0 => Slot0, 1 => Slot1, 2 => Slot2, 3 => Slot3, _ => -1 };

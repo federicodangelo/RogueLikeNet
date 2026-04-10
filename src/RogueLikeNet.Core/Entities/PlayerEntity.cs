@@ -14,7 +14,6 @@ public struct PlayerEntity
     public TileAppearance Appearance;
     public PlayerInput Input;
     public ClassData ClassData;
-    public SkillSlots Skills;
     public Inventory Inventory;
     public Equipment Equipment;
     public QuickSlots QuickSlots;
