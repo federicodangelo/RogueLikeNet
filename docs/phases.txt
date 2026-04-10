@@ -1,0 +1,58 @@
+Phase 1: Data Foundation (JSON Loader + New Item Model)
+Everything else depends on this phase.
+
+- Define JSON folder structure — data/items/weapons.json, data/items/armor.json, data/recipes/crafting.json, data/terrain/blocks.json, data/entities/monsters.json, data/biomes/biomes.json, etc. (folder-per-category with split files)
+- Create new data model types — New enums (ItemCategory, EquipSlot, ToolType, MaterialTier, DamageType, CraftingStationType) and category-specific structs (WeaponData, ArmorData, ToolData, FoodData, PotionData, BlockData, SeedData, FurnitureData) in Data
+- Build JSON loader — DataLoader, ItemRegistry, RecipeRegistry, TerrainBlockRegistry using System.Text.Json source generators (AOT-compatible for web target). Auto-assign numeric IDs sorted by string ID for deterministic network serialization
+- Migrate existing 68 items + 18 recipes from C# constants to JSON, then delete old Definitions/ classes (big-bang)
+- Simplify ItemData component — Just ItemId (int), StackCount, Durability. Stats derived from definition + material tier (no more random rarity)
+- Update all systems, protocol, rendering, persistence, and tests to use new registries
+
+Phase 2: Terrain Revolution (Block-Based World) [DISCARDED, WE REMOVED THE BLOCK TYPE AND RELATED SYSTEMS, RESOURCE NODES ARE GOOD ENOUGH FOR OUR NEEDS]
+Depends on Phase 1
+
+- Replace TileType enum with BlockId (int) referencing TerrainBlockRegistry — walkability/transparency derived from block definitions
+- Create MiningSystem — new ActionTypes.Mine, tool mining power vs block hardness, tool durability, drop items on break
+- Expand block placement — distinguish structural blocks (replace terrain) vs furniture (placeable layer on floor)
+- Update all world generators to emit block IDs instead of TileTypes (dirt layers, stone, ore veins, biome composition)
+- Define ~80 terrain block types in data/terrain/blocks.json (natural, ores, liquids, organic, crafted, special)
+
+Phase 3: Equipment & Combat Overhaul
+Depends on Phase 1, parallel with Phase 2
+
+- Expand Equipment to 10 slots — Head, Chest, Legs, Boots, Gloves, Weapon, Offhand, Ring, Necklace, Belt
+- Material-tier combat stats — remove rarity system; damage = WeaponData.BaseDamage × MaterialTierMultiplier (Wood=1.0 → Adamantite=4.0); defense = sum of all armor slots
+- Update CombatSystem — read from all equipment slots, weapon determines speed/damage type, shield adds block chance
+- Update equipment UI — 10-slot display in InventoryRenderer, tooltips with material-derived stats
+
+Phase 4: Survival System (Hunger & Thirst)
+Depends on Phase 1, parallel with Phases 2-3
+
+- Add Survival component to PlayerEntity — Hunger (0-100), Thirst (0-100), decreasing over time
+- Create SurvivalSystem — tick-based drain, threshold effects (>80 regen bonus, 20-50 speed penalty, <20 damage-over-time)
+- Food/drink consumption — FoodData.HungerRestore/ThirstRestore on use, cooked meals restore more, some give buffs
+- HUD update — hunger/thirst bars alongside health
+
+Phase 5: Crafting Station System
+Depends on Phases 1+2+3
+
+- Station-aware crafting — recipes reference CraftingStationType; CraftingSystem checks player proximity to required station furniture
+- Crafting station furniture — Workbench, Forge, Anvil, Cooking Station, Alchemy Table, Loom, etc. as placeable items with FurnitureData.CraftingStationType
+- ~200+ recipes in JSON — material chains (ore → ingot → weapon), cooking, alchemy, organized by station
+- Crafting UI — filter by available nearby stations, show material requirements with have/need
+
+Phase 6: Farming System
+Depends on Phases 2+4 (blocks + survival)
+
+- Tilling & planting — Hoe converts dirt/grass to tilled_soil block; seeds plant crop entities on tilled soil
+- Crop growth — new FarmingSystem with tick-based growth stages, watering with watering can, visual glyph changes per stage, harvest produces items + seed return chance
+- Animal husbandry — new AnimalEntity (chicken, cow, sheep, etc.); feeding, timed resource production (eggs, milk, wool), breeding
+- Seasonal system (stretch) — Spring→Summer→Fall→Winter cycle, crop season preferences
+- Phase 7: Content Population (~800 items)
+- Can start writing JSON during Phase 1, completed after all systems exist
+
+Populate all JSON files — ~120 raw materials, ~80 processed, ~40 tools, ~70 weapons, ~80 armor, ~100 food, ~30 potions, ~60 blocks, ~50 furniture, ~50 decorations, ~40 farming, ~80 misc
+~200+ recipes linking the material chains
+~80 terrain block types with biome composition
+Expanded enemies, animals, NPCs
+World generation tuning — ore distribution, biome block composition, surface features
