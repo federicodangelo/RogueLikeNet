@@ -73,6 +73,10 @@ public sealed class ItemDefinition : BaseDefinition
     public int BaseAttack => Weapon?.BaseDamage ?? Potion?.AttackBoost ?? 0;
     public int BaseDefense => Armor?.BaseDefense ?? Potion?.DefenseBoost ?? 0;
     public int BaseHealth => Potion?.HealthRestore ?? Food?.HealthRestore ?? 0;
+
+    // Material-tier-adjusted effective stats (damage = BaseDamage × tier, defense = BaseDefense × tier)
+    public int EffectiveAttack => MaterialTiers.Apply(BaseAttack, MaterialTier);
+    public int EffectiveDefense => MaterialTiers.Apply(BaseDefense, MaterialTier);
     public int HungerReduction => Food?.HungerRestore ?? 0;
     public int ThirstReduction => Food?.ThirstRestore ?? 0;
     public int HealthRestore => Food?.HealthRestore ?? Potion?.HealthRestore ?? 0;

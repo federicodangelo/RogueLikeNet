@@ -226,6 +226,7 @@ public static class GameStateSerializer
             TargetY = e.Target.Y,
             Damage = e.Damage,
             TargetDied = e.TargetDied,
+            Blocked = e.Blocked,
         }).ToArray();
     }
 

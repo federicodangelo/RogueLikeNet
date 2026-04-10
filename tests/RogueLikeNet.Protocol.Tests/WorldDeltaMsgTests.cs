@@ -205,6 +205,26 @@ public class WorldDeltaMsgTests
     }
 
     [Fact]
+    public void CombatEventMsg_Blocked_RoundTrip()
+    {
+        var msg = new CombatEventMsg
+        {
+            AttackerX = 5,
+            AttackerY = 6,
+            TargetX = 7,
+            TargetY = 8,
+            Damage = 0,
+            TargetDied = false,
+            Blocked = true
+        };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<CombatEventMsg>(data);
+        Assert.Equal(0, result.Damage);
+        Assert.False(result.TargetDied);
+        Assert.True(result.Blocked);
+    }
+
+    [Fact]
     public void PlayerStateMsg_NewFields_RoundTrip()
     {
         var msg = new PlayerStateMsg

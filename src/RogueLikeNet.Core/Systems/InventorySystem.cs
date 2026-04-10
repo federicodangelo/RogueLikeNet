@@ -146,8 +146,8 @@ public class InventorySystem
     {
         var def = GameData.Instance.Items.Get(item.ItemTypeId);
         if (def == null) return;
-        player.CombatStats.Attack += def.BaseAttack;
-        player.CombatStats.Defense += def.BaseDefense;
+        player.CombatStats.Attack += def.EffectiveAttack;
+        player.CombatStats.Defense += def.EffectiveDefense;
         player.Health.Max += def.BaseHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
     }
@@ -156,10 +156,31 @@ public class InventorySystem
     {
         var def = GameData.Instance.Items.Get(item.ItemTypeId);
         if (def == null) return;
-        player.CombatStats.Attack -= def.BaseAttack;
-        player.CombatStats.Defense -= def.BaseDefense;
+        player.CombatStats.Attack -= def.EffectiveAttack;
+        player.CombatStats.Defense -= def.EffectiveDefense;
         player.Health.Max -= def.BaseHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
+    }
+
+    /// <summary>
+    /// Adjusts attack delay when a weapon is equipped (lower AttackSpeed = slower).
+    /// AttackDelay.Interval = max(0, baseInterval - (weaponSpeed - 4)).
+    /// A weapon with AttackSpeed 4 is neutral; higher is faster, lower is slower.
+    /// </summary>
+    private static void ApplyWeaponSpeed(ref PlayerEntity player, ItemData item)
+    {
+        var def = GameData.Instance.Items.Get(item.ItemTypeId);
+        if (def?.Weapon == null) return;
+        int speedBonus = def.Weapon.AttackSpeed - 4; // 4 is neutral baseline
+        player.AttackDelay.Interval = Math.Max(0, player.AttackDelay.Interval - speedBonus);
+    }
+
+    private static void RemoveWeaponSpeed(ref PlayerEntity player, ItemData item)
+    {
+        var def = GameData.Instance.Items.Get(item.ItemTypeId);
+        if (def?.Weapon == null) return;
+        int speedBonus = def.Weapon.AttackSpeed - 4;
+        player.AttackDelay.Interval = Math.Max(0, player.AttackDelay.Interval + speedBonus);
     }
 
     private static int ResolveEquipSlot(ItemDefinition def)
@@ -186,11 +207,13 @@ public class InventorySystem
         if (player.Equipment.HasItem(equipSlot))
         {
             RemoveItemStats(ref player, player.Equipment[equipSlot]);
+            RemoveWeaponSpeed(ref player, player.Equipment[equipSlot]);
             player.Inventory.Items.Add(player.Equipment[equipSlot]);
         }
         player.Equipment[equipSlot] = newItem;
 
         ApplyItemStats(ref player, newItem);
+        ApplyWeaponSpeed(ref player, newItem);
     }
 
     private static void ProcessSwapItems(ref PlayerEntity player)
@@ -224,6 +247,7 @@ public class InventorySystem
         {
             var old = player.Equipment[equipSlot];
             RemoveItemStats(ref player, old);
+            RemoveWeaponSpeed(ref player, old);
             player.Inventory.Items.Add(old);
             player.Equipment[equipSlot] = ItemData.None;
         }

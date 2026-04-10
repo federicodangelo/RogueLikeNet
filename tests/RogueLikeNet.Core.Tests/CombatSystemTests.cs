@@ -1,5 +1,7 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 
@@ -413,5 +415,194 @@ public class CombatSystemTests
         var monsterEvents = engine.Combat.LastTickEvents.Where(
             e => e.Attacker.X == sx + 1 && e.Attacker.Y == sy).ToList();
         Assert.Empty(monsterEvents);
+    }
+
+    // === Shield Block Tests ===
+
+    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
+    private static ItemDefinition Item(string id) => GameData.Instance.Items.Get(id)!;
+
+    private static void EquipItem(ref PlayerEntity player, GameEngine engine, string itemId)
+    {
+        var pos = player.Position;
+        var def = Item(itemId);
+        engine.SpawnItemOnGround(def, pos);
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+    }
+
+    [Fact]
+    public void ShieldBlock_CanBlockMonsterAttack()
+    {
+        // steel_shield: steel tier (250%), baseDefense=7 → effectiveDefense=17, blockChance=34%
+        // Run many iterations; statistically some should block and some should not
+        int blocked = 0;
+        int hit = 0;
+
+        for (int seed = 0; seed < 200; seed++)
+        {
+            using var engine = CreateEngine();
+            var (sx, sy, _) = engine.FindSpawnPosition();
+            var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+            ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+            EquipItem(ref player, engine, "steel_shield");
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+            var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+                new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 50, Defense = 0, Speed = 8 });
+            ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+            monster.AI.StateId = AIStates.Attack;
+
+            engine.Tick();
+
+            var events = engine.Combat.LastTickEvents.Where(
+                e => e.Attacker.X == sx + 1 && e.Attacker.Y == sy).ToList();
+            Assert.Single(events);
+
+            if (events[0].Blocked)
+            {
+                Assert.Equal(0, events[0].Damage);
+                blocked++;
+            }
+            else
+            {
+                Assert.True(events[0].Damage > 0);
+                hit++;
+            }
+        }
+
+        // With 34% block chance over 200 trials, expect roughly 68 blocks
+        // Extremely unlikely to get 0 blocks or 200 blocks
+        Assert.True(blocked > 0, $"Expected some blocks, got {blocked} out of 200");
+        Assert.True(hit > 0, $"Expected some hits, got {hit} out of 200");
+    }
+
+    [Fact]
+    public void ShieldBlock_NoDamageOnBlock()
+    {
+        // Use large number of tries to find a block event
+        for (int seed = 0; seed < 500; seed++)
+        {
+            using var engine = CreateEngine();
+            var (sx, sy, _) = engine.FindSpawnPosition();
+            var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+            ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+            int hpBefore = player.Health.Current;
+
+            EquipItem(ref player, engine, "steel_shield");
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+            var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+                new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 50, Defense = 0, Speed = 8 });
+            ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+            monster.AI.StateId = AIStates.Attack;
+
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+            var events = engine.Combat.LastTickEvents.Where(
+                e => e.Attacker.X == sx + 1 && e.Attacker.Y == sy).ToList();
+
+            if (events.Count > 0 && events[0].Blocked)
+            {
+                // Player should take zero damage on block
+                Assert.Equal(hpBefore, player.Health.Current);
+                return; // Test passed
+            }
+        }
+
+        Assert.Fail("No block event observed in 500 iterations");
+    }
+
+    [Fact]
+    public void NoShield_NeverBlocks()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // No shield equipped
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 50, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        monster.AI.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        var events = engine.Combat.LastTickEvents.Where(
+            e => e.Attacker.X == sx + 1 && e.Attacker.Y == sy).ToList();
+        Assert.Single(events);
+        Assert.False(events[0].Blocked);
+        Assert.True(events[0].Damage > 0);
+    }
+
+    [Fact]
+    public void EquippedWeapon_AppliesTieredDamageToMonster()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseAtk = player.CombatStats.Attack;
+
+        // Equip long_sword (iron, baseDamage=5, effective=10)
+        EquipItem(ref player, engine, "long_sword");
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        int weaponAtk = player.CombatStats.Attack;
+        Assert.Equal(baseAtk + Item("long_sword").EffectiveAttack, weaponAtk);
+
+        // Spawn monster with known defense=0, health=100
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+
+        // Damage should be max(1, weaponAtk - 0) = weaponAtk
+        int expectedDamage = Math.Max(1, weaponAtk);
+        Assert.Equal(100 - expectedDamage, monster.Health.Current);
+    }
+
+    [Fact]
+    public void EquippedArmor_ReducesDamageFromMonster()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseDef = player.CombatStats.Defense;
+
+        // Equip chain_mail (iron, baseDefense=4, effective=8)
+        EquipItem(ref player, engine, "chain_mail");
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int totalDef = player.CombatStats.Defense;
+        Assert.Equal(baseDef + Item("chain_mail").EffectiveDefense, totalDef);
+
+        // Monster with attack = totalDef + 5 → expect 5 damage
+        int monsterAtk = totalDef + 5;
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = monsterAtk, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        monster.AI.StateId = AIStates.Attack;
+
+        int hpBefore = player.Health.Current;
+        engine.Tick();
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        Assert.Equal(hpBefore - 5, player.Health.Current);
     }
 }

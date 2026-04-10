@@ -28,6 +28,22 @@ public sealed class ParticleSystem
         });
     }
 
+    /// <summary>Spawn floating "BLOCK" text when a shield blocks an attack.</summary>
+    public void SpawnBlockText(int worldX, int worldY)
+    {
+        _particles.Add(new Particle
+        {
+            WorldX = worldX + (_rng.NextSingle() - 0.5f) * 0.3f,
+            WorldY = worldY - 0.2f,
+            VelocityX = (_rng.NextSingle() - 0.5f) * 0.3f,
+            VelocityY = -1.5f,
+            Text = "BLOCK",
+            Color = new Color4(100, 180, 255, 255),
+            Life = 1.0f,
+            Decay = 1.0f,
+        });
+    }
+
     /// <summary>Spawn hit sparks between attacker and target.</summary>
     public void SpawnHitSparks(int attackerX, int attackerY, int targetX, int targetY, bool killed)
     {

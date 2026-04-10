@@ -813,4 +813,209 @@ public class InventorySystemTests
         // After unequip, defense is restored
         Assert.Equal(defBefore, player.CombatStats.Defense);
     }
+
+    // === Material Tier Stat Tests ===
+
+    [Fact]
+    public void EquipWeapon_AppliesMaterialTierMultiplier()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseAtk = player.CombatStats.Attack;
+
+        // long_sword: iron tier (200%), baseDamage=5 → effectiveAttack=10
+        var swordDef = Item("long_sword");
+        engine.SpawnItemOnGround(swordDef, Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(baseAtk + swordDef.EffectiveAttack, player.CombatStats.Attack);
+    }
+
+    [Fact]
+    public void EquipArmor_AppliesMaterialTierMultiplier()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseDef = player.CombatStats.Defense;
+
+        // chain_mail: iron tier (200%), baseDefense=4 → effectiveDefense=8
+        var armorDef = Item("chain_mail");
+        engine.SpawnItemOnGround(armorDef, Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(baseDef + armorDef.EffectiveDefense, player.CombatStats.Defense);
+    }
+
+    [Fact]
+    public void UnequipWeapon_RemovesTieredAttack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseAtk = player.CombatStats.Attack;
+
+        var swordDef = Item("long_sword");
+        engine.SpawnItemOnGround(swordDef, Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Unequip weapon (slot 5 = Hand)
+        player.Input.ActionType = ActionTypes.Unequip;
+        player.Input.ItemSlot = 5;
+        engine.Tick();
+
+        Assert.Equal(baseAtk, player.CombatStats.Attack);
+    }
+
+    [Fact]
+    public void SwapWeapon_CorrectlySwapsTieredStats()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseAtk = player.CombatStats.Attack;
+
+        // Equip short_sword (iron, baseDamage=3, effective=6)
+        engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(baseAtk + Item("short_sword").EffectiveAttack, player.CombatStats.Attack);
+
+        // Pick up long_sword and equip (should swap short_sword back)
+        engine.SpawnItemOnGround(Item("long_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(baseAtk + Item("long_sword").EffectiveAttack, player.CombatStats.Attack);
+    }
+
+    [Fact]
+    public void EquipShield_IncreasesDefense()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseDef = player.CombatStats.Defense;
+
+        // iron_shield: iron tier (200%), baseDefense=5
+        var shieldDef = Item("iron_shield");
+        engine.SpawnItemOnGround(shieldDef, Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(baseDef + shieldDef.EffectiveDefense, player.CombatStats.Defense);
+        Assert.True(player.Equipment.HasItem(Data.EquipSlot.Offhand));
+    }
+
+    // === Weapon Speed Tests ===
+
+    [Fact]
+    public void EquipWeapon_AdjustsAttackDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseInterval = player.AttackDelay.Interval;
+
+        // short_sword: attackSpeed=5, speedBonus = 5-4 = 1 → interval decreases by 1
+        engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        Assert.Equal(Math.Max(0, baseInterval - 1), player.AttackDelay.Interval);
+    }
+
+    [Fact]
+    public void UnequipWeapon_RestoresAttackDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseInterval = player.AttackDelay.Interval;
+
+        engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
+        player.Input.ActionType = ActionTypes.PickUp;
+        engine.Tick();
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        // Unequip
+        player.Input.ActionType = ActionTypes.Unequip;
+        player.Input.ItemSlot = 5; // Hand slot
+        engine.Tick();
+
+        Assert.Equal(baseInterval, player.AttackDelay.Interval);
+    }
+
+    [Fact]
+    public void EquipMultipleArmorSlots_SumsDefense()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseDef = player.CombatStats.Defense;
+
+        // Equip chain_mail (chest) and iron_helmet (head) and iron_shield (offhand)
+        string[] items = ["chain_mail", "iron_helmet", "iron_shield"];
+        int expectedDefBonus = 0;
+        foreach (var itemId in items)
+        {
+            var def = Item(itemId);
+            expectedDefBonus += def.EffectiveDefense;
+            engine.SpawnItemOnGround(def, Position.FromCoords(sx, sy, Position.DefaultZ));
+            player.Input.ActionType = ActionTypes.PickUp;
+            engine.Tick();
+            player.Input.ActionType = ActionTypes.Equip;
+            player.Input.ItemSlot = 0;
+            engine.Tick();
+        }
+
+        Assert.Equal(baseDef + expectedDefBonus, player.CombatStats.Defense);
+    }
 }

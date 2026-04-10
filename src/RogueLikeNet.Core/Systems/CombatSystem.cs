@@ -15,6 +15,7 @@ public class CombatSystem
 {
     private readonly List<CombatEvent> _events = new();
     private readonly List<NpcDialogueEvent> _dialogueEvents = new();
+    private readonly Random _rng = new();
 
     private static readonly (int DX, int DY)[] MeleeOffsets =
         [(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)];
@@ -146,6 +147,22 @@ public class CombatSystem
                     int dy = Math.Abs(monster.Position.Y - player.Position.Y);
                     if (dx + dy > 1) continue;
 
+                    // Shield in offhand adds block chance
+                    int blockChance = GetShieldBlockChance(ref player);
+                    if (blockChance > 0 && _rng.Next(100) < blockChance)
+                    {
+                        _events.Add(new CombatEvent
+                        {
+                            Attacker = monster.Position,
+                            Target = player.Position,
+                            Damage = 0,
+                            TargetDied = false,
+                            Blocked = true,
+                        });
+                        monster.AttackDelay.Current = monster.AttackDelay.Interval;
+                        break;
+                    }
+
                     int damage = Math.Max(1, monster.CombatStats.Attack - player.CombatStats.Defense);
                     player.Health.Current = Math.Max(0, player.Health.Current - damage);
 
@@ -222,6 +239,22 @@ public class CombatSystem
 
         return 0;
     }
+
+    /// <summary>
+    /// Computes block chance from a shield in the offhand slot.
+    /// Block chance = BaseDefense × MaterialTierMultiplier × 2 (%), capped at 50%.
+    /// </summary>
+    private static int GetShieldBlockChance(ref PlayerEntity player)
+    {
+        var offhand = player.Equipment.Offhand;
+        if (offhand.IsNone) return 0;
+
+        var def = GameData.Instance.Items.Get(offhand.ItemTypeId);
+        if (def?.Armor == null || def.EquipSlot != EquipSlot.Offhand) return 0;
+
+        int effectiveDef = MaterialTiers.Apply(def.Armor.BaseDefense, def.MaterialTier);
+        return Math.Min(50, effectiveDef * 2);
+    }
 }
 
 public struct CombatEvent
@@ -230,6 +263,7 @@ public struct CombatEvent
     public Position Target;
     public int Damage;
     public bool TargetDied;
+    public bool Blocked;
 }
 
 public struct NpcDialogueEvent

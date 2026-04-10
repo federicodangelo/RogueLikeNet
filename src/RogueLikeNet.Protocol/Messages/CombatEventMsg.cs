@@ -11,4 +11,5 @@ public class CombatEventMsg
     [Key(3)] public int TargetY { get; set; }
     [Key(4)] public int Damage { get; set; }
     [Key(5)] public bool TargetDied { get; set; }
+    [Key(6)] public bool Blocked { get; set; }
 }

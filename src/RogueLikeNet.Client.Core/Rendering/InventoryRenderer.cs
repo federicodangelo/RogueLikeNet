@@ -217,13 +217,13 @@ public sealed class InventoryRenderer
         var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
 
         var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
-        int eqAtk = eqDef?.BaseAttack ?? 0;
-        int eqDefVal = eqDef?.BaseDefense ?? 0;
+        int eqAtk = eqDef?.EffectiveAttack ?? 0;
+        int eqDefVal = eqDef?.EffectiveDefense ?? 0;
         int eqMaxHp = eqDef?.BaseHealth ?? 0;
 
 
-        int diffAtk = def.BaseAttack - eqAtk;
-        int diffDef = def.BaseDefense - eqDefVal;
+        int diffAtk = def.EffectiveAttack - eqAtk;
+        int diffDef = def.EffectiveDefense - eqDefVal;
         int difMaxfHp = def.BaseHealth - eqMaxHp;
         int diffHunger = def.HungerReduction;
         int diffThirst = def.ThirstReduction;

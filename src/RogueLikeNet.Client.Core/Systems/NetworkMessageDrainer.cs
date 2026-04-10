@@ -29,8 +29,15 @@ public sealed class NetworkMessageDrainer
 
         foreach (var evt in gameState.PendingCombatEvents)
         {
-            particles.SpawnDamageNumber(evt.TargetX, evt.TargetY, evt.Damage, evt.TargetDied);
-            particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
+            if (evt.Blocked)
+            {
+                particles.SpawnBlockText(evt.TargetX, evt.TargetY);
+            }
+            else
+            {
+                particles.SpawnDamageNumber(evt.TargetX, evt.TargetY, evt.Damage, evt.TargetDied);
+                particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
+            }
         }
         gameState.DrainCombatEvents();
 
