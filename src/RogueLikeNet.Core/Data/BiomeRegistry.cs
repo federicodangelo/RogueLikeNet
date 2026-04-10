@@ -19,10 +19,6 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
         // Map string Id to BiomeType enum for fast lookup by enum value
         if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
             _byBiomeType[(int)biomeType] = biome;
-
-        // Resolve liquid tile type from string
-        if (biome.Liquid != null)
-            biome.Liquid.ResolvedTileType = Enum.Parse<TileType>(biome.Liquid.TileType, ignoreCase: true);
     }
 
     public BiomeDefinition? Get(BiomeType biome) =>

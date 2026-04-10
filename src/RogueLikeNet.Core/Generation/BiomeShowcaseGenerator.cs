@@ -141,7 +141,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                         if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                         {
                             ref var tile = ref chunk.Tiles[x, y];
-                            tile.Type = liquidDef.ResolvedTileType;
+                            tile.Type = liquidDef.TileType;
                             tile.GlyphId = liquidDef.GlyphId;
                             tile.FgColor = liquidDef.FgColor;
                             tile.BgColor = liquidDef.BgColor;

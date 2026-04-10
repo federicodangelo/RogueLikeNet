@@ -109,7 +109,7 @@ internal static class DungeonHelper
                             continue; // Make the pool roughly circular
 
                         ref var tile = ref chunk.Tiles[x, y];
-                        tile.Type = liquidDef.ResolvedTileType;
+                        tile.Type = liquidDef.TileType;
                         tile.GlyphId = liquidDef.GlyphId;
                         tile.FgColor = liquidDef.FgColor;
                         tile.BgColor = liquidDef.BgColor;

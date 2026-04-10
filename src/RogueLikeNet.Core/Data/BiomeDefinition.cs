@@ -34,14 +34,11 @@ public sealed class BiomeEnemySpawnDef
 
 public sealed class BiomeLiquidDef
 {
-    public string TileType { get; set; } = "Water";
+    public TileType TileType { get; set; }
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int BgColor { get; set; }
     public int Chance100 { get; set; }
-
-    [JsonIgnore]
-    public TileType ResolvedTileType { get; set; }
 }
 
 public sealed class BiomeResourceWeight

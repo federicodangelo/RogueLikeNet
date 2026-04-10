@@ -148,7 +148,7 @@ public class OverworldGenerator : IDungeonGenerator
                 if (height < LiquidHeightThreshold && liquidDef != null)
                 {
                     // Liquid
-                    tile.Type = liquidDef.ResolvedTileType;
+                    tile.Type = liquidDef.TileType;
                     tile.GlyphId = liquidDef.GlyphId;
                     tile.FgColor = liquidDef.FgColor;
                     tile.BgColor = liquidDef.BgColor;
