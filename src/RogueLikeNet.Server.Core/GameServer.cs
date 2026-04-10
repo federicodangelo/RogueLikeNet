@@ -73,6 +73,13 @@ public class GameServer : IDisposable
         set => _engine.DebugMaxSpeed = value;
     }
 
+    /// <summary>Debug: when true, crafting skips ingredient and station checks.</summary>
+    public bool DebugFreeCrafting
+    {
+        get => _engine.DebugFreeCrafting;
+        set => _engine.DebugFreeCrafting = value;
+    }
+
     /// <summary>Debug: when true, all tiles are treated as visible (no FOV).</summary>
     public bool DebugVisibilityOff { get; set; } = false;
 

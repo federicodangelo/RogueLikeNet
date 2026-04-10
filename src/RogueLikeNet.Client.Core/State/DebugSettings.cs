@@ -26,6 +26,9 @@ public sealed class DebugSettings
     /// <summary>When true, movement has no delay and holding a direction moves 4 tiles at a time.</summary>
     public bool MaxSpeed { get; set; } = true;
 
+    /// <summary>When true, crafting skips ingredient and station proximity checks.</summary>
+    public bool FreeCrafting { get; set; } = true;
+
     /// <summary>Zoom level offset. 0 = default, negative = zoom out, positive = zoom in.</summary>
     public int ZoomLevel { get; set; }
 
@@ -45,6 +48,7 @@ public sealed class DebugSettings
         LightOff = true;
         Invulnerable = true;
         MaxSpeed = true;
+        FreeCrafting = true;
         ZoomLevel = 0;
     }
 
@@ -102,16 +106,21 @@ public sealed class DebugSettings
                     ZoomLevel = 0;
                     changes = true;
                     break;
+                case 'f' or 'F':
+                    FreeCrafting = !FreeCrafting;
+                    changes = true;
+                    break;
                 case 'z' or 'Z':
                 {
                     // Toggle all boolean flags at once
-                    bool anyOn = VisibilityOff || CollisionsOff || Invulnerable || LightOff || MaxSpeed;
+                    bool anyOn = VisibilityOff || CollisionsOff || Invulnerable || LightOff || MaxSpeed || FreeCrafting;
                     bool newVal = !anyOn;
                     VisibilityOff = newVal;
                     CollisionsOff = newVal;
                     Invulnerable = newVal;
                     LightOff = newVal;
                     MaxSpeed = newVal;
+                    FreeCrafting = newVal;
                     changes = true;
                     break;
                 }

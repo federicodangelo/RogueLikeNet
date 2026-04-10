@@ -422,4 +422,77 @@ public class CraftingSystemTests
         Assert.NotNull(cookingPot.Placeable);
         Assert.Equal(CraftingStationType.CookingPot, cookingPot.Placeable.CraftingStationType);
     }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Debug free crafting
+    // ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void DebugFreeCrafting_SkipsIngredientCheck()
+    {
+        // No ingredients in inventory — normally fails
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = true;
+        var pid = SpawnPlayerWithItems(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+    }
+
+    [Fact]
+    public void DebugFreeCrafting_SkipsStationCheck()
+    {
+        // Anvil recipe with no anvil nearby — normally fails
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = true;
+        var pid = SpawnPlayerWithItems(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_iron_sword");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("iron_sword"));
+    }
+
+    [Fact]
+    public void DebugFreeCrafting_DoesNotConsumeIngredients()
+    {
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = true;
+        var pid = SpawnPlayerWithItems(engine, ("wood", 8));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        // Crafted item should be in inventory
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+        // Wood should NOT be consumed in debug mode
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wood") && i.StackCount == 8);
+    }
+
+    [Fact]
+    public void DebugFreeCrafting_Off_StillValidates()
+    {
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = false;
+        var pid = SpawnPlayerWithItems(engine);
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+    }
 }

@@ -241,7 +241,7 @@ public sealed class MenuRenderer
         AsciiDraw.FillOverlay(r, totalCols, totalRows);
 
         bool showDebug = debug is { Enabled: true };
-        int debugLines = showDebug ? 10 : 0;
+        int debugLines = showDebug ? 11 : 0;
         int boxW = 38;
         int boxH = PauseMenuItems.Length + 6 + debugLines;
         int bx = (totalCols - boxW) / 2;
@@ -282,6 +282,8 @@ public sealed class MenuRenderer
             AsciiDraw.DrawString(r, bx + 4, debugY, $"L  Lighting: {(debug.LightOff ? "OFF" : "ON")}", debug.LightOff ? RenderingTheme.Selected : RenderingTheme.Normal);
             debugY++;
             AsciiDraw.DrawString(r, bx + 4, debugY, $"M  Max Speed: {(debug.MaxSpeed ? "ON" : "OFF")}", debug.MaxSpeed ? RenderingTheme.Selected : RenderingTheme.Normal);
+            debugY++;
+            AsciiDraw.DrawString(r, bx + 4, debugY, $"F  Free Craft: {(debug.FreeCrafting ? "ON" : "OFF")}", debug.FreeCrafting ? RenderingTheme.Selected : RenderingTheme.Normal);
             debugY++;
             AsciiDraw.DrawString(r, bx + 4, debugY, $"Z  Toggle All", RenderingTheme.Normal);
             debugY++;

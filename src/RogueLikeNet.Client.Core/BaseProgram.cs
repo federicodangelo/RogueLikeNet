@@ -206,6 +206,7 @@ public abstract class BaseProgram
         _embeddedServer.DebugNoCollision = debug.CollisionsOff;
         _embeddedServer.DebugInvulnerable = debug.Invulnerable;
         _embeddedServer.DebugMaxSpeed = debug.MaxSpeed;
+        _embeddedServer.DebugFreeCrafting = debug.FreeCrafting;
         _embeddedServer.DebugVisibilityOff = debug.VisibilityOff;
         _embeddedServer.DebugGiveResources = debug.Enabled;
         Game.GameState.DebugSeeAll = debug.VisibilityOff;

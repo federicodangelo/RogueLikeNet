@@ -38,6 +38,8 @@ public sealed class CraftingScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.Crafting;
 
+    private bool IsDebugFreeCraft => _ctx.Debug is { Enabled: true, FreeCrafting: true };
+
     public CraftingScreen(ScreenContext ctx, GameWorldRenderer worldRenderer, OverlayRenderer overlayRenderer)
     {
         _ctx = ctx;
@@ -306,7 +308,7 @@ public sealed class CraftingScreen : IScreen
         for (int i = scrollOffset; i < visibleEnd && row < maxRow; i++)
         {
             var recipe = _filteredRecipes[i];
-            bool canCraft = CanCraftRecipe(recipe, hud);
+            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
@@ -339,7 +341,7 @@ public sealed class CraftingScreen : IScreen
             if (row >= maxRow) break;
             var recipe = recipes.Get(recipeId);
             if (recipe == null) continue;
-            bool canCraft = CanCraftRecipe(recipe, hud);
+            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
             var def = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
             string tag = def != null ? AsciiDraw.CategoryTag(def.CategoryInt) : "     ";
             string text = $"  {tag}{recipe.Name}";
@@ -385,7 +387,7 @@ public sealed class CraftingScreen : IScreen
 
         if (row < maxRow)
         {
-            bool canCraft = CanCraftRecipe(recipe, hud);
+            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
             bool hasStation = HasNearbyStation(recipe, hud);
             if (!hasStation)
             {
@@ -422,7 +424,8 @@ public sealed class CraftingScreen : IScreen
         if (hud == null) return;
 
         var recipe = _filteredRecipes[selIdx];
-        if (!CanCraftRecipe(recipe, hud)) return;
+        bool debugFree = _ctx.Debug is { Enabled: true, FreeCrafting: true };
+        if (!debugFree && !CanCraftRecipe(recipe, hud)) return;
 
         // Track recent recipe
         _recentRecipeIds.Remove(recipe.NumericId);
@@ -480,8 +483,8 @@ public sealed class CraftingScreen : IScreen
         // Sort: craftable first, then by name
         filtered.Sort((a, b) =>
         {
-            bool aCraft = hud != null && CanCraftRecipe(a, hud);
-            bool bCraft = hud != null && CanCraftRecipe(b, hud);
+            bool aCraft = hud != null && CanCraftRecipe(a, hud, IsDebugFreeCraft);
+            bool bCraft = hud != null && CanCraftRecipe(b, hud, IsDebugFreeCraft);
             if (aCraft != bCraft) return aCraft ? -1 : 1;
             return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
         });
@@ -493,7 +496,7 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState))
+            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft))
                 return true;
         }
         return false;
@@ -510,19 +513,21 @@ public sealed class CraftingScreen : IScreen
         return count;
     }
 
-    private static int CountCraftableInCategory(int category, PlayerStateMsg playerState)
+    private int CountCraftableInCategory(int category, PlayerStateMsg playerState)
     {
         int count = 0;
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState)) count++;
+            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft)) count++;
         }
         return count;
     }
 
-    private static bool CanCraftRecipe(RecipeDefinition recipe, PlayerStateMsg playerState)
+    private static bool CanCraftRecipe(RecipeDefinition recipe, PlayerStateMsg playerState, bool debugFreeCraft = false)
     {
+        if (debugFreeCraft) return true;
+
         // Check station availability
         if (!HasNearbyStation(recipe, playerState))
             return false;

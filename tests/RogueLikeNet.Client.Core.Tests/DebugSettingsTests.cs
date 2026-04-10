@@ -43,6 +43,7 @@ public class DebugSettingsTests
         Assert.True(debug.Invulnerable);
         Assert.True(debug.LightOff);
         Assert.True(debug.MaxSpeed);
+        Assert.True(debug.FreeCrafting);
 
         var input = new FakeInputManager { TextInput = "Z" };
         bool synced = false;
@@ -53,6 +54,7 @@ public class DebugSettingsTests
         Assert.False(debug.Invulnerable);
         Assert.False(debug.LightOff);
         Assert.False(debug.MaxSpeed);
+        Assert.False(debug.FreeCrafting);
         Assert.True(synced);
     }
 
@@ -67,6 +69,7 @@ public class DebugSettingsTests
             Invulnerable = false,
             LightOff = false,
             MaxSpeed = false,
+            FreeCrafting = false,
         };
 
         var input = new FakeInputManager { TextInput = "z" };
@@ -77,6 +80,7 @@ public class DebugSettingsTests
         Assert.True(debug.Invulnerable);
         Assert.True(debug.LightOff);
         Assert.True(debug.MaxSpeed);
+        Assert.True(debug.FreeCrafting);
     }
 
     [Fact]
@@ -90,6 +94,7 @@ public class DebugSettingsTests
             Invulnerable = true,
             LightOff = false,
             MaxSpeed = false,
+            FreeCrafting = true,
         };
 
         var input = new FakeInputManager { TextInput = "Z" };
@@ -100,6 +105,7 @@ public class DebugSettingsTests
         Assert.False(debug.Invulnerable);
         Assert.False(debug.LightOff);
         Assert.False(debug.MaxSpeed);
+        Assert.False(debug.FreeCrafting);
     }
 
     [Fact]
@@ -124,6 +130,20 @@ public class DebugSettingsTests
         debug.HandleDebugKeys(input, () => { });
 
         Assert.False(debug.VisibilityOff);
+        // Others unchanged
+        Assert.True(debug.CollisionsOff);
+    }
+
+    [Fact]
+    public void IndividualToggle_FreeCrafting()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.True(debug.FreeCrafting);
+
+        var input = new FakeInputManager { TextInput = "f" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.False(debug.FreeCrafting);
         // Others unchanged
         Assert.True(debug.CollisionsOff);
     }

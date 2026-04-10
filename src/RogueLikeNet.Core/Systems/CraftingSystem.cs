@@ -13,7 +13,7 @@ public class CraftingSystem
 {
     public const int StationRange = 5;
 
-    public void Update(WorldMap map)
+    public void Update(WorldMap map, bool debugFreeCrafting = false)
     {
         foreach (ref var player in map.Players)
         {
@@ -25,34 +25,39 @@ public class CraftingSystem
 
             var recipe = GameData.Instance.Recipes.Get(recipeId);
             if (recipe == null) continue;
-            if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items)) continue;
 
-            // Validate crafting station proximity
-            if (recipe.Station != CraftingStationType.Hand && !IsNearStation(map, player.Position, recipe.Station))
-                continue;
-
-            // Remove ingredients
-            foreach (var ingredient in recipe.Ingredients)
+            if (!debugFreeCrafting)
             {
-                int remaining = ingredient.Count;
-                for (int i = player.Inventory.Items.Count - 1; i >= 0 && remaining > 0; i--)
+                if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items)) continue;
+
+                // Validate crafting station proximity
+                if (recipe.Station != CraftingStationType.Hand && !IsNearStation(map, player.Position, recipe.Station))
+                    continue;
+            }
+
+            // Remove ingredients (skip when debug free crafting)
+            if (!debugFreeCrafting)
+                foreach (var ingredient in recipe.Ingredients)
                 {
-                    if (player.Inventory.Items[i].ItemTypeId != ingredient.NumericItemId) continue;
-                    var item = player.Inventory.Items[i];
-                    int take = Math.Min(remaining, item.StackCount);
-                    item.StackCount -= take;
-                    remaining -= take;
-                    if (item.StackCount <= 0)
+                    int remaining = ingredient.Count;
+                    for (int i = player.Inventory.Items.Count - 1; i >= 0 && remaining > 0; i--)
                     {
-                        player.Inventory.Items.RemoveAt(i);
-                        player.QuickSlots.OnItemRemoved(i);
-                    }
-                    else
-                    {
-                        player.Inventory.Items[i] = item;
+                        if (player.Inventory.Items[i].ItemTypeId != ingredient.NumericItemId) continue;
+                        var item = player.Inventory.Items[i];
+                        int take = Math.Min(remaining, item.StackCount);
+                        item.StackCount -= take;
+                        remaining -= take;
+                        if (item.StackCount <= 0)
+                        {
+                            player.Inventory.Items.RemoveAt(i);
+                            player.QuickSlots.OnItemRemoved(i);
+                        }
+                        else
+                        {
+                            player.Inventory.Items[i] = item;
+                        }
                     }
                 }
-            }
 
             // Add crafted item
             var resultDef = GameData.Instance.Items.Get(recipe.Result.NumericItemId);

@@ -54,6 +54,9 @@ public class GameEngine : IDisposable
     /// <summary>Debug: when true, player has zero move/attack delay.</summary>
     public bool DebugMaxSpeed { get; set; }
 
+    /// <summary>Debug: when true, crafting skips ingredient and station checks.</summary>
+    public bool DebugFreeCrafting { get; set; }
+
     /// <summary>
     /// Optional callback to deserialize raw entity JSON from saved chunks.
     /// Set by the server layer so entities are restored after the chunk is registered in WorldMap.
@@ -311,7 +314,7 @@ public class GameEngine : IDisposable
         _combatSystem.Update(_worldMap, DebugInvulnerable);
         _aiSystem.Update(_worldMap);
         _inventorySystem.Update(_worldMap, this);
-        _craftingSystem.Update(_worldMap);
+        _craftingSystem.Update(_worldMap, DebugFreeCrafting);
         _buildingSystem.Update(_worldMap);
         _skillSystem.Update(_worldMap);
         _worldMap.Update();
