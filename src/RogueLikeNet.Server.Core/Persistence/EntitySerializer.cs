@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
@@ -186,14 +185,8 @@ public static class EntitySerializer
             var dict = new Dictionary<string, object> { ["Type"] = TypeCrop };
             SerializePosition(dict, c.Position);
             dict["SeedItemTypeId"] = c.CropData.SeedItemTypeId;
-            dict["HarvestItemTypeId"] = c.CropData.HarvestItemTypeId;
-            dict["HarvestMin"] = c.CropData.HarvestMin;
-            dict["HarvestMax"] = c.CropData.HarvestMax;
-            dict["GrowthTicksRequired"] = c.CropData.GrowthTicksRequired;
             dict["GrowthTicksCurrent"] = c.CropData.GrowthTicksCurrent;
             dict["IsWatered"] = c.CropData.IsWatered;
-            dict["WateredGrowthMultiplierBase100"] = c.CropData.WateredGrowthMultiplierBase100;
-            dict["SeedReturnChanceBase100"] = c.CropData.SeedReturnChanceBase100;
             entities.Add(dict);
         }
 
@@ -355,29 +348,18 @@ public static class EntitySerializer
     {
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         var pos = Position.FromCoords(x, y, z);
+        int seedItemTypeId = GetInt(dict, "SeedItemTypeId");
+        int growthTicksCurrent = GetInt(dict, "GrowthTicksCurrent");
+        bool isWatered = GetBool(dict, "IsWatered");
+        var def = GameData.Instance.Items.Get(seedItemTypeId);
+        if (def == null || def.Seed == null) return;
 
-        var cropData = new CropData
-        {
-            SeedItemTypeId = GetInt(dict, "SeedItemTypeId"),
-            HarvestItemTypeId = GetInt(dict, "HarvestItemTypeId"),
-            HarvestMin = GetInt(dict, "HarvestMin", 1),
-            HarvestMax = GetInt(dict, "HarvestMax", 1),
-            GrowthTicksRequired = GetInt(dict, "GrowthTicksRequired"),
-            GrowthTicksCurrent = GetInt(dict, "GrowthTicksCurrent"),
-            IsWatered = GetBool(dict, "IsWatered"),
-            WateredGrowthMultiplierBase100 = GetInt(dict, "WateredGrowthMultiplierBase100", 150),
-            SeedReturnChanceBase100 = GetInt(dict, "SeedReturnChanceBase100", 50),
-        };
+        ref var crop = ref engine.SpawnCrop(pos, def);
 
-        var crop = new CropEntity(engine.WorldMap.AllocateEntityId())
-        {
-            Position = pos,
-            Appearance = FarmingSystem.GetCropAppearance(cropData.GrowthStage),
-            CropData = cropData,
-        };
-
-        var chunk = engine.WorldMap.GetChunkForWorldPos(pos);
-        chunk?.AddEntity(crop);
+        // Restore runtime state
+        crop.CropData.GrowthTicksCurrent = growthTicksCurrent;
+        crop.CropData.IsWatered = isWatered;
+        crop.Appearance = FarmingSystem.GetCropAppearance(crop.CropData.GetGrowthStage(def.Seed));
     }
 
     private static void DeserializeAnimal(Dictionary<string, JsonElement> dict, GameEngine engine)

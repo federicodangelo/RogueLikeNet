@@ -1,7 +1,6 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
-using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
@@ -26,7 +25,7 @@ public class FarmingShowcaseGeneratorTests
         var gen = new FarmingShowcaseGenerator(42);
         var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
-        Assert.True(result.Chunk.Crops.Length > 0, "Expected crops in the farming showcase");
+        Assert.True(result.Crops.Count > 0, "Expected crops in the farming showcase");
     }
 
     [Fact]
@@ -93,10 +92,14 @@ public class FarmingShowcaseGeneratorTests
         var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         bool hasStage0 = false, hasStage3 = false;
-        foreach (var crop in result.Chunk.Crops)
+        foreach (var (_, seedItem, growth, _) in result.Crops)
         {
-            if (crop.CropData.GrowthStage == 0) hasStage0 = true;
-            if (crop.CropData.GrowthStage == 3) hasStage3 = true;
+            var seedData = seedItem.Seed;
+            if (seedData == null) continue;
+            var cropData = new CropData { SeedItemTypeId = seedItem.NumericId, GrowthTicksCurrent = growth };
+            int stage = cropData.GetGrowthStage(seedData);
+            if (stage == 0) hasStage0 = true;
+            if (stage == 3) hasStage3 = true;
         }
 
         Assert.True(hasStage0, "Expected seedling crops (stage 0)");
@@ -110,8 +113,8 @@ public class FarmingShowcaseGeneratorTests
         var result = gen.Generate(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         bool hasWatered = false;
-        foreach (var crop in result.Chunk.Crops)
-            if (crop.CropData.IsWatered) hasWatered = true;
+        foreach (var (_, _, _, isWatered) in result.Crops)
+            if (isWatered) hasWatered = true;
 
         Assert.True(hasWatered, "Expected watered crops in the showcase");
     }
@@ -139,8 +142,8 @@ public class FarmingShowcaseGeneratorTests
 
         Assert.Null(result.SpawnPosition);
         Assert.Empty(result.Animals);
+        Assert.Empty(result.Crops);
         Assert.Empty(result.Items);
-        Assert.Equal(0, result.Chunk.Crops.Length);
     }
 
     [Fact]

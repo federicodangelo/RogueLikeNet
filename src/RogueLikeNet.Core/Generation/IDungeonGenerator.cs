@@ -24,6 +24,7 @@ public class GenerationResult
     public List<DungeonElement> Elements { get; } = new();
     public List<(Position Position, Data.ResourceNodeDefinition NodeDef)> ResourceNodes { get; } = new();
     public List<(Position Position, Data.AnimalDefinition AnimalDef)> Animals { get; } = new();
+    public List<(Position Position, Data.ItemDefinition ItemSeed, int GrowthTicksCurrent, bool IsWatered)> Crops { get; } = new();
     public List<(Position Position, string Name, int TownCenterX, int TownCenterY, int WanderRadius)> TownNpcs { get; } = new();
 
     /// <summary>

@@ -129,6 +129,15 @@ public class GameEngine : IDisposable
         foreach (var (pos, animalDef) in result.Animals)
             SpawnAnimal(pos, animalDef);
 
+        foreach (var (pos, itemSeed, growth, watered) in result.Crops)
+        {
+            if (itemSeed.Seed == null) continue; // Invalid seed, skip
+            ref var crop = ref SpawnCrop(pos, itemSeed);
+            crop.CropData.GrowthTicksCurrent = growth;
+            crop.CropData.IsWatered = watered;
+            crop.Appearance = FarmingSystem.GetCropAppearance(crop.CropData.GetGrowthStage(itemSeed.Seed));
+        }
+
         foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
             SpawnTownNpc(pos, name, tcx, tcy, radius);
     }
@@ -333,6 +342,32 @@ public class GameEngine : IDisposable
 
         var c = Chunk.WorldToChunkCoord(pos);
         return ref _worldMap.GetChunk(c).AddEntity(animal);
+    }
+
+    /// <summary>
+    /// Spawns a crop at the given position using a seed item type ID and optional growth state.
+    /// </summary>
+    public ref CropEntity SpawnCrop(Position pos, ItemDefinition itemDefinition)
+    {
+        if (itemDefinition.Seed == null)
+            throw new ArgumentException($"Item type {itemDefinition.NumericId} is not a valid seed.");
+
+        var seedData = itemDefinition.Seed;
+
+        var crop = new CropEntity(_worldMap.AllocateEntityId())
+        {
+            Position = pos,
+            Appearance = FarmingSystem.GetCropAppearance(0),
+            CropData = new CropData
+            {
+                SeedItemTypeId = itemDefinition.NumericId,
+                GrowthTicksCurrent = 0,
+                IsWatered = false,
+            },
+        };
+
+        var ck = Chunk.WorldToChunkCoord(pos);
+        return ref _worldMap.GetChunk(ck).AddEntity(crop);
     }
 
     // ── Tick ──────────────────────────────────────────────────────────

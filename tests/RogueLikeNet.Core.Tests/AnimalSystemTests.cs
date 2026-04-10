@@ -38,7 +38,8 @@ public class AnimalSystemTests
 
         // Spawn animal
         var def = GameData.Instance.Animals.Get(animalType)!;
-        engine.SpawnAnimal(animalPos, def);
+        ref var testAnimal = ref engine.SpawnAnimal(animalPos, def);
+        testAnimal.MoveDelay.Current = 9999; // prevent moving so it stays in place for the test
 
         // Give player correct feed
         ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);

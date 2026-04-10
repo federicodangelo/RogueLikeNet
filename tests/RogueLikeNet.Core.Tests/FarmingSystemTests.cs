@@ -181,7 +181,8 @@ public class FarmingSystemTests
                 Assert.Equal(ItemId("wheat_seeds"), crop.CropData.SeedItemTypeId);
                 // Growth is 1 because the farming system update also runs during the plant tick
                 Assert.Equal(1, crop.CropData.GrowthTicksCurrent);
-                Assert.False(crop.CropData.IsFullyGrown);
+                var seedDef = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+                Assert.False(crop.CropData.IsFullyGrown(seedDef));
                 break;
             }
         }
@@ -317,7 +318,8 @@ public class FarmingSystemTests
         {
             if (crop.Position == target && !crop.IsDestroyed)
             {
-                crop.CropData.GrowthTicksCurrent = crop.CropData.GrowthTicksRequired - 1;
+                var seedDef = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+                crop.CropData.GrowthTicksCurrent = seedDef.GrowthTicks - 1;
                 break;
             }
         }
@@ -329,7 +331,8 @@ public class FarmingSystemTests
         {
             if (crop.Position == target && !crop.IsDestroyed)
             {
-                Assert.True(crop.CropData.IsFullyGrown);
+                var seedDef2 = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+                Assert.True(crop.CropData.IsFullyGrown(seedDef2));
                 int growthBefore = crop.CropData.GrowthTicksCurrent;
 
                 // Additional ticks should not increase growth
@@ -509,7 +512,8 @@ public class FarmingSystemTests
         {
             if (crop.Position == target && !crop.IsDestroyed)
             {
-                crop.CropData.GrowthTicksCurrent = crop.CropData.GrowthTicksRequired;
+                var wheatSeed = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+                crop.CropData.GrowthTicksCurrent = wheatSeed.GrowthTicks;
                 break;
             }
         }
@@ -574,30 +578,32 @@ public class FarmingSystemTests
     [Fact]
     public void CropData_GrowthStage_ReturnsCorrectStage()
     {
-        var crop = new CropData { GrowthTicksRequired = 100, GrowthTicksCurrent = 0 };
-        Assert.Equal(0, crop.GrowthStage);
+        var crop = new CropData { GrowthTicksCurrent = 0 };
+        var def = new SeedData { GrowthTicks = 100 };
+        Assert.Equal(0, crop.GetGrowthStage(def));
 
         crop.GrowthTicksCurrent = 33;
-        Assert.Equal(1, crop.GrowthStage);
+        Assert.Equal(1, crop.GetGrowthStage(def));
 
         crop.GrowthTicksCurrent = 66;
-        Assert.Equal(2, crop.GrowthStage);
+        Assert.Equal(2, crop.GetGrowthStage(def));
 
         crop.GrowthTicksCurrent = 100;
-        Assert.Equal(3, crop.GrowthStage);
+        Assert.Equal(3, crop.GetGrowthStage(def));
     }
 
     [Fact]
     public void CropData_IsFullyGrown_WhenGrowthComplete()
     {
-        var crop = new CropData { GrowthTicksRequired = 100, GrowthTicksCurrent = 99 };
-        Assert.False(crop.IsFullyGrown);
+        var crop = new CropData { GrowthTicksCurrent = 99 };
+        var def = new SeedData { GrowthTicks = 100 };
+        Assert.False(crop.IsFullyGrown(def));
 
         crop.GrowthTicksCurrent = 100;
-        Assert.True(crop.IsFullyGrown);
+        Assert.True(crop.IsFullyGrown(def));
 
         crop.GrowthTicksCurrent = 150;
-        Assert.True(crop.IsFullyGrown);
+        Assert.True(crop.IsFullyGrown(def));
     }
 
     [Fact]
@@ -690,7 +696,10 @@ public class FarmingSystemTests
         var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
         foreach (ref var crop in chunk.Crops)
             if (crop.Position == target && !crop.IsDestroyed)
-                crop.CropData.GrowthTicksCurrent = crop.CropData.GrowthTicksRequired;
+            {
+                var wheatSeed = GameData.Instance.Items.Get("wheat_seeds")!.Seed!;
+                crop.CropData.GrowthTicksCurrent = wheatSeed.GrowthTicks;
+            }
 
         // Interact should harvest
         player = ref engine.WorldMap.GetPlayerRef(pid);
@@ -723,7 +732,8 @@ public class FarmingSystemTests
 
         // Spawn animal
         var chickenDef = GameData.Instance.Animals.Get("chicken")!;
-        engine.SpawnAnimal(animalPos, chickenDef);
+        ref var testAnimal = ref engine.SpawnAnimal(animalPos, chickenDef);
+        testAnimal.MoveDelay.Current = 9999; // prevent moving so it stays in place for the test
 
         // Give player animal feed
         player.Inventory.Items.Add(new ItemData

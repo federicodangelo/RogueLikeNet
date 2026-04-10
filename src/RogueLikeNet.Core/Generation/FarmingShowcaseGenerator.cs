@@ -1,7 +1,6 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
-using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
@@ -115,7 +114,6 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
         {
             string seedId = seedIds[rowIndex % seedIds.Length];
             var seedDef = GameData.Instance.Items.Get(seedId);
-            int seedNumId = GameData.Instance.Items.GetNumericId(seedId);
 
             for (int x = fieldX + 1; x < fieldX + fieldW - 1; x++)
             {
@@ -143,28 +141,8 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
                     else
                         currentTicks = growthTicks; // Stage 3 (mature)
 
-                    int harvestItemId = GameData.Instance.Items.GetNumericId(seedDef.Seed.HarvestItemId);
-                    var cropData = new CropData
-                    {
-                        SeedItemTypeId = seedNumId,
-                        HarvestItemTypeId = harvestItemId,
-                        HarvestMin = seedDef.Seed.HarvestMin,
-                        HarvestMax = seedDef.Seed.HarvestMax,
-                        GrowthTicksRequired = growthTicks,
-                        GrowthTicksCurrent = currentTicks,
-                        IsWatered = false,
-                        WateredGrowthMultiplierBase100 = seedDef.Seed.WateredGrowthMultiplierBase100,
-                        SeedReturnChanceBase100 = (int)(seedDef.Seed.SeedReturnChance * 100),
-                    };
-
                     var worldPos = Position.FromCoords(worldOffsetX + x, worldOffsetY + y, chunkZ);
-                    var crop = new CropEntity(0) // ID assigned later by engine
-                    {
-                        Position = worldPos,
-                        Appearance = FarmingSystem.GetCropAppearance(cropData.GrowthStage),
-                        CropData = cropData,
-                    };
-                    chunk.AddEntity(crop);
+                    result.Crops.Add((worldPos, seedDef, currentTicks, false));
                 }
             }
             rowIndex++;
@@ -289,9 +267,6 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
         var seedDef = GameData.Instance.Items.Get("wheat_seeds");
         if (seedDef?.Seed == null) return;
 
-        int seedNumId = GameData.Instance.Items.GetNumericId("wheat_seeds");
-        int harvestItemId = GameData.Instance.Items.GetNumericId(seedDef.Seed.HarvestItemId);
-
         for (int y = fieldY + 1; y < fieldY + fieldH - 1; y += 2)
         {
             for (int x = fieldX + 1; x < fieldX + fieldW - 1; x++)
@@ -308,27 +283,8 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
                 int growthTicks = seedDef.Seed.GrowthTicks;
                 int currentTicks = (int)(growthTicks * progress);
 
-                var cropData = new CropData
-                {
-                    SeedItemTypeId = seedNumId,
-                    HarvestItemTypeId = harvestItemId,
-                    HarvestMin = seedDef.Seed.HarvestMin,
-                    HarvestMax = seedDef.Seed.HarvestMax,
-                    GrowthTicksRequired = growthTicks,
-                    GrowthTicksCurrent = currentTicks,
-                    IsWatered = true,
-                    WateredGrowthMultiplierBase100 = seedDef.Seed.WateredGrowthMultiplierBase100,
-                    SeedReturnChanceBase100 = (int)(seedDef.Seed.SeedReturnChance * 100),
-                };
-
                 var worldPos = Position.FromCoords(worldOffsetX + x, worldOffsetY + y, chunkZ);
-                var crop = new CropEntity(0)
-                {
-                    Position = worldPos,
-                    Appearance = FarmingSystem.GetCropAppearance(cropData.GrowthStage),
-                    CropData = cropData,
-                };
-                chunk.AddEntity(crop);
+                result.Crops.Add((worldPos, seedDef, currentTicks, true));
             }
         }
     }

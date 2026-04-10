@@ -35,17 +35,20 @@ public class FarmingSystem
             foreach (ref var crop in chunk.Crops)
             {
                 if (crop.IsDestroyed) continue;
-                if (crop.CropData.IsFullyGrown) continue;
+
+                var seedData = GameData.Instance.Items.Get(crop.CropData.SeedItemTypeId)?.Seed;
+                if (seedData == null) continue;
+                if (crop.CropData.IsFullyGrown(seedData)) continue;
 
                 int growthIncrement = 1;
-                if (crop.CropData.IsWatered && crop.CropData.WateredGrowthMultiplierBase100 > 0)
-                    growthIncrement = crop.CropData.WateredGrowthMultiplierBase100 / 100;
+                if (crop.CropData.IsWatered && seedData.WateredGrowthMultiplierBase100 > 0)
+                    growthIncrement = seedData.WateredGrowthMultiplierBase100 / 100;
 
-                int previousStage = crop.CropData.GrowthStage;
+                int previousStage = crop.CropData.GetGrowthStage(seedData);
                 crop.CropData.GrowthTicksCurrent += growthIncrement;
 
                 // Update appearance when growth stage changes
-                int newStage = crop.CropData.GrowthStage;
+                int newStage = crop.CropData.GetGrowthStage(seedData);
                 if (newStage != previousStage)
                 {
                     crop.Appearance = GetCropAppearance(newStage);
@@ -158,7 +161,6 @@ public class FarmingSystem
         }
 
         // Spawn the crop entity
-        int harvestItemId = GameData.Instance.Items.GetNumericId(def.Seed.HarvestItemId);
         var cropEntity = new CropEntity(map.AllocateEntityId())
         {
             Position = target,
@@ -166,14 +168,8 @@ public class FarmingSystem
             CropData = new CropData
             {
                 SeedItemTypeId = itemData.ItemTypeId,
-                HarvestItemTypeId = harvestItemId,
-                HarvestMin = def.Seed.HarvestMin,
-                HarvestMax = def.Seed.HarvestMax,
-                GrowthTicksRequired = def.Seed.GrowthTicks,
                 GrowthTicksCurrent = 0,
                 IsWatered = false,
-                WateredGrowthMultiplierBase100 = def.Seed.WateredGrowthMultiplierBase100,
-                SeedReturnChanceBase100 = (int)(def.Seed.SeedReturnChance * 100),
             },
         };
         chunk.AddEntity(cropEntity);
@@ -223,23 +219,28 @@ public class FarmingSystem
         foreach (ref var crop in chunk.Crops)
         {
             if (crop.IsDestroyed || crop.Position != target) continue;
-            if (!crop.CropData.IsFullyGrown) continue;
+
+            var seedData = GameData.Instance.Items.Get(crop.CropData.SeedItemTypeId)?.Seed;
+            if (seedData == null) continue;
+            if (!crop.CropData.IsFullyGrown(seedData)) continue;
 
             // Calculate harvest amount
-            int harvestCount = crop.CropData.HarvestMin;
-            if (crop.CropData.HarvestMax > crop.CropData.HarvestMin)
-                harvestCount += Random.Shared.Next(crop.CropData.HarvestMax - crop.CropData.HarvestMin + 1);
+            int harvestItemId = GameData.Instance.Items.GetNumericId(seedData.HarvestItemId);
+            int harvestCount = seedData.HarvestMin;
+            if (seedData.HarvestMax > seedData.HarvestMin)
+                harvestCount += Random.Shared.Next(seedData.HarvestMax - seedData.HarvestMin + 1);
 
             // Add harvested items to inventory
             var harvestItem = new ItemData
             {
-                ItemTypeId = crop.CropData.HarvestItemTypeId,
+                ItemTypeId = harvestItemId,
                 StackCount = harvestCount,
             };
             InventorySystem.AddItemToInventory(ref player, harvestItem);
 
             // Seed return chance
-            if (crop.CropData.SeedReturnChanceBase100 > 0 && Random.Shared.Next(100) < crop.CropData.SeedReturnChanceBase100)
+            int seedReturnChanceBase100 = (int)(seedData.SeedReturnChance * 100);
+            if (seedReturnChanceBase100 > 0 && Random.Shared.Next(100) < seedReturnChanceBase100)
             {
                 if (!player.Inventory.IsFull)
                 {
@@ -309,7 +310,9 @@ public class FarmingSystem
         // 1. Harvest: target has a mature crop
         foreach (var crop in chunk.Crops)
         {
-            if (!crop.IsDestroyed && crop.Position == target && crop.CropData.IsFullyGrown)
+            if (crop.IsDestroyed || crop.Position != target) continue;
+            var seedData = GameData.Instance.Items.Get(crop.CropData.SeedItemTypeId)?.Seed;
+            if (seedData != null && crop.CropData.IsFullyGrown(seedData))
             {
                 player.Input.ActionType = ActionTypes.Harvest;
                 return true;
