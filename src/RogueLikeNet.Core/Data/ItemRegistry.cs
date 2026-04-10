@@ -12,34 +12,35 @@ public sealed class ItemRegistry
     public const int PlaceableCategoryFloorTile = 4;
 
     private readonly Dictionary<string, ItemDefinition> _byStringId = new();
-    private ItemDefinition?[] _byNumericId = [];
+    private readonly Dictionary<int, ItemDefinition> _byNumericId = new();
 
     public IReadOnlyCollection<ItemDefinition> All => _byStringId.Values;
 
     public void Register(IEnumerable<ItemDefinition> items)
     {
-        // Sort by string ID for deterministic numeric ID assignment
-        var sorted = items.OrderBy(i => i.Id, StringComparer.Ordinal).ToList();
+        var errors = new List<string>();
 
-        // Assign sequential IDs starting from 1 (0 is reserved for None)
-        int nextId = 1;
-        foreach (var item in sorted)
+        foreach (var item in items)
         {
-            item.NumericId = nextId++;
-            _byStringId[item.Id] = item;
+            item.NumericId = DefinitionIdHash.Compute(item.Id);
+
+            if (!_byStringId.TryAdd(item.Id, item))
+                errors.Add($"Item: duplicate string ID '{item.Id}'.");
+
+            if (!_byNumericId.TryAdd(item.NumericId, item))
+                errors.Add($"Item '{item.Id}': hash collision on NumericId {item.NumericId}.");
         }
 
-        int maxId = sorted.Max(i => i.NumericId);
-        _byNumericId = new ItemDefinition?[maxId + 1];
-        foreach (var item in sorted)
-            _byNumericId[item.NumericId] = item;
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"ItemRegistry validation failed:\n" + string.Join("\n", errors));
     }
 
     public ItemDefinition? Get(string id) =>
         _byStringId.GetValueOrDefault(id);
 
     public ItemDefinition? Get(int numericId) =>
-        numericId > 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
+        _byNumericId.GetValueOrDefault(numericId);
 
     public int GetNumericId(string id) =>
         _byStringId.TryGetValue(id, out var def) ? def.NumericId : 0;

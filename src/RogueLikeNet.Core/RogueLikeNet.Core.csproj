@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Engine\Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="murmurhash" Version="1.0.3" />
+  </ItemGroup>
+
 </Project>

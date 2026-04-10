@@ -9,51 +9,54 @@ namespace RogueLikeNet.Core.Data;
 public sealed class NpcRegistry
 {
     private readonly Dictionary<string, NpcDefinition> _byStringId = new();
-    private NpcDefinition?[] _byNumericId = [];
+    private readonly Dictionary<int, NpcDefinition> _byNumericId = new();
+
+    /// <summary>NPCs sorted by attack stat (ascending) for difficulty-gated picking.</summary>
+    private NpcDefinition[] _sortedByAttack = [];
 
     public IReadOnlyCollection<NpcDefinition> All => _byStringId.Values;
 
     public void Register(IEnumerable<NpcDefinition> npcs)
     {
-        var sorted = npcs.OrderBy(n => n.Id, StringComparer.Ordinal).ToList();
+        var errors = new List<string>();
 
-        // Assign sequential IDs starting from 0
-        int nextId = 0;
-        foreach (var npc in sorted)
+        foreach (var npc in npcs)
         {
-            npc.NumericId = nextId++;
-            _byStringId[npc.Id] = npc;
+            npc.NumericId = DefinitionIdHash.Compute(npc.Id);
+
+            if (!_byStringId.TryAdd(npc.Id, npc))
+                errors.Add($"NPC: duplicate string ID '{npc.Id}'.");
+
+            if (!_byNumericId.TryAdd(npc.NumericId, npc))
+                errors.Add($"NPC '{npc.Id}': hash collision on NumericId {npc.NumericId}.");
         }
 
-        int maxId = sorted.Max(n => n.NumericId);
-        _byNumericId = new NpcDefinition?[maxId + 1];
-        foreach (var npc in sorted)
-            _byNumericId[npc.NumericId] = npc;
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"NpcRegistry validation failed:\n" + string.Join("\n", errors));
+
+        _sortedByAttack = [.. _byStringId.Values.OrderBy(n => n.Attack).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
     public NpcDefinition? Get(string id) =>
         _byStringId.GetValueOrDefault(id);
 
     public NpcDefinition? Get(int numericId) =>
-        numericId >= 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
+        _byNumericId.GetValueOrDefault(numericId);
 
     public int Count => _byStringId.Count;
 
     /// <summary>
     /// Picks a random monster type suitable for the given difficulty tier (0-based).
+    /// NPCs are sorted by attack; higher difficulty unlocks more of the sorted list.
     /// </summary>
     public NpcDefinition? Pick(SeededRandom rng, int difficulty)
     {
-        if (Count > 0)
-        {
-            int totalCount = Count;
-            int maxIndex = Math.Min(difficulty + 1, totalCount - 1);
-            int idx = rng.Next(maxIndex + 1);
-            var npc = Get(idx);
-            if (npc != null) return npc;
-        }
+        if (_sortedByAttack.Length == 0) return null;
 
-        return null;
+        int maxIndex = Math.Min(difficulty + 1, _sortedByAttack.Length - 1);
+        int idx = rng.Next(maxIndex + 1);
+        return _sortedByAttack[idx];
     }
 
     public static MonsterData GenerateMonsterData(NpcDefinition def, int difficulty)

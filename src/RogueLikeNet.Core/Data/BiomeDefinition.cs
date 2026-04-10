@@ -10,6 +10,7 @@ namespace RogueLikeNet.Core.Data;
 public sealed class BiomeDefinition
 {
     public string Id { get; set; } = "";
+    [JsonIgnore]
     public int NumericId { get; set; }
     public string Name { get; set; } = "";
     public int FloorColor { get; set; }

@@ -1,7 +1,6 @@
 [
     {
         "id": "stone",
-        "numericId": 0,
         "name": "Stone",
         "floorColor": 8947848,
         "tintR": 100,
@@ -63,7 +62,6 @@
     },
     {
         "id": "lava",
-        "numericId": 1,
         "name": "Lava",
         "floorColor": 16729088,
         "tintR": 110,
@@ -119,7 +117,6 @@
     },
     {
         "id": "ice",
-        "numericId": 2,
         "name": "Ice",
         "floorColor": 11206655,
         "tintR": 80,
@@ -175,7 +172,6 @@
     },
     {
         "id": "forest",
-        "numericId": 3,
         "name": "Forest",
         "floorColor": 6710835,
         "tintR": 85,
@@ -244,7 +240,6 @@
     },
     {
         "id": "arcane",
-        "numericId": 4,
         "name": "Arcane",
         "floorColor": 6702216,
         "tintR": 90,
@@ -306,7 +301,6 @@
     },
     {
         "id": "crypt",
-        "numericId": 5,
         "name": "Crypt",
         "floorColor": 6710835,
         "tintR": 95,
@@ -365,7 +359,6 @@
     },
     {
         "id": "sewer",
-        "numericId": 6,
         "name": "Sewer",
         "floorColor": 6710835,
         "tintR": 85,
@@ -430,7 +423,6 @@
     },
     {
         "id": "fungal",
-        "numericId": 7,
         "name": "Fungal",
         "floorColor": 6710835,
         "tintR": 95,
@@ -503,7 +495,6 @@
     },
     {
         "id": "ruined",
-        "numericId": 8,
         "name": "Ruined",
         "floorColor": 8947575,
         "tintR": 105,
@@ -566,7 +557,6 @@
     },
     {
         "id": "infernal",
-        "numericId": 9,
         "name": "Infernal",
         "floorColor": 16729088,
         "tintR": 115,

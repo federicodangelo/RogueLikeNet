@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -14,6 +16,7 @@ public sealed class ItemDefinition
     public const int RarityLegendary = 4;
 
     public string Id { get; set; } = "";
+    [JsonIgnore]
     public int NumericId { get; set; }
     public string Name { get; set; } = "";
     public ItemCategory Category { get; set; }

@@ -8,6 +8,7 @@ namespace RogueLikeNet.Core.Data;
 public sealed class RecipeDefinition
 {
     public string Id { get; set; } = "";
+    [JsonIgnore]
     public int NumericId { get; set; }
     public string Name { get; set; } = "";
     public CraftingStationType Station { get; set; }

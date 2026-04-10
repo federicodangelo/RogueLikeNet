@@ -8,19 +8,24 @@ namespace RogueLikeNet.Core.Data;
 public sealed class RecipeRegistry
 {
     private readonly Dictionary<string, RecipeDefinition> _byStringId = new();
-    private RecipeDefinition?[] _byNumericId = [];
+    private readonly Dictionary<int, RecipeDefinition> _byNumericId = new();
     private readonly Dictionary<CraftingStationType, List<RecipeDefinition>> _byStation = new();
 
     public IReadOnlyCollection<RecipeDefinition> All => _byStringId.Values;
 
     public void Register(IEnumerable<RecipeDefinition> recipes, ItemRegistry itemRegistry)
     {
-        var sorted = recipes.OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
-        int nextId = 0;
-        foreach (var recipe in sorted)
+        var errors = new List<string>();
+
+        foreach (var recipe in recipes)
         {
-            recipe.NumericId = nextId++;
-            _byStringId[recipe.Id] = recipe;
+            recipe.NumericId = DefinitionIdHash.Compute(recipe.Id);
+
+            if (!_byStringId.TryAdd(recipe.Id, recipe))
+                errors.Add($"Recipe: duplicate string ID '{recipe.Id}'.");
+
+            if (!_byNumericId.TryAdd(recipe.NumericId, recipe))
+                errors.Add($"Recipe '{recipe.Id}': hash collision on NumericId {recipe.NumericId}.");
 
             // Resolve string item IDs to numeric IDs
             recipe.Result.NumericItemId = itemRegistry.GetNumericId(recipe.Result.ItemId);
@@ -35,16 +40,16 @@ public sealed class RecipeRegistry
             list.Add(recipe);
         }
 
-        _byNumericId = new RecipeDefinition?[nextId];
-        foreach (var recipe in sorted)
-            _byNumericId[recipe.NumericId] = recipe;
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"RecipeRegistry validation failed:\n" + string.Join("\n", errors));
     }
 
     public RecipeDefinition? Get(string id) =>
         _byStringId.GetValueOrDefault(id);
 
     public RecipeDefinition? Get(int numericId) =>
-        numericId >= 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
+        _byNumericId.GetValueOrDefault(numericId);
 
     public IReadOnlyList<RecipeDefinition> GetByStation(CraftingStationType station) =>
         _byStation.TryGetValue(station, out var list) ? list : [];

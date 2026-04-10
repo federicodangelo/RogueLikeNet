@@ -1,7 +1,6 @@
 [
     {
         "id": "tree",
-        "numericId": 4,
         "name": "Tree",
         "glyphId": 5,
         "fgColor": 2263842,
@@ -14,7 +13,6 @@
     },
     {
         "id": "copper_rock",
-        "numericId": 1,
         "name": "Copper Rock",
         "glyphId": 8,
         "fgColor": 12092211,
@@ -27,7 +25,6 @@
     },
     {
         "id": "iron_rock",
-        "numericId": 2,
         "name": "Iron Rock",
         "glyphId": 8,
         "fgColor": 11053176,
@@ -40,7 +37,6 @@
     },
     {
         "id": "gold_rock",
-        "numericId": 3,
         "name": "Gold Rock",
         "glyphId": 8,
         "fgColor": 16766720,
@@ -53,7 +49,6 @@
     },
     {
         "id": "mithril_rock",
-        "numericId": 5,
         "name": "Mithril Rock",
         "glyphId": 8,
         "fgColor": 6737151,
@@ -66,7 +61,6 @@
     },
     {
         "id": "adamantite_rock",
-        "numericId": 6,
         "name": "Adamantite Rock",
         "glyphId": 8,
         "fgColor": 8388736,
@@ -79,7 +73,6 @@
     },
     {
         "id": "coal_deposit",
-        "numericId": 7,
         "name": "Coal Deposit",
         "glyphId": 8,
         "fgColor": 3355443,
@@ -92,7 +85,6 @@
     },
     {
         "id": "sand_deposit",
-        "numericId": 8,
         "name": "Sand Deposit",
         "glyphId": 8,
         "fgColor": 15329769,
@@ -105,7 +97,6 @@
     },
     {
         "id": "clay_deposit",
-        "numericId": 9,
         "name": "Clay Deposit",
         "glyphId": 8,
         "fgColor": 11173350,

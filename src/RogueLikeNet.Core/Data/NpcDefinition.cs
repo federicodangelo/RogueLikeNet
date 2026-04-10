@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -6,6 +8,7 @@ namespace RogueLikeNet.Core.Data;
 public sealed class NpcDefinition
 {
     public string Id { get; set; } = "";
+    [JsonIgnore]
     public int NumericId { get; set; }
     public string Name { get; set; } = "";
     public int GlyphId { get; set; }

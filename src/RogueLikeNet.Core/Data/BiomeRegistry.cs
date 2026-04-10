@@ -15,55 +15,78 @@ public sealed class BiomeRegistry
     // ===== Registry instance members =====
 
     private readonly Dictionary<string, BiomeDefinition> _byStringId = new();
-    private BiomeDefinition?[] _byNumericId = [];
+    private readonly Dictionary<int, BiomeDefinition> _byNumericId = new();
+    private readonly BiomeDefinition?[] _byBiomeType = new BiomeDefinition?[BiomeCount];
 
     public IReadOnlyCollection<BiomeDefinition> All => _byStringId.Values;
     public int Count => _byStringId.Count;
 
     public void Register(IEnumerable<BiomeDefinition> biomes)
     {
-        var sorted = biomes.OrderBy(b => b.NumericId).ToList();
-        int maxId = sorted.Max(b => b.NumericId);
-        _byNumericId = new BiomeDefinition?[maxId + 1];
+        var errors = new List<string>();
 
-        foreach (var biome in sorted)
+        foreach (var biome in biomes)
         {
-            _byStringId[biome.Id] = biome;
-            _byNumericId[biome.NumericId] = biome;
+            biome.NumericId = DefinitionIdHash.Compute(biome.Id);
+
+            if (!_byStringId.TryAdd(biome.Id, biome))
+                errors.Add($"Biome: duplicate string ID '{biome.Id}'.");
+
+            if (!_byNumericId.TryAdd(biome.NumericId, biome))
+                errors.Add($"Biome '{biome.Id}': hash collision on NumericId {biome.NumericId}.");
+
+            // Map string Id to BiomeType enum for fast lookup by enum value
+            if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
+                _byBiomeType[(int)biomeType] = biome;
 
             // Resolve liquid tile type from string
             if (biome.Liquid != null)
                 biome.Liquid.ResolvedTileType = Enum.Parse<TileType>(biome.Liquid.TileType, ignoreCase: true);
         }
+
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"BiomeRegistry validation failed:\n" + string.Join("\n", errors));
     }
 
     public BiomeDefinition? Get(string id) =>
         _byStringId.GetValueOrDefault(id);
 
     public BiomeDefinition? Get(int numericId) =>
-        numericId >= 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
+        _byNumericId.GetValueOrDefault(numericId);
+
+    public BiomeDefinition? Get(BiomeType biome) =>
+        _byBiomeType[(int)biome];
 
     // ===== Instance data-access methods =====
 
     /// <summary>Returns the display name for a biome type.</summary>
-    public string GetBiomeName(BiomeType biome) => Get((int)biome)?.Name ?? "Unknown";
+    public string GetBiomeName(BiomeType biome) => Get(biome)?.Name ?? "Unknown";
 
     /// <summary>Returns the decoration table for a biome.</summary>
-    public BiomeDecorationDef[] GetDecorations(BiomeType biome) => Get((int)biome)?.Decorations ?? [];
+    public BiomeDecorationDef[] GetDecorations(BiomeType biome) => Get(biome)?.Decorations ?? [];
 
     /// <summary>Returns the liquid definition for a biome, or null if it has no liquid.</summary>
-    public BiomeLiquidDef? GetLiquid(BiomeType biome) => Get((int)biome)?.Liquid;
+    public BiomeLiquidDef? GetLiquid(BiomeType biome) => Get(biome)?.Liquid;
 
     /// <summary>Returns the enemy spawn table for a biome.</summary>
-    public BiomeEnemySpawnDef[] GetEnemySpawns(BiomeType biome) => Get((int)biome)?.EnemySpawns ?? [];
+    public BiomeEnemySpawnDef[] GetEnemySpawns(BiomeType biome) => Get(biome)?.EnemySpawns ?? [];
 
     /// <summary>Returns the floor color for a biome.</summary>
-    public int GetFloorColor(BiomeType biome) => Get((int)biome)?.FloorColor ?? 0;
+    public int GetFloorColor(BiomeType biome) => Get(biome)?.FloorColor ?? 0;
 
     /// <summary>Applies biome tint to a packed 0xRRGGBB color using the biome's tint values.</summary>
-    public int ApplyBiomeTint(int packedRgb, BiomeType biome) => ApplyBiomeTint(packedRgb, (int)biome);
+    public int ApplyBiomeTint(int packedRgb, BiomeType biome)
+    {
+        if (packedRgb == 0) return 0;
+        var def = Get(biome);
+        if (def == null) return packedRgb;
+        var color = ColorUtils.IntToColor4(packedRgb);
+        var scaledColor = ColorUtils.ScaleColor(color, def.TintR, def.TintG, def.TintB);
+        return ColorUtils.Color4ToInt(scaledColor);
+    }
 
-    /// <summary>Applies biome tint using JSON-loaded tint values.</summary>
+    /// <summary>Applies biome tint using numeric biome ID.</summary>
     public int ApplyBiomeTint(int packedRgb, int biomeId)
     {
         if (packedRgb == 0) return 0;

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
 
 namespace RogueLikeNet.Server.Persistence;
@@ -125,12 +126,15 @@ public static class PlayerSerializer
                 player.Inventory.Items.Clear();
                 foreach (var item in items)
                 {
-                    player.Inventory.Items.Add(new ItemData
+                    if (GameData.Instance.Items.Get(item.ItemTypeId) != null) // Skip invalid items that don't exist in current game data
                     {
-                        ItemTypeId = item.ItemTypeId,
-                        StackCount = item.StackCount,
-                        Durability = item.Durability,
-                    });
+                        player.Inventory.Items.Add(new ItemData
+                        {
+                            ItemTypeId = item.ItemTypeId,
+                            StackCount = item.StackCount,
+                            Durability = item.Durability,
+                        });
+                    }
                 }
             }
         }
@@ -144,7 +148,13 @@ public static class PlayerSerializer
                 foreach (var slotData in equipData.Slots)
                 {
                     if (slotData.Item != null && slotData.Slot >= 0 && slotData.Slot < Equipment.SlotCount)
-                        player.Equipment[slotData.Slot] = FromItemJson(slotData.Item);
+                    {
+                        var item = FromItemJson(slotData.Item);
+                        if (GameData.Instance.Items.Get(item.ItemTypeId) != null) // Skip invalid items that don't exist in current game data
+                        {
+                            player.Equipment[slotData.Slot] = item;
+                        }
+                    }
                 }
             }
         }
@@ -176,6 +186,18 @@ public static class PlayerSerializer
                 player.QuickSlots.Slot1 = qsData.Slot1;
                 player.QuickSlots.Slot2 = qsData.Slot2;
                 player.QuickSlots.Slot3 = qsData.Slot3;
+
+                for (var i = 0; i < QuickSlots.SlotCount; i++)
+                {
+                    int invIndex = player.QuickSlots[i];
+                    if (invIndex < 0 ||
+                        player.Inventory.Items == null ||
+                        invIndex >= player.Inventory.Items.Count ||
+                        player.Inventory.Items[invIndex].ItemTypeId == 0)
+                    {
+                        player.QuickSlots[i] = -1; // Clear invalid quickslot reference
+                    }
+                }
             }
         }
 

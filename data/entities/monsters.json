@@ -1,7 +1,6 @@
 [
     {
         "id": "goblin",
-        "numericId": 0,
         "name": "Goblin",
         "glyphId": 103,
         "fgColor": 65280,
@@ -27,7 +26,6 @@
     },
     {
         "id": "orc",
-        "numericId": 1,
         "name": "Orc",
         "glyphId": 111,
         "fgColor": 16711680,
@@ -59,7 +57,6 @@
     },
     {
         "id": "skeleton",
-        "numericId": 2,
         "name": "Skeleton",
         "glyphId": 115,
         "fgColor": 16777215,
@@ -85,7 +82,6 @@
     },
     {
         "id": "dragon",
-        "numericId": 3,
         "name": "Dragon",
         "glyphId": 68,
         "fgColor": 16744448,
@@ -117,7 +113,6 @@
     },
     {
         "id": "slime",
-        "numericId": 4,
         "name": "Slime",
         "glyphId": 111,
         "fgColor": 65280,
@@ -137,7 +132,6 @@
     },
     {
         "id": "wolf",
-        "numericId": 5,
         "name": "Wolf",
         "glyphId": 119,
         "fgColor": 8947848,
@@ -163,7 +157,6 @@
     },
     {
         "id": "spider",
-        "numericId": 6,
         "name": "Spider",
         "glyphId": 120,
         "fgColor": 3355443,
@@ -183,7 +176,6 @@
     },
     {
         "id": "zombie",
-        "numericId": 7,
         "name": "Zombie",
         "glyphId": 122,
         "fgColor": 5416721,

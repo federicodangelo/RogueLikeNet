@@ -67,15 +67,16 @@ public class DataLoaderTests
 
         var data = DataLoader.LoadFromJson(itemsJson: json);
 
-        // "a_item" sorts first, so NumericId = 1
         var a = data.Items.Get("a_item");
         var z = data.Items.Get("z_item");
-        Assert.Equal(1, a!.NumericId);
-        Assert.Equal(2, z!.NumericId);
+        // NumericId is computed via MurmurHash3, must be non-zero and unique
+        Assert.NotEqual(0, a!.NumericId);
+        Assert.NotEqual(0, z!.NumericId);
+        Assert.NotEqual(a.NumericId, z.NumericId);
 
         // Lookup by numeric ID works
-        Assert.Same(a, data.Items.Get(1));
-        Assert.Same(z, data.Items.Get(2));
+        Assert.Same(a, data.Items.Get(a.NumericId));
+        Assert.Same(z, data.Items.Get(z.NumericId));
     }
 
     [Fact]
@@ -121,7 +122,6 @@ public class DataLoaderTests
         [
           {
             "id": "tree",
-            "numericId": 4,
             "name": "Tree",
             "glyphId": 5,
             "fgColor": 2263842,
@@ -151,7 +151,6 @@ public class DataLoaderTests
         [
           {
             "id": "goblin",
-            "numericId": 0,
             "name": "Goblin",
             "glyphId": 103,
             "fgColor": 65280,
@@ -186,7 +185,6 @@ public class DataLoaderTests
         [
           {
             "id": "forest",
-            "numericId": 3,
             "name": "Forest",
             "floorColor": 6710835,
             "tintR": 85,
@@ -217,7 +215,7 @@ public class DataLoaderTests
         Assert.Equal(1, data.Biomes.Count);
         var forest = data.Biomes.Get("forest");
         Assert.NotNull(forest);
-        Assert.Equal(3, forest.NumericId);
+        Assert.NotEqual(0, forest.NumericId);
         Assert.Equal("Forest", forest.Name);
         Assert.Equal(85, forest.TintR);
         Assert.Single(forest.Decorations);

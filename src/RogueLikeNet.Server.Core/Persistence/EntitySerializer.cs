@@ -271,7 +271,8 @@ public static class EntitySerializer
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         int nodeTypeId = GetInt(dict, "NodeTypeId");
         var def = GameData.Instance.ResourceNodes.Get(nodeTypeId);
-        ref var node = ref engine.SpawnResourceNode(Position.FromCoords(x, y, z), def!);
+        if (def == null) return;
+        ref var node = ref engine.SpawnResourceNode(Position.FromCoords(x, y, z), def);
 
         // Restore runtime state
         node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);

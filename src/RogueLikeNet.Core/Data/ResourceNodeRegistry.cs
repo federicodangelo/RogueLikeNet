@@ -10,33 +10,35 @@ namespace RogueLikeNet.Core.Data;
 public sealed class ResourceNodeRegistry
 {
     private readonly Dictionary<string, ResourceNodeDefinition> _byStringId = new();
-    private ResourceNodeDefinition?[] _byNumericId = [];
+    private readonly Dictionary<int, ResourceNodeDefinition> _byNumericId = new();
 
     public IReadOnlyCollection<ResourceNodeDefinition> All => _byStringId.Values;
 
     public void Register(IEnumerable<ResourceNodeDefinition> nodes)
     {
-        var sorted = nodes.OrderBy(n => n.Id, StringComparer.Ordinal).ToList();
+        var errors = new List<string>();
 
-        // Assign sequential IDs starting from 1 (0 is reserved for None)
-        int nextId = 1;
-        foreach (var node in sorted)
+        foreach (var node in nodes)
         {
-            node.NumericId = nextId++;
-            _byStringId[node.Id] = node;
+            node.NumericId = DefinitionIdHash.Compute(node.Id);
+
+            if (!_byStringId.TryAdd(node.Id, node))
+                errors.Add($"ResourceNode: duplicate string ID '{node.Id}'.");
+
+            if (!_byNumericId.TryAdd(node.NumericId, node))
+                errors.Add($"ResourceNode '{node.Id}': hash collision on NumericId {node.NumericId}.");
         }
 
-        int maxId = sorted.Max(n => n.NumericId);
-        _byNumericId = new ResourceNodeDefinition?[maxId + 1];
-        foreach (var node in sorted)
-            _byNumericId[node.NumericId] = node;
+        if (errors.Count > 0)
+            throw new InvalidOperationException(
+                $"ResourceNodeRegistry validation failed:\n" + string.Join("\n", errors));
     }
 
     public ResourceNodeDefinition? Get(string id) =>
         _byStringId.GetValueOrDefault(id);
 
     public ResourceNodeDefinition? Get(int numericId) =>
-        numericId > 0 && numericId < _byNumericId.Length ? _byNumericId[numericId] : null;
+        _byNumericId.GetValueOrDefault(numericId);
 
     public int Count => _byStringId.Count;
 
