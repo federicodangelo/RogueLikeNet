@@ -31,13 +31,17 @@ public sealed class ItemDefinition : BaseDefinition
     public int BaseAttack => Weapon?.BaseDamage ?? Potion?.AttackBoost ?? 0;
     public int BaseDefense => Armor?.BaseDefense ?? Potion?.DefenseBoost ?? 0;
     public int BaseHealth => Potion?.HealthRestore ?? Food?.HealthRestore ?? 0;
+    public int HungerReduction => Food?.HungerRestore ?? 0;
+    public int ThirstReduction => Food?.ThirstRestore ?? 0;
+    public int HealthRestore => Food?.HealthRestore ?? Potion?.HealthRestore ?? 0;
 
     /// <summary>True for items that can be placed on tiles (furniture, blocks).</summary>
     public bool IsPlaceable => Category is ItemCategory.Furniture or ItemCategory.Block;
 
     /// <summary>True for items that can be equipped.</summary>
-    public bool IsEquippable => Category is ItemCategory.Weapon or ItemCategory.Armor
-        or ItemCategory.Tool or ItemCategory.Accessory;
+    public bool IsEquippable => Category is ItemCategory.Weapon or ItemCategory.Armor or ItemCategory.Tool or ItemCategory.Accessory;
+
+    public bool IsConsumable => Category is ItemCategory.Food or ItemCategory.Potion;
 
     /// <summary>Returns the category as an int suitable for protocol messages.</summary>
     public int CategoryInt => (int)Category;

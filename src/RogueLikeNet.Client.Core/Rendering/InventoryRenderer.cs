@@ -186,7 +186,7 @@ public sealed class InventoryRenderer
     {
         // Always render the section header and separator, even if no item is selected, to keep the layout consistent
         if (row >= maxRow) return;
-        AsciiDraw.DrawString(r, col, row, "If equipped:", RenderingTheme.Dim); row++;
+        AsciiDraw.DrawString(r, col, row, "If equipped / consumed:", RenderingTheme.Dim); row++;
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
@@ -201,13 +201,15 @@ public sealed class InventoryRenderer
         var def = GameData.Instance.Items.Get(item.ItemTypeId);
         if (def == null) return;
 
-        // Only show preview for equippable items (weapons, armor, tools)
-        if (!def.IsEquippable)
+        // Only show preview for equippable items (weapons, armor, tools) or consumable items (food, potions) 
+        if (!def.IsEquippable && !def.IsConsumable)
             return;
 
         // Resolve the correct equipment slot from JSON registry
         int targetSlot;
-        if (def.EquipSlot is { } regSlot)
+        if (def.IsConsumable)
+            targetSlot = -1;
+        else if (def.EquipSlot is { } regSlot)
             targetSlot = (int)regSlot;
         else
             targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
@@ -217,12 +219,15 @@ public sealed class InventoryRenderer
         var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
         int eqAtk = eqDef?.BaseAttack ?? 0;
         int eqDefVal = eqDef?.BaseDefense ?? 0;
-        int eqHp = eqDef?.BaseHealth ?? 0;
+        int eqMaxHp = eqDef?.BaseHealth ?? 0;
+
 
         int diffAtk = def.BaseAttack - eqAtk;
         int diffDef = def.BaseDefense - eqDefVal;
-        int diffHp = def.BaseHealth - eqHp;
-
+        int difMaxfHp = def.BaseHealth - eqMaxHp;
+        int diffHunger = def.HungerReduction;
+        int diffThirst = def.ThirstReduction;
+        int diffHealth = def.BaseHealth;
 
         if (row < maxRow && diffAtk != 0)
         {
@@ -238,11 +243,33 @@ public sealed class InventoryRenderer
             AsciiDraw.DrawString(r, col, row, $"  DEF: {sign}{diffDef}", color);
             row++;
         }
-        if (row < maxRow && diffHp != 0)
+        if (row < maxRow && difMaxfHp != 0)
         {
-            string sign = diffHp > 0 ? "+" : "";
-            var color = diffHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  HP:  {sign}{diffHp}", color);
+            string sign = difMaxfHp > 0 ? "+" : "";
+            var color = difMaxfHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  MAX HP: {sign}{difMaxfHp}", color);
+            row++;
+        }
+        if (row < maxRow && diffHunger != 0)
+        {
+            string sign = diffHunger > 0 ? "-" : ""; // For hunger reduction, a positive value is good (reduces hunger), so we use "-" to indicate that
+            var color = diffHunger > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  Hunger: {sign}{diffHunger}", color);
+            row++;
+        }
+        if (row < maxRow && diffThirst != 0)
+        {
+            string sign = diffThirst > 0 ? "-" : ""; // For thirst reduction, a positive value is good (reduces thirst), so we use "-" to indicate that
+            var color = diffThirst > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  Thirst: {sign}{diffThirst}", color);
+            row++;
+        }
+        if (row < maxRow && diffHealth != 0)
+        {
+            string sign = diffHealth > 0 ? "+" : "";
+            var color = diffHealth > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            AsciiDraw.DrawString(r, col, row, $"  Heal HP: {sign}{diffHealth}", color);
+            row++;
         }
     }
 

@@ -18,17 +18,24 @@ public static class LootGenerator
     {
         // Pick category weighted: 70% Misc(gold), 10% resource, 10% potion, 5% armor, 5% weapon
         int roll = rng.Next(100);
-        ItemCategory category;
-        if (roll < 70) category = ItemCategory.Misc;
+        ItemCategory? category = null;
+        string[]? ids = null;
+        if (roll < 35) ids = ["gold_coin"];
+        else if (roll < 70) category = ItemCategory.Food;
         else if (roll < 80) category = ItemCategory.Material;
         else if (roll < 90) category = ItemCategory.Potion;
         else if (roll < 95) category = ItemCategory.Armor;
         else category = ItemCategory.Weapon;
 
         // Filter by category from registry
-        var candidates = GetItemsByCategory(category);
-        var def = candidates[rng.Next(candidates.Length)];
+        var candidates =
+            category.HasValue ?
+                GetItemsByCategory(category.Value) :
+                ids != null ?
+                    ids.Select(GameData.Instance.Items.Get).OfType<ItemDefinition>().ToArray() :
+                    [];
 
+        var def = candidates[rng.Next(candidates.Length)];
         return new Loot(def);
     }
 
