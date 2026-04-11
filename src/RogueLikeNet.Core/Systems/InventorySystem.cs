@@ -52,11 +52,16 @@ public class InventorySystem
     {
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true });
+            return;
+        }
 
         var chunk = map.GetChunkForWorldPos(player.Position);
         if (chunk == null) return;
 
+        bool pickedAny = false;
         foreach (ref var gi in chunk.GroundItems)
         {
             if (gi.IsDestroyed || gi.Position != player.Position) continue;
@@ -65,8 +70,12 @@ public class InventorySystem
             {
                 player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, ItemTypeId = gi.Item.ItemTypeId, StackCount = gi.Item.StackCount });
                 gi.IsDestroyed = true;
+                pickedAny = true;
             }
         }
+
+        if (!pickedAny)
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true });
     }
 
     private static void ProcessDrop(ref PlayerEntity player, GameEngine engine)
@@ -74,7 +83,11 @@ public class InventorySystem
         int slot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Drop, Failed = true });
+            return;
+        }
 
         var itemData = player.Inventory.Items[slot];
         player.Inventory.Items.RemoveAt(slot);
@@ -121,6 +134,10 @@ public class InventorySystem
             case ItemCategory.Armor:
             case ItemCategory.Tool:
                 EquipItem(ref player, slot);
+                break;
+
+            default:
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.UsePotion, ItemTypeId = itemData.ItemTypeId, Failed = true });
                 break;
         }
     }
@@ -247,7 +264,11 @@ public class InventorySystem
         int equipSlot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Unequip, Failed = true });
+            return;
+        }
         if (equipSlot < 0 || equipSlot >= Equipment.SlotCount) return;
 
         if (player.Equipment.HasItem(equipSlot))

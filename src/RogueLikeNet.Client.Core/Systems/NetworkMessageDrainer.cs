@@ -77,6 +77,28 @@ public sealed class NetworkMessageDrainer
         var eventType = (PlayerActionEventType)evt.EventType;
         var itemName = GetItemName(evt.ItemTypeId);
 
+        if (evt.Failed)
+        {
+            return eventType switch
+            {
+                PlayerActionEventType.PickUp => "Failed to pick up items",
+                PlayerActionEventType.Drop => "Failed to drop item",
+                PlayerActionEventType.UsePotion => evt.ItemTypeId != 0 ? $"Failed to use {itemName}" : "Failed to use item",
+                PlayerActionEventType.EatFood => evt.ItemTypeId != 0 ? $"Failed to eat {itemName}" : "Failed to eat item",
+                PlayerActionEventType.Equip => evt.ItemTypeId != 0 ? $"Failed to equip {itemName}" : "Failed to equip item",
+                PlayerActionEventType.Unequip => "Failed to unequip item",
+                PlayerActionEventType.PlaceItem => evt.ItemTypeId != 0 ? $"Failed to place {itemName}" : "Failed to place item",
+                PlayerActionEventType.PickUpPlaced => "Failed to pick up item",
+                PlayerActionEventType.Till => "Failed to till soil",
+                PlayerActionEventType.Plant => evt.ItemTypeId != 0 ? $"Failed to plant {itemName}" : "Failed to plant",
+                PlayerActionEventType.Water => "Failed to water crop",
+                PlayerActionEventType.Harvest => "Failed to harvest",
+                PlayerActionEventType.FeedAnimal => "Failed to feed animal",
+                PlayerActionEventType.Craft => evt.ItemTypeId != 0 ? $"Failed to craft {itemName}" : "Failed to craft",
+                _ => null,
+            };
+        }
+
         return eventType switch
         {
             PlayerActionEventType.PickUp => evt.StackCount > 1

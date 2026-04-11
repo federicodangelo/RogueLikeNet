@@ -93,18 +93,26 @@ public class FarmingSystem
         player.Input.ActionType = ActionTypes.None;
 
         // Must be adjacent
-        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY)) return;
+        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till, Failed = true });
+            return;
+        }
 
         // Player must have a hoe equipped
-        if (!HasEquippedToolType(ref player, ToolType.Hoe)) return;
+        if (!HasEquippedToolType(ref player, ToolType.Hoe))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till, Failed = true });
+            return;
+        }
 
         // Target must be a floor tile (dirt/grass)
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor) return;
-        if (tile.HasPlaceable) return;
-
-        // Check no entity occupies the target
-        if (map.IsPositionOccupiedByEntity(target)) return;
+        if (tile.Type != TileType.Floor || tile.HasPlaceable || map.IsPositionOccupiedByEntity(target))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till, Failed = true });
+            return;
+        }
 
         // Convert to tilled soil (change the tile glyph/color to represent tilled soil)
         tile.GlyphId = TilledSoilGlyphId;
@@ -122,28 +130,57 @@ public class FarmingSystem
         player.Input.ActionType = ActionTypes.None;
 
         // Must be adjacent
-        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY)) return;
+        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, Failed = true });
+            return;
+        }
 
         // Validate inventory slot
-        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, Failed = true });
+            return;
+        }
 
         var itemData = player.Inventory.Items[slot];
         var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
-        if (def == null || def.Category != ItemCategory.Seed || def.Seed == null) return;
+        if (def == null || def.Category != ItemCategory.Seed || def.Seed == null)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         // Target must be tilled soil
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor) return;
-        if (tile.GlyphId != TilledSoilGlyphId) return;
+        if (tile.Type != TileType.Floor || tile.GlyphId != TilledSoilGlyphId)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         // Check no crop already at this position
         var chunk = map.GetChunkForWorldPos(target);
-        if (chunk == null) return;
+        if (chunk == null)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
         foreach (var c in chunk.Crops)
-            if (!c.IsDestroyed && c.Position == target) return;
+        {
+            if (!c.IsDestroyed && c.Position == target)
+            {
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
+                return;
+            }
+        }
 
         // Check no other entity occupies the position
-        if (map.IsPositionOccupiedByEntity(target)) return;
+        if (map.IsPositionOccupiedByEntity(target))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         // Consume seed from inventory
         var item = player.Inventory.Items[slot];
@@ -182,14 +219,26 @@ public class FarmingSystem
         player.Input.ActionType = ActionTypes.None;
 
         // Must be adjacent
-        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY)) return;
+        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water, Failed = true });
+            return;
+        }
 
         // Player must have a watering can equipped
-        if (!HasEquippedToolType(ref player, ToolType.WateringCan)) return;
+        if (!HasEquippedToolType(ref player, ToolType.WateringCan))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water, Failed = true });
+            return;
+        }
 
         // Find a crop at the target position
         var chunk = map.GetChunkForWorldPos(target);
-        if (chunk == null) return;
+        if (chunk == null)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water, Failed = true });
+            return;
+        }
 
         foreach (ref var crop in chunk.Crops)
         {
@@ -198,6 +247,8 @@ public class FarmingSystem
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water });
             return;
         }
+
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water, Failed = true });
     }
 
     private static void ProcessHarvest(ref PlayerEntity player, WorldMap map)
@@ -208,13 +259,25 @@ public class FarmingSystem
         player.Input.ActionType = ActionTypes.None;
 
         // Must be adjacent
-        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY)) return;
+        if (!IsAdjacent(player.Input.TargetX, player.Input.TargetY))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, Failed = true });
+            return;
+        }
 
-        if (player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, Failed = true });
+            return;
+        }
 
         // Find mature crop at target
         var chunk = map.GetChunkForWorldPos(target);
-        if (chunk == null) return;
+        if (chunk == null)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, Failed = true });
+            return;
+        }
 
         foreach (ref var crop in chunk.Crops)
         {
@@ -258,6 +321,8 @@ public class FarmingSystem
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, ItemTypeId = harvestItemId, StackCount = harvestCount });
             return;
         }
+
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, Failed = true });
     }
 
     public static TileAppearance GetCropAppearance(int growthStage) => growthStage switch

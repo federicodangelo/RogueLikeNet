@@ -24,15 +24,26 @@ public class CraftingSystem
             player.Input.ActionType = ActionTypes.None;
 
             var recipe = GameData.Instance.Recipes.Get(recipeId);
-            if (recipe == null) continue;
+            if (recipe == null)
+            {
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Craft, Failed = true });
+                continue;
+            }
 
             if (!debugFreeCrafting)
             {
-                if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items)) continue;
+                if (!RecipeRegistry.CanCraft(recipe, player.Inventory.Items))
+                {
+                    player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Craft, ItemTypeId = recipe.Result.NumericItemId, Failed = true });
+                    continue;
+                }
 
                 // Validate crafting station proximity
                 if (recipe.Station != CraftingStationType.Hand && !IsNearStation(map, player.Position, recipe.Station))
+                {
+                    player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Craft, ItemTypeId = recipe.Result.NumericItemId, Failed = true });
                     continue;
+                }
             }
 
             // Remove ingredients (skip when debug free crafting)

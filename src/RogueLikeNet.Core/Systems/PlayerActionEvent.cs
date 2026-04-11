@@ -23,4 +23,5 @@ public struct PlayerActionEvent
     public PlayerActionEventType EventType;
     public int ItemTypeId;
     public int StackCount;
+    public bool Failed;
 }

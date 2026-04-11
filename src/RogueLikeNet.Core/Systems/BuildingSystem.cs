@@ -41,11 +41,19 @@ public class BuildingSystem
         var target = Position.FromCoords(targetX, targetY, player.Position.Z);
         player.Input.ActionType = ActionTypes.None;
 
-        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, Failed = true });
+            return;
+        }
 
         var itemData = player.Inventory.Items[slot];
         var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
-        if (def == null || !def.IsPlaceable) return;
+        if (def == null || !def.IsPlaceable)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         int dx = target.X - player.Position.X;
         int dy = target.Y - player.Position.Y;
@@ -54,14 +62,18 @@ public class BuildingSystem
         {
             if (dx == ox && dy == oy) { adjacent = true; break; }
         }
-        if (!adjacent) return;
+        if (!adjacent)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor) return;
-        if (tile.PlaceableItemId != 0) return;
-
-        // Check no entity occupies the target position
-        if (map.IsPositionOccupiedByEntity(target)) return;
+        if (tile.Type != TileType.Floor || tile.PlaceableItemId != 0 || map.IsPositionOccupiedByEntity(target))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId, Failed = true });
+            return;
+        }
 
         map.SetPlaceable(target, itemData.ItemTypeId, 0);
         player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId });
@@ -86,7 +98,11 @@ public class BuildingSystem
         var target = Position.FromCoords(targetX, targetY, player.Position.Z);
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.IsFull) return;
+        if (player.Inventory.IsFull)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUpPlaced, Failed = true });
+            return;
+        }
 
         var tile = map.GetTile(target);
         if (tile.PlaceableItemId == 0)

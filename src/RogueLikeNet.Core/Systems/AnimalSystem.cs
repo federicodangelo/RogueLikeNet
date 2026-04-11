@@ -89,16 +89,28 @@ public class AnimalSystem
         player.Input.ActionType = ActionTypes.None;
 
         // Validate inventory slot
-        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (slot < 0 || slot >= player.Inventory.Items.Count)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, Failed = true });
+            return;
+        }
 
         // Must be adjacent
         int dx = target.X - player.Position.X;
         int dy = target.Y - player.Position.Y;
-        if (!IsAdjacent(dx, dy)) return;
+        if (!IsAdjacent(dx, dy))
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, Failed = true });
+            return;
+        }
 
         // Find animal at target
         var chunk = map.GetChunkForWorldPos(target);
-        if (chunk == null) return;
+        if (chunk == null)
+        {
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, Failed = true });
+            return;
+        }
 
         foreach (ref var animal in chunk.Animals)
         {
@@ -133,6 +145,8 @@ public class AnimalSystem
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, ItemTypeId = feedItemId });
             return;
         }
+
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, Failed = true });
     }
 
     private static void ProcessProduction(WorldMap map)
