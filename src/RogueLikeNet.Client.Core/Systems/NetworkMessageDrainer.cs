@@ -43,26 +43,27 @@ public sealed class NetworkMessageDrainer
         }
         gameState.DrainCombatEvents();
 
-        if (chat != null)
+        foreach (var dlg in gameState.PendingNpcDialogues)
         {
-            foreach (var dlg in gameState.PendingNpcDialogues)
-            {
-                chat.ChatLog.Add($"[{dlg.NpcName}]: {dlg.Text}");
-                if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
-            }
-
-            foreach (var evt in gameState.PendingPlayerActionEvents)
-            {
-                var msg = FormatPlayerActionEvent(evt);
-                if (msg != null)
-                {
-                    chat.ChatLog.Add(msg);
-                    if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
-                }
-            }
+            AddChatLine($"[{dlg.NpcName}]: {dlg.Text}", chat);
         }
+
+        foreach (var evt in gameState.PendingPlayerActionEvents)
+        {
+            var msg = FormatPlayerActionEvent(evt);
+            if (msg != null)
+                AddChatLine(msg, chat);
+        }
+
         gameState.DrainNpcDialogues();
         gameState.DrainPlayerActionEvents();
+    }
+
+    private void AddChatLine(string line, ChatSystem? chat)
+    {
+        if (chat == null) return;
+        chat.ChatLog.Add(line);
+        if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
     }
 
     public void Reset()
