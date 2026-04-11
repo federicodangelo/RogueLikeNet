@@ -9,7 +9,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 600,
+            "growthTicks": 6000,
             "harvestItemId": "wheat",
             "harvestMin": 1,
             "harvestMax": 3
@@ -25,7 +25,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 800,
+            "growthTicks": 8000,
             "harvestItemId": "corn",
             "harvestMin": 1,
             "harvestMax": 2
@@ -41,7 +41,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 700,
+            "growthTicks": 7000,
             "harvestItemId": "potato",
             "harvestMin": 1,
             "harvestMax": 3
@@ -57,7 +57,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 500,
+            "growthTicks": 5000,
             "harvestItemId": "carrot",
             "harvestMin": 1,
             "harvestMax": 3
@@ -73,7 +73,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 1000,
+            "growthTicks": 10000,
             "harvestItemId": "pumpkin",
             "harvestMin": 1,
             "harvestMax": 1
@@ -89,7 +89,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 400,
+            "growthTicks": 4000,
             "harvestItemId": "berry",
             "harvestMin": 2,
             "harvestMax": 5
@@ -105,7 +105,7 @@
         "maxStackSize": 20,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 2000,
+            "growthTicks": 20000,
             "harvestItemId": "apple",
             "harvestMin": 2,
             "harvestMax": 4
@@ -121,7 +121,7 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "seed": {
-            "growthTicks": 400,
+            "growthTicks": 4000,
             "harvestItemId": "fiber",
             "harvestMin": 1,
             "harvestMax": 2

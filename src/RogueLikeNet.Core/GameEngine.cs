@@ -309,6 +309,9 @@ public class GameEngine : IDisposable
             },
         };
 
+        // Stagger movement so not all NPCs move on the same tick
+        npc.MoveDelay.Current = _worldRng.Next(npc.MoveDelay.Interval);
+
         var c = Chunk.WorldToChunkCoord(pos);
         return ref _worldMap.GetChunk(c).AddEntity(npc);
     }
@@ -334,6 +337,9 @@ public class GameEngine : IDisposable
             AI = new AIState { StateId = AIStates.Idle },
             MoveDelay = new MoveDelay(50),
         };
+
+        // Stagger movement so not all animals move on the same tick
+        animal.MoveDelay.Current = _worldRng.Next(animal.MoveDelay.Interval);
 
         var c = Chunk.WorldToChunkCoord(pos);
         return ref _worldMap.GetChunk(c).AddEntity(animal);
