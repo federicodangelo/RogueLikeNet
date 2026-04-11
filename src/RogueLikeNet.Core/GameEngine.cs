@@ -332,7 +332,7 @@ public class GameEngine : IDisposable
                 BreedCooldownCurrent = def.BreedCooldownTicks,
             },
             AI = new AIState { StateId = AIStates.Idle },
-            MoveDelay = new MoveDelay(5),
+            MoveDelay = new MoveDelay(50),
         };
 
         var c = Chunk.WorldToChunkCoord(pos);
@@ -346,8 +346,6 @@ public class GameEngine : IDisposable
     {
         if (itemDefinition.Seed == null)
             throw new ArgumentException($"Item type {itemDefinition.NumericId} is not a valid seed.");
-
-        var seedData = itemDefinition.Seed;
 
         var crop = new CropEntity(_worldMap.AllocateEntityId())
         {

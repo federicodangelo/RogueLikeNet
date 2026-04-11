@@ -16,8 +16,6 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
     private readonly long _seed;
 
     // Layout constants
-    private const int FenceGlyph = 35;      // # for fences
-    private const int FenceFgColor = 0x8B6914; // brown fence
     private const int GrassGlyph = 250;      // middle dot
     private const int GrassFgColor = 0x228B22; // green grass
     private const int TroughGlyph = 220;    // ▄ bottom half block
@@ -192,6 +190,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
 
             // Leave a 1-tile gap as entrance
             ref var entrance = ref chunk.Tiles[px + penWidth / 2, py + penHeight - 1];
+            entrance.PlaceableItemId = GameData.Instance.Items.GetNumericId("fence_gate");
             entrance.Type = TileType.Floor;
             entrance.GlyphId = GrassGlyph;
             entrance.FgColor = GrassFgColor;
@@ -306,9 +305,6 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Blocked;
-        tile.GlyphId = FenceGlyph;
-        tile.FgColor = FenceFgColor;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        tile.PlaceableItemId = GameData.Instance.Items.GetNumericId("fence");
     }
 }

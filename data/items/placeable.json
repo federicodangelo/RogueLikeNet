@@ -637,5 +637,43 @@
             "alternateWalkable": false,
             "alternateTransparent": false
         }
+    },
+    {
+        "id": "fence",
+        "name": "Fence",
+        "category": "placeable",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none",
+        "placeable": {
+            "placeableType": "wall",
+            "placedGlyphId": 35,
+            "placedFgColor": 9136404,
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "fence_gate",
+        "name": "Fence Gate",
+        "category": "placeable",
+        "glyphId": 35,
+        "fgColor": 9136404,
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "none",
+        "placeable": {
+            "placeableType": "door",
+            "placedGlyphId": 35,
+            "placedFgColor": 9136404,
+            "walkable": false,
+            "transparent": true,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
     }
 ]
