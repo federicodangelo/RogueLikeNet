@@ -53,6 +53,11 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null) return 0;
+        return GetPlaceableFgColor(def, extra);
+    }
+
+    public int GetPlaceableFgColor(ItemDefinition def, int extra)
+    {
         if (def.Placeable != null) return def.FgColor;
         return def.FgColor;
     }

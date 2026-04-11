@@ -8,7 +8,6 @@ public static class RenderConstants
 {
     // Entity glyphs (CP437)
     public const int GlyphPlayer = 64;
-    public const int GlyphTorch = 15;
     public const int GlyphTownNpc = 2;
 
     // Door glyphs

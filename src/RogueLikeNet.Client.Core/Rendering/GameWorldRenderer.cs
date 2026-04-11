@@ -1,3 +1,4 @@
+using System.Drawing;
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
@@ -73,16 +74,23 @@ public sealed class GameWorldRenderer
                     var bgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.BgColor), brightness);
                     var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.FgColor), brightness);
                     var glyphId = tile.GlyphId;
+                    var placeableEmitsLight = false;
 
                     // Override glyph/color from placed item when present
                     if (tile.PlaceableItemId != 0)
                     {
-                        glyphId = GameData.Instance.Items.GetPlaceableGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
-                        fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(GameData.Instance.Items.GetPlaceableFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
+                        var placeableDef = GameData.Instance.Items.Get(tile.PlaceableItemId);
+                        if (placeableDef != null)
+                        {
+                            glyphId = placeableDef.GlyphId;
+                            fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(GameData.Instance.Items.GetPlaceableFgColor(placeableDef, tile.PlaceableItemExtra)), brightness);
+                            if (placeableDef.Placeable != null && placeableDef.Placeable.LightRadius > 0)
+                                placeableEmitsLight = true;
+                        }
                     }
 
-                    if ((glyphId == RenderConstants.GlyphTorch || tile.Type == TileType.Lava)
-                        && visible && lightLevel >= 5)
+                    if ((placeableEmitsLight || (tile.Type is TileType.Lava or TileType.StairsDown or TileType.StairsUp))
+                        && visible && lightLevel >= 2)
                     {
                         _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
                     }
@@ -138,28 +146,30 @@ public sealed class GameWorldRenderer
                 var sx = pos.X;
                 var sy = pos.Y;
 
-                int resolvedGlyph = tile.PlaceableItemId != 0
-                    ? GameData.Instance.Items.GetPlaceableGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra)
-                    : tile.GlyphId;
+                var itemDef = tile.PlaceableItemId != 0 ? GameData.Instance.Items.Get(tile.PlaceableItemId) : null;
 
-                if (resolvedGlyph == RenderConstants.GlyphTorch)
+                float cx = sx * tileW + tileW * 0.5f + shakeX;
+                float cy = sy * tileH + tileH * 0.5f + shakeY;
+                float radius = tileW * 2.5f;
+                Color4 inner;
+                Color4 outer;
+                if (itemDef != null && itemDef.Placeable != null && itemDef.Placeable.LightRadius > 0)
                 {
-                    float cx = sx * tileW + tileW * 0.5f + shakeX;
-                    float cy = sy * tileH + tileH * 0.5f + shakeY;
-                    float radius = tileW * 2.5f;
-                    var inner = new Color4(255, 200, 100, 40);
-                    var outer = new Color4(255, 150, 50, 0);
-                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+                    inner = ColorUtils.IntToColor4(itemDef.Placeable.LightColor).WithAlpha(40);
+                    outer = inner.WithAlpha(0);
                 }
-                else if (tile.Type == TileType.Lava)
+                else
                 {
-                    float cx = sx * tileW + tileW * 0.5f + shakeX;
-                    float cy = sy * tileH + tileH * 0.5f + shakeY;
-                    float radius = tileW * 1.5f;
-                    var inner = new Color4(255, 80, 20, 25);
-                    var outer = new Color4(255, 40, 0, 0);
-                    r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 12);
+                    inner = tile.Type switch
+                    {
+                        TileType.Lava => new Color4(255, 80, 20, 25),
+                        TileType.StairsDown => new Color4(200, 180, 50, 25),
+                        TileType.StairsUp => new Color4(250, 150, 150, 25),
+                        _ => new Color4(255, 255, 255, 25)
+                    };
+                    outer = inner.WithAlpha(0);
                 }
+                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
             }
         }
 
