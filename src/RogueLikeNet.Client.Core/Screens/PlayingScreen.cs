@@ -289,7 +289,12 @@ public sealed class PlayingScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, isPickingUpPlaced: _pickingUpPlaced || _placingFromSlot >= 0 || _interacting);
+        _hudRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows,
+            directionalInteractionMode:
+                _pickingUpPlaced ? HudRenderer.DirectionalInteractionMode.PickUp :
+                _placingFromSlot >= 0 ? HudRenderer.DirectionalInteractionMode.Place :
+                _interacting ? HudRenderer.DirectionalInteractionMode.Interact : HudRenderer.DirectionalInteractionMode.None
+        );
 
         // Render particles
         int halfW = zoomedGameCols / 2;

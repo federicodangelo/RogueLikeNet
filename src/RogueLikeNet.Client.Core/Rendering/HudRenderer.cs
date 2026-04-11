@@ -43,8 +43,10 @@ public sealed class HudRenderer
         return layout;
     }
 
+    public enum DirectionalInteractionMode { None, PickUp, Place, Interact }
+
     public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
-        int tileW = 0, int tileH = 0, float fontScale = 0f, bool isPickingUpPlaced = false)
+        int tileW = 0, int tileH = 0, float fontScale = 0f, DirectionalInteractionMode directionalInteractionMode = DirectionalInteractionMode.None)
     {
         _tw = tileW > 0 ? tileW : AsciiDraw.TileWidth;
         _th = tileH > 0 ? tileH : AsciiDraw.TileHeight;
@@ -179,7 +181,7 @@ public sealed class HudRenderer
                     break;
 
                 case "Controls":
-                    RenderControlsSection(r, col, innerW, row, maxRow, state, isPickingUpPlaced);
+                    RenderControlsSection(r, col, innerW, row, maxRow, state, directionalInteractionMode);
                     break;
             }
         }
@@ -243,7 +245,7 @@ public sealed class HudRenderer
     }
 
     private void RenderControlsSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        ClientGameState state, bool isPickingUpPlaced)
+        ClientGameState state, DirectionalInteractionMode directionalInteractionMode)
     {
         if (row >= maxRow) return;
         Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
@@ -252,17 +254,25 @@ public sealed class HudRenderer
         if (row >= maxRow) return;
         Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim); row++;
 
-        if (isPickingUpPlaced)
+        if (directionalInteractionMode != DirectionalInteractionMode.None)
         {
+            string modeText = directionalInteractionMode switch
+            {
+                DirectionalInteractionMode.PickUp => "Pick up",
+                DirectionalInteractionMode.Place => "Place",
+                DirectionalInteractionMode.Interact => "Interact",
+                _ => ""
+            };
+
             if (row >= maxRow) return;
-            Ds(r, col, row, "Pick dir: ↑↓←→", RenderingTheme.Selected); row++;
+            Ds(r, col, row, $"{modeText}: ↑↓←→", RenderingTheme.Selected); row++;
             if (row >= maxRow) return;
             Ds(r, col, row, "[Esc] Cancel", RenderingTheme.Dim);
         }
-        else if (HasAdjacentPickableTile(state))
+        else if (HasAdjacentTileWithPlaceable(state))
         {
             if (row >= maxRow) return;
-            Ds(r, col, row, "[P] Pick up tile", RenderingTheme.Stats);
+            Ds(r, col, row, "[P] Pick up near placeable", RenderingTheme.Stats);
         }
         else if (AboveStairsTile(state))
         {
@@ -276,7 +286,7 @@ public sealed class HudRenderer
         }
     }
 
-    private static bool HasAdjacentPickableTile(ClientGameState state)
+    private static bool HasAdjacentTileWithPlaceable(ClientGameState state)
     {
         int px = state.PlayerX, py = state.PlayerY;
         ReadOnlySpan<(int, int)> offsets = [(0, -1), (0, 1), (-1, 0), (1, 0)];
