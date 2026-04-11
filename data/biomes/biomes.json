@@ -2,19 +2,19 @@
     {
         "id": "stone",
         "name": "Stone",
-        "floorColor": 8947848,
+        "floorColor": "#888888",
         "tintR": 100,
         "tintG": 100,
         "tintB": 100,
         "decorations": [
             {
                 "glyphId": 177,
-                "fgColor": 8947575,
+                "fgColor": "#888777",
                 "chance1000": 4
             },
             {
                 "glyphId": 9,
-                "fgColor": 10066329,
+                "fgColor": "#999999",
                 "chance1000": 2
             }
         ],
@@ -63,19 +63,19 @@
     {
         "id": "lava",
         "name": "Lava",
-        "floorColor": 16729088,
+        "floorColor": "#FF4400",
         "tintR": 110,
         "tintG": 85,
         "tintB": 75,
         "decorations": [
             {
                 "glyphId": 7,
-                "fgColor": 16737826,
+                "fgColor": "#FF6622",
                 "chance1000": 8
             },
             {
                 "glyphId": 126,
-                "fgColor": 6697506,
+                "fgColor": "#663222",
                 "chance1000": 6
             }
         ],
@@ -92,8 +92,8 @@
         "liquid": {
             "tileType": "lava",
             "glyphId": 247,
-            "fgColor": 16729088,
-            "bgColor": 3346432,
+            "fgColor": "#FF4400",
+            "bgColor": "#331000",
             "chance100": 30
         },
         "resourceWeights": [
@@ -118,19 +118,19 @@
     {
         "id": "ice",
         "name": "Ice",
-        "floorColor": 11206655,
+        "floorColor": "#AAFFFF",
         "tintR": 80,
         "tintG": 95,
         "tintB": 115,
         "decorations": [
             {
                 "glyphId": 124,
-                "fgColor": 11206655,
+                "fgColor": "#AAFFFF",
                 "chance1000": 8
             },
             {
                 "glyphId": 126,
-                "fgColor": 11206655,
+                "fgColor": "#AAFFFF",
                 "chance1000": 4
             }
         ],
@@ -151,8 +151,8 @@
         "liquid": {
             "tileType": "water",
             "glyphId": 247,
-            "fgColor": 11206655,
-            "bgColor": 659746,
+            "fgColor": "#AAFFFF",
+            "bgColor": "#0A1122",
             "chance100": 25
         },
         "resourceWeights": [
@@ -173,24 +173,24 @@
     {
         "id": "forest",
         "name": "Forest",
-        "floorColor": 6710835,
+        "floorColor": "#666633",
         "tintR": 85,
         "tintG": 110,
         "tintB": 80,
         "decorations": [
             {
                 "glyphId": 44,
-                "fgColor": 5605444,
+                "fgColor": "#558844",
                 "chance1000": 12
             },
             {
                 "glyphId": 39,
-                "fgColor": 4881978,
+                "fgColor": "#4A7E3A",
                 "chance1000": 8
             },
             {
                 "glyphId": 244,
-                "fgColor": 3375155,
+                "fgColor": "#338033",
                 "chance1000": 4
             }
         ],
@@ -215,8 +215,8 @@
         "liquid": {
             "tileType": "water",
             "glyphId": 247,
-            "fgColor": 4490495,
-            "bgColor": 4403,
+            "fgColor": "#4484FF",
+            "bgColor": "#001133",
             "chance100": 20
         },
         "resourceWeights": [
@@ -241,19 +241,19 @@
     {
         "id": "arcane",
         "name": "Arcane",
-        "floorColor": 6702216,
+        "floorColor": "#664488",
         "tintR": 90,
         "tintG": 80,
         "tintB": 110,
         "decorations": [
             {
                 "glyphId": 42,
-                "fgColor": 13403903,
+                "fgColor": "#CC86FF",
                 "chance1000": 6
             },
             {
                 "glyphId": 4,
-                "fgColor": 8965375,
+                "fgColor": "#88CCFF",
                 "chance1000": 6
             }
         ],
@@ -302,24 +302,24 @@
     {
         "id": "crypt",
         "name": "Crypt",
-        "floorColor": 6710835,
+        "floorColor": "#666633",
         "tintR": 95,
         "tintG": 90,
         "tintB": 85,
         "decorations": [
             {
                 "glyphId": 229,
-                "fgColor": 13417369,
+                "fgColor": "#CCBB99",
                 "chance1000": 10
             },
             {
                 "glyphId": 254,
-                "fgColor": 13417369,
+                "fgColor": "#CCBB99",
                 "chance1000": 4
             },
             {
                 "glyphId": 37,
-                "fgColor": 12303308,
+                "fgColor": "#BBBBCC",
                 "chance1000": 6
             }
         ],
@@ -360,24 +360,24 @@
     {
         "id": "sewer",
         "name": "Sewer",
-        "floorColor": 6710835,
+        "floorColor": "#666633",
         "tintR": 85,
         "tintG": 95,
         "tintB": 90,
         "decorations": [
             {
                 "glyphId": 39,
-                "fgColor": 4881978,
+                "fgColor": "#4A7E3A",
                 "chance1000": 8
             },
             {
                 "glyphId": 232,
-                "fgColor": 10053171,
+                "fgColor": "#996633",
                 "chance1000": 4
             },
             {
                 "glyphId": 126,
-                "fgColor": 8947575,
+                "fgColor": "#888777",
                 "chance1000": 4
             }
         ],
@@ -402,8 +402,8 @@
         "liquid": {
             "tileType": "water",
             "glyphId": 247,
-            "fgColor": 4490495,
-            "bgColor": 4403,
+            "fgColor": "#4484FF",
+            "bgColor": "#001133",
             "chance100": 40
         },
         "resourceWeights": [
@@ -424,24 +424,24 @@
     {
         "id": "fungal",
         "name": "Fungal",
-        "floorColor": 6710835,
+        "floorColor": "#666633",
         "tintR": 95,
         "tintG": 85,
         "tintB": 105,
         "decorations": [
             {
                 "glyphId": 6,
-                "fgColor": 13395626,
+                "fgColor": "#CC66AA",
                 "chance1000": 12
             },
             {
                 "glyphId": 39,
-                "fgColor": 4881978,
+                "fgColor": "#4A7E3A",
                 "chance1000": 6
             },
             {
                 "glyphId": 44,
-                "fgColor": 3375155,
+                "fgColor": "#338033",
                 "chance1000": 4
             }
         ],
@@ -470,8 +470,8 @@
         "liquid": {
             "tileType": "water",
             "glyphId": 247,
-            "fgColor": 4881978,
-            "bgColor": 4403,
+            "fgColor": "#4A7E3A",
+            "bgColor": "#001133",
             "chance100": 15
         },
         "resourceWeights": [
@@ -496,24 +496,24 @@
     {
         "id": "ruined",
         "name": "Ruined",
-        "floorColor": 8947575,
+        "floorColor": "#888777",
         "tintR": 105,
         "tintG": 95,
         "tintB": 85,
         "decorations": [
             {
                 "glyphId": 177,
-                "fgColor": 8947575,
+                "fgColor": "#888777",
                 "chance1000": 10
             },
             {
                 "glyphId": 9,
-                "fgColor": 10066329,
+                "fgColor": "#999999",
                 "chance1000": 4
             },
             {
                 "glyphId": 234,
-                "fgColor": 10066329,
+                "fgColor": "#999999",
                 "chance1000": 2
             }
         ],
@@ -558,24 +558,24 @@
     {
         "id": "infernal",
         "name": "Infernal",
-        "floorColor": 16729088,
+        "floorColor": "#FF4400",
         "tintR": 115,
         "tintG": 80,
         "tintB": 70,
         "decorations": [
             {
                 "glyphId": 7,
-                "fgColor": 16737826,
+                "fgColor": "#FF6622",
                 "chance1000": 10
             },
             {
                 "glyphId": 126,
-                "fgColor": 6697506,
+                "fgColor": "#663222",
                 "chance1000": 6
             },
             {
                 "glyphId": 229,
-                "fgColor": 13417369,
+                "fgColor": "#CCBB99",
                 "chance1000": 4
             }
         ],
@@ -596,8 +596,8 @@
         "liquid": {
             "tileType": "lava",
             "glyphId": 247,
-            "fgColor": 16729088,
-            "bgColor": 3346432,
+            "fgColor": "#FF4400",
+            "bgColor": "#331000",
             "chance100": 35
         },
         "resourceWeights": [

@@ -4,7 +4,7 @@
         "name": "Gold Coin",
         "category": "misc",
         "glyphId": 36,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 9999,
         "materialTier": "gold"
@@ -14,7 +14,7 @@
         "name": "Map Fragment",
         "category": "misc",
         "glyphId": 42,
-        "fgColor": 14329120,
+        "fgColor": "#DAA520",
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "none"
@@ -24,7 +24,7 @@
         "name": "Key",
         "category": "misc",
         "glyphId": 42,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 10,
         "materialTier": "none"

@@ -4,7 +4,7 @@
         "name": "Wood",
         "category": "material",
         "glyphId": 61,
-        "fgColor": 9136404,
+        "fgColor": "#8B6914",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "wood"
@@ -14,7 +14,7 @@
         "name": "Stone",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 8947848,
+        "fgColor": "#888888",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "stone"
@@ -24,7 +24,7 @@
         "name": "Copper Ore",
         "category": "material",
         "glyphId": 7,
-        "fgColor": 12092211,
+        "fgColor": "#B88333",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "copper"
@@ -34,7 +34,7 @@
         "name": "Iron Ore",
         "category": "material",
         "glyphId": 7,
-        "fgColor": 11053176,
+        "fgColor": "#A8A878",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "iron"
@@ -44,7 +44,7 @@
         "name": "Gold Ore",
         "category": "material",
         "glyphId": 7,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "gold"
@@ -54,7 +54,7 @@
         "name": "Copper Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 12092211,
+        "fgColor": "#B88333",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "copper"
@@ -64,7 +64,7 @@
         "name": "Iron Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 11053176,
+        "fgColor": "#A8A878",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "iron"
@@ -74,7 +74,7 @@
         "name": "Gold Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "gold"
@@ -84,7 +84,7 @@
         "name": "Steel Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 12632256,
+        "fgColor": "#C0C0C0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "steel"
@@ -94,7 +94,7 @@
         "name": "Mithril Ore",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 6737151,
+        "fgColor": "#66CCFF",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "mithril"
@@ -104,7 +104,7 @@
         "name": "Mithril Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 6737151,
+        "fgColor": "#66CCFF",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "mithril"
@@ -114,7 +114,7 @@
         "name": "Adamantite Ore",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 8388736,
+        "fgColor": "#800080",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "adamantite"
@@ -124,7 +124,7 @@
         "name": "Adamantite Ingot",
         "category": "material",
         "glyphId": 22,
-        "fgColor": 8388736,
+        "fgColor": "#800080",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "adamantite"
@@ -134,7 +134,7 @@
         "name": "Plant Fiber",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 5416721,
+        "fgColor": "#52A711",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -144,7 +144,7 @@
         "name": "Leather",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 9136404,
+        "fgColor": "#8B6914",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -154,7 +154,7 @@
         "name": "Cloth",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 15790320,
+        "fgColor": "#F0F0F0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -164,7 +164,7 @@
         "name": "Rope",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 9136404,
+        "fgColor": "#8B6914",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -174,7 +174,7 @@
         "name": "Glass",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 11599871,
+        "fgColor": "#B0FFFF",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -184,7 +184,7 @@
         "name": "Sand",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 15329769,
+        "fgColor": "#E9E9E9",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -194,7 +194,7 @@
         "name": "Clay",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 11173350,
+        "fgColor": "#AA7DE6",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -204,7 +204,7 @@
         "name": "Coal",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 3355443,
+        "fgColor": "#333333",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -214,7 +214,7 @@
         "name": "Ruby",
         "category": "material",
         "glyphId": 4,
-        "fgColor": 16711680,
+        "fgColor": "#FF0000",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -224,7 +224,7 @@
         "name": "Sapphire",
         "category": "material",
         "glyphId": 4,
-        "fgColor": 255,
+        "fgColor": "#0000FF",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -234,7 +234,7 @@
         "name": "Emerald",
         "category": "material",
         "glyphId": 4,
-        "fgColor": 65280,
+        "fgColor": "#00FF00",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -244,7 +244,7 @@
         "name": "Bone",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 15790320,
+        "fgColor": "#F0F0F0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -254,7 +254,7 @@
         "name": "Feather",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 15790320,
+        "fgColor": "#F0F0F0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -264,7 +264,7 @@
         "name": "Slime Gel",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 65280,
+        "fgColor": "#00FF00",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -274,7 +274,7 @@
         "name": "Torch",
         "category": "material",
         "glyphId": 33,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -284,7 +284,7 @@
         "name": "Planks",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 9136404,
+        "fgColor": "#8B6914",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "wood"
@@ -294,7 +294,7 @@
         "name": "Stone Brick",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 8947848,
+        "fgColor": "#888888",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "stone"
@@ -304,7 +304,7 @@
         "name": "Cured Leather",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 11173350,
+        "fgColor": "#AA7DE6",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -314,7 +314,7 @@
         "name": "Iron Chain",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 11053176,
+        "fgColor": "#A8A878",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "iron"
@@ -324,7 +324,7 @@
         "name": "Hardened Leather",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 7032338,
+        "fgColor": "#6B4E12",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -334,7 +334,7 @@
         "name": "Silk Cloth",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 15790320,
+        "fgColor": "#F0F0F0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -344,7 +344,7 @@
         "name": "Refined Planks",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 14329120,
+        "fgColor": "#DAA520",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "wood"
@@ -354,7 +354,7 @@
         "name": "Polished Stone",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 12632256,
+        "fgColor": "#C0C0C0",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "stone"
@@ -364,7 +364,7 @@
         "name": "Gold Chain",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 16766720,
+        "fgColor": "#FFD700",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "gold"
@@ -374,7 +374,7 @@
         "name": "Mithril Chain",
         "category": "material",
         "glyphId": 35,
-        "fgColor": 6737151,
+        "fgColor": "#66CCFF",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "mithril"
@@ -384,7 +384,7 @@
         "name": "Wool",
         "category": "material",
         "glyphId": 176,
-        "fgColor": 15658734,
+        "fgColor": "#EEEEEE",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none"
@@ -394,7 +394,7 @@
         "name": "Animal Feed",
         "category": "food",
         "glyphId": 44,
-        "fgColor": 11173350,
+        "fgColor": "#AA7DE6",
         "stackable": true,
         "maxStackSize": 99,
         "materialTier": "none",

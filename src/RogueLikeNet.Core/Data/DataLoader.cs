@@ -4,6 +4,31 @@ using System.Text.Json.Serialization;
 
 namespace RogueLikeNet.Core.Data;
 
+public class HexConverter : JsonConverter<int>
+{
+    public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+            return reader.GetInt32();
+
+        var value = reader.GetString();
+        if (value == null)
+            return 0;
+        // If the string starts with "#" or "0x", parse it as hex; otherwise parse as decimal
+        if (value.StartsWith("#"))
+            return int.Parse(value[1..], System.Globalization.NumberStyles.HexNumber);
+        else if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            return int.Parse(value.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber);
+        else
+            return int.Parse(value);
+    }
+
+    public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue($"#{value:X}");
+    }
+}
+
 /// <summary>
 /// Loads all game data from JSON files into the GameData registries.
 /// Uses System.Text.Json with source generators for AOT compatibility.
@@ -15,7 +40,7 @@ public static class DataLoader
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new HexConverter() },
         TypeInfoResolver = DataJsonContext.Default,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
