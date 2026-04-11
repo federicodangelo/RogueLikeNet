@@ -70,8 +70,6 @@ internal static class DungeonHelper
             return;
         }
 
-
-        ;
         var first = rooms[0];
         var last = rooms[^1];
         PlaceFeature(chunk, first.CenterX, first.CenterY, TileType.StairsUp,
