@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -63,10 +62,8 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
         result.SpawnPosition = Position.FromCoords(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ);
 
         // Broad torch at spawn for initial visibility
-        result.Elements.Add(new DungeonElement(
-            Position.FromCoords(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ),
-            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-            new LightSource(30, RenderConstants.ColorTorchFg)));
+        int torchId = GameData.Instance.Items.GetNumericId("torch_placeable");
+        chunk.Tiles[spawnX, 1].PlaceableItemId = torchId;
 
         var allNpcs = GameData.Instance.Npcs.All.ToArray();
         for (int enemyIdx = 0; enemyIdx < allNpcs.Length; enemyIdx++)
@@ -86,10 +83,7 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
                 BuildRoom(chunk, rx, ry, roomSize, roomSize);
 
                 // Torch inside room so player can see through the doorway
-                result.Elements.Add(new DungeonElement(
-                    Position.FromCoords(worldOffsetX + rx + roomSize / 2, worldOffsetY + ry + roomSize / 2, chunkZ),
-                    new TileAppearance(RenderConstants.GlyphTorch, def.FgColor),
-                    new LightSource(5, def.FgColor)));
+                chunk.Tiles[rx + roomSize / 2, ry + roomSize / 2].PlaceableItemId = torchId;
 
                 // Enemy in center
                 int cx = rx + roomSize / 2;

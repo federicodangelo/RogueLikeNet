@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -55,10 +54,7 @@ public class ItemShowcaseGenerator : IDungeonGenerator
 
         // Spawn point: just inside the room entrance at the top
         result.SpawnPosition = Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ);
-        result.Elements.Add(new DungeonElement(
-            Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ),
-            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-            new LightSource(20, RenderConstants.ColorTorchFg)));
+        chunk.Tiles[Chunk.Size / 2, 3].PlaceableItemId = GameData.Instance.Items.GetNumericId("torch_placeable");
 
         // Place items in a grid: rows = item types, columns = rarities
         // Start at (4, 5) with 4-tile spacing

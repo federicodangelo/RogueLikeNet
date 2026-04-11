@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
 
 namespace RogueLikeNet.Core.World;
@@ -51,9 +52,11 @@ public class Chunk
     public Span<GroundItemEntity> GroundItems => CollectionsMarshal.AsSpan(_groundItems);
     public Span<ResourceNodeEntity> ResourceNodes => CollectionsMarshal.AsSpan(_resourceNodes);
     public Span<TownNpcEntity> TownNpcs => CollectionsMarshal.AsSpan(_townNpcs);
-    public Span<ElementEntity> Elements => CollectionsMarshal.AsSpan(_elements);
     public Span<CropEntity> Crops => CollectionsMarshal.AsSpan(_crops);
     public Span<AnimalEntity> Animals => CollectionsMarshal.AsSpan(_animals);
+
+    // ── Light-emitting placeable tracking ─────────────────────────────
+    public ReadOnlySpan<long> LightEmittingTiles => CollectionsMarshal.AsSpan(_lightEmittingTiles);
 
     public ref struct SolidEntityWithHealth
     {
@@ -134,9 +137,9 @@ public class Chunk
     private readonly List<GroundItemEntity> _groundItems = [];
     private readonly List<ResourceNodeEntity> _resourceNodes = [];
     private readonly List<TownNpcEntity> _townNpcs = [];
-    private readonly List<ElementEntity> _elements = [];
     private readonly List<CropEntity> _crops = [];
     private readonly List<AnimalEntity> _animals = [];
+    private readonly List<long> _lightEmittingTiles = [];
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
     private readonly List<Position> _dirtyTiles = new();
@@ -222,9 +225,6 @@ public class Chunk
             case EntityType.TownNpc:
                 _townNpcs.RemoveAll(n => n.Id == entity.Id);
                 break;
-            case EntityType.Element:
-                _elements.RemoveAll(e => e.Id == entity.Id);
-                break;
             case EntityType.Crop:
                 _crops.RemoveAll(c => c.Id == entity.Id);
                 break;
@@ -239,7 +239,6 @@ public class Chunk
     public void RemoveEntity(GroundItemEntity entity) { _groundItems.RemoveAll(i => i.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(ResourceNodeEntity entity) { _resourceNodes.RemoveAll(r => r.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(TownNpcEntity entity) { _townNpcs.RemoveAll(n => n.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(ElementEntity entity) { _elements.RemoveAll(e => e.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(CropEntity entity) { _crops.RemoveAll(c => c.Id == entity.Id); MarkModified(); }
     public void RemoveEntity(AnimalEntity entity) { _animals.RemoveAll(a => a.Id == entity.Id); MarkModified(); }
 
@@ -247,7 +246,6 @@ public class Chunk
     public ref GroundItemEntity AddEntity(GroundItemEntity entity) { _groundItems.Add(entity); MarkModified(); return ref GroundItems[^1]; }
     public ref ResourceNodeEntity AddEntity(ResourceNodeEntity entity) { _resourceNodes.Add(entity); MarkModified(); return ref ResourceNodes[^1]; }
     public ref TownNpcEntity AddEntity(TownNpcEntity entity) { _townNpcs.Add(entity); MarkModified(); return ref TownNpcs[^1]; }
-    public ref ElementEntity AddEntity(ElementEntity entity) { _elements.Add(entity); MarkModified(); return ref Elements[^1]; }
     public ref CropEntity AddEntity(CropEntity entity) { _crops.Add(entity); MarkModified(); return ref Crops[^1]; }
     public ref AnimalEntity AddEntity(AnimalEntity entity) { _animals.Add(entity); MarkModified(); return ref Animals[^1]; }
 
@@ -285,14 +283,6 @@ public class Chunk
         throw new KeyNotFoundException($"Town NPC entity {entityId} not found in chunk.");
     }
 
-    public ref ElementEntity GetElementRef(int entityId)
-    {
-        var span = Elements;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Element entity {entityId} not found in chunk.");
-    }
-
     public ref CropEntity GetCropRef(int entityId)
     {
         var span = Crops;
@@ -309,9 +299,61 @@ public class Chunk
         throw new KeyNotFoundException($"Animal entity {entityId} not found in chunk.");
     }
 
+    // Called by WorldMap when a chunk is loaded (from disk or generated) to perform any necessary initialization
+    public void Init()
+    {
+        // Ensure light-emitting tile index is populated after loading (or generating) a chunk
+        RebuildLightTileIndex();
+    }
+
     public void ResetLight()
     {
         Array.Clear(LightLevels, 0, LightLevels.Length);
+    }
+
+    public void SetTile(int localX, int localY, TileInfo tile)
+    {
+        int oldPlaceableId = Tiles[localX, localY].PlaceableItemId;
+
+        Tiles[localX, localY] = tile;
+        MarkTileDirty(LocalToWorld(localX, localY));
+
+        int newPlaceableId = tile.PlaceableItemId;
+        if (oldPlaceableId != newPlaceableId)
+        {
+            var items = Data.GameData.Instance.Items;
+            bool wasLight = oldPlaceableId != 0 && items.GetPlaceableLightRadius(oldPlaceableId) > 0;
+            bool isLight = newPlaceableId != 0 && items.GetPlaceableLightRadius(newPlaceableId) > 0;
+            if (isLight && !wasLight)
+                TrackLightEmittingTile(localX, localY);
+            else if (!isLight && wasLight)
+                UntrackLightEmittingTile(localX, localY);
+        }
+    }
+
+    private void RebuildLightTileIndex()
+    {
+        _lightEmittingTiles.Clear();
+        var items = GameData.Instance.Items;
+        for (int lx = 0; lx < Size; lx++)
+            for (int ly = 0; ly < Size; ly++)
+            {
+                int pid = Tiles[lx, ly].PlaceableItemId;
+                if (pid != 0 && items.GetPlaceableLightRadius(pid) > 0)
+                    _lightEmittingTiles.Add(LocalToWorld(lx, ly).Pack());
+            }
+    }
+
+    private void TrackLightEmittingTile(int localX, int localY)
+    {
+        int packed = localX * Size + localY;
+        if (!_lightEmittingTiles.Contains(packed))
+            _lightEmittingTiles.Add(packed);
+    }
+
+    private void UntrackLightEmittingTile(int localX, int localY)
+    {
+        _lightEmittingTiles.Remove(localX * Size + localY);
     }
 
     /// <summary>Removes dead entities from all lists (compacts in-place).</summary>
@@ -332,7 +374,6 @@ public class Chunk
         _groundItems.Clear();
         _resourceNodes.Clear();
         _townNpcs.Clear();
-        _elements.Clear();
         _crops.Clear();
         _animals.Clear();
     }

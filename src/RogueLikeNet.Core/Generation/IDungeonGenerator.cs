@@ -11,17 +11,11 @@ public interface IDungeonGenerator
     GenerationResult Generate(ChunkPosition chunkPos);
 }
 
-/// <summary>
-/// An element placed in the dungeon with a visual appearance and optional light source.
-/// </summary>
-public readonly record struct DungeonElement(Position Position, TileAppearance Appearance, LightSource? Light);
-
 public class GenerationResult
 {
     public Chunk Chunk { get; }
     public List<(Position Position, MonsterData Monster)> Monsters { get; } = new();
     public List<(Position Position, ItemData Item)> Items { get; } = new();
-    public List<DungeonElement> Elements { get; } = new();
     public List<(Position Position, Data.ResourceNodeDefinition NodeDef)> ResourceNodes { get; } = new();
     public List<(Position Position, Data.AnimalDefinition AnimalDef)> Animals { get; } = new();
     public List<(Position Position, Data.ItemDefinition ItemSeed, int GrowthTicksCurrent, bool IsWatered)> Crops { get; } = new();

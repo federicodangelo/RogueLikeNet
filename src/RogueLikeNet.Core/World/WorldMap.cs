@@ -406,15 +406,13 @@ public class WorldMap
         bool wasDynamic = IsDynamicTile(chunk.Tiles[lx, ly]);
         bool isDynamic = IsDynamicTile(tile);
 
-        chunk.Tiles[lx, ly] = tile;
-        chunk.MarkTileDirty(pos);
+        chunk.SetTile(lx, ly, tile);
 
         if (isDynamic && !wasDynamic)
             TrackDynamicTile(pos);
         else if (!isDynamic && wasDynamic)
             UntrackDynamicTile(pos);
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetPlaceable(Position pos, int placeableId, int extraData = 0)
@@ -468,6 +466,7 @@ public class WorldMap
         long key = chunk.ChunkPosition.Pack();
         _chunks[key] = chunk;
         ScanChunkForDynamicTiles(chunk);
+        chunk.Init();
     }
 
     /// <summary>

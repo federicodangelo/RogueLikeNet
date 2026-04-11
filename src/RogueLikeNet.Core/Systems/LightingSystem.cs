@@ -1,12 +1,13 @@
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
-/// Shadow-cast lighting from all LightSource entities and player ambient light.
+/// Shadow-cast lighting from all light-emitting placeables and player ambient light.
 /// </summary>
 public class LightingSystem
 {
@@ -15,11 +16,19 @@ public class LightingSystem
         foreach (var chunk in map.LoadedChunks)
             chunk.ResetLight();
 
-        // Light sources from elements
+        // Light sources from placeables
+        var items = GameData.Instance.Items;
         foreach (var chunk in map.LoadedChunks)
-            foreach (var elem in chunk.Elements)
-                if (elem.Light.HasValue)
-                    FloodLight(map, elem.Position, elem.Light.Value.Radius);
+            foreach (var packed in chunk.LightEmittingTiles)
+            {
+                var worldPos = Position.UnpackCoord(packed);
+                if (!chunk.WorldToLocal(worldPos.X, worldPos.Y, out var lx, out var ly))
+                    continue;
+                int itemId = chunk.Tiles[lx, ly].PlaceableItemId;
+                int radius = items.GetPlaceableLightRadius(itemId);
+                if (radius > 0)
+                    FloodLight(map, worldPos, radius);
+            }
 
         // Players emit ambient light matching their FOV
         foreach (var player in map.Players)

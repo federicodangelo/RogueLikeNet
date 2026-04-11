@@ -223,6 +223,9 @@ public class AISystem
                                     if (entityRef.Type == EntityType.Player)
                                         return TileWalkability.Walkable;
 
+                                    if (entityRef.Type == EntityType.GroundItem)
+                                        return TileWalkability.Walkable;
+
                                     return TileWalkability.None;
                                 }
 

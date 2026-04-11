@@ -120,10 +120,10 @@ internal static class TownGenerator
         }
 
         // Place a torch in the town center
-        result.Elements.Add(new DungeonElement(
-            Position.FromCoords(townCenterX, townCenterY, worldZ),
-            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-            new LightSource(8, RenderConstants.ColorTorchFg)));
+        int townCenterLx = townCenterX - worldOffsetX;
+        int townCenterLy = townCenterY - worldOffsetY;
+        if (townCenterLx >= 0 && townCenterLx < Chunk.Size && townCenterLy >= 0 && townCenterLy < Chunk.Size)
+            chunk.Tiles[townCenterLx, townCenterLy].PlaceableItemId = ItemId("torch_placeable");
 
         // Spawn town NPCs in the town area
         int npcCount = MinNpcCount + rng.Next(MaxNpcCount - MinNpcCount + 1);
@@ -272,10 +272,7 @@ internal static class TownGenerator
         if (torchX >= 0 && torchX < Chunk.Size && torchY >= 0 && torchY < Chunk.Size &&
             chunk.Tiles[torchX, torchY].Type == TileType.Floor)
         {
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(worldOffsetX + torchX, worldOffsetY + torchY, worldZ),
-                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                new LightSource(5, RenderConstants.ColorTorchFg)));
+            chunk.Tiles[torchX, torchY].PlaceableItemId = ItemId("torch_placeable");
         }
     }
 

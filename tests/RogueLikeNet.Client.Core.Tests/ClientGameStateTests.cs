@@ -313,7 +313,7 @@ public class ClientGameStateTests
             Chunks = [],
             CombatEvents = [],
             EntityUpdates = [],
-            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileId = GameData.Instance.Tiles.GetNumericId("wall"), LightLevel = 3 }],
+            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileId = GameData.Instance.Tiles.GetNumericId("wall") }],
         });
 
         var (tile, lightlevel) = state.GetTileAndLightLevel(32, 32);

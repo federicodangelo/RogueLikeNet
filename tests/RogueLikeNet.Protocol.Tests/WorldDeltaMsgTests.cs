@@ -13,14 +13,12 @@ public class WorldDeltaMsgTests
             X = 10,
             Y = 20,
             TileId = 42,
-            LightLevel = 75
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<TileUpdateMsg>(data);
         Assert.Equal(10, result.X);
         Assert.Equal(20, result.Y);
         Assert.Equal(42, result.TileId);
-        Assert.Equal(75, result.LightLevel);
     }
 
     [Fact]
@@ -30,7 +28,6 @@ public class WorldDeltaMsgTests
         Assert.Equal(0, msg.X);
         Assert.Equal(0, msg.Y);
         Assert.Equal(0, msg.TileId);
-        Assert.Equal(0, msg.LightLevel);
     }
 
     [Fact]
@@ -89,7 +86,7 @@ public class WorldDeltaMsgTests
         {
             FromTick = 5,
             ToTick = 6,
-            TileUpdates = [new TileUpdateMsg { X = 1, Y = 2, TileId = 42, LightLevel = 50 }],
+            TileUpdates = [new TileUpdateMsg { X = 1, Y = 2, TileId = 42 }],
             PlayerState = new PlayerStateMsg { Health = 50, MaxHealth = 100, Attack = 10, Defense = 5 }
         };
         var data = NetSerializer.Serialize(delta);

@@ -84,16 +84,26 @@ public class CellularAutomataCaveGeneratorTests
     {
         // Generate with many different chunk coordinates to exercise ExtractRooms.
         // The fallback path kicks in when the cellular automata leaves < 2 qualifying rooms,
-        // ensuring the generator always places up-stairs and down-stairs elements.
+        // ensuring the generator always places up-stairs and down-stairs tiles.
         var gen = new CellularAutomataCaveGenerator(123456);
+        int stairsUp = GameData.Instance.Tiles.GetNumericId("stairs_up");
+        int stairsDown = GameData.Instance.Tiles.GetNumericId("stairs_down");
         for (int cx = -5; cx <= 5; cx++)
             for (int cy = -5; cy <= 5; cy++)
             {
                 var result = gen.Generate(ChunkPosition.FromCoords(cx, cy, Position.DefaultZ));
-                // The generator places stair-up (element 0) and stair-down (element 1) in separate rooms.
+                // The generator places stair-up and stair-down tiles in separate rooms.
                 // If the fallback ran, rooms were synthesized to ensure >= 2.
-                Assert.True(result.Elements.Count >= 2,
-                    $"Chunk ({cx},{cy}): expected at least 2 elements (stairs), got {result.Elements.Count}");
+                bool hasUp = false, hasDown = false;
+                for (int x = 0; x < Chunk.Size && !(hasUp && hasDown); x++)
+                    for (int y = 0; y < Chunk.Size && !(hasUp && hasDown); y++)
+                    {
+                        int tileId = result.Chunk.Tiles[x, y].TileId;
+                        if (tileId == stairsUp) hasUp = true;
+                        if (tileId == stairsDown) hasDown = true;
+                    }
+                Assert.True(hasUp && hasDown,
+                    $"Chunk ({cx},{cy}): expected both stairs_up and stairs_down tiles");
             }
     }
 }

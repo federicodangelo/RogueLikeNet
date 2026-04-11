@@ -192,12 +192,6 @@ public static class GameStateSerializer
                 ProcessEntity((long)n.Id, EntityType.TownNpc, n.Position, n.Appearance, n.Health.Current, n.Health.Max, 0, null);
             }
 
-            foreach (var e in chunk.Elements)
-            {
-                int lightRadius = e.Light.HasValue ? e.Light.Value.Radius : 0;
-                ProcessEntity((long)e.Id, EntityType.Element, e.Position, e.Appearance, 0, 0, lightRadius, null);
-            }
-
             foreach (var c in chunk.Crops)
             {
                 if (c.IsDestroyed) continue;

@@ -140,59 +140,6 @@ public class EntitySerializerTests : IDisposable
     }
 
     [Fact]
-    public void Element_RoundTrip_PreservesData()
-    {
-        var element = new DungeonElement(
-            Position.FromCoords(6, 7, Z),
-            new TileAppearance(99, 0xAABBCC, 0x112233),
-            null
-        );
-        _engine.SpawnElement(element);
-
-        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        var json = EntitySerializer.SerializeEntities(chunk);
-        Assert.Contains("\"Type\":\"Element\"", json);
-
-        using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Z));
-        EntitySerializer.DeserializeEntities(json, engine2);
-
-        var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 6 && e.Position.Y == 7 && e.Position.Z == Z);
-        Assert.NotEqual(EntityRef.NullId, found.Id);
-
-        Assert.Equal(99, found!.Appearance.GlyphId);
-        Assert.Equal(0xAABBCC, found.Appearance.FgColor);
-        Assert.Equal(0x112233, found.Appearance.BgColor);
-    }
-
-    [Fact]
-    public void ElementWithLight_RoundTrip_PreservesData()
-    {
-        var element = new DungeonElement(
-            Position.FromCoords(8, 9, Z),
-            new TileAppearance(55, 0xFFCC66, 0x000000),
-            new LightSource(5, 0xFFCC66)
-        );
-        _engine.SpawnElement(element);
-
-        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        var json = EntitySerializer.SerializeEntities(chunk);
-
-        using var engine2 = new GameEngine(42, _gen);
-        engine2.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Z));
-        EntitySerializer.DeserializeEntities(json, engine2);
-
-        var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        var found = chunk2.Elements.ToArray().FirstOrDefault(e => e.Position.X == 8 && e.Position.Y == 9 && e.Position.Z == Z);
-        Assert.NotEqual(EntityRef.NullId, found.Id);
-
-        Assert.NotNull(found!.Light);
-        Assert.Equal(5, found.Light!.Value.Radius);
-        Assert.Equal(0xFFCC66, found.Light.Value.ColorRgb);
-    }
-
-    [Fact]
     public void TownNpc_RoundTrip_PreservesData()
     {
         var npc = _engine.SpawnTownNpc(Position.FromCoords(2, 8, Z), "Blacksmith", 5, 10, 3);
@@ -233,16 +180,6 @@ public class EntitySerializerTests : IDisposable
         _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
         _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
-        _engine.SpawnElement(new DungeonElement(
-            Position.FromCoords(4, 4, Z),
-            new TileAppearance(20, 0, 0),
-            null
-        ));
-        _engine.SpawnElement(new DungeonElement(
-            Position.FromCoords(5, 5, Z),
-            new TileAppearance(30, 0, 0),
-            new LightSource(3, 0xFFFFFF)
-        ));
         _engine.SpawnTownNpc(Position.FromCoords(6, 6, Z), "Vendor", 6, 6, 2);
 
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
@@ -256,13 +193,11 @@ public class EntitySerializerTests : IDisposable
         int monsters = chunk2.Monsters.ToArray().Count(m => !m.IsDead);
         int items = chunk2.GroundItems.ToArray().Count(gi => !gi.IsDestroyed);
         int nodes = chunk2.ResourceNodes.ToArray().Count(r => !r.IsDead);
-        int elements = chunk2.Elements.Length;
         int npcs = chunk2.TownNpcs.ToArray().Count(n => !n.IsDead);
 
         Assert.True(monsters >= 1, $"Expected >= 1 monster, got {monsters}");
         Assert.True(items >= 1, $"Expected >= 1 item, got {items}");
         Assert.True(nodes >= 1, $"Expected >= 1 resource node, got {nodes}");
-        Assert.True(elements >= 1, $"Expected >= 1 element, got {elements}");
         Assert.True(npcs >= 1, $"Expected >= 1 NPC, got {npcs}");
     }
 

@@ -70,12 +70,6 @@ public sealed class GameWorldRenderer
                         brightness = Math.Clamp(brightness + brightnessOffset, 0f, 1f);
                     }
 
-                    if ((tile.GlyphId == RenderConstants.GlyphTorch || tile.Type == TileType.Lava)
-                        && visible && lightLevel >= 5)
-                    {
-                        _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
-                    }
-
                     var bgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.BgColor), brightness);
                     var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.FgColor), brightness);
                     var glyphId = tile.GlyphId;
@@ -85,6 +79,12 @@ public sealed class GameWorldRenderer
                     {
                         glyphId = GameData.Instance.Items.GetPlaceableGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra);
                         fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(GameData.Instance.Items.GetPlaceableFgColor(tile.PlaceableItemId, tile.PlaceableItemExtra)), brightness);
+                    }
+
+                    if ((glyphId == RenderConstants.GlyphTorch || tile.Type == TileType.Lava)
+                        && visible && lightLevel >= 5)
+                    {
+                        _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
                     }
 
                     // Client-side door glyph override: pick | or - based on surrounding walls
@@ -138,7 +138,11 @@ public sealed class GameWorldRenderer
                 var sx = pos.X;
                 var sy = pos.Y;
 
-                if (tile.GlyphId == RenderConstants.GlyphTorch)
+                int resolvedGlyph = tile.PlaceableItemId != 0
+                    ? GameData.Instance.Items.GetPlaceableGlyphId(tile.PlaceableItemId, tile.PlaceableItemExtra)
+                    : tile.GlyphId;
+
+                if (resolvedGlyph == RenderConstants.GlyphTorch)
                 {
                     float cx = sx * tileW + tileW * 0.5f + shakeX;
                     float cy = sy * tileH + tileH * 0.5f + shakeY;

@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
@@ -272,14 +271,12 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
 
     private static void PlaceTorches(GenerationResult result, int worldOffsetX, int worldOffsetY, int chunkZ)
     {
+        int torchId = GameData.Instance.Items.GetNumericId("torch_placeable");
         int[][] positions = [[16, 2], [48, 2], [16, 32], [48, 32], [32, 16], [32, 48],
                               [4, 4], [60, 4], [4, 60], [60, 60]];
         foreach (var pos in positions)
         {
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(worldOffsetX + pos[0], worldOffsetY + pos[1], chunkZ),
-                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                new LightSource(10, RenderConstants.ColorTorchFg)));
+            result.Chunk.Tiles[pos[0], pos[1]].PlaceableItemId = torchId;
         }
     }
 

@@ -120,9 +120,6 @@ public class GameEngine : IDisposable
         foreach (var (pos, item) in result.Items)
             SpawnItemOnGround(item, pos);
 
-        foreach (var element in result.Elements)
-            SpawnElement(element);
-
         foreach (var (pos, nodeDef) in result.ResourceNodes)
             SpawnResourceNode(pos, nodeDef);
 
@@ -238,22 +235,6 @@ public class GameEngine : IDisposable
 
         var c = Chunk.WorldToChunkCoord(pos);
         return ref _worldMap.GetChunk(c).AddEntity(item);
-    }
-
-    /// <summary>
-    /// Spawns a dungeon element (decoration with optional light).
-    /// </summary>
-    public ref ElementEntity SpawnElement(DungeonElement element)
-    {
-        var elem = new ElementEntity(_worldMap.AllocateEntityId())
-        {
-            Position = element.Position,
-            Appearance = element.Appearance,
-            Light = element.Light,
-        };
-
-        var c = Chunk.WorldToChunkCoord(elem.Position);
-        return ref _worldMap.GetChunk(c).AddEntity(elem);
     }
 
     /// <summary>

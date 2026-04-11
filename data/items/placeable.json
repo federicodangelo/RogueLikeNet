@@ -569,13 +569,15 @@
         "maxStackSize": 99,
         "materialTier": "none",
         "placeable": {
-            "placeableType": "decoration",
+            "placeableType": "lighting",
             "walkable": true,
             "transparent": true,
             "stateType": "none",
             "alternateGlyphId": 0,
             "alternateWalkable": false,
-            "alternateTransparent": false
+            "alternateTransparent": false,
+            "lightRadius": 10,
+            "lightColor": "#FFCC66"
         }
     },
     {

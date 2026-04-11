@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -67,10 +66,8 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
         // x = 2 + 12 + 1 = 15 (gap tile between east wall x=14 and west wall x=17), y = 0
 
         // Broad torch at spawn for initial visibility
-        result.Elements.Add(new DungeonElement(
-            Position.FromCoords(worldOffsetX + startX + roomW + 1, worldOffsetY + 0, chunkZ),
-            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-            new LightSource(30, RenderConstants.ColorTorchFg)));
+        int torchId = GameData.Instance.Items.GetNumericId("torch_placeable");
+        chunk.Tiles[startX + roomW + 1, 0].PlaceableItemId = torchId;
 
         var biomes = (BiomeType[])Enum.GetValues(typeof(BiomeType));
 
@@ -144,10 +141,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
             }
 
             // Torch inside the room for FOV
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(worldOffsetX + rx + 1, worldOffsetY + ry + 1, chunkZ),
-                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                new LightSource(8, RenderConstants.ColorTorchFg)));
+            chunk.Tiles[rx + 1, ry + 1].PlaceableItemId = torchId;
         }
 
         return result;

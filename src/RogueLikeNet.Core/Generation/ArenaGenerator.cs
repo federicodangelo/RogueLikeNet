@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -79,6 +78,7 @@ public class ArenaGenerator : IDungeonGenerator
         }
 
         // Torches in the corners and center
+        int torchId = GameData.Instance.Items.GetNumericId("torch_placeable");
         int[][] torchPositions =
         [
             [8, 8], [56, 8], [8, 56], [56, 56], [32, 32],
@@ -86,10 +86,7 @@ public class ArenaGenerator : IDungeonGenerator
         ];
         foreach (var pos in torchPositions)
         {
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(worldOffsetX + pos[0], worldOffsetY + pos[1], chunkZ),
-                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                new LightSource(10, RenderConstants.ColorTorchFg)));
+            chunk.Tiles[pos[0], pos[1]].PlaceableItemId = torchId;
         }
 
         // Spawn enemies scattered around

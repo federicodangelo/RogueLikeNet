@@ -74,4 +74,16 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
         var def = Get(itemTypeId);
         return def?.Placeable?.CraftingStationType;
     }
+
+    public int GetPlaceableLightRadius(int itemTypeId)
+    {
+        var def = Get(itemTypeId);
+        return def?.Placeable?.LightRadius ?? 0;
+    }
+
+    public int GetPlaceableLightColor(int itemTypeId)
+    {
+        var def = Get(itemTypeId);
+        return def?.Placeable?.LightColor ?? 0xFFFFFF;
+    }
 }

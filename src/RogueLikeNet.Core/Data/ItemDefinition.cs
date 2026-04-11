@@ -231,6 +231,8 @@ public sealed class PlaceableData
     public int AlternateGlyphId { get; set; }
     public bool AlternateWalkable { get; set; }
     public bool AlternateTransparent { get; set; }
+    public int LightRadius { get; set; }
+    public int LightColor { get; set; } = 0xFFFFFF;
 }
 
 public sealed class AmmoData

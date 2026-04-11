@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
@@ -28,7 +27,6 @@ public static class EntitySerializer
     private const string TypeMonster = "Monster";
     private const string TypeGroundItem = "GroundItem";
     private const string TypeResourceNode = "ResourceNode";
-    private const string TypeElement = "Element";
     private const string TypeTownNpc = "TownNpc";
     private const string TypeCrop = "Crop";
     private const string TypeAnimal = "Animal";
@@ -94,19 +92,6 @@ public static class EntitySerializer
         dict["WanderRadius"] = npc.WanderRadius;
     }
 
-    private static void SerializeTileAppearance(Dictionary<string, object> dict, TileAppearance ta)
-    {
-        dict["GlyphId"] = ta.GlyphId;
-        dict["FgColor"] = ta.FgColor;
-        dict["BgColor"] = ta.BgColor;
-    }
-
-    private static void SerializeLightSource(Dictionary<string, object> dict, LightSource ls)
-    {
-        dict["LightRadius"] = ls.Radius;
-        dict["LightColor"] = ls.ColorRgb;
-    }
-
     // ── Serialization ─────────────────────────────────────────────────
 
     /// <summary>
@@ -150,17 +135,6 @@ public static class EntitySerializer
             SerializeResourceNodeData(dict, r.NodeData);
             SerializeHealth(dict, r.Health);
             SerializeAttackDelay(dict, r.AttackDelay);
-            entities.Add(dict);
-        }
-
-        // Elements (decorations with optional light)
-        foreach (var e in chunk.Elements)
-        {
-            var dict = new Dictionary<string, object> { ["Type"] = TypeElement };
-            SerializePosition(dict, e.Position);
-            SerializeTileAppearance(dict, e.Appearance);
-            if (e.Light.HasValue)
-                SerializeLightSource(dict, e.Light.Value);
             entities.Add(dict);
         }
 
@@ -232,7 +206,6 @@ public static class EntitySerializer
                 case TypeMonster: DeserializeMonster(dict, engine); break;
                 case TypeGroundItem: DeserializeGroundItem(dict, engine); break;
                 case TypeResourceNode: DeserializeResourceNode(dict, engine); break;
-                case TypeElement: DeserializeElement(dict, engine); break;
                 case TypeTownNpc: DeserializeTownNpc(dict, engine); break;
                 case TypeCrop: DeserializeCrop(dict, engine); break;
                 case TypeAnimal: DeserializeAnimal(dict, engine); break;
@@ -312,18 +285,6 @@ public static class EntitySerializer
         // Restore runtime state
         node.Health.Current = GetInt(dict, "HealthCurrent", node.Health.Current);
         node.AttackDelay.Current = GetInt(dict, "AttackCurrent");
-    }
-
-    private static void DeserializeElement(Dictionary<string, JsonElement> dict, GameEngine engine)
-    {
-        int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
-        var pos = Position.FromCoords(x, y, z);
-        var ta = new TileAppearance(GetInt(dict, "GlyphId"), GetInt(dict, "FgColor"), GetInt(dict, "BgColor"));
-
-        LightSource? light = dict.ContainsKey("LightRadius")
-            ? new LightSource(GetInt(dict, "LightRadius"), GetInt(dict, "LightColor", 0xFFCC66))
-            : null;
-        engine.SpawnElement(new DungeonElement(pos, ta, light));
     }
 
     private static void DeserializeTownNpc(Dictionary<string, JsonElement> dict, GameEngine engine)

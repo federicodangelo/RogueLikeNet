@@ -153,7 +153,7 @@ public class GameEngineTests
         var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
         int entityCount = chunk.Monsters.Length + chunk.GroundItems.Length +
-                          chunk.ResourceNodes.Length + chunk.TownNpcs.Length + chunk.Elements.Length;
+                          chunk.ResourceNodes.Length + chunk.TownNpcs.Length;
         Assert.True(entityCount > 0, "Chunk loading should spawn entities");
     }
 
@@ -354,41 +354,6 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void SpawnElement_WithLight_CreatesLightSource()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-
-        var element = new DungeonElement
-        {
-            Position = Position.FromCoords(10, 10, Position.DefaultZ),
-            Appearance = new TileAppearance('*', 0xFFAA00),
-            Light = new LightSource { Radius = 5 }
-        };
-
-        var entity = engine.SpawnElement(element);
-        Assert.NotNull(entity.Light);
-        Assert.Equal(5, entity.Light!.Value.Radius);
-    }
-
-    [Fact]
-    public void SpawnElement_WithoutLight_NoLightSource()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-
-        var element = new DungeonElement
-        {
-            Position = Position.FromCoords(10, 10, Position.DefaultZ),
-            Appearance = new TileAppearance('#', 0x888888),
-            Light = null
-        };
-
-        var entity = engine.SpawnElement(element);
-        Assert.Null(entity.Light);
-    }
-
-    [Fact]
     public void GetPlayerStateData_InventoryItemCategory()
     {
         using var engine = new GameEngine(42, _gen);
@@ -482,23 +447,6 @@ public class GameEngineTests
 
         var itemData = new ItemData { ItemTypeId = ItemId("health_potion_small"), StackCount = 1 };
         engine.SpawnItemOnGround(itemData, Position.FromCoords(5, 5, Position.DefaultZ));
-
-        Assert.True(chunk.IsModifiedSinceLastSave);
-    }
-
-    [Fact]
-    public void SpawnElement_MarksChunkDirty()
-    {
-        using var engine = new GameEngine(42, _gen);
-        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
-        chunk.ClearSaveFlag();
-
-        engine.SpawnElement(new DungeonElement
-        {
-            Position = Position.FromCoords(5, 5, Position.DefaultZ),
-            Appearance = new TileAppearance('#', 0x888888),
-        });
 
         Assert.True(chunk.IsModifiedSinceLastSave);
     }

@@ -1,6 +1,7 @@
 using System.Collections;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Utilities;
@@ -91,11 +92,13 @@ public class ClientGameState
             {
                 if (chunk.WorldToLocal(tileUpdate.X, tileUpdate.Y, out var lx, out var ly))
                 {
-                    ref var tile = ref chunk.Tiles[lx, ly];
+                    var tile = chunk.Tiles[lx, ly];
+
                     tile.TileId = tileUpdate.TileId;
                     tile.PlaceableItemId = tileUpdate.PlaceableItemId;
                     tile.PlaceableItemExtra = tileUpdate.PlaceableItemExtra;
-                    chunk.LightLevels[lx, ly] = tileUpdate.LightLevel;
+
+                    chunk.SetTile(lx, ly, tile);
                 }
             }
         }
@@ -210,6 +213,7 @@ public class ClientGameState
             }
         long key = Position.PackCoord(msg.ChunkX, msg.ChunkY, msg.ChunkZ);
         _chunks[key] = chunk;
+        chunk.Init();
     }
 
     public TileInfo GetTile(int worldX, int worldY)
@@ -353,8 +357,14 @@ public class ClientGameState
         var (minCx, minCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(PlayerX - ClassDefinitions.FOVRadius, PlayerY - ClassDefinitions.FOVRadius, PlayerZ));
         var (maxCx, maxCy, _) = Chunk.WorldToChunkCoord(Position.FromCoords(PlayerX + ClassDefinitions.FOVRadius, PlayerY + ClassDefinitions.FOVRadius, PlayerZ));
         foreach (var chunk in _chunks.Values)
-            if (chunk.ChunkPosition.X >= minCx && chunk.ChunkPosition.X <= maxCx && chunk.ChunkPosition.Y >= minCy && chunk.ChunkPosition.Y <= maxCy)
+        {
+            if (chunk.ChunkPosition.X >= minCx && chunk.ChunkPosition.X <= maxCx &&
+                chunk.ChunkPosition.Y >= minCy && chunk.ChunkPosition.Y <= maxCy &&
+                chunk.ChunkPosition.Z == PlayerZ)
+            {
                 chunk.ResetLight();
+            }
+        }
 
         // Player emits light at FOV radius
         FloodLight(PlayerX, PlayerY, ClassDefinitions.FOVRadius);
@@ -363,6 +373,27 @@ public class ClientGameState
         foreach (var entity in _entities.Values)
             if (entity.LightRadius > 0 && entity.Z == PlayerZ)
                 FloodLight(entity.X, entity.Y, entity.LightRadius);
+
+        // Light-emitting placeables in nearby chunks
+        var items = GameData.Instance.Items;
+        foreach (var chunk in _chunks.Values)
+        {
+            if (chunk.ChunkPosition.X >= minCx && chunk.ChunkPosition.X <= maxCx &&
+                chunk.ChunkPosition.Y >= minCy && chunk.ChunkPosition.Y <= maxCy &&
+                chunk.ChunkPosition.Z == PlayerZ)
+            {
+                foreach (var packed in chunk.LightEmittingTiles)
+                {
+                    var worldPos = Position.UnpackCoord(packed);
+                    if (!chunk.WorldToLocal(worldPos.X, worldPos.Y, out var lx, out var ly))
+                        continue;
+
+                    int lightRadius = items.GetPlaceableLightRadius(chunk.Tiles[lx, ly].PlaceableItemId);
+                    if (lightRadius > 0)
+                        FloodLight(worldPos.X, worldPos.Y, lightRadius);
+                }
+            }
+        }
     }
 
     private void FloodLight(int originX, int originY, int radius)

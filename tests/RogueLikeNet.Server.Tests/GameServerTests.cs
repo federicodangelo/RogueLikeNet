@@ -2,6 +2,7 @@ using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
@@ -498,12 +499,11 @@ public class GameServerTests
         // Determine where the player will spawn so we can place the test entity nearby
         var (spawnX, spawnY, _) = loop.Engine.FindSpawnPosition();
 
-        // Create an element entity with Position + TileAppearance but NO Health — near the spawn
-        loop.Engine.SpawnElement(new DungeonElement(
-            Position.FromCoords(spawnX, spawnY, Position.DefaultZ),
-            new TileAppearance(42, 0x00FF00),
-            null
-        ));
+        // Create a ground item entity (no Health) — near the spawn
+        loop.Engine.SpawnItemOnGround(
+            new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("health_potion_small"), StackCount = 1 },
+            Position.FromCoords(spawnX, spawnY, Position.DefaultZ)
+        );
 
         loop.SpawnPlayerForConnection(conn.ConnectionId);
 
@@ -512,7 +512,7 @@ public class GameServerTests
         var snapshot = NetSerializer.Deserialize<WorldDeltaMsg>(envelope.Payload);
 
         // Should have the healthless entity with Health = 0 / MaxHealth = 0
-        var healthless = snapshot.EntityUpdates.FirstOrDefault(e => e.GlyphId == 42);
+        var healthless = snapshot.EntityUpdates.FirstOrDefault(e => e.EntityType == (int)EntityType.GroundItem);
         Assert.NotNull(healthless);
         Assert.Equal(0, healthless.Health);
         Assert.Equal(0, healthless.MaxHealth);
@@ -535,12 +535,11 @@ public class GameServerTests
         // Get the player's position so the entity is within FOV
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
 
-        // Create an element entity with Position + TileAppearance but NO Health — at player pos
-        loop.Engine.SpawnElement(new DungeonElement(
-            Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ),
-            new TileAppearance(88, 0xFF0000),
-            null
-        ));
+        // Create a ground item entity (no Health) — at player pos
+        loop.Engine.SpawnItemOnGround(
+            new ItemData { ItemTypeId = GameData.Instance.Items.GetNumericId("health_potion_small"), StackCount = 1 },
+            Position.FromCoords(player.Position.X, player.Position.Y, Position.DefaultZ)
+        );
 
         loop.Start();
         await Task.Delay(200);
@@ -550,7 +549,7 @@ public class GameServerTests
         var env = NetSerializer.UnwrapMessage(messages[0]);
         var delta = NetSerializer.Deserialize<WorldDeltaMsg>(env.Payload);
 
-        var healthless = delta.EntityUpdates.FirstOrDefault(e => e.GlyphId == 88);
+        var healthless = delta.EntityUpdates.FirstOrDefault(e => e.EntityType == (int)EntityType.GroundItem);
         Assert.NotNull(healthless);
         Assert.Equal(0, healthless.Health);
     }

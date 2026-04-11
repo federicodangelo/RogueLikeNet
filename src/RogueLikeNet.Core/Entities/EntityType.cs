@@ -8,7 +8,6 @@ public enum EntityType
     GroundItem,
     ResourceNode,
     TownNpc,
-    Element,
     Crop,
     Animal,
 }

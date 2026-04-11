@@ -144,22 +144,6 @@ public class ChunkTests
     }
 
     [Fact]
-    public void AddAndGetElementRef()
-    {
-        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        chunk.AddEntity(new ElementEntity(1) { Position = Position.FromCoords(5, 5, Position.DefaultZ) });
-        ref var got = ref chunk.GetElementRef(1);
-        Assert.Equal(1, got.Id);
-    }
-
-    [Fact]
-    public void GetElementRef_Throws_WhenNotFound()
-    {
-        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        Assert.Throws<KeyNotFoundException>(() => chunk.GetElementRef(999));
-    }
-
-    [Fact]
     public void AddAndGetCropRef()
     {
         var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -248,15 +232,6 @@ public class ChunkTests
     }
 
     [Fact]
-    public void RemoveEntity_ByRef_Element()
-    {
-        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        chunk.AddEntity(new ElementEntity(1) { Position = Position.FromCoords(0, 0, Position.DefaultZ) });
-        chunk.RemoveEntity(new EntityRef(1, EntityType.Element));
-        Assert.Equal(0, chunk.Elements.Length);
-    }
-
-    [Fact]
     public void RemoveEntity_ByRef_Crop()
     {
         var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
@@ -294,16 +269,6 @@ public class ChunkTests
         chunk.AddEntity(node);
         chunk.RemoveEntity(node);
         Assert.Equal(0, chunk.ResourceNodes.Length);
-    }
-
-    [Fact]
-    public void RemoveEntity_Element_Typed()
-    {
-        var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        var elem = new ElementEntity(1) { Position = Position.FromCoords(0, 0, Position.DefaultZ) };
-        chunk.AddEntity(elem);
-        chunk.RemoveEntity(elem);
-        Assert.Equal(0, chunk.Elements.Length);
     }
 
     [Fact]
@@ -345,7 +310,6 @@ public class ChunkTests
         chunk.AddEntity(new GroundItemEntity(2));
         chunk.AddEntity(new ResourceNodeEntity(3) { Health = new Health(5) });
         chunk.AddEntity(new TownNpcEntity(4) { Health = new Health(50) });
-        chunk.AddEntity(new ElementEntity(5));
         chunk.AddEntity(new CropEntity(6));
         chunk.AddEntity(new AnimalEntity(7) { Health = new Health(10) });
 
@@ -355,7 +319,6 @@ public class ChunkTests
         Assert.Equal(0, chunk.GroundItems.Length);
         Assert.Equal(0, chunk.ResourceNodes.Length);
         Assert.Equal(0, chunk.TownNpcs.Length);
-        Assert.Equal(0, chunk.Elements.Length);
         Assert.Equal(0, chunk.Crops.Length);
         Assert.Equal(0, chunk.Animals.Length);
     }

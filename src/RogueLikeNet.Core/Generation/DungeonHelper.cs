@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -172,10 +171,8 @@ internal static class DungeonHelper
         {
             if (IsChunkCoordinateWalkable(room.CenterX, room.CenterY))
             {
-                result.Elements.Add(new DungeonElement(
-                    Position.FromCoords(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY, worldZ),
-                    new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                    new LightSource(6, RenderConstants.ColorTorchFg)));
+                result.Chunk.Tiles[room.CenterX, room.CenterY].PlaceableItemId =
+                    GameData.Instance.Items.GetNumericId("torch_placeable");
             }
         }
     }

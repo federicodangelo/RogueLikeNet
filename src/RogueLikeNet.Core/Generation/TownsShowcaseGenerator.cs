@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -55,10 +54,7 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         {
             result.SpawnPosition = Position.FromCoords(worldOffsetX + 2, worldOffsetY + 2, chunkZ);
 
-            result.Elements.Add(new DungeonElement(
-                Position.FromCoords(worldOffsetX + 2, worldOffsetY + 2, chunkZ),
-                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                new LightSource(10, RenderConstants.ColorTorchFg)));
+            chunk.Tiles[2, 2].PlaceableItemId = GameData.Instance.Items.GetNumericId("torch_placeable");
         }
 
         return result;

@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -203,10 +202,8 @@ public class OverworldGenerator : IDungeonGenerator
                         }
                         else if (rng.Next(1000) < TorchChance1000)
                         {
-                            result.Elements.Add(new DungeonElement(
-                                Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
-                                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                                new LightSource(6, RenderConstants.ColorTorchFg)));
+                            chunk.Tiles[lx, ly].PlaceableItemId =
+                                GameData.Instance.Items.GetNumericId("torch_placeable");
                         }
                     }
                 }
@@ -236,11 +233,9 @@ public class OverworldGenerator : IDungeonGenerator
                 DungeonHelper.MakeTilesFloorInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius, GameData.Instance.Tiles.GetNumericId("floor"));
 
                 // Add torch
-                result.Elements.Add(new DungeonElement(
-                    Position.FromCoords(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ),
-                    new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
-                    new LightSource(6, RenderConstants.ColorTorchFg))
-                );
+                Chunk.WorldToLocal(spawnPoint.Value.X, spawnPoint.Value.Y, chunkX, chunkY, out var spLx, out var spLy);
+                chunk.Tiles[spLx, spLy].PlaceableItemId =
+                    GameData.Instance.Items.GetNumericId("torch_placeable");
             }
         }
 
