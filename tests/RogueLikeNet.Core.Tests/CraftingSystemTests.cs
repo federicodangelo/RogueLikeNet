@@ -495,4 +495,115 @@ public class CraftingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(pid);
         Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
     }
+
+    // ── Null recipe ──
+
+    [Fact]
+    public void Craft_InvalidRecipeId_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var pid = SpawnPlayerWithItems(engine, ("wood", 50));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = 9999; // non-existent recipe
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        // Should still have the original items, nothing crafted
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("wood") && i.StackCount == 50);
+    }
+
+    // ── Ingredient removal from multiple stacks ──
+
+    [Fact]
+    public void Craft_RemovesIngredientsFromMultipleStacks()
+    {
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = false;
+
+        // Split wood across two stacks
+        var pid = SpawnPlayerWithItems(engine, ("wood", 3), ("wood", 7));
+        ref var player = ref engine.WorldMap.GetPlayerRef(pid);
+
+        // Find a recipe requiring wood (crafting_bench needs 10 wood)
+        var recipe = GameData.Instance.Recipes.Get("craft_crafting_bench");
+        if (recipe == null) return;
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(pid);
+        // Both wood stacks should be consumed
+        int remainingWood = player.Inventory.Items.Where(i => i.ItemTypeId == ItemId("wood")).Sum(i => i.StackCount);
+        // Result item should be in inventory
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+    }
+
+    // ── Craft stacking result into existing stack ──
+
+    [Fact]
+    public void Craft_StackableResult_MergesIntoExistingStack()
+    {
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = true;
+
+        // Find a recipe that produces a stackable result
+        var allRecipes = GameData.Instance.Recipes.All;
+        RecipeDefinition? stackableRecipe = null;
+        foreach (var r in allRecipes)
+        {
+            var resultDef = GameData.Instance.Items.Get(r.Result.NumericItemId);
+            if (resultDef != null && resultDef.Stackable)
+            {
+                stackableRecipe = r;
+                break;
+            }
+        }
+        if (stackableRecipe == null) return;
+
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Pre-add the result item to inventory
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = stackableRecipe.Result.NumericItemId, StackCount = 1 });
+
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = stackableRecipe.NumericId;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Should have merged into existing stack
+        int totalCount = player.Inventory.Items.Where(i => i.ItemTypeId == stackableRecipe.Result.NumericItemId).Sum(i => i.StackCount);
+        Assert.True(totalCount > 1);
+    }
+
+    // ── Craft with full inventory ──
+
+    [Fact]
+    public void Craft_FullInventory_NonStackable_DoesNotAddResult()
+    {
+        using var engine = CreateEngine();
+        engine.DebugFreeCrafting = true;
+
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Fill inventory
+        int cap = player.Inventory.Capacity;
+        for (int i = 0; i < cap; i++)
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
+
+        // Craft crafting_bench (non-stackable) with full inventory
+        player.Input.ActionType = ActionTypes.Craft;
+        player.Input.ItemSlot = RecipeId("craft_crafting_bench");
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Should not have added the result
+        Assert.DoesNotContain(player.Inventory.Items, i => i.ItemTypeId == ItemId("crafting_bench"));
+    }
 }

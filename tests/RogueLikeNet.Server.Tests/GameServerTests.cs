@@ -6,6 +6,7 @@ using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
+using RogueLikeNet.Server.Persistence;
 
 namespace RogueLikeNet.Server.Tests;
 
@@ -922,5 +923,164 @@ public class GameServerTests
 
         // visibleChunks=4 → chunkRange=1 → 3x3=9 chunks
         Assert.Equal(9, snapshot.Chunks.Length);
+    }
+
+    // ── Persistence tests ──
+
+    [Fact]
+    public void InitializeNewGame_CreatesSlotAndSavesWorldMeta()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+
+        server.InitializeNewGame("Test World", 42, "bsp");
+
+        var slots = provider.ListSaveSlots();
+        Assert.Single(slots);
+        Assert.Equal("Test World", slots[0].Name);
+        Assert.NotNull(server.CurrentSlotId);
+
+        var meta = provider.LoadWorldMeta(server.CurrentSlotId!);
+        Assert.NotNull(meta);
+        Assert.Equal(42, meta.Seed);
+    }
+
+    [Fact]
+    public void InitializeNewGame_WhileRunning_Throws()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.Start();
+        Assert.Throws<InvalidOperationException>(() => server.InitializeNewGame("Test", 42, "bsp"));
+        server.Dispose();
+    }
+
+    [Fact]
+    public void InitializeFromSlot_LoadsExistingSlot()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        var slot = provider.CreateSaveSlot("Saved World", 42, "bsp");
+        provider.SaveWorldMeta(slot.SlotId, new WorldSaveData { Seed = 42, GeneratorId = "bsp", CurrentTick = 50 });
+
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.InitializeFromSlot(slot.SlotId);
+
+        Assert.Equal(slot.SlotId, server.CurrentSlotId);
+    }
+
+    [Fact]
+    public void InitializeFromSlot_WhileRunning_Throws()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.Start();
+        Assert.Throws<InvalidOperationException>(() => server.InitializeFromSlot("none"));
+        server.Dispose();
+    }
+
+    [Fact]
+    public void InitializeFromSlot_MissingSlot_NoError()
+    {
+        var log = new StringWriter();
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, logWriter: log, saveProvider: provider);
+        server.InitializeFromSlot("nonexistent");
+        Assert.Contains("not found", log.ToString());
+    }
+
+    [Fact]
+    public void InitializeFromSlot_MissingMeta_NoError()
+    {
+        var log = new StringWriter();
+        using var provider = new InMemorySaveGameProvider();
+        var slot = provider.CreateSaveSlot("Saved World", 42, "bsp");
+        // Don't save world meta
+        using var server = new GameServer(42, _gen, logWriter: log, saveProvider: provider);
+        server.InitializeFromSlot(slot.SlotId);
+        Assert.Contains("metadata not found", log.ToString());
+    }
+
+    [Fact]
+    public void InitializeFromSaveProvider_NoProvider_NoOp()
+    {
+        using var server = new GameServer(42, _gen);
+        server.InitializeFromSaveProvider(); // Should not throw
+    }
+
+    [Fact]
+    public async Task InitializeFromSaveProvider_LoadsLatestSlot()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        var slot = provider.CreateSaveSlot("Test", 42, "bsp");
+        provider.SaveWorldMeta(slot.SlotId, new WorldSaveData { Seed = 42, GeneratorId = "bsp" });
+
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.InitializeFromSaveProvider();
+        // InitializeFromSaveProvider sets _restartGameTask but doesn't invoke it directly.
+        // It gets invoked on the next server loop iteration.
+        server.Start();
+        await Task.Delay(300);
+        Assert.Equal(slot.SlotId, server.CurrentSlotId);
+        server.Dispose();
+    }
+
+    [Fact]
+    public async Task InitializeFromSaveProvider_NoSlots_CreatesDefault()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.InitializeFromSaveProvider();
+        // InitializeFromSaveProvider sets _restartGameTask invoked on server loop
+        server.Start();
+        await Task.Delay(300);
+        server.Dispose();
+
+        var slots = provider.ListSaveSlots();
+        Assert.Single(slots);
+        Assert.Equal("Default World", slots[0].Name);
+    }
+
+    [Fact]
+    public void InitializeFromSaveProvider_WhileRunning_Throws()
+    {
+        using var provider = new InMemorySaveGameProvider();
+        using var server = new GameServer(42, _gen, saveProvider: provider);
+        server.Start();
+        Assert.Throws<InvalidOperationException>(() => server.InitializeFromSaveProvider());
+        server.Dispose();
+    }
+
+    [Fact]
+    public void HasSaveProvider_ReflectsConstructor()
+    {
+        using var server1 = new GameServer(42, _gen);
+        Assert.False(server1.HasSaveProvider);
+
+        using var provider = new InMemorySaveGameProvider();
+        using var server2 = new GameServer(42, _gen, saveProvider: provider);
+        Assert.True(server2.HasSaveProvider);
+    }
+
+    [Fact]
+    public void DebugProperties_SetAndGet()
+    {
+        using var server = new TestGameServer(42, _gen);
+        server.DebugNoCollision = true;
+        Assert.True(server.DebugNoCollision);
+
+        server.DebugInvulnerable = true;
+        Assert.True(server.DebugInvulnerable);
+
+        server.DebugMaxSpeed = true;
+        Assert.True(server.DebugMaxSpeed);
+
+        server.DebugFreeCrafting = true;
+        Assert.True(server.DebugFreeCrafting);
+
+        server.DebugVisibilityOff = true;
+        Assert.True(server.DebugVisibilityOff);
+
+        server.DebugGiveResources = true;
+        Assert.True(server.DebugGiveResources);
     }
 }

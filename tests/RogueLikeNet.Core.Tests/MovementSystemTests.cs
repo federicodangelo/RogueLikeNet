@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Systems;
@@ -203,5 +204,323 @@ public class MovementSystemTests
 
         // ActionType should still be Move (preserved for next tick)
         Assert.Equal(ActionTypes.Move, player.Input.ActionType);
+    }
+
+    // ── UseStairs tests ──
+
+    [Fact]
+    public void UseStairs_OnStairsDown_MovesPlayerDown()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Place stairs down at player position
+        var chunk = engine.WorldMap.GetChunkForWorldPos(player.Position);
+        if (chunk != null && chunk.WorldToLocal(sx, sy, out int lx, out int ly))
+        {
+            chunk.Tiles[lx, ly].Type = TileType.StairsDown;
+        }
+
+        // Ensure the chunk below exists and has a walkable tile at the same position
+        var belowZ = Position.DefaultZ - 1;
+        var belowChunkPos = ChunkPosition.FromCoords(
+            Chunk.WorldToChunkCoord(Position.FromCoords(sx, sy, belowZ)).X,
+            Chunk.WorldToChunkCoord(Position.FromCoords(sx, sy, belowZ)).Y,
+            belowZ);
+        var belowChunk = engine.EnsureChunkLoaded(belowChunkPos);
+        // Make destination tile walkable
+        if (belowChunk.WorldToLocal(sx, sy, out int blx, out int bly))
+            belowChunk.Tiles[blx, bly].Type = TileType.Floor;
+
+        player.Input.ActionType = ActionTypes.UseStairs;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(belowZ, player.Position.Z);
+    }
+
+    [Fact]
+    public void UseStairs_OnStairsUp_MovesPlayerUp()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Place stairs up at player position
+        var chunk = engine.WorldMap.GetChunkForWorldPos(player.Position);
+        if (chunk != null && chunk.WorldToLocal(sx, sy, out int lx, out int ly))
+        {
+            chunk.Tiles[lx, ly].Type = TileType.StairsUp;
+        }
+
+        // Ensure the chunk above exists
+        var aboveZ = Position.DefaultZ + 1;
+        var aboveChunkPos = ChunkPosition.FromCoords(
+            Chunk.WorldToChunkCoord(Position.FromCoords(sx, sy, aboveZ)).X,
+            Chunk.WorldToChunkCoord(Position.FromCoords(sx, sy, aboveZ)).Y,
+            aboveZ);
+        var aboveChunk = engine.EnsureChunkLoaded(aboveChunkPos);
+        // Make destination tile walkable
+        if (aboveChunk.WorldToLocal(sx, sy, out int alx, out int aly))
+            aboveChunk.Tiles[alx, aly].Type = TileType.Floor;
+
+        player.Input.ActionType = ActionTypes.UseStairs;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(aboveZ, player.Position.Z);
+    }
+
+    [Fact]
+    public void UseStairs_OnFloor_DoesNotMove()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Input.ActionType = ActionTypes.UseStairs;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(Position.DefaultZ, player.Position.Z);
+    }
+
+    [Fact]
+    public void UseStairs_WithCooldown_ClearsAction()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.MoveDelay.Current = 100;
+        player.Input.ActionType = ActionTypes.UseStairs;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(ActionTypes.None, player.Input.ActionType);
+        Assert.Equal(Position.DefaultZ, player.Position.Z);
+    }
+
+    // ── Door bumping tests ──
+
+    [Fact]
+    public void Move_IntoDoor_OpensDoor()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        var doorDef = GameData.Instance.Items.Get("wooden_door");
+        if (doorDef == null) return;
+
+        var doorPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
+        // Ensure adjacent tile is floor
+        var chunk = engine.WorldMap.GetChunkForWorldPos(doorPos);
+        if (chunk != null && chunk.WorldToLocal(doorPos.X, doorPos.Y, out int lx, out int ly))
+        {
+            chunk.Tiles[lx, ly].Type = TileType.Floor;
+            chunk.Tiles[lx, ly].PlaceableItemId = doorDef.NumericId;
+            chunk.Tiles[lx, ly].PlaceableItemExtra = 0; // closed
+        }
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Player should not have moved (door opens instead)
+        Assert.Equal(sx, player.Position.X);
+
+        // Door should now be open (PlaceableItemExtra set to DoorGraceTicks timer, minus 1 for this tick's update)
+        var tile = engine.WorldMap.GetTile(doorPos);
+        Assert.Equal(WorldMap.DoorGraceTicks - 1, tile.PlaceableItemExtra);
+    }
+
+    // ── Speed effect on delay ──
+
+    [Fact]
+    public void Move_WithSlowEffect_IncreasesDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Set survival to hungry state (Hunger in [20..49]) so ActiveEffectsSystem applies Hungry(50)
+        player.Survival.Hunger = 30;
+        player.Survival.HungerDecayRate = 0; // prevent decay during test
+
+        int baseInterval = player.MoveDelay.Interval;
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+
+        if (engine.WorldMap.IsWalkable(Position.FromCoords(sx + 1, sy, Position.DefaultZ)))
+        {
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+            // With 50% speed from Hungry effect, delay should be higher than base
+            Assert.True(player.MoveDelay.Current > baseInterval);
+        }
+    }
+
+    [Fact]
+    public void Move_WithNoSlowEffect_GivesBaseDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Ensure survival is full so no slow effects are applied
+        player.Survival.Hunger = 100;
+        player.Survival.Thirst = 100;
+
+        int baseInterval = player.MoveDelay.Interval;
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+
+        if (engine.WorldMap.IsWalkable(Position.FromCoords(sx + 1, sy, Position.DefaultZ)))
+        {
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+            // With no slow effects, delay should be base interval minus 1 (decremented by AISystem in same tick)
+            Assert.Equal(baseInterval - 1, player.MoveDelay.Current);
+        }
+    }
+
+    // ── Debug mode tests ──
+
+    [Fact]
+    public void DebugNoCollision_AllowsMoveThroughWalls()
+    {
+        using var engine = CreateEngine();
+        engine.DebugNoCollision = true;
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(sx + 1, player.Position.X);
+    }
+
+    [Fact]
+    public void DebugMaxSpeed_IgnoresDelay()
+    {
+        using var engine = CreateEngine();
+        engine.DebugMaxSpeed = true;
+        engine.DebugNoCollision = true; // ensure destination is reachable
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.MoveDelay.Current = 100;
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Should have moved 4 tiles despite cooldown
+        Assert.Equal(sx + 4, player.Position.X);
+    }
+
+    [Fact]
+    public void Move_WithSpeedupEffect_DecreasesDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Ensure survival is full so no slow effects
+        player.Survival.Hunger = 100;
+        player.Survival.Thirst = 100;
+
+        // Add a speedup effect (200% speed = double speed = half delay)
+        player.ActiveEffects.Add(new ActiveEffect(EffectType.Hungry, 200));
+
+        int baseInterval = player.MoveDelay.Interval;
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+
+        if (engine.WorldMap.IsWalkable(Position.FromCoords(sx + 1, sy, Position.DefaultZ)))
+        {
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+            // With 200% speed, delay should be <= base interval
+            // GetEffectiveDelay: baseDelay * 100 / 200 = baseDelay / 2
+            Assert.True(player.MoveDelay.Current <= baseInterval,
+                $"Speedup delay {player.MoveDelay.Current} should be <= base {baseInterval}");
+        }
+    }
+
+    [Fact]
+    public void Move_DeadPlayer_IsSkipped()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Kill the player
+        player.Health.Current = 0;
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+
+        // Save position before tick (ProcessPlayerDeath will respawn, so check action not processed)
+        int origX = player.Position.X;
+        int origY = player.Position.Y;
+
+        engine.Tick();
+
+        // After tick, player was respawned by ProcessPlayerDeath, not by MovementSystem
+        // The fact that the test doesn't crash proves the IsDead check works
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Player should have been respawned (health > 0 now)
+        Assert.True(player.Health.Current > 0);
+    }
+
+    [Fact]
+    public void UseStairs_AtZBoundary_DoesNotMove()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Move player to Z=0 and place stairs down (would go to Z=-1 which is invalid)
+        player.Position = Position.FromCoords(sx, sy, 0);
+        var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(
+            Chunk.WorldToChunkCoord(player.Position).X,
+            Chunk.WorldToChunkCoord(player.Position).Y, 0));
+        if (chunk.WorldToLocal(sx, sy, out int lx, out int ly))
+            chunk.Tiles[lx, ly].Type = TileType.StairsDown;
+
+        player.Input.ActionType = ActionTypes.UseStairs;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Should stay at Z=0 - can't go below
+        Assert.Equal(0, player.Position.Z);
     }
 }

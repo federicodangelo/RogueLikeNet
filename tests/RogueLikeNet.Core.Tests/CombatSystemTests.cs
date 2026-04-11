@@ -605,4 +605,298 @@ public class CombatSystemTests
 
         Assert.Equal(hpBefore - 5, player.Health.Current);
     }
+
+    // ── NPC Dialogue Tests ──
+
+    [Fact]
+    public void Attack_TownNpc_TriggersDialogue()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        engine.SpawnTownNpc(Position.FromCoords(sx + 1, sy, Position.DefaultZ), "TestNpc", sx, sy, 10);
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        Assert.True(engine.Combat.LastTickDialogueEvents.Count > 0);
+        Assert.Equal("TestNpc", engine.Combat.LastTickDialogueEvents[0].NpcName);
+    }
+
+    [Fact]
+    public void Attack_TownNpc_DialogueCooldown()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        engine.SpawnTownNpc(Position.FromCoords(sx + 1, sy, Position.DefaultZ), "TestNpc", sx, sy, 10);
+
+        // First talk
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        Assert.True(engine.Combat.LastTickDialogueEvents.Count > 0);
+
+        // Second immediate talk - should be on cooldown
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+        Assert.Empty(engine.Combat.LastTickDialogueEvents);
+    }
+
+    // ── Resource Node Tool Bonus Tests ──
+
+    [Fact]
+    public void Attack_ResourceNode_WithMatchingTool_BonusDamage()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Spawn a tree (requires axe)
+        var treeDef = GameData.Instance.ResourceNodes.Get("tree");
+        if (treeDef == null) return;
+        engine.SpawnResourceNode(Position.FromCoords(sx + 1, sy, Position.DefaultZ), treeDef);
+
+        // Attack without tool
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var eventsNoTool = engine.Combat.LastTickEvents.ToList();
+        int damageWithoutTool = eventsNoTool.Count > 0 ? eventsNoTool[0].Damage : 0;
+
+        // Now equip matching tool and attack again
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var axeDef = GameData.Instance.Items.All.FirstOrDefault(
+            i => i.Tool != null && i.Tool.ToolType == treeDef.RequiredToolType);
+        if (axeDef == null) return;
+
+        EquipItem(ref player, engine, axeDef.Id);
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Respawn tree for a fresh attack
+        engine.SpawnResourceNode(Position.FromCoords(sx + 1, sy, Position.DefaultZ), treeDef);
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        var eventsWithTool = engine.Combat.LastTickEvents.ToList();
+        if (eventsWithTool.Count > 0)
+        {
+            Assert.True(eventsWithTool[0].Damage >= damageWithoutTool);
+        }
+    }
+
+    // ── Auto-target resource node ──
+
+    [Fact]
+    public void AutoTarget_FindsAdjacentResourceNode()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        var treeDef = GameData.Instance.ResourceNodes.Get("tree");
+        if (treeDef == null) return;
+        engine.SpawnResourceNode(Position.FromCoords(sx + 1, sy, Position.DefaultZ), treeDef);
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 0;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        Assert.True(engine.Combat.LastTickEvents.Count > 0);
+    }
+
+    // ── DebugInvulnerable ──
+
+    [Fact]
+    public void DebugInvulnerable_MonsterCannotDamagePlayer()
+    {
+        using var engine = CreateEngine();
+        engine.DebugInvulnerable = true;
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int hpBefore = player.Health.Current;
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 500, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        monster.AI.StateId = AIStates.Attack;
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(hpBefore, player.Health.Current);
+    }
+
+    [Fact]
+    public void Attack_AttackDelayActive_DoesNotAttack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+
+        // Set attack delay active
+        player.AttackDelay.Current = 10;
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // No combat events since attack delay still active
+        Assert.Empty(engine.Combat.LastTickEvents);
+    }
+
+    [Fact]
+    public void Attack_SetsAttackDelayAfterAttack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.AttackDelay.Current > 0, "Attack delay should be set after attacking");
+    }
+
+    [Fact]
+    public void ResourceNode_NoToolEquipped_MinimumDamage()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Clear hand slot (no tool)
+        player.Equipment.Hand = ItemData.None;
+
+        var treeDef = GameData.Instance.ResourceNodes.Get("tree");
+        Assert.NotNull(treeDef);
+
+        var _n = engine.SpawnResourceNode(Position.FromCoords(sx + 1, sy, Position.DefaultZ), treeDef!);
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        // Should still deal damage (at least 1)
+        Assert.NotEmpty(engine.Combat.LastTickEvents);
+        Assert.True(engine.Combat.LastTickEvents[0].Damage >= 1);
+    }
+
+    [Fact]
+    public void MonsterAttack_SetsAttackDelayOnMonster()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 15, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        monster.AI.StateId = AIStates.Attack;
+        monster.AttackDelay.Current = 0;
+        monster.AttackDelay.Interval = 5;
+
+        engine.Tick();
+
+        monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        Assert.True(monster.AttackDelay.Current > 0, "Monster attack delay should be set after attacking");
+    }
+
+    [Fact]
+    public void MonsterAttack_AttackDelayActive_DoesNotAttack()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        int hpBefore = player.Health.Current;
+
+        var _m = engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 999, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(_m.Id);
+        monster.AI.StateId = AIStates.Attack;
+        monster.AttackDelay.Current = 10; // Attack delay active
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(hpBefore, player.Health.Current);
+    }
+
+    [Fact]
+    public void Attack_DirectTarget_AttacksSpecificDirection()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Place monsters in two directions
+        engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        engine.SpawnMonster(Position.FromCoords(sx - 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+
+        // Attack specifically to the left
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = -1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        Assert.NotEmpty(engine.Combat.LastTickEvents);
+        // The target should be at sx-1, sy
+        Assert.Equal(sx - 1, engine.Combat.LastTickEvents[0].Target.X);
+    }
+
+    [Fact]
+    public void Attack_MinimumDamage_IsAlwaysOne()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Spawn monster with very high defense
+        engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 999, Speed = 8 });
+
+        player.Input.ActionType = ActionTypes.Attack;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick();
+
+        Assert.NotEmpty(engine.Combat.LastTickEvents);
+        Assert.Equal(1, engine.Combat.LastTickEvents[0].Damage); // Min damage = 1
+    }
 }

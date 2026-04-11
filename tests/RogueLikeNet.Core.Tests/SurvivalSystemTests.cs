@@ -322,4 +322,120 @@ public class SurvivalSystemTests
         Assert.False(s.IsWellFed);
         Assert.False(s.IsWellHydrated);
     }
+
+    // ── Debug invulnerable ──
+
+    [Fact]
+    public void DebugInvulnerable_SkipsSurvivalDamage()
+    {
+        using var engine = CreateEngine();
+        engine.DebugInvulnerable = true;
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Hunger = 0;
+        player.Survival.Thirst = 0;
+        player.Survival.HungerDecayRate = 1;
+        player.Survival.ThirstDecayRate = 1;
+        int hpBefore = player.Health.Current;
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(hpBefore, player.Health.Current);
+    }
+
+    // ── Regen when well-fed and hydrated ──
+
+    [Fact]
+    public void Regen_WhenWellFedAndHydrated_HealsOverTime()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Damage player slightly
+        player.Health.Current = player.Health.Max - 5;
+        int damagedHp = player.Health.Current;
+        // Set maximum hunger/thirst to prevent decay
+        player.Survival.Hunger = 100;
+        player.Survival.Thirst = 100;
+        player.Survival.HungerDecayRate = 999999;
+        player.Survival.ThirstDecayRate = 999999;
+
+        // Tick enough for regen interval (RegenTickInterval = 200)
+        for (int i = 0; i < 200; i++)
+            engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Health.Current > damagedHp, "Player should have healed when well-fed and well-hydrated");
+    }
+
+    // ── Starvation at low hunger > 0 ──
+
+    [Fact]
+    public void StarvingDamage_AppliedWhenHungerLowButNotZero()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Set hunger to starving range (< 20) with fast decay
+        player.Survival.Hunger = 10;
+        player.Survival.HungerDecayRate = 1;
+        player.Survival.Thirst = 100;
+        player.Survival.ThirstDecayRate = 999999;
+        int hpBefore = player.Health.Current;
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Health.Current < hpBefore);
+    }
+
+    [Fact]
+    public void DehydrationDamage_AppliedWhenThirstLowButNotZero()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Thirst = 10;
+        player.Survival.ThirstDecayRate = 1;
+        player.Survival.Hunger = 100;
+        player.Survival.HungerDecayRate = 999999;
+        int hpBefore = player.Health.Current;
+
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Health.Current < hpBefore);
+    }
+
+    // ── Zero decay rate ──
+
+    [Fact]
+    public void ZeroDecayRate_DoesNotDecay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Hunger = 50;
+        player.Survival.HungerDecayRate = 0;
+        player.Survival.Thirst = 50;
+        player.Survival.ThirstDecayRate = 0;
+
+        for (int i = 0; i < 100; i++)
+            engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(50, player.Survival.Hunger);
+        Assert.Equal(50, player.Survival.Thirst);
+    }
 }

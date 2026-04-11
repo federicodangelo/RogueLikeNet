@@ -122,4 +122,21 @@ public class BiomeDungeonGeneratorTests
                     Assert.Equal(r1.Chunk.Tiles[x, y].Type, r2.Chunk.Tiles[x, y].Type);
         }
     }
+
+    [Fact]
+    public void Exists_DefaultZ_ReturnsTrue()
+    {
+        var gen = new BiomeDungeonGenerator(42);
+        Assert.True(gen.Exists(ChunkPosition.FromCoords(0, 0, Position.DefaultZ)));
+        Assert.True(gen.Exists(ChunkPosition.FromCoords(5, 10, Position.DefaultZ)));
+    }
+
+    [Fact]
+    public void Exists_NonDefaultZ_ReturnsFalse()
+    {
+        var gen = new BiomeDungeonGenerator(42);
+        Assert.False(gen.Exists(ChunkPosition.FromCoords(0, 0, Position.DefaultZ - 1)));
+        Assert.False(gen.Exists(ChunkPosition.FromCoords(0, 0, Position.DefaultZ + 1)));
+        Assert.False(gen.Exists(ChunkPosition.FromCoords(0, 0, 0)));
+    }
 }

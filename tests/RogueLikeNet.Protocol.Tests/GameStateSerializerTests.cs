@@ -368,4 +368,340 @@ public class GameStateSerializerTests
 
         engine.Dispose();
     }
+
+    // ── SerializeCombatEvents ──
+
+    [Fact]
+    public void SerializeCombatEvents_EmptyWhenNoCombat()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        var events = GameStateSerializer.SerializeCombatEvents(engine);
+        Assert.Empty(events);
+    }
+
+    // ── SerializeNpcDialogueEvents ──
+
+    [Fact]
+    public void SerializeNpcDialogueEvents_EmptyWhenNoEvents()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        var events = GameStateSerializer.SerializeNpcDialogueEvents(engine);
+        Assert.Empty(events);
+    }
+
+    // ── SerializeChunk ──
+
+    [Fact]
+    public void SerializeChunk_ReturnsCorrectDimensions()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+
+        var msg = GameStateSerializer.SerializeChunk(chunk);
+
+        Assert.Equal(0, msg.ChunkX);
+        Assert.Equal(0, msg.ChunkY);
+        Assert.Equal(Position.DefaultZ, msg.ChunkZ);
+        int total = Chunk.Size * Chunk.Size;
+        Assert.Equal(total, msg.TileTypes.Length);
+        Assert.Equal(total, msg.TileGlyphs.Length);
+        Assert.Equal(total, msg.TileFgColors.Length);
+        Assert.Equal(total, msg.TileBgColors.Length);
+        Assert.Equal(total, msg.TilePlaceableItemIds.Length);
+        Assert.Equal(total, msg.TilePlaceableItemExtras.Length);
+    }
+
+    // ── SerializeChunksAroundPosition ──
+
+    [Fact]
+    public void SerializeChunksAroundPosition_Returns9Chunks()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var pos = Position.FromCoords(16, 16, Position.DefaultZ);
+        var chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos);
+        Assert.Equal(9, chunks.Length);
+    }
+
+    // ── SerializeChunksDelta ──
+
+    [Fact]
+    public void SerializeChunksDelta_NewChunksIncluded()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        var tracker = new ChunkTracker();
+        var pos = Position.FromCoords(16, 16, Position.DefaultZ);
+
+        var result = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
+        Assert.True(result.NewChunks.Length > 0);
+    }
+
+    [Fact]
+    public void SerializeChunksDelta_SecondCall_NoNewChunks()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        var tracker = new ChunkTracker();
+        var pos = Position.FromCoords(16, 16, Position.DefaultZ);
+
+        GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
+        var result2 = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
+        Assert.Empty(result2.NewChunks);
+    }
+
+    // ── SerializeEntityDelta with debugVisibilityOff ──
+
+    [Fact]
+    public void SerializeEntityDelta_DebugVisibilityOff_IncludesAllEntities()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        engine.SpawnMonster(Position.FromCoords(sx, sy, Position.DefaultZ), new MonsterData
+        {
+            MonsterTypeId = 1,
+            Health = 10,
+            Attack = 5,
+            Defense = 0,
+            Speed = 8
+        });
+
+        // FOV has NO visible tiles, but debugVisibilityOff = true should include everything
+        var fov = new FOVData(10);
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+        var (full, _, _) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState, debugVisibilityOff: true);
+        Assert.True(full.Length > 0);
+    }
+
+    // ── SerializeEntityDelta: various entity types ──
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesGroundItems()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var pos = Position.FromCoords(sx, sy, Position.DefaultZ);
+        engine.SpawnItemOnGround(new ItemData { ItemTypeId = 1, StackCount = 1 }, pos);
+
+        var fov = new FOVData(10);
+        fov.VisibleTiles!.Add(Position.PackCoord(pos));
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+
+        var (full, _, _) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
+        Assert.Contains(full, e => e.EntityType == (int)EntityType.GroundItem);
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesResourceNodes()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var pos = Position.FromCoords(sx, sy, Position.DefaultZ);
+        var def = GameData.Instance.ResourceNodes.All.First();
+        engine.SpawnResourceNode(pos, def);
+
+        var fov = new FOVData(10);
+        fov.VisibleTiles!.Add(Position.PackCoord(pos));
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+
+        var (full, _, _) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
+        Assert.Contains(full, e => e.EntityType == (int)EntityType.ResourceNode);
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesPlayers()
+    {
+        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var player = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+
+        var fov = new FOVData(10);
+        fov.VisibleTiles!.Add(Position.PackCoord(player.Position));
+        var previousState = new Dictionary<long, EntityUpdateMsg>();
+
+        var (full, _, _) = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, previousState);
+        Assert.Contains(full, e => e.EntityType == (int)EntityType.Player);
+    }
+
+    // ── BuildPlayerState ──
+
+    [Fact]
+    public void BuildPlayerState_ReturnsCorrectData()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var state = GameStateSerializer.BuildPlayerState(engine, player);
+
+        Assert.NotNull(state);
+        Assert.Equal(player.Health.Current, state.Health);
+        Assert.Equal(player.Health.Max, state.MaxHealth);
+        Assert.Equal((long)player.Id, state.PlayerEntityId);
+
+        engine.Dispose();
+    }
+
+    // ── Non-empty combat events ──
+
+    [Fact]
+    public void SerializeCombatEvents_WithCombat_ReturnsEvents()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        // Spawn monster adjacent and attack it
+        engine.SpawnMonster(Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        p.Input.ActionType = ActionTypes.Attack;
+        p.Input.TargetX = 1;
+        p.Input.TargetY = 0;
+        engine.Tick();
+
+        var events = GameStateSerializer.SerializeCombatEvents(engine);
+        Assert.NotEmpty(events);
+        Assert.True(events[0].Damage > 0);
+
+        engine.Dispose();
+    }
+
+    // ── Non-empty dialogue events ──
+
+    [Fact]
+    public void SerializeNpcDialogueEvents_WithDialogue_ReturnsEvents()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        // Spawn town NPC adjacent and attack it
+        engine.SpawnTownNpc(
+            Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ),
+            "TestNpc", p.Position.X, p.Position.Y, 5);
+        p.Input.ActionType = ActionTypes.Attack;
+        p.Input.TargetX = 1;
+        p.Input.TargetY = 0;
+        engine.Tick();
+
+        var events = GameStateSerializer.SerializeNpcDialogueEvents(engine);
+        Assert.NotEmpty(events);
+        Assert.Equal("TestNpc", events[0].NpcName);
+
+        engine.Dispose();
+    }
+
+    // ── Entity delta with TownNpcs, Crops, Animals ──
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesTownNpcs()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        engine.SpawnTownNpc(
+            Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ),
+            "NpcTest", p.Position.X, p.Position.Y, 5);
+
+        var fov = new FOVData();
+        var prevState = new Dictionary<long, EntityUpdateMsg>();
+        var result = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, prevState, debugVisibilityOff: true);
+
+        Assert.Contains(result.FullUpdates, e => e.EntityType == (int)EntityType.TownNpc);
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesCrops()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        var seedDef = GameData.Instance.Items.Get("wheat_seeds");
+        if (seedDef != null)
+        {
+            engine.SpawnCrop(Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ), seedDef);
+
+            var fov = new FOVData();
+            var prevState = new Dictionary<long, EntityUpdateMsg>();
+            var result = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, prevState, debugVisibilityOff: true);
+
+            Assert.Contains(result.FullUpdates, e => e.EntityType == (int)EntityType.Crop);
+        }
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_IncludesAnimals()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        var animalDef = GameData.Instance.Animals.All.FirstOrDefault();
+        if (animalDef != null)
+        {
+            engine.SpawnAnimal(Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ), animalDef);
+
+            var fov = new FOVData();
+            var prevState = new Dictionary<long, EntityUpdateMsg>();
+            var result = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, prevState, debugVisibilityOff: true);
+
+            Assert.Contains(result.FullUpdates, e => e.EntityType == (int)EntityType.Animal);
+        }
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializeEntityDelta_DeadEntities_Excluded()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        ref var p = ref engine.WorldMap.GetPlayerRef(player.Id);
+
+        var m = engine.SpawnMonster(Position.FromCoords(p.Position.X + 1, p.Position.Y, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 5, Defense = 0, Speed = 8 });
+        ref var monster = ref engine.WorldMap.GetMonsterRef(m.Id);
+        monster.Health.Current = 0; // Kill it
+
+        var fov = new FOVData();
+        var prevState = new Dictionary<long, EntityUpdateMsg>();
+        var result = GameStateSerializer.SerializeEntityDelta(engine.WorldMap, fov, prevState, debugVisibilityOff: true);
+
+        Assert.DoesNotContain(result.FullUpdates, e => e.Id == (long)m.Id);
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializeChunksDelta_MaxChunksLimit_RespectsLimit()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+        var tracker = new ChunkTracker();
+
+        var result = GameStateSerializer.SerializeChunksDelta(engine, player.Position, tracker, visibleChunks: 9, maxChunksToSerialize: 2);
+
+        Assert.True(result.NewChunks.Length <= 2);
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_NullLastState_ReturnsState()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var result = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(result);
+
+        engine.Dispose();
+    }
+
+    [Fact]
+    public void SerializePlayerStateDelta_SameState_ReturnsNull()
+    {
+        var (engine, player) = CreateEngineWithPlayer();
+
+        var first = GameStateSerializer.SerializePlayerStateDelta(engine, player, null);
+        Assert.NotNull(first);
+
+        var second = GameStateSerializer.SerializePlayerStateDelta(engine, player, first);
+        Assert.Null(second);
+
+        engine.Dispose();
+    }
 }

@@ -1018,4 +1018,323 @@ public class InventorySystemTests
 
         Assert.Equal(baseDef + expectedDefBonus, player.CombatStats.Defense);
     }
+
+    // ── Food usage with hunger/thirst restore ──
+
+    [Fact]
+    public void UseFood_RestoresHunger()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Hunger = 30;
+        player.Survival.Thirst = 30;
+
+        // Find a food item that restores hunger
+        var foodDef = Item("cooked_meat");
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = foodDef.NumericId, StackCount = 1 });
+
+        player.Input.ActionType = ActionTypes.UseItem;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Food should restore hunger (cooked_meat has HungerRestore > 0)
+        if (foodDef.Food?.HungerRestore > 0)
+            Assert.True(player.Survival.Hunger > 30);
+    }
+
+    [Fact]
+    public void UseFood_ClampsToMax()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Hunger = 99;
+
+        var foodDef = Item("cooked_meat");
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = foodDef.NumericId, StackCount = 1 });
+
+        player.Input.ActionType = ActionTypes.UseItem;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Survival.Hunger <= player.Survival.MaxHunger);
+    }
+
+    // ── Quick slot tests ──
+
+    [Fact]
+    public void SetQuickSlot_AssignsAndClears()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
+
+        // Assign slot 0 to inventory index 0
+        player.Input.ActionType = ActionTypes.SetQuickSlot;
+        player.Input.ItemSlot = 0; // quick slot number
+        player.Input.TargetSlot = 0; // inventory index
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(0, player.QuickSlots.Slot0);
+
+        // Toggle same assignment to clear it
+        player.Input.ActionType = ActionTypes.SetQuickSlot;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(-1, player.QuickSlots.Slot0);
+    }
+
+    [Fact]
+    public void SetQuickSlot_InvalidSlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Input.ActionType = ActionTypes.SetQuickSlot;
+        player.Input.ItemSlot = -1; // invalid
+        player.Input.TargetSlot = 0;
+        engine.Tick(); // no crash
+
+        player.Input.ActionType = ActionTypes.SetQuickSlot;
+        player.Input.ItemSlot = 99; // out of range
+        player.Input.TargetSlot = 0;
+        engine.Tick(); // no crash
+    }
+
+    [Fact]
+    public void UseQuickSlot_UsesPotion()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Health.Current = 50;
+
+        var potionDef = Item("health_potion_small");
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = potionDef.NumericId, StackCount = 1 });
+
+        // Manually assign quick slot 0 → inventory 0
+        player.QuickSlots.Slot0 = 0;
+
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = 0; // quick slot number
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Health.Current > 50);
+        Assert.Empty(player.Inventory.Items);
+    }
+
+    [Fact]
+    public void UseQuickSlot_EquipsWeapon()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int baseAtk = player.CombatStats.Attack;
+
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("long_sword"), StackCount = 1 });
+        player.QuickSlots.Slot0 = 0;
+
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.CombatStats.Attack > baseAtk);
+        Assert.True(player.Equipment.HasWeapon);
+    }
+
+    [Fact]
+    public void UseQuickSlot_InvalidSlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = -1;
+        engine.Tick(); // no crash
+
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = 99;
+        engine.Tick(); // no crash
+    }
+
+    [Fact]
+    public void UseQuickSlot_EmptySlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Quick slot 0 is unassigned (-1)
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = 0;
+        engine.Tick(); // no crash
+    }
+
+    [Fact]
+    public void UseQuickSlot_UsesFood()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Survival.Hunger = 30;
+
+        var foodDef = Item("cooked_meat");
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = foodDef.NumericId, StackCount = 1 });
+        player.QuickSlots.Slot0 = 0;
+
+        player.Input.ActionType = ActionTypes.UseQuickSlot;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        if (foodDef.Food?.HungerRestore > 0)
+            Assert.True(player.Survival.Hunger > 30);
+    }
+
+    // ── Unequip with full inventory ──
+
+    [Fact]
+    public void Unequip_FullInventory_DoesNotMove()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Equip a weapon
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("long_sword"), StackCount = 1 });
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Equipment.HasWeapon);
+
+        // Fill inventory
+        int cap = player.Inventory.Capacity;
+        for (int i = 0; i < cap; i++)
+            player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
+
+        // Try to unequip - should fail since inventory is full
+        player.Input.ActionType = ActionTypes.Unequip;
+        player.Input.ItemSlot = 5; // Hand slot
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Equipment.HasWeapon); // Still equipped
+    }
+
+    // ── Equip tool ──
+
+    [Fact]
+    public void Equip_Tool_GoesToHandSlot()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Add a tool (pickaxe)
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("stone_pickaxe"), StackCount = 1 });
+
+        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ItemSlot = 0;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.True(player.Equipment.HasWeapon); // Tool goes to Hand slot
+        Assert.Empty(player.Inventory.Items);
+    }
+
+    // ── Swap with same slot ──
+
+    [Fact]
+    public void SwapItems_SameSlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
+
+        player.Input.ActionType = ActionTypes.SwapItems;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetSlot = 0; // same slot
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(ItemId("short_sword"), player.Inventory.Items[0].ItemTypeId);
+    }
+
+    // ── QuickSlot tracking during swap ──
+
+    [Fact]
+    public void SwapItems_UpdatesQuickSlots()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 });
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("long_sword"), StackCount = 1 });
+
+        // Assign quick slot 0 → inventory 0
+        player.QuickSlots.Slot0 = 0;
+
+        player.Input.ActionType = ActionTypes.SwapItems;
+        player.Input.ItemSlot = 0;
+        player.Input.TargetSlot = 1;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        // Quick slot should now point to the new position
+        Assert.Equal(1, player.QuickSlots.Slot0);
+    }
+
+    // ── Unequip empty slot ──
+
+    [Fact]
+    public void Unequip_EmptySlot_DoesNothing()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Input.ActionType = ActionTypes.Unequip;
+        player.Input.ItemSlot = 0; // Head slot - empty
+        engine.Tick(); // no crash
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Empty(player.Inventory.Items);
+    }
 }

@@ -147,4 +147,209 @@ public class DebugSettingsTests
         // Others unchanged
         Assert.True(debug.CollisionsOff);
     }
+
+    [Fact]
+    public void IndividualToggle_Collisions()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.True(debug.CollisionsOff);
+
+        var input = new FakeInputManager { TextInput = "c" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.False(debug.CollisionsOff);
+        Assert.True(debug.VisibilityOff); // unchanged
+    }
+
+    [Fact]
+    public void IndividualToggle_Invulnerable()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.True(debug.Invulnerable);
+
+        var input = new FakeInputManager { TextInput = "h" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.False(debug.Invulnerable);
+    }
+
+    [Fact]
+    public void IndividualToggle_LightOff()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.True(debug.LightOff);
+
+        var input = new FakeInputManager { TextInput = "l" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.False(debug.LightOff);
+    }
+
+    [Fact]
+    public void IndividualToggle_MaxSpeed()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.True(debug.MaxSpeed);
+
+        var input = new FakeInputManager { TextInput = "m" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.False(debug.MaxSpeed);
+    }
+
+    [Fact]
+    public void ZoomIn_DecreasesZoomLevel()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        Assert.Equal(0, debug.ZoomLevel);
+
+        var input = new FakeInputManager { TextInput = "+" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(-1, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void ZoomOut_IncreasesZoomLevel()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "-" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(1, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void ZoomReset_SetsZoomToZero()
+    {
+        var debug = new DebugSettings { Enabled = true, ZoomLevel = 3 };
+        var input = new FakeInputManager { TextInput = "0" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(0, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void ZoomIn_ClampsAtMinusFlive()
+    {
+        var debug = new DebugSettings { Enabled = true, ZoomLevel = -5 };
+        var input = new FakeInputManager { TextInput = "+" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(-5, debug.ZoomLevel); // Already at min, stays clamped
+    }
+
+    [Fact]
+    public void ZoomOut_ClampsAtFive()
+    {
+        var debug = new DebugSettings { Enabled = true, ZoomLevel = 5 };
+        var input = new FakeInputManager { TextInput = "-" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(5, debug.ZoomLevel); // Already at max, stays clamped
+    }
+
+    [Fact]
+    public void ZoomIn_AlternateKey_Equals()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "=" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(-1, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void ZoomOut_AlternateKey_Underscore()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "_" };
+        debug.HandleDebugKeys(input, () => { });
+
+        Assert.Equal(1, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void MultipleKeys_ProcessedInSequence()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "vc" };
+        int syncCount = 0;
+        debug.HandleDebugKeys(input, () => syncCount++);
+
+        Assert.False(debug.VisibilityOff);
+        Assert.False(debug.CollisionsOff);
+        Assert.Equal(1, syncCount); // sync called once even for multiple keys
+    }
+
+    [Fact]
+    public void NoRecognizedKeys_DoesNotSync()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "qwj" };
+        bool synced = false;
+        debug.HandleDebugKeys(input, () => synced = true);
+
+        Assert.False(synced);
+    }
+
+    [Fact]
+    public void Reset_RestoresAllDefaults()
+    {
+        var debug = new DebugSettings
+        {
+            Enabled = true,
+            VisibilityOff = false,
+            CollisionsOff = false,
+            Invulnerable = false,
+            LightOff = false,
+            MaxSpeed = false,
+            FreeCrafting = false,
+            ZoomLevel = 3,
+        };
+
+        debug.Reset();
+
+        Assert.True(debug.VisibilityOff);
+        Assert.True(debug.CollisionsOff);
+        Assert.True(debug.Invulnerable);
+        Assert.True(debug.LightOff);
+        Assert.True(debug.MaxSpeed);
+        Assert.True(debug.FreeCrafting);
+        Assert.Equal(0, debug.ZoomLevel);
+    }
+
+    [Fact]
+    public void UppercaseKeys_AlsoWork()
+    {
+        var debug = new DebugSettings { Enabled = true };
+        var input = new FakeInputManager { TextInput = "V" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.VisibilityOff);
+
+        debug = new DebugSettings { Enabled = true };
+        input = new FakeInputManager { TextInput = "C" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.CollisionsOff);
+
+        debug = new DebugSettings { Enabled = true };
+        input = new FakeInputManager { TextInput = "H" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.Invulnerable);
+
+        debug = new DebugSettings { Enabled = true };
+        input = new FakeInputManager { TextInput = "L" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.LightOff);
+
+        debug = new DebugSettings { Enabled = true };
+        input = new FakeInputManager { TextInput = "M" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.MaxSpeed);
+
+        debug = new DebugSettings { Enabled = true };
+        input = new FakeInputManager { TextInput = "F" };
+        debug.HandleDebugKeys(input, () => { });
+        Assert.False(debug.FreeCrafting);
+    }
 }

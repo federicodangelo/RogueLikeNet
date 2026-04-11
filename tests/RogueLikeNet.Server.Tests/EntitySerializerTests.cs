@@ -362,4 +362,116 @@ public class EntitySerializerTests : IDisposable
         Assert.True(loaded.TownNpcs.ToArray().Any(n => n.Position.X == 4 && n.Position.Y == 4 && n.NpcData.Name == "Blacksmith"),
             "Town NPC should be restored");
     }
+
+    [Fact]
+    public void Crop_RoundTrip_PreservesData()
+    {
+        // Find a seed item
+        var seedDef = GameData.Instance.Items.All.FirstOrDefault(i => i.Seed != null);
+        if (seedDef == null) return; // skip if no seed items loaded
+
+        var crop = _engine.SpawnCrop(Position.FromCoords(5, 5, Z), seedDef);
+        ref var cropRef = ref _engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Z)).GetCropRef(crop.Id);
+        cropRef.CropData.GrowthTicksCurrent = 42;
+        cropRef.CropData.IsWatered = true;
+
+        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var json = EntitySerializer.SerializeEntities(chunk);
+        Assert.Contains("\"Type\":\"Crop\"", json);
+
+        using var engine2 = new GameEngine(42, _gen);
+        engine2.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Z));
+        EntitySerializer.DeserializeEntities(json, engine2);
+
+        var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var found = chunk2.Crops.ToArray().FirstOrDefault(c => c.Position.X == 5 && c.Position.Y == 5 && c.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
+
+        Assert.Equal(seedDef.NumericId, found!.CropData.SeedItemTypeId);
+        Assert.Equal(42, found.CropData.GrowthTicksCurrent);
+        Assert.True(found.CropData.IsWatered);
+    }
+
+    [Fact]
+    public void Animal_RoundTrip_PreservesData()
+    {
+        var animalDef = GameData.Instance.Animals.All.FirstOrDefault();
+        if (animalDef == null) return; // skip if no animal definitions
+
+        var animal = _engine.SpawnAnimal(Position.FromCoords(7, 7, Z), animalDef);
+        ref var animalRef = ref _engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Z)).GetAnimalRef(animal.Id);
+        animalRef.Health.Current = 5;
+        animalRef.AnimalData.ProduceTicksCurrent = 100;
+        animalRef.AnimalData.IsFed = true;
+        animalRef.AnimalData.FedTicksRemaining = 50;
+        animalRef.AnimalData.BreedCooldownCurrent = 30;
+        animalRef.AI.StateId = 1;
+        animalRef.MoveDelay.Current = 3;
+
+        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var json = EntitySerializer.SerializeEntities(chunk);
+        Assert.Contains("\"Type\":\"Animal\"", json);
+
+        using var engine2 = new GameEngine(42, _gen);
+        engine2.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Z));
+        EntitySerializer.DeserializeEntities(json, engine2);
+
+        var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var found = chunk2.Animals.ToArray().FirstOrDefault(a => a.Position.X == 7 && a.Position.Y == 7 && a.Position.Z == Z);
+        Assert.NotEqual(EntityRef.NullId, found.Id);
+
+        Assert.Equal(animalDef.NumericId, found!.AnimalData.AnimalTypeId);
+        Assert.Equal(5, found.Health.Current);
+        Assert.Equal(100, found.AnimalData.ProduceTicksCurrent);
+        Assert.True(found.AnimalData.IsFed);
+        Assert.Equal(50, found.AnimalData.FedTicksRemaining);
+        Assert.Equal(30, found.AnimalData.BreedCooldownCurrent);
+        Assert.Equal(1, found.AI.StateId);
+        Assert.Equal(3, found.MoveDelay.Current);
+    }
+
+    [Fact]
+    public void Serialize_SkipsDestroyedItems()
+    {
+        var item = _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 8888, StackCount = 1 }, Position.FromCoords(9, 9, Z));
+        ref var itemRef = ref _engine.WorldMap.GetGroundItemRef(item.Id);
+        itemRef.IsDestroyed = true;
+
+        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var json = EntitySerializer.SerializeEntities(chunk);
+        Assert.DoesNotContain("\"ItemTypeId\":8888", json);
+    }
+
+    [Fact]
+    public void Serialize_SkipsDestroyedCrops()
+    {
+        var seedDef = GameData.Instance.Items.All.FirstOrDefault(i => i.Seed != null);
+        if (seedDef == null) return;
+
+        var crop = _engine.SpawnCrop(Position.FromCoords(10, 10, Z), seedDef);
+        ref var cropRef = ref _engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Z)).GetCropRef(crop.Id);
+        cropRef.IsDestroyed = true;
+
+        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var json = EntitySerializer.SerializeEntities(chunk);
+        // Should not contain a Crop entry with our specific position
+        Assert.DoesNotContain("\"GrowthTicksCurrent\":0", json.Substring(json.LastIndexOf("\"Type\":\"Crop\"") >= 0 ? json.LastIndexOf("\"Type\":\"Crop\"") : 0));
+    }
+
+    [Fact]
+    public void Serialize_SkipsDeadAnimals()
+    {
+        var animalDef = GameData.Instance.Animals.All.FirstOrDefault();
+        if (animalDef == null) return;
+
+        var animal = _engine.SpawnAnimal(Position.FromCoords(11, 11, Z), animalDef);
+        ref var animalRef = ref _engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Z)).GetAnimalRef(animal.Id);
+        animalRef.Health.Current = 0;
+
+        var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var json = EntitySerializer.SerializeEntities(chunk);
+        // The dead animal should not be serialized
+        var animalEntries = json.Split("\"Type\":\"Animal\"").Length - 1;
+        Assert.Equal(0, animalEntries);
+    }
 }

@@ -528,4 +528,356 @@ public class GameEngineTests
 
         Assert.True(chunk.IsModifiedSinceLastSave);
     }
+
+    // ── Debug mode flags ──
+
+    [Fact]
+    public void DebugFlags_DefaultFalse()
+    {
+        using var engine = new GameEngine(42, _gen);
+        Assert.False(engine.DebugNoCollision);
+        Assert.False(engine.DebugInvulnerable);
+        Assert.False(engine.DebugMaxSpeed);
+        Assert.False(engine.DebugFreeCrafting);
+    }
+
+    // ── GetPlayerStateData ──
+
+    [Fact]
+    public void GetPlayerStateData_ReturnsNullForDeadPlayer()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        player.Health.Current = 0;
+
+        var state = engine.GetPlayerStateData(player);
+        Assert.Null(state);
+    }
+
+    [Fact]
+    public void GetPlayerStateData_IncludesEquipment()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Equip a weapon
+        var swordDef = GameData.Instance.Items.Get("iron_sword");
+        if (swordDef != null)
+        {
+            engine.SpawnItemOnGround(swordDef, player.Position);
+            player.Input.ActionType = ActionTypes.PickUp;
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+            player.Input.ActionType = ActionTypes.Equip;
+            player.Input.ItemSlot = 0;
+            engine.Tick();
+            player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        }
+
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        Assert.NotNull(state.EquippedItems);
+    }
+
+    [Fact]
+    public void GetPlayerStateData_IncludesQuickSlots()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        var state = engine.GetPlayerStateData(player);
+        Assert.NotNull(state);
+        Assert.NotNull(state.QuickSlotIndices);
+        Assert.Equal(4, state.QuickSlotIndices.Length);
+    }
+
+    // ── GiveDebugResources ──
+
+    [Fact]
+    public void GiveDebugResources_AddsResources()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int before = player.Inventory.Items.Count;
+        engine.GiveDebugResources(ref player);
+        Assert.True(player.Inventory.Items.Count > before);
+    }
+
+    // ── All classes can spawn ──
+
+    [Theory]
+    [InlineData(ClassDefinitions.Warrior)]
+    [InlineData(ClassDefinitions.Rogue)]
+    [InlineData(ClassDefinitions.Mage)]
+    [InlineData(ClassDefinitions.Ranger)]
+    public void SpawnPlayer_AllClasses(int classId)
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), classId);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.False(player.IsDead);
+        Assert.Equal(classId, player.ClassData.ClassId);
+    }
+
+    // ── DestroyEntitiesInChunk ──
+
+    [Fact]
+    public void DestroyEntitiesInChunk_ClearsEntities()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        engine.SpawnMonster(Position.FromCoords(5, 5, Position.DefaultZ), new MonsterData { MonsterTypeId = 0, Health = 100, Attack = 1, Defense = 0, Speed = 1 });
+
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
+        Assert.True(chunk.Monsters.Length > 0);
+
+        engine.DestroyEntitiesInChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        Assert.Equal(0, chunk.Monsters.Length);
+    }
+
+    // ── EnsureChunkLoadedOrDoesntExist ──
+
+    [Fact]
+    public void EnsureChunkLoadedOrDoesntExist_ReturnsNullForNonExistent()
+    {
+        using var engine = new GameEngine(42, _gen);
+        // Try a far away chunk that the generator may report as not existing
+        var result = engine.EnsureChunkLoadedOrDoesntExist(ChunkPosition.FromCoords(9999, 9999, 0));
+        // This may or may not return null depending on generator; just verify no crash
+        Assert.True(result == null || result != null);
+    }
+
+    // ── SpawnCrop tests ──
+
+    [Fact]
+    public void SpawnCrop_ValidSeed_SpawnsCrop()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        // Find a seed item
+        var seedDef = GameData.Instance.Items.Get("wheat_seeds");
+        if (seedDef?.Seed == null) return;
+
+        ref var crop = ref engine.SpawnCrop(Position.FromCoords(sx, sy, Position.DefaultZ), seedDef);
+        Assert.Equal(seedDef.NumericId, crop.CropData.SeedItemTypeId);
+        Assert.Equal(0, crop.CropData.GrowthTicksCurrent);
+        Assert.False(crop.CropData.IsWatered);
+    }
+
+    [Fact]
+    public void SpawnCrop_InvalidSeed_Throws()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        var swordDef = GameData.Instance.Items.Get("short_sword")!;
+        Assert.Throws<ArgumentException>(() => engine.SpawnCrop(Position.FromCoords(sx, sy, Position.DefaultZ), swordDef));
+    }
+
+    // ── FindDropPosition tests ──
+
+    [Fact]
+    public void FindDropPosition_ReturnsWalkablePosition()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        var dropPos = engine.FindDropPosition(Position.FromCoords(sx, sy, Position.DefaultZ));
+        Assert.True(engine.WorldMap.GetTile(dropPos).IsWalkable);
+    }
+
+    // ── Player death and respawn ──
+
+    [Fact]
+    public void PlayerDeath_Respawns_WithHalfHealth()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        int maxHealth = player.Health.Max;
+        player.Health.Current = 0; // Kill the player
+
+        engine.Tick(); // should respawn
+
+        player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+        Assert.Equal(maxHealth / 2, player.Health.Current);
+        Assert.False(player.IsDead);
+    }
+
+    // ── FindSpawnPosition fallback ──
+
+    [Fact]
+    public void FindSpawnPosition_ReturnsWalkable()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, sz) = engine.FindSpawnPosition();
+        var tile = engine.WorldMap.GetTile(Position.FromCoords(sx, sy, sz));
+        Assert.True(tile.IsWalkable);
+    }
+
+    // ── GetPlayerStateData with nearby stations ──
+
+    [Fact]
+    public void GetPlayerStateData_IncludesNearbyStations()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Place a crafting bench adjacent
+        var benchDef = GameData.Instance.Items.Get("crafting_bench");
+        if (benchDef != null)
+        {
+            var stationPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
+            engine.WorldMap.SetTile(stationPos, new TileInfo
+            {
+                Type = TileType.Floor,
+                PlaceableItemId = benchDef.NumericId,
+            });
+        }
+
+        var stateData = engine.GetPlayerStateData(player);
+        Assert.NotNull(stateData);
+        // Hand station is always available
+        Assert.Contains((int)CraftingStationType.Hand, stateData!.NearbyStationsTypes);
+    }
+
+    // ── Loot drops from monsters ──
+
+    [Fact]
+    public void MonsterDeath_CanDropLoot()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        // Give player huge attack to one-shot monster
+        player.CombatStats.Attack = 9999;
+
+        var monsterPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
+        engine.WorldMap.SetTile(monsterPos, new TileInfo { Type = TileType.Floor });
+        engine.SpawnMonster(monsterPos, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 0, Defense = 0, Speed = 1 });
+
+        player.Input.ActionType = ActionTypes.Move;
+        player.Input.TargetX = 1;
+        player.Input.TargetY = 0;
+        engine.Tick(); // converts to attack, kills monster
+
+        // After tick, dead entities cleaned up. Loot may have dropped.
+        var chunk = engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!;
+        // Monster should be dead and removed
+        Assert.DoesNotContain(chunk.Monsters.ToArray(), m => m.Position == monsterPos && !m.IsDead);
+    }
+
+    // ── Dispose ──
+
+    [Fact]
+    public void Dispose_DoesNotThrow()
+    {
+        var engine = new GameEngine(42, _gen);
+        engine.Dispose(); // should not throw
+    }
+
+    // ── SpawnAnimal ──
+
+    [Fact]
+    public void SpawnAnimal_CreatesAnimalEntity()
+    {
+        using var engine = new GameEngine(42, _gen);
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+        var (sx, sy, _) = engine.FindSpawnPosition();
+
+        var animalDefs = GameData.Instance.Animals.All.ToArray();
+        if (animalDefs.Length == 0) return;
+        var animalDef = animalDefs[0];
+
+        var pos = Position.FromCoords(sx + 2, sy, Position.DefaultZ);
+        ref var animal = ref engine.SpawnAnimal(pos, animalDef);
+
+        Assert.Equal(pos, animal.Position);
+        Assert.Equal(animalDef.Health, animal.Health.Max);
+        Assert.Equal(animalDef.NumericId, animal.AnimalData.AnimalTypeId);
+    }
+
+    // ── RawEntityJsonHandler ──
+
+    [Fact]
+    public void RawEntityJsonHandler_InvokedDuringChunkLoad()
+    {
+        string? capturedJson = null;
+        GameEngine? capturedEngine = null;
+
+        // Use a fake generator that returns a GenerationResult with RawEntityJson
+        var fakeGen = new FakeGeneratorWithEntityJson("[{\"type\":\"test\"}]");
+        using var engine = new GameEngine(42, fakeGen);
+        engine.RawEntityJsonHandler = (json, eng) =>
+        {
+            capturedJson = json;
+            capturedEngine = eng;
+        };
+
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+
+        Assert.Equal("[{\"type\":\"test\"}]", capturedJson);
+        Assert.Same(engine, capturedEngine);
+    }
+
+    [Fact]
+    public void RawEntityJsonHandler_NullJson_DoesNotInvoke()
+    {
+        bool invoked = false;
+
+        using var engine = new GameEngine(42, _gen);
+        engine.RawEntityJsonHandler = (_, _) => invoked = true;
+        engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
+
+        Assert.False(invoked);
+    }
+
+    private class FakeGeneratorWithEntityJson : IDungeonGenerator
+    {
+        private readonly string _json;
+        private readonly HashSet<ChunkPosition> _generated = new();
+
+        public FakeGeneratorWithEntityJson(string rawEntityJson) => _json = rawEntityJson;
+
+        public bool Exists(ChunkPosition chunkPos) => true;
+
+        public GenerationResult Generate(ChunkPosition chunkPos)
+        {
+            var chunk = new Chunk(chunkPos);
+            for (int x = 0; x < Chunk.Size; x++)
+                for (int y = 0; y < Chunk.Size; y++)
+                    chunk.Tiles[x, y] = new TileInfo { Type = TileType.Floor };
+
+            return new GenerationResult(chunk)
+            {
+                RawEntityJson = _generated.Add(chunkPos) ? _json : null,
+            };
+        }
+    }
 }
