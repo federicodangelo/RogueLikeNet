@@ -733,19 +733,10 @@ public class GameServer : IDisposable
         foreach (var conn in _connections.Values)
         {
             if (!conn.PlayerEntityId.HasValue) continue;
-            var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
-            if (!player.HasValue || player.Value.IsDead) continue;
 
-            var pc = Chunk.WorldToChunkCoord(player.Value.Position);
-            int radius = conn.VisibleChunks;
-
-            for (int dx = -radius; dx <= radius; dx++)
+            foreach (var key in conn.SentChunkTracker.GetTrackedKeys())
             {
-                for (int dy = -radius; dy <= radius; dy++)
-                {
-                    var key = Position.PackCoord(pc.X + dx, pc.Y + dy, pc.Z);
-                    _chunkLastViewedTick[key] = currentTick;
-                }
+                _chunkLastViewedTick[key] = currentTick;
             }
         }
     }

@@ -88,6 +88,9 @@ public sealed class ChunkTracker
         return evicted;
     }
 
+    /// <summary>Returns all currently tracked chunk keys.</summary>
+    public IEnumerable<long> GetTrackedKeys() => _map.Keys;
+
     /// <summary>Clears all tracked chunks.</summary>
     public void Clear()
     {
