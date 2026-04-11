@@ -110,6 +110,7 @@ public class FarmingSystem
         tile.GlyphId = TilledSoilGlyphId;
         tile.FgColor = TileDefinitions.ColorTilledSoil;
         map.SetTile(target, tile);
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till });
     }
 
     private static void ProcessPlant(ref PlayerEntity player, WorldMap map)
@@ -170,6 +171,7 @@ public class FarmingSystem
             },
         };
         chunk.AddEntity(cropEntity);
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId });
     }
 
     private static void ProcessWater(ref PlayerEntity player, WorldMap map)
@@ -193,6 +195,7 @@ public class FarmingSystem
         {
             if (crop.IsDestroyed || crop.Position != target) continue;
             crop.CropData.IsWatered = true;
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Water });
             return;
         }
     }
@@ -252,6 +255,7 @@ public class FarmingSystem
 
             // Destroy the crop
             crop.IsDestroyed = true;
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Harvest, ItemTypeId = harvestItemId, StackCount = harvestCount });
             return;
         }
     }

@@ -19,6 +19,7 @@ public class ClientGameState
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
     private readonly List<NpcDialogueMsg> _pendingNpcDialogues = new();
+    private readonly List<PlayerActionEventMsg> _pendingPlayerActionEvents = new();
     private readonly Dictionary<long, BitArray> _exploredTilesByChunk = new();
     private readonly HashSet<long> _visibleTiles = new();
     private (int x, int y, int x1, int y1) _visibleTilesBounds = (0, 0, 0, 0);
@@ -36,6 +37,7 @@ public class ClientGameState
     public PlayerStateMsg? PlayerState { get; private set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
     public IReadOnlyList<NpcDialogueMsg> PendingNpcDialogues => _pendingNpcDialogues;
+    public IReadOnlyList<PlayerActionEventMsg> PendingPlayerActionEvents => _pendingPlayerActionEvents;
 
     public void Clear()
     {
@@ -43,6 +45,7 @@ public class ClientGameState
         _entities.Clear();
         _pendingCombatEvents.Clear();
         _pendingNpcDialogues.Clear();
+        _pendingPlayerActionEvents.Clear();
         _exploredTilesByChunk.Clear();
         _visibleTiles.Clear();
         PlayerX = 0;
@@ -64,6 +67,7 @@ public class ClientGameState
             _entities.Clear();
             _pendingCombatEvents.Clear();
             _pendingNpcDialogues.Clear();
+            _pendingPlayerActionEvents.Clear();
             _visibleTiles.Clear();
             _exploredTilesByChunk.Clear();
         }
@@ -147,6 +151,10 @@ public class ClientGameState
         if (delta.NpcDialogueEvents.Length > 0)
             _pendingNpcDialogues.AddRange(delta.NpcDialogueEvents);
 
+        // Queue player action events for chat display
+        if (delta.PlayerActionEvents.Length > 0)
+            _pendingPlayerActionEvents.AddRange(delta.PlayerActionEvents);
+
         // Update player data (entity id, X, Y) and recompute visibility/lighting since it may have changed
         if (PlayerState != null)
             PlayerEntityId = PlayerState.PlayerEntityId;
@@ -170,6 +178,11 @@ public class ClientGameState
     public void DrainNpcDialogues()
     {
         _pendingNpcDialogues.Clear();
+    }
+
+    public void DrainPlayerActionEvents()
+    {
+        _pendingPlayerActionEvents.Clear();
     }
 
     /// <summary>

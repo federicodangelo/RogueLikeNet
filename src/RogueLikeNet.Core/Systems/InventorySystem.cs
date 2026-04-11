@@ -62,7 +62,10 @@ public class InventorySystem
             if (gi.IsDestroyed || gi.Position != player.Position) continue;
 
             if (AddItemToInventory(ref player, gi.Item))
+            {
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, ItemTypeId = gi.Item.ItemTypeId, StackCount = gi.Item.StackCount });
                 gi.IsDestroyed = true;
+            }
         }
     }
 
@@ -76,6 +79,7 @@ public class InventorySystem
         var itemData = player.Inventory.Items[slot];
         player.Inventory.Items.RemoveAt(slot);
         player.QuickSlots.OnItemRemoved(slot);
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Drop, ItemTypeId = itemData.ItemTypeId, StackCount = itemData.StackCount });
 
         var drop = engine.FindDropPosition(player.Position);
 
@@ -103,12 +107,14 @@ public class InventorySystem
                 ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.UsePotion, ItemTypeId = itemData.ItemTypeId });
                 break;
 
             case ItemCategory.Food:
                 ApplyFood(ref player, template);
                 player.Inventory.Items.RemoveAt(slot);
                 player.QuickSlots.OnItemRemoved(slot);
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.EatFood, ItemTypeId = itemData.ItemTypeId });
                 break;
 
             case ItemCategory.Weapon:
@@ -214,6 +220,7 @@ public class InventorySystem
 
         ApplyItemStats(ref player, newItem);
         ApplyWeaponSpeed(ref player, newItem);
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Equip, ItemTypeId = newItem.ItemTypeId });
     }
 
     private static void ProcessSwapItems(ref PlayerEntity player)
@@ -250,6 +257,7 @@ public class InventorySystem
             RemoveWeaponSpeed(ref player, old);
             player.Inventory.Items.Add(old);
             player.Equipment[equipSlot] = ItemData.None;
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Unequip, ItemTypeId = old.ItemTypeId });
         }
     }
 
@@ -316,12 +324,14 @@ public class InventorySystem
                 ApplyPotion(ref player, template);
                 player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.UsePotion, ItemTypeId = itemData.ItemTypeId });
                 break;
 
             case ItemCategory.Food:
                 ApplyFood(ref player, template);
                 player.Inventory.Items.RemoveAt(invIndex);
                 player.QuickSlots.OnItemRemoved(invIndex);
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.EatFood, ItemTypeId = itemData.ItemTypeId });
                 break;
 
             case ItemCategory.Weapon:

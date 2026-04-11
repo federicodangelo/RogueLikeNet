@@ -376,6 +376,9 @@ public class GameEngine : IDisposable
     /// </summary>
     public void Tick()
     {
+        foreach (ref var player in _worldMap.Players)
+            player.ActionEvents.Clear();
+
         _survivalSystem.Update(_worldMap, DebugInvulnerable);
         _activeEffectsSystem.Update(_worldMap);
         _movementSystem.Update(_worldMap, DebugNoCollision, DebugMaxSpeed);

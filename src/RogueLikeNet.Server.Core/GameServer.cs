@@ -867,6 +867,7 @@ public class GameServer : IDisposable
             EntityRemovals = serializedEntityData.Removals,
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
             NpcDialogueEvents = GameStateSerializer.SerializeNpcDialogueEvents(_engine),
+            PlayerActionEvents = GameStateSerializer.SerializePlayerActionEvents(player),
             PlayerState = playerState,
         };
     }

@@ -130,6 +130,7 @@ public class AnimalSystem
             // Feed the animal
             animal.AnimalData.IsFed = true;
             animal.AnimalData.FedTicksRemaining = animalDef.FedDurationTicks;
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.FeedAnimal, ItemTypeId = feedItemId });
             return;
         }
     }

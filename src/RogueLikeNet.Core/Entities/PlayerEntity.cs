@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Systems;
 
 namespace RogueLikeNet.Core.Entities;
 
@@ -21,6 +22,7 @@ public struct PlayerEntity
     public AttackDelay AttackDelay;
     public Survival Survival;
     public ActiveEffects ActiveEffects;
+    public List<PlayerActionEvent> ActionEvents = new();
     public bool IsDead => !Health.IsAlive;
 
     public PlayerEntity()

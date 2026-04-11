@@ -2,6 +2,7 @@ using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
+using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
@@ -253,6 +254,17 @@ public static class GameStateSerializer
             NpcY = e.Npc.Y,
             NpcName = e.NpcName,
             Text = e.Text,
+        }).ToArray();
+    }
+
+    public static PlayerActionEventMsg[] SerializePlayerActionEvents(PlayerEntity player)
+    {
+        if (player.ActionEvents.Count == 0) return [];
+        return player.ActionEvents.Select(e => new PlayerActionEventMsg
+        {
+            EventType = (int)e.EventType,
+            ItemTypeId = e.ItemTypeId,
+            StackCount = e.StackCount,
         }).ToArray();
     }
 

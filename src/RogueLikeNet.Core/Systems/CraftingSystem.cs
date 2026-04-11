@@ -91,6 +91,8 @@ public class CraftingSystem
             {
                 player.Inventory.Items.Add(resultItem);
             }
+
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Craft, ItemTypeId = recipe.Result.NumericItemId, StackCount = recipe.Result.Count });
         }
     }
 

@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Systems;
@@ -48,13 +50,62 @@ public sealed class NetworkMessageDrainer
                 chat.ChatLog.Add($"[{dlg.NpcName}]: {dlg.Text}");
                 if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
             }
+
+            foreach (var evt in gameState.PendingPlayerActionEvents)
+            {
+                var msg = FormatPlayerActionEvent(evt);
+                if (msg != null)
+                {
+                    chat.ChatLog.Add(msg);
+                    if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
+                }
+            }
         }
         gameState.DrainNpcDialogues();
+        gameState.DrainPlayerActionEvents();
     }
 
     public void Reset()
     {
         FirstDeltaProcessed = false;
         while (_pendingDeltas.TryDequeue(out _)) { }
+    }
+
+    private static string? FormatPlayerActionEvent(PlayerActionEventMsg evt)
+    {
+        var eventType = (PlayerActionEventType)evt.EventType;
+        var itemName = GetItemName(evt.ItemTypeId);
+
+        return eventType switch
+        {
+            PlayerActionEventType.PickUp => evt.StackCount > 1
+                ? $"Picked up {itemName} x{evt.StackCount}"
+                : $"Picked up {itemName}",
+            PlayerActionEventType.Drop => $"Dropped {itemName}",
+            PlayerActionEventType.UsePotion => $"Used {itemName}",
+            PlayerActionEventType.EatFood => $"Ate {itemName}",
+            PlayerActionEventType.Equip => $"Equipped {itemName}",
+            PlayerActionEventType.Unequip => $"Unequipped {itemName}",
+            PlayerActionEventType.PlaceItem => $"Placed {itemName}",
+            PlayerActionEventType.PickUpPlaced => $"Picked up {itemName}",
+            PlayerActionEventType.Till => "Tilled soil",
+            PlayerActionEventType.Plant => $"Planted {itemName}",
+            PlayerActionEventType.Water => "Watered crop",
+            PlayerActionEventType.Harvest => evt.StackCount > 1
+                ? $"Harvested {itemName} x{evt.StackCount}"
+                : $"Harvested {itemName}",
+            PlayerActionEventType.FeedAnimal => $"Fed animal with {itemName}",
+            PlayerActionEventType.Craft => evt.StackCount > 1
+                ? $"Crafted {itemName} x{evt.StackCount}"
+                : $"Crafted {itemName}",
+            _ => null,
+        };
+    }
+
+    private static string GetItemName(int itemTypeId)
+    {
+        if (itemTypeId == 0) return "unknown";
+        var def = GameData.Instance.Items.Get(itemTypeId);
+        return def?.Name ?? "unknown";
     }
 }

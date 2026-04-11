@@ -64,6 +64,7 @@ public class BuildingSystem
         if (map.IsPositionOccupiedByEntity(target)) return;
 
         map.SetPlaceable(target, itemData.ItemTypeId, 0);
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId });
 
         var item = player.Inventory.Items[slot];
         item.StackCount--;
@@ -98,7 +99,10 @@ public class BuildingSystem
                 {
                     if (gi.IsDestroyed || gi.Position != target) continue;
                     if (InventorySystem.AddItemToInventory(ref player, gi.Item))
+                    {
+                        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUpPlaced, ItemTypeId = gi.Item.ItemTypeId, StackCount = gi.Item.StackCount });
                         gi.IsDestroyed = true;
+                    }
                 }
             }
             return;
@@ -113,6 +117,7 @@ public class BuildingSystem
         if (!InventorySystem.AddItemToInventory(ref player, placeableItemData))
             return;
 
+        player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUpPlaced, ItemTypeId = tile.PlaceableItemId });
         map.SetPlaceable(target, 0, 0);
     }
 }
