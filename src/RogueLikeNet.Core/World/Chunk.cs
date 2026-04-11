@@ -88,7 +88,7 @@ public class Chunk
         public bool MoveNext()
         {
             _index++;
-            while (_phase <= 2)
+            while (_phase <= 3)
             {
                 int count = _phase switch
                 {
