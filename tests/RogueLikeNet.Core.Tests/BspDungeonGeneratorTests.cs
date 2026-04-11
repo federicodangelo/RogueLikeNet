@@ -1,6 +1,5 @@
-using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -50,35 +49,37 @@ public class BspDungeonGeneratorTests
     }
 
     [Fact]
-    public void Generate_AppliesBiomeTints()
+    public void Generate_UsesBiomeTileIds()
     {
-        // Find a chunk whose biome is NOT Stone (Stone = neutral, no tint)
+        // Find a chunk whose biome is NOT Stone
         var gen = new BspDungeonGenerator(42);
-        Chunk? tintedChunk = null;
+        Chunk? biomeChunk = null;
+        BiomeType foundBiome = BiomeType.Stone;
         for (int cx = 0; cx < 20; cx++)
         {
             var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
             if (biome != BiomeType.Stone)
             {
                 var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
-                tintedChunk = result.Chunk;
+                biomeChunk = result.Chunk;
+                foundBiome = biome;
                 break;
             }
         }
 
-        Assert.NotNull(tintedChunk);
+        Assert.NotNull(biomeChunk);
 
-        // Find a floor tile and verify its FgColor differs from the base floor color
-        bool foundTinted = false;
-        for (int x = 0; x < Chunk.Size && !foundTinted; x++)
-            for (int y = 0; y < Chunk.Size && !foundTinted; y++)
+        // Floor tiles should use the biome-specific floor tile ID
+        int expectedFloorTileId = GameData.Instance.Biomes.GetFloorTileId(foundBiome);
+        bool foundBiomeFloor = false;
+        for (int x = 0; x < Chunk.Size && !foundBiomeFloor; x++)
+            for (int y = 0; y < Chunk.Size && !foundBiomeFloor; y++)
             {
-                if (tintedChunk.Tiles[x, y].Type == TileType.Floor &&
-                    tintedChunk.Tiles[x, y].FgColor != TileDefinitions.ColorFloorFg)
-                    foundTinted = true;
+                if (biomeChunk.Tiles[x, y].TileId == expectedFloorTileId)
+                    foundBiomeFloor = true;
             }
 
-        Assert.True(foundTinted, "Non-Stone biome should produce tinted floor colors");
+        Assert.True(foundBiomeFloor, "Non-Stone biome should use biome-specific floor tile IDs");
     }
 
     [Fact]
@@ -89,12 +90,15 @@ public class BspDungeonGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
+            int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
             var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
                     ref var t = ref result.Chunk.Tiles[x, y];
-                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
+                    if (t.Type == TileType.Floor && t.TileId != floorTileId)
                         totalDecorations++;
                 }
         }
@@ -129,12 +133,14 @@ public class BspDungeonGeneratorTests
         var gen = new BspDungeonGenerator(42);
         for (int cx = 0; cx < 5; cx++)
         {
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
             var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
                     ref var tile = ref result.Chunk.Tiles[x, y];
-                    if (tile.Type == TileType.Floor && tile.GlyphId != TileDefinitions.GlyphFloor)
+                    if (tile.Type == TileType.Floor && tile.TileId != floorTileId)
                         Assert.True(tile.IsWalkable, $"Decoration at ({x},{y}) should be walkable");
                 }
         }

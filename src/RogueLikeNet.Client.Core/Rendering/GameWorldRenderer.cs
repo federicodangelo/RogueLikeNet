@@ -70,7 +70,7 @@ public sealed class GameWorldRenderer
                         brightness = Math.Clamp(brightness + brightnessOffset, 0f, 1f);
                     }
 
-                    if ((tile.GlyphId == TileDefinitions.GlyphTorch || tile.Type == TileType.Lava)
+                    if ((tile.GlyphId == RenderConstants.GlyphTorch || tile.Type == TileType.Lava)
                         && visible && lightLevel >= 5)
                     {
                         _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
@@ -138,7 +138,7 @@ public sealed class GameWorldRenderer
                 var sx = pos.X;
                 var sy = pos.Y;
 
-                if (tile.GlyphId == TileDefinitions.GlyphTorch)
+                if (tile.GlyphId == RenderConstants.GlyphTorch)
                 {
                     float cx = sx * tileW + tileW * 0.5f + shakeX;
                     float cy = sy * tileH + tileH * 0.5f + shakeY;
@@ -217,7 +217,7 @@ public sealed class GameWorldRenderer
         if (extra > 0)
         {
             // Open door!
-            return TileDefinitions.GlyphDoor;
+            return RenderConstants.GlyphDoor;
         }
 
         bool wallN = IsWallLike(state.GetTile(x, y - 1));
@@ -225,9 +225,9 @@ public sealed class GameWorldRenderer
         bool wallE = IsWallLike(state.GetTile(x + 1, y));
         bool wallW = IsWallLike(state.GetTile(x - 1, y));
 
-        if (wallN && wallS) return TileDefinitions.GlyphDoorVertical;
-        if (wallE && wallW) return TileDefinitions.GlyphDoorHorizontal;
-        return TileDefinitions.GlyphDoorVertical; // default
+        if (wallN && wallS) return RenderConstants.GlyphDoorVertical;
+        if (wallE && wallW) return RenderConstants.GlyphDoorHorizontal;
+        return RenderConstants.GlyphDoorVertical; // default
     }
 
     private static bool IsWallLike(TileInfo tile) =>

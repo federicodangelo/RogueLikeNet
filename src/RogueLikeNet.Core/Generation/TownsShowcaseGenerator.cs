@@ -37,18 +37,10 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
 
-        // Fill entire chunk with flat floor
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
         for (int x = 0; x < Chunk.Size; x++)
-        {
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
-        }
+                chunk.Tiles[x, y].TileId = floorTileId;
 
         // Cycle through biomes based on chunk position
         var biomes = (BiomeType[])Enum.GetValues(typeof(BiomeType));
@@ -65,8 +57,8 @@ public class TownsShowcaseGenerator : IDungeonGenerator
 
             result.Elements.Add(new DungeonElement(
                 Position.FromCoords(worldOffsetX + 2, worldOffsetY + 2, chunkZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(10, TileDefinitions.ColorTorchFg)));
+                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                new LightSource(10, RenderConstants.ColorTorchFg)));
         }
 
         return result;

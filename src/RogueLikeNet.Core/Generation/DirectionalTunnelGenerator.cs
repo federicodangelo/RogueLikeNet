@@ -45,9 +45,11 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 
         // Step 1: Fill with walls
-        DungeonHelper.FillWalls(chunk);
+        DungeonHelper.FillWalls(chunk, wallTileId);
 
         var rooms = new List<Room>();
 
@@ -56,7 +58,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
         for (int pass = 0; pass < passes; pass++)
         {
             bool horizontal = pass == 0;
-            CarveTunnel(chunk, rng, size, horizontal, rooms);
+            CarveTunnel(chunk, rng, size, horizontal, rooms, floorTileId);
         }
 
         // Step 3: Place stairs
@@ -75,9 +77,6 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
         DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
 
-        // Step 7: Biome tint
-        DungeonHelper.ApplyBiomeTint(chunk, biome);
-
         // Spawn point: center of the first room/chamber
         if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
             result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
@@ -86,7 +85,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
     }
 
     private static void CarveTunnel(Chunk chunk, SeededRandom rng, int size,
-        bool horizontal, List<Room> rooms)
+        bool horizontal, List<Room> rooms, int floorTileId)
     {
         int tunnelWidth = MinTunnelWidth + rng.Next(MaxTunnelWidth - MinTunnelWidth + 1);
         int roughness = 40 + rng.Next(30);
@@ -116,7 +115,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
                 // Carve tunnel cross-section
                 int halfW = tunnelWidth / 2;
                 for (int dy = -halfW; dy <= halfW; dy++)
-                    DungeonHelper.CarveTile(chunk, x, posY + dy);
+                    DungeonHelper.CarveTile(chunk, x, posY + dy, floorTileId);
 
                 // Chamber chance
                 if (rng.Next(100) < ChamberChance && x > Padding + 3 && x < size - Padding - MaxChamberSize)
@@ -131,7 +130,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
                     if (chamberY >= Padding && chamberY + chamberH < size - Padding)
                     {
                         var room = new Room(x, chamberY, chamberW, chamberH);
-                        DungeonHelper.CarveRoom(chunk, room);
+                        DungeonHelper.CarveRoom(chunk, room, floorTileId);
                         rooms.Add(room);
                     }
                 }
@@ -141,13 +140,13 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
             int startRoomW = 5 + rng.Next(3);
             int startRoomH = 5 + rng.Next(3);
             var startRoom = new Room(Padding + 1, posY - startRoomH / 2, startRoomW, startRoomH);
-            DungeonHelper.CarveRoom(chunk, startRoom);
+            DungeonHelper.CarveRoom(chunk, startRoom, floorTileId);
             rooms.Insert(0, startRoom);
 
             int endRoomW = 5 + rng.Next(3);
             int endRoomH = 5 + rng.Next(3);
             var endRoom = new Room(size - Padding - endRoomW - 1, posY - endRoomH / 2, endRoomW, endRoomH);
-            DungeonHelper.CarveRoom(chunk, endRoom);
+            DungeonHelper.CarveRoom(chunk, endRoom, floorTileId);
             rooms.Add(endRoom);
         }
         else
@@ -171,7 +170,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
 
                 int halfW = tunnelWidth / 2;
                 for (int dx = -halfW; dx <= halfW; dx++)
-                    DungeonHelper.CarveTile(chunk, posX + dx, y);
+                    DungeonHelper.CarveTile(chunk, posX + dx, y, floorTileId);
 
                 if (rng.Next(100) < ChamberChance && y > Padding + 3 && y < size - Padding - MaxChamberSize)
                 {
@@ -185,7 +184,7 @@ public class DirectionalTunnelGenerator : IDungeonGenerator
                     if (chamberX >= Padding && chamberX + chamberW < size - Padding)
                     {
                         var room = new Room(chamberX, y, chamberW, chamberH);
-                        DungeonHelper.CarveRoom(chunk, room);
+                        DungeonHelper.CarveRoom(chunk, room, floorTileId);
                         rooms.Add(room);
                     }
                 }

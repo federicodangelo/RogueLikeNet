@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -44,9 +43,11 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 
         // Step 1: Fill with walls
-        DungeonHelper.FillWalls(chunk);
+        DungeonHelper.FillWalls(chunk, wallTileId);
 
         // Step 2: Randomly carve interior cells
         var map = new bool[size, size]; // true = floor
@@ -72,7 +73,7 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
             for (int y = 0; y < size; y++)
             {
                 if (map[x, y])
-                    DungeonHelper.CarveFloor(chunk, x, y);
+                    DungeonHelper.CarveFloor(chunk, x, y, floorTileId);
             }
 
         // Step 5: Flood fill to find connected regions, keep largest
@@ -105,11 +106,7 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
                 if (map[x, y] && regionMap[x, y] != largestId)
                 {
                     map[x, y] = false;
-                    ref var tile = ref chunk.Tiles[x, y];
-                    tile.Type = TileType.Blocked;
-                    tile.GlyphId = TileDefinitions.GlyphWall;
-                    tile.FgColor = TileDefinitions.ColorWallFg;
-                    tile.BgColor = TileDefinitions.ColorBlack;
+                    chunk.Tiles[x, y].TileId = wallTileId;
                 }
             }
 
@@ -131,9 +128,6 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
         DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
-
-        // Step 11: Biome tint
-        DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         // Spawn point: center of the first extracted room
         if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)

@@ -1,5 +1,5 @@
 using RogueLikeNet.Core.Components;
-using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -26,15 +26,10 @@ public class EmptyGenerator : IDungeonGenerator
         if (chunkZ != Position.DefaultZ)
             return result;
 
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
+                chunk.Tiles[x, y].TileId = floorTileId;
 
         // Spawn point: center of the chunk
         if (chunkX == 0 && chunkY == 0)

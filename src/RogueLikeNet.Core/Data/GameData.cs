@@ -6,16 +6,18 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class GameData
 {
+    public readonly TilesRegistry Tiles = new();
     public readonly ItemRegistry Items = new();
     public readonly RecipeRegistry Recipes;
     public readonly ResourceNodeRegistry ResourceNodes = new();
     public readonly NpcRegistry Npcs = new();
-    public readonly BiomeRegistry Biomes = new();
+    public readonly BiomeRegistry Biomes;
     public readonly AnimalRegistry Animals = new();
 
     public GameData()
     {
         Recipes = new RecipeRegistry(Items);
+        Biomes = new BiomeRegistry(Tiles);
     }
 
     /// <summary>
@@ -25,6 +27,7 @@ public sealed class GameData
 
     public void LogLoadedData(TextWriter output)
     {
+        output.WriteLine($"[GameData] Loaded {Tiles.Count} tiles");
         output.WriteLine($"[GameData] Loaded {Items.Count} items");
         output.WriteLine($"[GameData] Loaded {Recipes.Count} recipes");
         output.WriteLine($"[GameData] Loaded {ResourceNodes.Count} resource nodes");

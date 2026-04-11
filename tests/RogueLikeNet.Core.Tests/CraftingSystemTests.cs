@@ -46,10 +46,7 @@ public class CraftingSystemTests
 
     private static TileInfo FloorTile() => new()
     {
-        Type = TileType.Floor,
-        GlyphId = TileDefinitions.GlyphFloor,
-        FgColor = TileDefinitions.ColorFloorFg,
-        BgColor = TileDefinitions.ColorBlack,
+        TileId = GameData.Instance.Tiles.GetNumericId("floor"),
     };
 
     // ──────────────────────────────────────────────────────────────

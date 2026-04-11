@@ -181,26 +181,29 @@ public class DataLoaderTests
     [Fact]
     public void LoadFromJson_RegistersBiomes()
     {
+        var tilesJson = """
+        [
+          { "id": "forest_floor", "name": "Forest Floor", "type": "floor", "glyphId": 250, "fgColor": "#558844", "bgColor": "#000000", "walkable": true, "transparent": true },
+          { "id": "forest_wall",  "name": "Forest Wall",  "type": "blocked", "glyphId": 219, "fgColor": "#90BB88", "bgColor": "#000000", "walkable": false, "transparent": false },
+          { "id": "forest_deco",  "name": "Forest Deco",  "type": "floor", "glyphId": 44, "fgColor": "#558844", "bgColor": "#000000", "walkable": true, "transparent": true },
+          { "id": "forest_water", "name": "Forest Water", "type": "water", "glyphId": 247, "fgColor": "#4484FF", "bgColor": "#001133", "walkable": false, "transparent": true }
+        ]
+        """;
         var json = """
         [
           {
             "id": "forest",
             "name": "Forest",
-            "floorColor": 6710835,
-            "tintR": 85,
-            "tintG": 110,
-            "tintB": 80,
+            "floorTileId": "forest_floor",
+            "wallTileId": "forest_wall",
             "decorations": [
-              { "glyphId": 44, "fgColor": 5605444, "chance1000": 12 }
+              { "tileId": "forest_deco", "chance1000": 12 }
             ],
             "enemySpawns": [
               { "npcId": "goblin", "weight": 75 }
             ],
             "liquid": {
-              "tileType": "water",
-              "glyphId": 247,
-              "fgColor": 4490495,
-              "bgColor": 4403,
+              "tileId": "forest_water",
               "chance100": 20
             },
             "resourceWeights": [
@@ -210,14 +213,14 @@ public class DataLoaderTests
         ]
         """;
 
-        var data = DataLoader.LoadFromJsonForTests(biomesJson: json);
+        var data = DataLoader.LoadFromJsonForTests(tilesJson: tilesJson, biomesJson: json);
 
         Assert.Equal(1, data.Biomes.Count);
         var forest = data.Biomes.Get("forest");
         Assert.NotNull(forest);
         Assert.NotEqual(0, forest.NumericId);
         Assert.Equal("Forest", forest.Name);
-        Assert.Equal(85, forest.TintR);
+        Assert.Equal("forest_floor", forest.FloorTileId);
         Assert.Single(forest.Decorations);
         Assert.Single(forest.EnemySpawns);
         Assert.NotNull(forest.Liquid);

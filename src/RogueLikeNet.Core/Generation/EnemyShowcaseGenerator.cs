@@ -38,16 +38,11 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
         if (chunkZ != Position.DefaultZ)
             return result;
 
-        // Fill with floor
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+        int wallTileId = GameData.Instance.Tiles.GetNumericId("wall");
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
+                chunk.Tiles[x, y].TileId = floorTileId;
 
         if (chunkX != 0 || chunkY != 0)
             return result;
@@ -70,8 +65,8 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
         // Broad torch at spawn for initial visibility
         result.Elements.Add(new DungeonElement(
             Position.FromCoords(worldOffsetX + spawnX, worldOffsetY + 1, chunkZ),
-            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-            new LightSource(30, TileDefinitions.ColorTorchFg)));
+            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+            new LightSource(30, RenderConstants.ColorTorchFg)));
 
         var allNpcs = GameData.Instance.Npcs.All.ToArray();
         for (int enemyIdx = 0; enemyIdx < allNpcs.Length; enemyIdx++)
@@ -93,7 +88,7 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
                 // Torch inside room so player can see through the doorway
                 result.Elements.Add(new DungeonElement(
                     Position.FromCoords(worldOffsetX + rx + roomSize / 2, worldOffsetY + ry + roomSize / 2, chunkZ),
-                    new TileAppearance(TileDefinitions.GlyphTorch, def.FgColor),
+                    new TileAppearance(RenderConstants.GlyphTorch, def.FgColor),
                     new LightSource(5, def.FgColor)));
 
                 // Enemy in center
@@ -137,10 +132,6 @@ public class EnemyShowcaseGenerator : IDungeonGenerator
     private static void SetWall(Chunk chunk, int x, int y)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Blocked;
-        tile.GlyphId = TileDefinitions.GlyphWall;
-        tile.FgColor = TileDefinitions.ColorWallFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        chunk.Tiles[x, y].TileId = GameData.Instance.Tiles.GetNumericId("wall");
     }
 }

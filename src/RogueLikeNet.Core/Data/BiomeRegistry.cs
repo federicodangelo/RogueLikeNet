@@ -6,19 +6,35 @@ namespace RogueLikeNet.Core.Data;
 
 /// <summary>
 /// Holds all loaded biome definitions with lookup by numeric ID.
-/// Provides biome palette data, decoration tables, enemy spawn tables, and tinting logic.
+/// Provides biome palette data, decoration tables, enemy spawn tables, and tile lookups.
 /// </summary>
 public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
 {
     public const int BiomeCount = 10;
 
     private readonly BiomeDefinition?[] _byBiomeType = new BiomeDefinition?[BiomeCount];
+    private readonly TilesRegistry _tilesRegistry;
+
+    public BiomeRegistry(TilesRegistry tilesRegistry)
+    {
+        _tilesRegistry = tilesRegistry;
+    }
 
     protected override void ExtraRegister(BiomeDefinition biome)
     {
         // Map string Id to BiomeType enum for fast lookup by enum value
         if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
             _byBiomeType[(int)biomeType] = biome;
+
+        // Resolve tile IDs to numeric IDs
+        biome.FloorTileNumericId = _tilesRegistry.GetNumericId(biome.FloorTileId);
+        biome.WallTileNumericId = _tilesRegistry.GetNumericId(biome.WallTileId);
+
+        foreach (var deco in biome.Decorations)
+            deco.TileNumericId = _tilesRegistry.GetNumericId(deco.TileId);
+
+        if (biome.Liquid != null)
+            biome.Liquid.TileNumericId = _tilesRegistry.GetNumericId(biome.Liquid.TileId);
     }
 
     public BiomeDefinition? Get(BiomeType biome) =>
@@ -38,30 +54,11 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
     /// <summary>Returns the enemy spawn table for a biome.</summary>
     public BiomeEnemySpawnDef[] GetEnemySpawns(BiomeType biome) => Get(biome)?.EnemySpawns ?? [];
 
-    /// <summary>Returns the floor color for a biome.</summary>
-    public int GetFloorColor(BiomeType biome) => Get(biome)?.FloorColor ?? 0;
+    /// <summary>Returns the floor tile numeric ID for a biome.</summary>
+    public int GetFloorTileId(BiomeType biome) => Get(biome)?.FloorTileNumericId ?? 0;
 
-    /// <summary>Applies biome tint to a packed 0xRRGGBB color using the biome's tint values.</summary>
-    public int ApplyBiomeTint(int packedRgb, BiomeType biome)
-    {
-        if (packedRgb == 0) return 0;
-        var def = Get(biome);
-        if (def == null) return packedRgb;
-        var color = ColorUtils.IntToColor4(packedRgb);
-        var scaledColor = ColorUtils.ScaleColor(color, def.TintR, def.TintG, def.TintB);
-        return ColorUtils.Color4ToInt(scaledColor);
-    }
-
-    /// <summary>Applies biome tint using numeric biome ID.</summary>
-    public int ApplyBiomeTint(int packedRgb, int biomeId)
-    {
-        if (packedRgb == 0) return 0;
-        var biome = Get(biomeId);
-        if (biome == null) return packedRgb;
-        var color = ColorUtils.IntToColor4(packedRgb);
-        var scaledColor = ColorUtils.ScaleColor(color, biome.TintR, biome.TintG, biome.TintB);
-        return ColorUtils.Color4ToInt(scaledColor);
-    }
+    /// <summary>Returns the wall tile numeric ID for a biome.</summary>
+    public int GetWallTileId(BiomeType biome) => Get(biome)?.WallTileNumericId ?? 0;
 
     /// <summary>
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.

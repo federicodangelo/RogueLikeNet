@@ -92,10 +92,7 @@ public class ClientGameState
                 if (chunk.WorldToLocal(tileUpdate.X, tileUpdate.Y, out var lx, out var ly))
                 {
                     ref var tile = ref chunk.Tiles[lx, ly];
-                    tile.Type = (TileType)tileUpdate.TileType;
-                    tile.GlyphId = tileUpdate.GlyphId;
-                    tile.FgColor = tileUpdate.FgColor;
-                    tile.BgColor = tileUpdate.BgColor;
+                    tile.TileId = tileUpdate.TileId;
                     tile.PlaceableItemId = tileUpdate.PlaceableItemId;
                     tile.PlaceableItemExtra = tileUpdate.PlaceableItemExtra;
                     chunk.LightLevels[lx, ly] = tileUpdate.LightLevel;
@@ -207,10 +204,7 @@ public class ClientGameState
             {
                 int idx = y * Chunk.Size + x;
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = (TileType)msg.TileTypes[idx];
-                tile.GlyphId = msg.TileGlyphs[idx];
-                tile.FgColor = msg.TileFgColors[idx];
-                tile.BgColor = msg.TileBgColors[idx];
+                tile.TileId = msg.TileIds[idx];
                 tile.PlaceableItemId = msg.TilePlaceableItemIds[idx];
                 tile.PlaceableItemExtra = msg.TilePlaceableItemExtras[idx];
             }

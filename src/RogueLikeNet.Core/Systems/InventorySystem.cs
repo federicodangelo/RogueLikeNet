@@ -98,7 +98,7 @@ public class InventorySystem
 
         var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
         int dropGlyph = def != null && def.IsPlaceable
-            ? TileDefinitions.GlyphDroppedPlaceable
+            ? RenderConstants.GlyphDroppedPlaceable
             : def?.GlyphId ?? 0;
         engine.SpawnItemOnGround(itemData, drop);
     }

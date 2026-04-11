@@ -187,7 +187,7 @@ public class GameEngineTests
         var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                chunk.Tiles[x, y].Type = TileType.Blocked;
+                chunk.Tiles[x, y].TileId = GameData.Instance.Tiles.GetNumericId("wall");
 
         var (rx, ry, _) = engine.FindSpawnPosition();
         Assert.Equal(Chunk.Size / 2, rx);
@@ -332,7 +332,7 @@ public class GameEngineTests
     {
         using var engine = new GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
-        engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!.Tiles[10, 10].Type = TileType.Floor;
+        engine.WorldMap.GetChunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ))!.Tiles[10, 10].TileId = GameData.Instance.Tiles.GetNumericId("floor");
         var drop = engine.FindDropPosition(Position.FromCoords(10, 10, Position.DefaultZ));
         Assert.Equal(10, drop.X);
         Assert.Equal(10, drop.Y);
@@ -436,16 +436,16 @@ public class GameEngineTests
     public void ResourceItems_UseDifferentGlyphs()
     {
         var wood = Item("wood");
-        Assert.Equal(TileDefinitions.GlyphLog, wood.GlyphId);
+        Assert.Equal(RenderConstants.GlyphLog, wood.GlyphId);
 
         var copper = Item("copper_ore");
-        Assert.Equal(TileDefinitions.GlyphOreNugget, copper.GlyphId);
+        Assert.Equal(RenderConstants.GlyphOreNugget, copper.GlyphId);
 
         var iron = Item("iron_ore");
-        Assert.Equal(TileDefinitions.GlyphOreNugget, iron.GlyphId);
+        Assert.Equal(RenderConstants.GlyphOreNugget, iron.GlyphId);
 
         var gold = Item("gold_ore");
-        Assert.Equal(TileDefinitions.GlyphOreNugget, gold.GlyphId);
+        Assert.Equal(RenderConstants.GlyphOreNugget, gold.GlyphId);
     }
 
     // ──────────────────────────────────────────────
@@ -753,7 +753,7 @@ public class GameEngineTests
             var stationPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
             engine.WorldMap.SetTile(stationPos, new TileInfo
             {
-                Type = TileType.Floor,
+                TileId = GameData.Instance.Tiles.GetNumericId("floor"),
                 PlaceableItemId = benchDef.NumericId,
             });
         }
@@ -779,7 +779,7 @@ public class GameEngineTests
         player.CombatStats.Attack = 9999;
 
         var monsterPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
-        engine.WorldMap.SetTile(monsterPos, new TileInfo { Type = TileType.Floor });
+        engine.WorldMap.SetTile(monsterPos, new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") });
         engine.SpawnMonster(monsterPos, new MonsterData { MonsterTypeId = 0, Health = 1, Attack = 0, Defense = 0, Speed = 1 });
 
         player.Input.ActionType = ActionTypes.Move;
@@ -872,7 +872,7 @@ public class GameEngineTests
             var chunk = new Chunk(chunkPos);
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    chunk.Tiles[x, y] = new TileInfo { Type = TileType.Floor };
+                    chunk.Tiles[x, y] = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") };
 
             return new GenerationResult(chunk)
             {

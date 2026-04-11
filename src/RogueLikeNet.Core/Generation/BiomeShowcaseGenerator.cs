@@ -36,14 +36,12 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
             return result;
 
         // Fill with floor
+        int defaultFloorTileId = GameData.Instance.Tiles.GetNumericId("floor");
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                tile.TileId = defaultFloorTileId;
             }
 
         if (chunkX != 0 || chunkY != 0)
@@ -71,8 +69,8 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
         // Broad torch at spawn for initial visibility
         result.Elements.Add(new DungeonElement(
             Position.FromCoords(worldOffsetX + startX + roomW + 1, worldOffsetY + 0, chunkZ),
-            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-            new LightSource(30, TileDefinitions.ColorTorchFg)));
+            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+            new LightSource(30, RenderConstants.ColorTorchFg)));
 
         var biomes = (BiomeType[])Enum.GetValues(typeof(BiomeType));
 
@@ -88,27 +86,28 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                 continue;
 
             // Walled room with 3-tile centered north opening
-            BuildRoom(chunk, rx, ry, roomW, roomH);
+            BuildRoom(chunk, rx, ry, roomW, roomH, biome);
 
-            // Apply biome tint to interior floor tiles
+            // Apply biome floor tiles to interior
+            int biomeFloorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
             for (int x = rx; x < rx + roomW; x++)
                 for (int y = ry; y < ry + roomH; y++)
                 {
                     ref var tile = ref chunk.Tiles[x, y];
-                    tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
-                    tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
+                    tile.TileId = biomeFloorTileId;
                 }
 
-            // Tint wall tiles on all four sides (TintWall is a no-op on floor tiles)
+            // Tint wall tiles on all four sides
+            int biomeWallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
             for (int x = rx - 1; x <= rx + roomW; x++)
             {
-                TintWall(chunk, x, ry - 1, biome); // north (partial wall + corners)
-                TintWall(chunk, x, ry + roomH, biome); // south
+                SetBiomeWall(chunk, x, ry - 1, biomeWallTileId);
+                SetBiomeWall(chunk, x, ry + roomH, biomeWallTileId);
             }
             for (int y = ry; y <= ry + roomH; y++)
             {
-                TintWall(chunk, rx - 1, y, biome);   // west
-                TintWall(chunk, rx + roomW, y, biome); // east
+                SetBiomeWall(chunk, rx - 1, y, biomeWallTileId);
+                SetBiomeWall(chunk, rx + roomW, y, biomeWallTileId);
             }
 
             // Decorations row near the south wall
@@ -121,9 +120,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                     int dx = rx + 1 + d * 3;
                     if (dx >= rx + roomW - 1) break;
                     ref var tile = ref chunk.Tiles[dx, decoY];
-                    tile.Type = TileType.Floor;
-                    tile.GlyphId = decorations[d].GlyphId;
-                    tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(decorations[d].FgColor, biome);
+                    tile.TileId = decorations[d].TileNumericId;
                 }
             }
 
@@ -141,10 +138,7 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
                         if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                         {
                             ref var tile = ref chunk.Tiles[x, y];
-                            tile.Type = liquidDef.TileType;
-                            tile.GlyphId = liquidDef.GlyphId;
-                            tile.FgColor = liquidDef.FgColor;
-                            tile.BgColor = liquidDef.BgColor;
+                            tile.TileId = liquidDef.TileNumericId;
                         }
                     }
             }
@@ -152,8 +146,8 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
             // Torch inside the room for FOV
             result.Elements.Add(new DungeonElement(
                 Position.FromCoords(worldOffsetX + rx + 1, worldOffsetY + ry + 1, chunkZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(8, TileDefinitions.ColorTorchFg)));
+                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                new LightSource(8, RenderConstants.ColorTorchFg)));
         }
 
         return result;
@@ -164,46 +158,41 @@ public class BiomeShowcaseGenerator : IDungeonGenerator
     /// North wall has a 3-tile centered opening; south, west, east walls are solid.
     /// Interior tiles remain as pre-filled floor.
     /// </summary>
-    private static void BuildRoom(Chunk chunk, int rx, int ry, int rw, int rh)
+    private static void BuildRoom(Chunk chunk, int rx, int ry, int rw, int rh, BiomeType biome)
     {
-        int openStart = (rw - 3) / 2; // local x offset from rx where the opening starts
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int openStart = (rw - 3) / 2;
 
         // North wall with centered 3-tile opening (lx = x - rx, range -1..rw)
         for (int x = rx - 1; x <= rx + rw; x++)
         {
             int lx = x - rx;
             if (lx < openStart || lx > openStart + 2)
-                SetWall(chunk, x, ry - 1);
+                SetWall(chunk, x, ry - 1, wallTileId);
         }
         // South wall (full)
         for (int x = rx - 1; x <= rx + rw; x++)
-            SetWall(chunk, x, ry + rh);
+            SetWall(chunk, x, ry + rh, wallTileId);
         // West and east walls
         for (int y = ry; y <= ry + rh; y++)
         {
-            SetWall(chunk, rx - 1, y);
-            SetWall(chunk, rx + rw, y);
+            SetWall(chunk, rx - 1, y, wallTileId);
+            SetWall(chunk, rx + rw, y, wallTileId);
         }
     }
 
-    private static void SetWall(Chunk chunk, int x, int y)
+    private static void SetWall(Chunk chunk, int x, int y, int wallTileId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Blocked;
-        tile.GlyphId = TileDefinitions.GlyphWall;
-        tile.FgColor = TileDefinitions.ColorWallFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        tile.TileId = wallTileId;
     }
 
-    private static void TintWall(Chunk chunk, int x, int y, BiomeType biome)
+    private static void SetBiomeWall(Chunk chunk, int x, int y, int wallTileId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
         if (tile.Type == TileType.Blocked)
-        {
-            tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
-            tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
-        }
+            tile.TileId = wallTileId;
     }
 }

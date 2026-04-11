@@ -1,6 +1,5 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Generation;
@@ -64,8 +63,10 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
 
         int depth = Position.DefaultZ - chunkZ; // 0 at surface, increases going down
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 
-        DungeonHelper.FillWalls(chunk);
+        DungeonHelper.FillWalls(chunk, wallTileId);
 
         // Build BSP tree
         var root = new BspNode(Padding, Padding, Chunk.Size - Padding * 2, Chunk.Size - Padding * 2);
@@ -75,39 +76,36 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         CreateRooms(root, rng, rooms);
 
         foreach (var room in rooms)
-            DungeonHelper.CarveRoom(chunk, room);
+            DungeonHelper.CarveRoom(chunk, room, floorTileId);
 
-        ConnectRooms(root, chunk, rng);
+        ConnectRooms(root, chunk, rng, floorTileId);
 
         // Place stairs using deterministic boundary positions
         // Up-stairs: connects this level to the level above (boundary between chunkZ and chunkZ+1)
         if (chunkZ < Position.DefaultZ)
         {
             var (upX, upY) = GetStairPosition(chunkX, chunkY, chunkZ);
-            DungeonHelper.CarveFloor(chunk, upX, upY);
-            DungeonHelper.PlaceFeature(chunk, upX, upY, TileType.StairsUp,
-                TileDefinitions.GlyphStairsUp, TileDefinitions.ColorWhite);
-            EnsureConnected(chunk, rooms, upX, upY, rng);
+            DungeonHelper.CarveFloor(chunk, upX, upY, floorTileId);
+            DungeonHelper.PlaceFeature(chunk, upX, upY, GameData.Instance.Tiles.GetNumericId("stairs_up"));
+            EnsureConnected(chunk, rooms, upX, upY, rng, floorTileId);
         }
 
         // Down-stairs: connects this level to the level below (boundary between chunkZ-1 and chunkZ)
         if (chunkZ > 0)
         {
             var (downX, downY) = GetStairPosition(chunkX, chunkY, chunkZ - 1);
-            DungeonHelper.CarveFloor(chunk, downX, downY);
-            DungeonHelper.PlaceFeature(chunk, downX, downY, TileType.StairsDown,
-                TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
-            EnsureConnected(chunk, rooms, downX, downY, rng);
+            DungeonHelper.CarveFloor(chunk, downX, downY, floorTileId);
+            DungeonHelper.PlaceFeature(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
+            EnsureConnected(chunk, rooms, downX, downY, rng, floorTileId);
         }
 
         // At overworld level, place a down-stair to go below
         if (chunkZ == Position.DefaultZ)
         {
             var (downX, downY) = GetStairPosition(chunkX, chunkY, chunkZ - 1);
-            DungeonHelper.CarveFloor(chunk, downX, downY);
-            DungeonHelper.PlaceFeature(chunk, downX, downY, TileType.StairsDown,
-                TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
-            EnsureConnected(chunk, rooms, downX, downY, rng);
+            DungeonHelper.CarveFloor(chunk, downX, downY, floorTileId);
+            DungeonHelper.PlaceFeature(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
+            EnsureConnected(chunk, rooms, downX, downY, rng, floorTileId);
         }
 
         DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
@@ -118,7 +116,6 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
         DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         // Spawn point at overworld level only
         if (chunkX == 0 && chunkY == 0 && chunkZ == Position.DefaultZ && rooms.Count > 0)
@@ -172,16 +169,16 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         rooms.Add(room);
     }
 
-    private static void ConnectRooms(BspNode node, Chunk chunk, SeededRandom rng)
+    private static void ConnectRooms(BspNode node, Chunk chunk, SeededRandom rng, int floorTileId)
     {
         if (node.Left == null || node.Right == null) return;
-        ConnectRooms(node.Left, chunk, rng);
-        ConnectRooms(node.Right, chunk, rng);
+        ConnectRooms(node.Left, chunk, rng, floorTileId);
+        ConnectRooms(node.Right, chunk, rng, floorTileId);
 
         var leftRoom = GetRoom(node.Left);
         var rightRoom = GetRoom(node.Right);
         if (leftRoom == null || rightRoom == null) return;
-        DungeonHelper.CarveCorridor(chunk, leftRoom.CenterX, leftRoom.CenterY, rightRoom.CenterX, rightRoom.CenterY, rng);
+        DungeonHelper.CarveCorridor(chunk, leftRoom.CenterX, leftRoom.CenterY, rightRoom.CenterX, rightRoom.CenterY, rng, floorTileId);
     }
 
     private static Room? GetRoom(BspNode node)
@@ -194,7 +191,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
     /// <summary>
     /// Ensures the stair tile at (sx, sy) is connected to the nearest room by carving a corridor.
     /// </summary>
-    private static void EnsureConnected(Chunk chunk, List<Room> rooms, int sx, int sy, SeededRandom rng)
+    private static void EnsureConnected(Chunk chunk, List<Room> rooms, int sx, int sy, SeededRandom rng, int floorTileId)
     {
         if (rooms.Count == 0) return;
 
@@ -208,6 +205,6 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         }
 
         if (best != null)
-            DungeonHelper.CarveCorridor(chunk, sx, sy, best.CenterX, best.CenterY, rng);
+            DungeonHelper.CarveCorridor(chunk, sx, sy, best.CenterX, best.CenterY, rng, floorTileId);
     }
 }

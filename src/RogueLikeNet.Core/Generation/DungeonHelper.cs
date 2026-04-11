@@ -7,81 +7,62 @@ namespace RogueLikeNet.Core.Generation;
 
 /// <summary>
 /// Shared helpers used by all dungeon generator implementations.
-/// Handles tile carving, feature placement, population, decorations, liquids, and biome tinting.
+/// Handles tile carving, feature placement, population, decorations, and liquids.
 /// </summary>
 internal static class DungeonHelper
 {
-    public static void FillWalls(Chunk chunk)
+    public static void FillWalls(Chunk chunk, int wallTileId)
     {
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Blocked;
-                tile.GlyphId = TileDefinitions.GlyphWall;
-                tile.FgColor = TileDefinitions.ColorWallFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
+                chunk.Tiles[x, y].TileId = wallTileId;
     }
 
-    public static void CarveTile(Chunk chunk, int x, int y)
+    public static void CarveTile(Chunk chunk, int x, int y, int floorTileId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
         if (tile.Type == TileType.Blocked)
-        {
-            tile.Type = TileType.Floor;
-            tile.GlyphId = TileDefinitions.GlyphFloor;
-            tile.FgColor = TileDefinitions.ColorFloorFg;
-            tile.BgColor = TileDefinitions.ColorBlack;
-        }
+            tile.TileId = floorTileId;
     }
 
-    public static void CarveFloor(Chunk chunk, int x, int y)
+    public static void CarveFloor(Chunk chunk, int x, int y, int floorTileId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Floor;
-        tile.GlyphId = TileDefinitions.GlyphFloor;
-        tile.FgColor = TileDefinitions.ColorFloorFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        chunk.Tiles[x, y].TileId = floorTileId;
     }
 
-    public static void CarveRoom(Chunk chunk, Room room)
+    public static void CarveRoom(Chunk chunk, Room room, int floorTileId)
     {
         for (int x = room.X; x < room.X + room.Width; x++)
             for (int y = room.Y; y < room.Y + room.Height; y++)
-                CarveFloor(chunk, x, y);
+                CarveFloor(chunk, x, y, floorTileId);
     }
 
-    public static void PlaceFeature(Chunk chunk, int x, int y, TileType type, int glyph, int fgColor)
+    public static void PlaceFeature(Chunk chunk, int x, int y, int tileId)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = type;
-        tile.GlyphId = glyph;
-        tile.FgColor = fgColor;
+        chunk.Tiles[x, y].TileId = tileId;
     }
 
     public static void PlaceStairs(Chunk chunk, List<Room> rooms)
     {
         if (rooms.Count < 2)
-        {
             return;
-        }
 
         var first = rooms[0];
         var last = rooms[^1];
-        PlaceFeature(chunk, first.CenterX, first.CenterY, TileType.StairsUp,
-            TileDefinitions.GlyphStairsUp, TileDefinitions.ColorWhite);
-        PlaceFeature(chunk, last.CenterX, last.CenterY, TileType.StairsDown,
-            TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
+        int stairsUp = GameData.Instance.Tiles.GetNumericId("stairs_up");
+        int stairsDown = GameData.Instance.Tiles.GetNumericId("stairs_down");
+        PlaceFeature(chunk, first.CenterX, first.CenterY, stairsUp);
+        PlaceFeature(chunk, last.CenterX, last.CenterY, stairsDown);
     }
 
     public static void PlaceLiquidPools(Chunk chunk, List<Room> rooms, BiomeType biome, SeededRandom rng)
     {
         var liquidDef = GameData.Instance.Biomes.GetLiquid(biome);
         if (liquidDef == null) return;
+        int liquidTileId = liquidDef.TileNumericId;
 
         for (int i = 1; i < rooms.Count - 1; i++)
         {
@@ -104,13 +85,9 @@ internal static class DungeonHelper
                     if (x >= 0 && x < Chunk.Size && y >= 0 && y < Chunk.Size)
                     {
                         if (circular && Position.ManhattanDistance2D(x, y, poolCenterX, poolCenterY) > Math.Min(poolW, poolH) / 2)
-                            continue; // Make the pool roughly circular
+                            continue;
 
-                        ref var tile = ref chunk.Tiles[x, y];
-                        tile.Type = liquidDef.TileType;
-                        tile.GlyphId = liquidDef.GlyphId;
-                        tile.FgColor = liquidDef.FgColor;
-                        tile.BgColor = liquidDef.BgColor;
+                        chunk.Tiles[x, y].TileId = liquidTileId;
                     }
                 }
             }
@@ -133,9 +110,7 @@ internal static class DungeonHelper
                 {
                     if (rng.Next(1000) < deco.Chance1000)
                     {
-                        tile.Type = TileType.Floor;
-                        tile.GlyphId = deco.GlyphId;
-                        tile.FgColor = deco.FgColor;
+                        tile.TileId = deco.TileNumericId;
                         break;
                     }
                 }
@@ -199,8 +174,8 @@ internal static class DungeonHelper
             {
                 result.Elements.Add(new DungeonElement(
                     Position.FromCoords(worldOffsetX + room.CenterX, worldOffsetY + room.CenterY, worldZ),
-                    new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                    new LightSource(6, TileDefinitions.ColorTorchFg)));
+                    new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                    new LightSource(6, RenderConstants.ColorTorchFg)));
             }
         }
     }
@@ -215,7 +190,7 @@ internal static class DungeonHelper
     {
         for (int i = 1; i < rooms.Count; i++)
         {
-            int nodeCount = rng.Next(3); // 0-2 nodes per room
+            int nodeCount = rng.Next(3);
             var room = rooms[i];
             for (int n = 0; n < nodeCount; n++)
             {
@@ -234,44 +209,33 @@ internal static class DungeonHelper
         }
     }
 
-    public static void ApplyBiomeTint(Chunk chunk, BiomeType biome)
-    {
-        for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
-                tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
-            }
-    }
-
-    public static void CarveHLine(Chunk chunk, int x1, int x2, int y)
+    public static void CarveHLine(Chunk chunk, int x1, int x2, int y, int floorTileId)
     {
         int minX = Math.Min(x1, x2);
         int maxX = Math.Max(x1, x2);
         for (int x = minX; x <= maxX; x++)
-            CarveTile(chunk, x, y);
+            CarveTile(chunk, x, y, floorTileId);
     }
 
-    public static void CarveVLine(Chunk chunk, int y1, int y2, int x)
+    public static void CarveVLine(Chunk chunk, int y1, int y2, int x, int floorTileId)
     {
         int minY = Math.Min(y1, y2);
         int maxY = Math.Max(y1, y2);
         for (int y = minY; y <= maxY; y++)
-            CarveTile(chunk, x, y);
+            CarveTile(chunk, x, y, floorTileId);
     }
 
-    public static void CarveCorridor(Chunk chunk, int x1, int y1, int x2, int y2, SeededRandom rng)
+    public static void CarveCorridor(Chunk chunk, int x1, int y1, int x2, int y2, SeededRandom rng, int floorTileId)
     {
         if (rng.Next(2) == 0)
         {
-            CarveHLine(chunk, x1, x2, y1);
-            CarveVLine(chunk, y1, y2, x2);
+            CarveHLine(chunk, x1, x2, y1, floorTileId);
+            CarveVLine(chunk, y1, y2, x2, floorTileId);
         }
         else
         {
-            CarveVLine(chunk, y1, y2, x1);
-            CarveHLine(chunk, x1, x2, y2);
+            CarveVLine(chunk, y1, y2, x1, floorTileId);
+            CarveHLine(chunk, x1, x2, y2, floorTileId);
         }
     }
 
@@ -281,7 +245,6 @@ internal static class DungeonHelper
         int worldOffsetY = chunk.ChunkPosition.Y * Chunk.Size;
         int midX = Chunk.Size / 2;
         int midY = Chunk.Size / 2;
-        // Spiral outward from center until we find an open floor tile
         for (int radius = 0; radius < Chunk.Size / 2; radius++)
         {
             for (int dx = -radius; dx <= radius; dx++)
@@ -292,9 +255,7 @@ internal static class DungeonHelper
                     int cx = midX + dx, cy = midY + dy;
                     if (cx < 1 || cy < 1 || cx >= Chunk.Size - 1 || cy >= Chunk.Size - 1) continue;
                     if (chunk.Tiles[cx, cy].Type == TileType.Floor)
-                    {
                         return (worldOffsetX + cx, worldOffsetY + cy);
-                    }
                 }
             }
         }
@@ -308,7 +269,7 @@ internal static class DungeonHelper
         );
     }
 
-    public static void MakeTilesFloorInRadius(GenerationResult result, int x, int y, int radius)
+    public static void MakeTilesFloorInRadius(GenerationResult result, int x, int y, int radius, int floorTileId)
     {
         var chunk = result.Chunk;
 
@@ -321,10 +282,7 @@ internal static class DungeonHelper
                     continue;
                 if (cx < 0 || cy < 0 || cx >= Chunk.Size || cy >= Chunk.Size)
                     continue;
-                chunk.Tiles[cx, cy].Type = TileType.Floor;
-                chunk.Tiles[cx, cy].GlyphId = TileDefinitions.GlyphFloor;
-                chunk.Tiles[cx, cy].FgColor = TileDefinitions.ColorFloorFg;
-                chunk.Tiles[cx, cy].BgColor = TileDefinitions.ColorBlack;
+                chunk.Tiles[cx, cy].TileId = floorTileId;
             }
         }
     }

@@ -87,6 +87,19 @@ public static class DataLoader
     /// </summary>
     public static GameData Load(string dataDir)
     {
+        // Load tiles from data/tiles/
+        var tiles = new List<TileDefinition>();
+        var tilesDir = Path.Combine(dataDir, "tiles");
+        if (Directory.Exists(tilesDir))
+        {
+            foreach (var file in Directory.GetFiles(tilesDir, "*.json"))
+            {
+                var loaded = DeserializeFile<TileDefinition[]>(file);
+                if (loaded != null)
+                    tiles.AddRange(loaded);
+            }
+        }
+
         // Load items from all JSON files in data/items/
         var items = new List<ItemDefinition>();
         var itemsDir = Path.Combine(dataDir, "items");
@@ -145,11 +158,8 @@ public static class DataLoader
             animals = DeserializeFile<AnimalDefinition[]>(animalsFile);
         }
 
-        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
     }
-
-
-    /// <summary>
     /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
     /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
     /// </summary>
@@ -157,6 +167,18 @@ public static class DataLoader
     {
         var assembly = typeof(DataLoader).Assembly;
         var resourceNames = assembly.GetManifestResourceNames();
+
+        // Load tiles from all data/tiles/*.json resources
+        var tiles = new List<TileDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/tiles/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<TileDefinition[]>(assembly, name);
+                if (loaded != null)
+                    tiles.AddRange(loaded);
+            }
+        }
 
         // Load items from all data/items/*.json resources
         var items = new List<ItemDefinition>();
@@ -194,13 +216,14 @@ public static class DataLoader
         // Load animals
         var animals = DeserializeResource<AnimalDefinition[]>(assembly, "data/entities/animals.json");
 
-        return Load(items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
     }
 
-    private static GameData Load(IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals)
+    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals)
     {
         var data = new GameData();
 
+        data.Tiles.Register(tiles);
         data.Items.Register(items);
         data.Recipes.Register(recipes);
         data.ResourceNodes.Register(nodes);
@@ -217,6 +240,7 @@ public static class DataLoader
     /// Loads data from in-memory JSON strings (for testing or embedded resources).
     /// </summary>
     public static GameData LoadFromJsonForTests(
+        string? tilesJson = null,
         string? itemsJson = null,
         string? recipesJson = null,
         string? resourceNodesJson = null,
@@ -225,6 +249,13 @@ public static class DataLoader
         string? animalsJson = null)
     {
         var data = new GameData();
+
+        if (tilesJson != null)
+        {
+            var tiles = JsonSerializer.Deserialize<TileDefinition[]>(tilesJson, JsonOptions);
+            if (tiles != null)
+                data.Tiles.Register(tiles);
+        }
 
         if (itemsJson != null)
         {

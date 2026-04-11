@@ -79,7 +79,7 @@ public class FarmingShowcaseGeneratorTests
         bool hasTilled = false;
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-                if (result.Chunk.Tiles[x, y].GlyphId == FarmingSystem.TilledSoilGlyphId)
+                if (result.Chunk.Tiles[x, y].TileId == FarmingSystem.TilledSoilTileId)
                     hasTilled = true;
 
         Assert.True(hasTilled, "Expected tilled soil tiles in the farming showcase");

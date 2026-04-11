@@ -11,10 +11,9 @@ public class WorldSnapshotMsgTests
         var msg = new ChunkDataMsg();
         Assert.Equal(0, msg.ChunkX);
         Assert.Equal(0, msg.ChunkY);
-        Assert.Empty(msg.TileTypes);
-        Assert.Empty(msg.TileGlyphs);
-        Assert.Empty(msg.TileFgColors);
-        Assert.Empty(msg.TileBgColors);
+        Assert.Empty(msg.TileIds);
+        Assert.Empty(msg.TilePlaceableItemIds);
+        Assert.Empty(msg.TilePlaceableItemExtras);
     }
 
     [Fact]

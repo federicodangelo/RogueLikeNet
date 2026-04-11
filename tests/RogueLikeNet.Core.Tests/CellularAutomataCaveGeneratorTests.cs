@@ -1,5 +1,5 @@
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -64,12 +64,14 @@ public class CellularAutomataCaveGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 10; cx++)
         {
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
             var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
                     ref var t = ref result.Chunk.Tiles[x, y];
-                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
+                    if (t.Type == TileType.Floor && t.TileId != floorTileId)
                         totalDecorations++;
                 }
         }

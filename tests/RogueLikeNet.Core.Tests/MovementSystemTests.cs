@@ -220,7 +220,7 @@ public class MovementSystemTests
         var chunk = engine.WorldMap.GetChunkForWorldPos(player.Position);
         if (chunk != null && chunk.WorldToLocal(sx, sy, out int lx, out int ly))
         {
-            chunk.Tiles[lx, ly].Type = TileType.StairsDown;
+            chunk.Tiles[lx, ly].TileId = GameData.Instance.Tiles.GetNumericId("stairs_down");
         }
 
         // Ensure the chunk below exists and has a walkable tile at the same position
@@ -232,7 +232,7 @@ public class MovementSystemTests
         var belowChunk = engine.EnsureChunkLoaded(belowChunkPos);
         // Make destination tile walkable
         if (belowChunk.WorldToLocal(sx, sy, out int blx, out int bly))
-            belowChunk.Tiles[blx, bly].Type = TileType.Floor;
+            belowChunk.Tiles[blx, bly].TileId = GameData.Instance.Tiles.GetNumericId("floor");
 
         player.Input.ActionType = ActionTypes.UseStairs;
         engine.Tick();
@@ -253,7 +253,7 @@ public class MovementSystemTests
         var chunk = engine.WorldMap.GetChunkForWorldPos(player.Position);
         if (chunk != null && chunk.WorldToLocal(sx, sy, out int lx, out int ly))
         {
-            chunk.Tiles[lx, ly].Type = TileType.StairsUp;
+            chunk.Tiles[lx, ly].TileId = GameData.Instance.Tiles.GetNumericId("stairs_up");
         }
 
         // Ensure the chunk above exists
@@ -265,7 +265,7 @@ public class MovementSystemTests
         var aboveChunk = engine.EnsureChunkLoaded(aboveChunkPos);
         // Make destination tile walkable
         if (aboveChunk.WorldToLocal(sx, sy, out int alx, out int aly))
-            aboveChunk.Tiles[alx, aly].Type = TileType.Floor;
+            aboveChunk.Tiles[alx, aly].TileId = GameData.Instance.Tiles.GetNumericId("floor");
 
         player.Input.ActionType = ActionTypes.UseStairs;
         engine.Tick();
@@ -324,7 +324,7 @@ public class MovementSystemTests
         var chunk = engine.WorldMap.GetChunkForWorldPos(doorPos);
         if (chunk != null && chunk.WorldToLocal(doorPos.X, doorPos.Y, out int lx, out int ly))
         {
-            chunk.Tiles[lx, ly].Type = TileType.Floor;
+            chunk.Tiles[lx, ly].TileId = GameData.Instance.Tiles.GetNumericId("floor");
             chunk.Tiles[lx, ly].PlaceableItemId = doorDef.NumericId;
             chunk.Tiles[lx, ly].PlaceableItemExtra = 0; // closed
         }
@@ -514,7 +514,7 @@ public class MovementSystemTests
             Chunk.WorldToChunkCoord(player.Position).X,
             Chunk.WorldToChunkCoord(player.Position).Y, 0));
         if (chunk.WorldToLocal(sx, sy, out int lx, out int ly))
-            chunk.Tiles[lx, ly].Type = TileType.StairsDown;
+            chunk.Tiles[lx, ly].TileId = GameData.Instance.Tiles.GetNumericId("stairs_down");
 
         player.Input.ActionType = ActionTypes.UseStairs;
         engine.Tick();

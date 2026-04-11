@@ -43,8 +43,10 @@ public class BspDungeonGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 
-        DungeonHelper.FillWalls(chunk);
+        DungeonHelper.FillWalls(chunk, wallTileId);
 
         // Build BSP tree
         var root = new BspNode(Padding, Padding, size - Padding * 2, size - Padding * 2);
@@ -56,10 +58,10 @@ public class BspDungeonGenerator : IDungeonGenerator
 
         // Carve rooms into chunk
         foreach (var room in rooms)
-            DungeonHelper.CarveRoom(chunk, room);
+            DungeonHelper.CarveRoom(chunk, room, floorTileId);
 
         // Connect rooms via BSP siblings
-        ConnectRooms(root, chunk, rng);
+        ConnectRooms(root, chunk, rng, floorTileId);
 
         DungeonHelper.PlaceStairs(chunk, rooms);
         DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
@@ -69,7 +71,6 @@ public class BspDungeonGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
         DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         // Spawn point: center of the first room (before any monsters are placed there)
         if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
@@ -127,19 +128,19 @@ public class BspDungeonGenerator : IDungeonGenerator
         rooms.Add(room);
     }
 
-    private static void ConnectRooms(BspNode node, Chunk chunk, SeededRandom rng)
+    private static void ConnectRooms(BspNode node, Chunk chunk, SeededRandom rng, int floorTileId)
     {
         if (node.Left == null || node.Right == null) return;
 
-        ConnectRooms(node.Left, chunk, rng);
-        ConnectRooms(node.Right, chunk, rng);
+        ConnectRooms(node.Left, chunk, rng, floorTileId);
+        ConnectRooms(node.Right, chunk, rng, floorTileId);
 
         var leftRoom = GetRoom(node.Left, rng);
         var rightRoom = GetRoom(node.Right, rng);
         if (leftRoom == null || rightRoom == null) return;
 
         DungeonHelper.CarveCorridor(chunk, leftRoom.CenterX, leftRoom.CenterY,
-            rightRoom.CenterX, rightRoom.CenterY, rng);
+            rightRoom.CenterX, rightRoom.CenterY, rng, floorTileId);
     }
 
     private static Room? GetRoom(BspNode node, SeededRandom rng)

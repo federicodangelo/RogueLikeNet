@@ -47,6 +47,7 @@ internal static class TownGenerator
         int worldOffsetX, int worldOffsetY, int worldZ)
     {
         var mat = GetMaterial(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
         int townSize = MinTownSize + rng.Next(MaxTownSize - MinTownSize + 1);
         int townStart = (Chunk.Size - townSize) / 2;
         int townEnd = townStart + townSize;
@@ -62,10 +63,7 @@ internal static class TownGenerator
                 ref var tile = ref chunk.Tiles[x, y];
                 if (tile.Type != TileType.Floor)
                 {
-                    tile.Type = TileType.Floor;
-                    tile.GlyphId = TileDefinitions.GlyphFloor;
-                    tile.FgColor = TileDefinitions.ColorFloorFg;
-                    tile.BgColor = TileDefinitions.ColorBlack;
+                    tile.TileId = floorTileId;
                 }
             }
         }
@@ -124,8 +122,8 @@ internal static class TownGenerator
         // Place a torch in the town center
         result.Elements.Add(new DungeonElement(
             Position.FromCoords(townCenterX, townCenterY, worldZ),
-            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-            new LightSource(8, TileDefinitions.ColorTorchFg)));
+            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+            new LightSource(8, RenderConstants.ColorTorchFg)));
 
         // Spawn town NPCs in the town area
         int npcCount = MinNpcCount + rng.Next(MaxNpcCount - MinNpcCount + 1);
@@ -151,6 +149,8 @@ internal static class TownGenerator
     private static void BuildHouse(Chunk chunk, Room house, SeededRandom rng, TownMaterial mat,
         int worldOffsetX, int worldOffsetY, int worldZ, GenerationResult result)
     {
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+
         // Floor inside (inset by 1 for walls)
         for (int x = house.X + 1; x < house.X + house.Width - 1; x++)
         {
@@ -158,10 +158,7 @@ internal static class TownGenerator
             {
                 if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                tile.TileId = floorTileId;
                 tile.PlaceableItemId = mat.FloorTileItemId;
                 tile.PlaceableItemExtra = 0;
             }
@@ -277,8 +274,8 @@ internal static class TownGenerator
         {
             result.Elements.Add(new DungeonElement(
                 Position.FromCoords(worldOffsetX + torchX, worldOffsetY + torchY, worldZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(5, TileDefinitions.ColorTorchFg)));
+                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                new LightSource(5, RenderConstants.ColorTorchFg)));
         }
     }
 
@@ -302,10 +299,7 @@ internal static class TownGenerator
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
         ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Floor;
-        tile.GlyphId = TileDefinitions.GlyphFloor;
-        tile.FgColor = TileDefinitions.ColorFloorFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        tile.TileId = GameData.Instance.Tiles.GetNumericId("floor");
         tile.PlaceableItemId = placeableItemId;
         tile.PlaceableItemExtra = 0;
     }

@@ -2,19 +2,15 @@
     {
         "id": "stone",
         "name": "Stone",
-        "floorColor": "#888888",
-        "tintR": 100,
-        "tintG": 100,
-        "tintB": 100,
+        "floorTileId": "stone_floor",
+        "wallTileId": "stone_wall",
         "decorations": [
             {
-                "glyphId": "▒",
-                "fgColor": "#888777",
+                "tileId": "stone_deco_rubble",
                 "chance1000": 4
             },
             {
-                "glyphId": "○",
-                "fgColor": "#999999",
+                "tileId": "stone_deco_pebble",
                 "chance1000": 2
             }
         ],
@@ -63,19 +59,15 @@
     {
         "id": "lava",
         "name": "Lava",
-        "floorColor": "#FF4400",
-        "tintR": 110,
-        "tintG": 85,
-        "tintB": 75,
+        "floorTileId": "lava_floor",
+        "wallTileId": "lava_wall",
         "decorations": [
             {
-                "glyphId": "•",
-                "fgColor": "#FF6622",
+                "tileId": "lava_deco_ember",
                 "chance1000": 8
             },
             {
-                "glyphId": "~",
-                "fgColor": "#663222",
+                "tileId": "lava_deco_ash",
                 "chance1000": 6
             }
         ],
@@ -90,10 +82,7 @@
             }
         ],
         "liquid": {
-            "tileType": "lava",
-            "glyphId": "≈",
-            "fgColor": "#FF4400",
-            "bgColor": "#331000",
+            "tileId": "lava_lava",
             "chance100": 30
         },
         "resourceWeights": [
@@ -118,19 +107,15 @@
     {
         "id": "ice",
         "name": "Ice",
-        "floorColor": "#AAFFFF",
-        "tintR": 80,
-        "tintG": 95,
-        "tintB": 115,
+        "floorTileId": "ice_floor",
+        "wallTileId": "ice_wall",
         "decorations": [
             {
-                "glyphId": "|",
-                "fgColor": "#AAFFFF",
+                "tileId": "ice_deco_icicle",
                 "chance1000": 8
             },
             {
-                "glyphId": "~",
-                "fgColor": "#AAFFFF",
+                "tileId": "ice_deco_frost",
                 "chance1000": 4
             }
         ],
@@ -149,10 +134,7 @@
             }
         ],
         "liquid": {
-            "tileType": "water",
-            "glyphId": "≈",
-            "fgColor": "#AAFFFF",
-            "bgColor": "#0A1122",
+            "tileId": "ice_water",
             "chance100": 25
         },
         "resourceWeights": [
@@ -173,24 +155,19 @@
     {
         "id": "forest",
         "name": "Forest",
-        "floorColor": "#666633",
-        "tintR": 85,
-        "tintG": 110,
-        "tintB": 80,
+        "floorTileId": "forest_floor",
+        "wallTileId": "forest_wall",
         "decorations": [
             {
-                "glyphId": ",",
-                "fgColor": "#558844",
+                "tileId": "forest_deco_grass",
                 "chance1000": 12
             },
             {
-                "glyphId": "'",
-                "fgColor": "#4A7E3A",
+                "tileId": "forest_deco_sprout",
                 "chance1000": 8
             },
             {
-                "glyphId": "⌠",
-                "fgColor": "#338033",
+                "tileId": "forest_deco_fern",
                 "chance1000": 4
             }
         ],
@@ -213,10 +190,7 @@
             }
         ],
         "liquid": {
-            "tileType": "water",
-            "glyphId": "≈",
-            "fgColor": "#4484FF",
-            "bgColor": "#001133",
+            "tileId": "forest_water",
             "chance100": 20
         },
         "resourceWeights": [
@@ -241,19 +215,15 @@
     {
         "id": "arcane",
         "name": "Arcane",
-        "floorColor": "#664488",
-        "tintR": 90,
-        "tintG": 80,
-        "tintB": 110,
+        "floorTileId": "arcane_floor",
+        "wallTileId": "arcane_wall",
         "decorations": [
             {
-                "glyphId": "*",
-                "fgColor": "#CC86FF",
+                "tileId": "arcane_deco_sparkle",
                 "chance1000": 6
             },
             {
-                "glyphId": "♦",
-                "fgColor": "#88CCFF",
+                "tileId": "arcane_deco_crystal",
                 "chance1000": 6
             }
         ],
@@ -302,24 +272,19 @@
     {
         "id": "crypt",
         "name": "Crypt",
-        "floorColor": "#666633",
-        "tintR": 95,
-        "tintG": 90,
-        "tintB": 85,
+        "floorTileId": "crypt_floor",
+        "wallTileId": "crypt_wall",
         "decorations": [
             {
-                "glyphId": "σ",
-                "fgColor": "#CCBB99",
+                "tileId": "crypt_deco_bone",
                 "chance1000": 10
             },
             {
-                "glyphId": "■",
-                "fgColor": "#CCBB99",
+                "tileId": "crypt_deco_tomb",
                 "chance1000": 4
             },
             {
-                "glyphId": "%",
-                "fgColor": "#BBBBCC",
+                "tileId": "crypt_deco_remains",
                 "chance1000": 6
             }
         ],
@@ -360,24 +325,19 @@
     {
         "id": "sewer",
         "name": "Sewer",
-        "floorColor": "#666633",
-        "tintR": 85,
-        "tintG": 95,
-        "tintB": 90,
+        "floorTileId": "sewer_floor",
+        "wallTileId": "sewer_wall",
         "decorations": [
             {
-                "glyphId": "'",
-                "fgColor": "#4A7E3A",
+                "tileId": "sewer_deco_moss",
                 "chance1000": 8
             },
             {
-                "glyphId": "Φ",
-                "fgColor": "#996633",
+                "tileId": "sewer_deco_pipe",
                 "chance1000": 4
             },
             {
-                "glyphId": "~",
-                "fgColor": "#888777",
+                "tileId": "sewer_deco_slime",
                 "chance1000": 4
             }
         ],
@@ -400,10 +360,7 @@
             }
         ],
         "liquid": {
-            "tileType": "water",
-            "glyphId": "≈",
-            "fgColor": "#4484FF",
-            "bgColor": "#001133",
+            "tileId": "sewer_water",
             "chance100": 40
         },
         "resourceWeights": [
@@ -424,24 +381,19 @@
     {
         "id": "fungal",
         "name": "Fungal",
-        "floorColor": "#666633",
-        "tintR": 95,
-        "tintG": 85,
-        "tintB": 105,
+        "floorTileId": "fungal_floor",
+        "wallTileId": "fungal_wall",
         "decorations": [
             {
-                "glyphId": "♠",
-                "fgColor": "#CC66AA",
+                "tileId": "fungal_deco_mushroom",
                 "chance1000": 12
             },
             {
-                "glyphId": "'",
-                "fgColor": "#4A7E3A",
+                "tileId": "fungal_deco_sprout",
                 "chance1000": 6
             },
             {
-                "glyphId": ",",
-                "fgColor": "#338033",
+                "tileId": "fungal_deco_spore",
                 "chance1000": 4
             }
         ],
@@ -468,10 +420,7 @@
             }
         ],
         "liquid": {
-            "tileType": "water",
-            "glyphId": "≈",
-            "fgColor": "#4A7E3A",
-            "bgColor": "#001133",
+            "tileId": "fungal_water",
             "chance100": 15
         },
         "resourceWeights": [
@@ -496,24 +445,19 @@
     {
         "id": "ruined",
         "name": "Ruined",
-        "floorColor": "#888777",
-        "tintR": 105,
-        "tintG": 95,
-        "tintB": 85,
+        "floorTileId": "ruined_floor",
+        "wallTileId": "ruined_wall",
         "decorations": [
             {
-                "glyphId": "▒",
-                "fgColor": "#888777",
+                "tileId": "ruined_deco_rubble",
                 "chance1000": 10
             },
             {
-                "glyphId": "○",
-                "fgColor": "#999999",
+                "tileId": "ruined_deco_pebble",
                 "chance1000": 4
             },
             {
-                "glyphId": "Ω",
-                "fgColor": "#999999",
+                "tileId": "ruined_deco_ruin",
                 "chance1000": 2
             }
         ],
@@ -558,24 +502,19 @@
     {
         "id": "infernal",
         "name": "Infernal",
-        "floorColor": "#FF4400",
-        "tintR": 115,
-        "tintG": 80,
-        "tintB": 70,
+        "floorTileId": "infernal_floor",
+        "wallTileId": "infernal_wall",
         "decorations": [
             {
-                "glyphId": "•",
-                "fgColor": "#FF6622",
+                "tileId": "infernal_deco_ember",
                 "chance1000": 10
             },
             {
-                "glyphId": "~",
-                "fgColor": "#663222",
+                "tileId": "infernal_deco_ash",
                 "chance1000": 6
             },
             {
-                "glyphId": "σ",
-                "fgColor": "#CCBB99",
+                "tileId": "infernal_deco_bone",
                 "chance1000": 4
             }
         ],
@@ -594,10 +533,7 @@
             }
         ],
         "liquid": {
-            "tileType": "lava",
-            "glyphId": "≈",
-            "fgColor": "#FF4400",
-            "bgColor": "#331000",
+            "tileId": "infernal_lava",
             "chance100": 35
         },
         "resourceWeights": [

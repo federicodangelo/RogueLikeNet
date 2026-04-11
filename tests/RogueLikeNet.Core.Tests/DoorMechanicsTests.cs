@@ -21,10 +21,7 @@ public class DoorMechanicsTests
 
     private static TileInfo MakeClosedDoor() => new()
     {
-        Type = TileType.Floor,
-        GlyphId = TileDefinitions.GlyphFloor,
-        FgColor = TileDefinitions.ColorFloorFg,
-        BgColor = TileDefinitions.ColorBlack,
+        TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         PlaceableItemId = ItemId("wooden_door"),
         PlaceableItemExtra = 0,
     };
@@ -101,10 +98,7 @@ public class DoorMechanicsTests
         // Make sure the tile beyond the door is floor
         engine.WorldMap.SetTile(Position.FromCoords(doorX + 1, doorY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         // Place a closed door
@@ -182,7 +176,7 @@ public class DoorMechanicsTests
     {
         var tile = new TileInfo
         {
-            Type = TileType.Floor,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
             PlaceableItemId = ItemId("wooden_window"),
         };
         Assert.False(tile.IsWalkable);

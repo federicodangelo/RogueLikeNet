@@ -16,30 +16,20 @@ public enum TileType : byte
 
 public struct TileInfo
 {
-    public TileType Type;
-    public int GlyphId;
-    public int FgColor;
-    public int BgColor;
-
-    /// <summary>
-    /// The placeable item on this tile. 0 means nothing is placed.
-    /// The base tile (Type/GlyphId/FgColor/BgColor) represents the underlying terrain;
-    /// the placed item's appearance is derived from the item registry at render time.
-    /// </summary>
+    public int TileId;
     public int PlaceableItemId;
-
-    /// <summary>
-    /// Extra state for the placed item (e.g. 0 = closed door, 1 = open door).
-    /// Interpretation depends on the specific placeable item type.
-    /// </summary>
     public int PlaceableItemExtra;
+
+    public readonly TileType Type => GameData.Instance.Tiles.GetTileType(TileId);
+    public readonly int GlyphId => GameData.Instance.Tiles.GetGlyphId(TileId);
+    public readonly int FgColor => GameData.Instance.Tiles.GetFgColor(TileId);
+    public readonly int BgColor => GameData.Instance.Tiles.GetBgColor(TileId);
 
     public readonly bool IsWalkable
     {
         get
         {
-            var baseWalkable = Type is TileType.Floor or TileType.StairsDown or TileType.StairsUp;
-            if (!baseWalkable) return false;
+            if (!GameData.Instance.Tiles.IsWalkable(TileId)) return false;
             if (PlaceableItemId != 0)
                 return GameData.Instance.Items.IsPlaceableWalkable(PlaceableItemId, PlaceableItemExtra);
             return true;
@@ -50,8 +40,7 @@ public struct TileInfo
     {
         get
         {
-            var baseTransparent = Type is not TileType.Blocked;
-            if (!baseTransparent) return false;
+            if (!GameData.Instance.Tiles.IsTransparent(TileId)) return false;
             if (PlaceableItemId != 0)
                 return GameData.Instance.Items.IsPlaceableTransparent(PlaceableItemId, PlaceableItemExtra);
             return true;

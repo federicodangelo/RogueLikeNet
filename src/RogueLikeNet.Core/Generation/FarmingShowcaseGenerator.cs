@@ -15,12 +15,6 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
 {
     private readonly long _seed;
 
-    // Layout constants
-    private const int GrassGlyph = 250;      // middle dot
-    private const int GrassFgColor = 0x228B22; // green grass
-    private const int TroughGlyph = 220;    // ▄ bottom half block
-    private const int TroughFgColor = 0x8B7355; // tan/wood
-
     public FarmingShowcaseGenerator(long seed)
     {
         _seed = seed;
@@ -90,10 +84,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = GrassGlyph;
-                tile.FgColor = GrassFgColor;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                tile.TileId = GameData.Instance.Tiles.GetNumericId("floor");
             }
     }
 
@@ -117,10 +108,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
             {
                 // Till the soil
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = FarmingSystem.TilledSoilGlyphId;
-                tile.FgColor = TileDefinitions.ColorTilledSoil;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                tile.TileId = GameData.Instance.Tiles.GetNumericId("tilled_soil");
 
                 // Determine what to plant based on position along the row
                 float progress = (float)(x - fieldX) / fieldW;
@@ -191,9 +179,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
             // Leave a 1-tile gap as entrance
             ref var entrance = ref chunk.Tiles[px + penWidth / 2, py + penHeight - 1];
             entrance.PlaceableItemId = GameData.Instance.Items.GetNumericId("fence_gate");
-            entrance.Type = TileType.Floor;
-            entrance.GlyphId = GrassGlyph;
-            entrance.FgColor = GrassFgColor;
+            entrance.TileId = GameData.Instance.Tiles.GetNumericId("floor");
 
             // Place animals inside pen (3 of each type)
             for (int a = 0; a < 3; a++)
@@ -207,8 +193,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
 
             // Place a feeding trough (decorative)
             ref var trough = ref chunk.Tiles[px + penWidth / 2, py + 1];
-            trough.GlyphId = TroughGlyph;
-            trough.FgColor = TroughFgColor;
+            trough.TileId = GameData.Instance.Tiles.GetNumericId("floor");
         }
 
         // Drop animal feed near the pens
@@ -272,10 +257,7 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
             {
                 // Till the soil
                 ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = FarmingSystem.TilledSoilGlyphId;
-                tile.FgColor = TileDefinitions.ColorTilledSoil;
-                tile.BgColor = TileDefinitions.ColorBlack;
+                tile.TileId = GameData.Instance.Tiles.GetNumericId("tilled_soil");
 
                 // Plant watered crops at varying stages
                 float progress = (float)(x - fieldX) / fieldW;
@@ -296,8 +278,8 @@ public class FarmingShowcaseGenerator : IDungeonGenerator
         {
             result.Elements.Add(new DungeonElement(
                 Position.FromCoords(worldOffsetX + pos[0], worldOffsetY + pos[1], chunkZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(10, TileDefinitions.ColorTorchFg)));
+                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                new LightSource(10, RenderConstants.ColorTorchFg)));
         }
     }
 

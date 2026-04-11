@@ -1,4 +1,5 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Server.Persistence;
@@ -21,7 +22,7 @@ public class PersistentDungeonGeneratorTests
             // Fill chunk with floor tiles
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
-                    chunk.Tiles[x, y] = new TileInfo { Type = TileType.Floor };
+                    chunk.Tiles[x, y] = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") };
             return new GenerationResult(chunk);
         }
     }
@@ -59,7 +60,7 @@ public class PersistentDungeonGeneratorTests
         // Save a chunk
         var pos = TestPos;
         var tiles = new TileInfo[Chunk.Size, Chunk.Size];
-        tiles[0, 0] = new TileInfo { Type = TileType.Floor };
+        tiles[0, 0] = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") };
         var tileData = ChunkSerializer.SerializeTiles(tiles);
         provider.SaveChunks(slot.SlotId, [new ChunkSaveEntry
         {
@@ -96,8 +97,8 @@ public class PersistentDungeonGeneratorTests
         // Create tiles with specific pattern
         var pos = TestPos;
         var tiles = new TileInfo[Chunk.Size, Chunk.Size];
-        tiles[0, 0] = new TileInfo { Type = TileType.Floor };
-        tiles[1, 1] = new TileInfo { Type = TileType.StairsDown };
+        tiles[0, 0] = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") };
+        tiles[1, 1] = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("stairs_down") };
         var tileData = ChunkSerializer.SerializeTiles(tiles);
         provider.SaveChunks(slot.SlotId, [new ChunkSaveEntry
         {

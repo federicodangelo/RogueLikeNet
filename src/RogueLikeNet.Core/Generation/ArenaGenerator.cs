@@ -22,7 +22,6 @@ public class ArenaGenerator : IDungeonGenerator
     public bool Exists(ChunkPosition chunkPos)
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
-        // Only the spawn chunk has content; all other chunks are empty floors.
         return chunkZ == Position.DefaultZ;
     }
 
@@ -35,16 +34,13 @@ public class ArenaGenerator : IDungeonGenerator
         if (chunkZ != Position.DefaultZ)
             return result;
 
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+        int wallTileId = GameData.Instance.Tiles.GetNumericId("wall");
+
         // Fill with floor
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
+                chunk.Tiles[x, y].TileId = floorTileId;
 
         if (chunkX != 0 || chunkY != 0)
             return result;
@@ -59,13 +55,13 @@ public class ArenaGenerator : IDungeonGenerator
         // Build walls around the entire chunk perimeter
         for (int x = 0; x < Chunk.Size; x++)
         {
-            SetWall(chunk, x, 0);
-            SetWall(chunk, x, Chunk.Size - 1);
+            chunk.Tiles[x, 0].TileId = wallTileId;
+            chunk.Tiles[x, Chunk.Size - 1].TileId = wallTileId;
         }
         for (int y = 0; y < Chunk.Size; y++)
         {
-            SetWall(chunk, 0, y);
-            SetWall(chunk, Chunk.Size - 1, y);
+            chunk.Tiles[0, y].TileId = wallTileId;
+            chunk.Tiles[Chunk.Size - 1, y].TileId = wallTileId;
         }
 
         // Place 4 pillars for cover
@@ -75,7 +71,11 @@ public class ArenaGenerator : IDungeonGenerator
         {
             for (int dx = -1; dx <= 1; dx++)
                 for (int dy = -1; dy <= 1; dy++)
-                    SetWall(chunk, pillarXs[p] + dx, pillarYs[p] + dy);
+                {
+                    int px = pillarXs[p] + dx, py = pillarYs[p] + dy;
+                    if (px >= 0 && px < Chunk.Size && py >= 0 && py < Chunk.Size)
+                        chunk.Tiles[px, py].TileId = wallTileId;
+                }
         }
 
         // Torches in the corners and center
@@ -88,8 +88,8 @@ public class ArenaGenerator : IDungeonGenerator
         {
             result.Elements.Add(new DungeonElement(
                 Position.FromCoords(worldOffsetX + pos[0], worldOffsetY + pos[1], chunkZ),
-                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                new LightSource(10, TileDefinitions.ColorTorchFg)));
+                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                new LightSource(10, RenderConstants.ColorTorchFg)));
         }
 
         // Spawn enemies scattered around
@@ -100,10 +100,8 @@ public class ArenaGenerator : IDungeonGenerator
             int x = 3 + rng.Next(Chunk.Size - 6);
             int y = 3 + rng.Next(Chunk.Size - 6);
 
-            // Skip pillars area
             if (chunk.Tiles[x, y].Type != TileType.Floor) continue;
 
-            // Don't spawn near player start (center area)
             int distToCenter = Math.Abs(x - 32) + Math.Abs(y - 32);
             if (distToCenter < 8) continue;
 
@@ -126,15 +124,5 @@ public class ArenaGenerator : IDungeonGenerator
         }
 
         return result;
-    }
-
-    private static void SetWall(Chunk chunk, int x, int y)
-    {
-        if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Blocked;
-        tile.GlyphId = TileDefinitions.GlyphWall;
-        tile.FgColor = TileDefinitions.ColorWallFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
     }
 }

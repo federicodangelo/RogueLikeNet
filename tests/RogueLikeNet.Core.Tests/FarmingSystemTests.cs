@@ -48,10 +48,7 @@ public class FarmingSystemTests
         var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(targetPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         return (_p.Id, targetPos);
@@ -73,9 +70,7 @@ public class FarmingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(target);
-        Assert.Equal(TileType.Floor, tile.Type);
-        Assert.Equal(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
-        Assert.Equal(TileDefinitions.ColorTilledSoil, tile.FgColor);
+        Assert.Equal(FarmingSystem.TilledSoilTileId, tile.TileId);
     }
 
     [Fact]
@@ -95,7 +90,7 @@ public class FarmingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(target);
-        Assert.NotEqual(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
+        Assert.NotEqual(FarmingSystem.TilledSoilTileId, tile.TileId);
     }
 
     [Fact]
@@ -108,8 +103,7 @@ public class FarmingSystemTests
         // Set target to blocked
         engine.WorldMap.SetTile(target, new TileInfo
         {
-            Type = TileType.Blocked,
-            GlyphId = TileDefinitions.GlyphWall,
+            TileId = GameData.Instance.Tiles.GetNumericId("wall"),
         });
 
         player.Input.ActionType = ActionTypes.Till;
@@ -140,11 +134,10 @@ public class FarmingSystemTests
         var farTarget = Position.FromCoords(player.Position.X + 2, player.Position.Y, Position.DefaultZ);
         engine.WorldMap.SetTile(farTarget, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
         var tile = engine.WorldMap.GetTile(farTarget);
-        Assert.NotEqual(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
+        Assert.NotEqual(FarmingSystem.TilledSoilTileId, tile.TileId);
     }
 
     // ── Planting ──
@@ -371,7 +364,7 @@ public class FarmingSystemTests
         // Get the crop and check initial appearance
         var chunk = engine.WorldMap.GetChunkForWorldPos(target)!;
         ref var cropRef = ref GetCropAt(chunk, target);
-        Assert.Equal(TileDefinitions.GlyphCropStage0, cropRef.Appearance.GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage0, cropRef.Appearance.GlyphId);
 
         // Stage thresholds for wheat (600 ticks): stage 1 at 198 (0.33), stage 2 at 396 (0.66), stage 3 at 600
         // Set GrowthTicksCurrent so that after tick (+1) it crosses into the next stage.
@@ -383,7 +376,7 @@ public class FarmingSystemTests
         engine.Tick(); // 197+1=198 → stage 1
 
         cropRef = ref GetCropAt(chunk, target);
-        Assert.Equal(TileDefinitions.GlyphCropStage1, cropRef.Appearance.GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage1, cropRef.Appearance.GlyphId);
 
         // Advance to stage 2
         int stage2Threshold = (int)(seed.Seed.GrowthTicks * 0.66f); // 396
@@ -391,14 +384,14 @@ public class FarmingSystemTests
         engine.Tick();
 
         cropRef = ref GetCropAt(chunk, target);
-        Assert.Equal(TileDefinitions.GlyphCropStage2, cropRef.Appearance.GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage2, cropRef.Appearance.GlyphId);
 
         // Advance to stage 3 (fully grown)
         cropRef.CropData.GrowthTicksCurrent = seed.Seed.GrowthTicks - 1;
         engine.Tick();
 
         cropRef = ref GetCropAt(chunk, target);
-        Assert.Equal(TileDefinitions.GlyphCropStage3, cropRef.Appearance.GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage3, cropRef.Appearance.GlyphId);
     }
 
     // ── Watering ──
@@ -609,10 +602,10 @@ public class FarmingSystemTests
     [Fact]
     public void GetCropAppearance_ReturnsCorrectGlyphs()
     {
-        Assert.Equal(TileDefinitions.GlyphCropStage0, FarmingSystem.GetCropAppearance(0).GlyphId);
-        Assert.Equal(TileDefinitions.GlyphCropStage1, FarmingSystem.GetCropAppearance(1).GlyphId);
-        Assert.Equal(TileDefinitions.GlyphCropStage2, FarmingSystem.GetCropAppearance(2).GlyphId);
-        Assert.Equal(TileDefinitions.GlyphCropStage3, FarmingSystem.GetCropAppearance(3).GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage0, FarmingSystem.GetCropAppearance(0).GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage1, FarmingSystem.GetCropAppearance(1).GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage2, FarmingSystem.GetCropAppearance(2).GlyphId);
+        Assert.Equal(RenderConstants.GlyphCropStage3, FarmingSystem.GetCropAppearance(3).GlyphId);
     }
 
     private static ref CropEntity GetCropAt(Chunk chunk, Position pos)
@@ -640,7 +633,7 @@ public class FarmingSystemTests
         engine.Tick();
 
         var tile = engine.WorldMap.GetTile(target);
-        Assert.Equal(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
+        Assert.Equal(FarmingSystem.TilledSoilTileId, tile.TileId);
     }
 
     [Fact]
@@ -726,8 +719,7 @@ public class FarmingSystemTests
         var animalPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(animalPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         // Spawn animal
@@ -972,7 +964,7 @@ public class FarmingSystemTests
         // Floor tile 2 tiles away should remain untouched
         var farTarget = Position.FromCoords(player.Position.X + 2, player.Position.Y, player.Position.Z);
         var tile = engine.WorldMap.GetTile(farTarget);
-        Assert.NotEqual(FarmingSystem.TilledSoilGlyphId, tile.GlyphId);
+        Assert.NotEqual(FarmingSystem.TilledSoilTileId, tile.TileId);
     }
 
     [Fact]
@@ -987,8 +979,7 @@ public class FarmingSystemTests
         var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(targetPos, new TileInfo
         {
-            Type = TileType.Blocked,
-            GlyphId = TileDefinitions.GlyphWall,
+            TileId = GameData.Instance.Tiles.GetNumericId("wall"),
         });
 
         int inventoryCountBefore = player.Inventory.Items.Count;
@@ -1069,10 +1060,7 @@ public class FarmingSystemTests
         var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(targetPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = FarmingSystem.TilledSoilGlyphId,
-            FgColor = TileDefinitions.ColorTilledSoil,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = FarmingSystem.TilledSoilTileId,
         });
 
         // Add some non-seed items first, then seeds — seeds NOT in quick slot
@@ -1109,7 +1097,7 @@ public class FarmingSystemTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.Equal(FarmingSystem.TilledSoilGlyphId, engine.WorldMap.GetTile(target).GlyphId);
+        Assert.Equal(FarmingSystem.TilledSoilTileId, engine.WorldMap.GetTile(target).TileId);
 
         // Step 2: Interact on tilled soil with seeds → plants
         player = ref engine.WorldMap.GetPlayerRef(pid);

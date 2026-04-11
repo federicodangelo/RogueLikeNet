@@ -9,6 +9,7 @@ namespace RogueLikeNet.Core.Data;
     AllowTrailingCommas = true,
     UseStringEnumConverter = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.Never)]
+[JsonSerializable(typeof(TileDefinition[]))]
 [JsonSerializable(typeof(ItemDefinition[]))]
 [JsonSerializable(typeof(RecipeDefinition[]))]
 [JsonSerializable(typeof(ResourceNodeDefinition[]))]

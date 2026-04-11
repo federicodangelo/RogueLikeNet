@@ -1,7 +1,6 @@
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
 using RogueLikeNet.Core.Entities;
@@ -12,20 +11,14 @@ public class WorldMapTests
 {
     private static TileInfo MakeClosedDoor() => new()
     {
-        Type = TileType.Floor,
-        GlyphId = TileDefinitions.GlyphFloor,
-        FgColor = TileDefinitions.ColorFloorFg,
-        BgColor = TileDefinitions.ColorBlack,
+        TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         PlaceableItemId = GameData.Instance.Items.GetNumericId("wooden_door"),
         PlaceableItemExtra = 0,
     };
 
     private static TileInfo MakeFloor() => new()
     {
-        Type = TileType.Floor,
-        GlyphId = TileDefinitions.GlyphFloor,
-        FgColor = TileDefinitions.ColorFloorFg,
-        BgColor = TileDefinitions.ColorBlack,
+        TileId = GameData.Instance.Tiles.GetNumericId("floor"),
     };
 
     [Fact]

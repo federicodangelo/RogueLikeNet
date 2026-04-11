@@ -15,8 +15,8 @@ namespace RogueLikeNet.Core.Systems;
 /// </summary>
 public class FarmingSystem
 {
-    /// <summary>Glyph ID used for tilled soil tiles.</summary>
-    public const int TilledSoilGlyphId = 126; // ~ (tilde, tilled appearance)
+    /// <summary>Numeric tile ID for tilled soil (resolved from registry).</summary>
+    public static int TilledSoilTileId => GameData.Instance.Tiles.GetNumericId("tilled_soil");
 
     public void Update(WorldMap map)
     {
@@ -114,9 +114,8 @@ public class FarmingSystem
             return;
         }
 
-        // Convert to tilled soil (change the tile glyph/color to represent tilled soil)
-        tile.GlyphId = TilledSoilGlyphId;
-        tile.FgColor = TileDefinitions.ColorTilledSoil;
+        // Convert to tilled soil
+        tile.TileId = TilledSoilTileId;
         map.SetTile(target, tile);
         player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till });
     }
@@ -153,7 +152,7 @@ public class FarmingSystem
 
         // Target must be tilled soil
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor || tile.GlyphId != TilledSoilGlyphId)
+        if (tile.Type != TileType.Floor || tile.TileId != TilledSoilTileId)
         {
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
             return;
@@ -327,10 +326,10 @@ public class FarmingSystem
 
     public static TileAppearance GetCropAppearance(int growthStage) => growthStage switch
     {
-        0 => new TileAppearance(TileDefinitions.GlyphCropStage0, TileDefinitions.ColorCropSeedling),
-        1 => new TileAppearance(TileDefinitions.GlyphCropStage1, TileDefinitions.ColorCropGrowing),
-        2 => new TileAppearance(TileDefinitions.GlyphCropStage2, TileDefinitions.ColorCropGrowing),
-        _ => new TileAppearance(TileDefinitions.GlyphCropStage3, TileDefinitions.ColorCropMature),
+        0 => new TileAppearance(RenderConstants.GlyphCropStage0, RenderConstants.ColorCropSeedling),
+        1 => new TileAppearance(RenderConstants.GlyphCropStage1, RenderConstants.ColorCropGrowing),
+        2 => new TileAppearance(RenderConstants.GlyphCropStage2, RenderConstants.ColorCropGrowing),
+        _ => new TileAppearance(RenderConstants.GlyphCropStage3, RenderConstants.ColorCropMature),
     };
 
     private static bool IsAdjacent(int dx, int dy)
@@ -397,7 +396,7 @@ public class FarmingSystem
         }
 
         // 3. Plant: target is tilled soil and player has seeds in quick slot or inventory
-        if (tile.Type == TileType.Floor && tile.GlyphId == TilledSoilGlyphId)
+        if (tile.Type == TileType.Floor && tile.TileId == TilledSoilTileId)
         {
             int seedInventoryIndex = -1;
 
@@ -440,7 +439,7 @@ public class FarmingSystem
         // 4. Till: target is a regular floor and player has a hoe
         if (HasEquippedToolType(ref player, ToolType.Hoe) &&
             tile.Type == TileType.Floor &&
-            tile.GlyphId != TilledSoilGlyphId)
+            tile.TileId != TilledSoilTileId)
         {
             player.Input.ActionType = ActionTypes.Till;
             return true;

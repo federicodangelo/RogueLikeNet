@@ -53,10 +53,9 @@ public class NetSerializerTests
             Chunks = [new ChunkDataMsg
             {
                 ChunkX = 0, ChunkY = 0,
-                TileTypes = [1, 2, 3],
-                TileGlyphs = [250, 219, 43],
-                TileFgColors = [0xFFFFFF, 0x808080, 0],
-                TileBgColors = [0, 0, 0],
+                TileIds = [1, 2, 3],
+                TilePlaceableItemIds = [0, 0, 0],
+                TilePlaceableItemExtras = [0, 0, 0],
             }],
             EntityUpdates = [new EntityUpdateMsg { Id = 1, X = 10, Y = 10, GlyphId = 64, FgColor = 0xFFFFFF, Health = 100, MaxHealth = 100 }],
             PlayerState = new PlayerStateMsg { PlayerEntityId = 5 },
@@ -69,7 +68,7 @@ public class NetSerializerTests
         Assert.Equal(0, result.FromTick);
         Assert.Equal(100, result.ToTick);
         Assert.Single(result.Chunks);
-        Assert.Equal(3, result.Chunks[0].TileTypes.Length);
+        Assert.Equal(3, result.Chunks[0].TileIds.Length);
         Assert.Single(result.EntityUpdates);
         Assert.Equal(64, result.EntityUpdates[0].GlyphId);
     }
@@ -125,10 +124,9 @@ public class NetSerializerTests
             {
                 ChunkX = i,
                 ChunkY = i,
-                TileTypes = new byte[256],
-                TileGlyphs = new int[256],
-                TileFgColors = new int[256],
-                TileBgColors = new int[256],
+                TileIds = new int[256],
+                TilePlaceableItemIds = new int[256],
+                TilePlaceableItemExtras = new int[256],
             };
         }
         var delta = new WorldDeltaMsg { FromTick = 0, ToTick = 1, IsSnapshot = true, Chunks = chunks };

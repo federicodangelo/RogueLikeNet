@@ -30,10 +30,7 @@ public class AnimalSystemTests
         var animalPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(animalPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         // Spawn animal
@@ -272,10 +269,7 @@ public class AnimalSystemTests
                 var p = Position.FromCoords(sx + dx, sy + dy, Position.DefaultZ);
                 engine.WorldMap.SetTile(p, new TileInfo
                 {
-                    Type = TileType.Floor,
-                    GlyphId = TileDefinitions.GlyphFloor,
-                    FgColor = TileDefinitions.ColorFloorFg,
-                    BgColor = TileDefinitions.ColorBlack,
+                    TileId = GameData.Instance.Tiles.GetNumericId("floor"),
                 });
             }
         }
@@ -319,8 +313,7 @@ public class AnimalSystemTests
                 var p = Position.FromCoords(sx + dx, sy + dy, Position.DefaultZ);
                 engine.WorldMap.SetTile(p, new TileInfo
                 {
-                    Type = TileType.Floor,
-                    GlyphId = TileDefinitions.GlyphFloor,
+                    TileId = GameData.Instance.Tiles.GetNumericId("floor"),
                 });
             }
         }
@@ -369,8 +362,7 @@ public class AnimalSystemTests
                 var p = Position.FromCoords(sx + dx, sy + dy, Position.DefaultZ);
                 engine.WorldMap.SetTile(p, new TileInfo
                 {
-                    Type = TileType.Floor,
-                    GlyphId = TileDefinitions.GlyphFloor,
+                    TileId = GameData.Instance.Tiles.GetNumericId("floor"),
                 });
             }
         }

@@ -44,10 +44,7 @@ public class BuildingSystemTests
         // Ensure target is floor
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;
@@ -73,10 +70,7 @@ public class BuildingSystemTests
 
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;
@@ -102,10 +96,7 @@ public class BuildingSystemTests
         // Place a wall
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;
@@ -147,10 +138,7 @@ public class BuildingSystemTests
 
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         // Place the door
@@ -190,10 +178,7 @@ public class BuildingSystemTests
         // Place a natural wall (not player-placed — Blocked terrain type)
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Blocked,
-            GlyphId = TileDefinitions.GlyphWall,
-            FgColor = TileDefinitions.ColorWallFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("wall"),
         });
 
         player.Input.ActionType = ActionTypes.PickUpPlaced;
@@ -209,21 +194,21 @@ public class BuildingSystemTests
     [Fact]
     public void PlaceableItemId_SetOnPlacedTile()
     {
-        var tile = new TileInfo { Type = TileType.Floor, PlaceableItemId = ItemId("wooden_wall") };
+        var tile = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor"), PlaceableItemId = ItemId("wooden_wall") };
         Assert.Equal(ItemId("wooden_wall"), tile.PlaceableItemId);
     }
 
     [Fact]
     public void PlaceableItemId_NoneForNaturalTile()
     {
-        var tile = new TileInfo { Type = TileType.Blocked, GlyphId = TileDefinitions.GlyphWall, FgColor = TileDefinitions.ColorWallFg };
+        var tile = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("wall") };
         Assert.Equal(0, tile.PlaceableItemId);
     }
 
     [Fact]
     public void PlaceableItemId_NoneForFloor()
     {
-        var tile = new TileInfo { Type = TileType.Floor, GlyphId = TileDefinitions.GlyphFloor, FgColor = TileDefinitions.ColorFloorFg };
+        var tile = new TileInfo { TileId = GameData.Instance.Tiles.GetNumericId("floor") };
         Assert.Equal(0, tile.PlaceableItemId);
     }
 
@@ -276,10 +261,7 @@ public class BuildingSystemTests
         int targetY = player.Position.Y;
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;
@@ -328,10 +310,7 @@ public class BuildingSystemTests
         // Ensure target is floor
         engine.WorldMap.SetTile(targetPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         // Place a monster at the target
@@ -362,10 +341,7 @@ public class BuildingSystemTests
         // Set target to wall
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Blocked,
-            GlyphId = TileDefinitions.GlyphWall,
-            FgColor = TileDefinitions.ColorWallFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("wall"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;
@@ -392,10 +368,7 @@ public class BuildingSystemTests
         var targetPos = Position.FromCoords(sx + 1, sy, Position.DefaultZ);
         engine.WorldMap.SetTile(targetPos, new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         var template = GameData.Instance.Items.Get("short_sword")!;
@@ -444,10 +417,7 @@ public class BuildingSystemTests
         int targetY = player.Position.Y;
         engine.WorldMap.SetTile(Position.FromCoords(targetX, targetY, Position.DefaultZ), new TileInfo
         {
-            Type = TileType.Floor,
-            GlyphId = TileDefinitions.GlyphFloor,
-            FgColor = TileDefinitions.ColorFloorFg,
-            BgColor = TileDefinitions.ColorBlack,
+            TileId = GameData.Instance.Tiles.GetNumericId("floor"),
         });
 
         player.Input.ActionType = ActionTypes.PlaceItem;

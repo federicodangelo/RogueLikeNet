@@ -403,10 +403,7 @@ public class GameStateSerializerTests
         Assert.Equal(0, msg.ChunkY);
         Assert.Equal(Position.DefaultZ, msg.ChunkZ);
         int total = Chunk.Size * Chunk.Size;
-        Assert.Equal(total, msg.TileTypes.Length);
-        Assert.Equal(total, msg.TileGlyphs.Length);
-        Assert.Equal(total, msg.TileFgColors.Length);
-        Assert.Equal(total, msg.TileBgColors.Length);
+        Assert.Equal(total, msg.TileIds.Length);
         Assert.Equal(total, msg.TilePlaceableItemIds.Length);
         Assert.Equal(total, msg.TilePlaceableItemExtras.Length);
     }

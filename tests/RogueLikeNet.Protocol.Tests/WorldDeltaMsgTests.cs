@@ -12,20 +12,14 @@ public class WorldDeltaMsgTests
         {
             X = 10,
             Y = 20,
-            TileType = 3,
-            GlyphId = 219,
-            FgColor = 0xFFFFFF,
-            BgColor = 0x000000,
+            TileId = 42,
             LightLevel = 75
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<TileUpdateMsg>(data);
         Assert.Equal(10, result.X);
         Assert.Equal(20, result.Y);
-        Assert.Equal(3, result.TileType);
-        Assert.Equal(219, result.GlyphId);
-        Assert.Equal(0xFFFFFF, result.FgColor);
-        Assert.Equal(0x000000, result.BgColor);
+        Assert.Equal(42, result.TileId);
         Assert.Equal(75, result.LightLevel);
     }
 
@@ -35,10 +29,7 @@ public class WorldDeltaMsgTests
         var msg = new TileUpdateMsg();
         Assert.Equal(0, msg.X);
         Assert.Equal(0, msg.Y);
-        Assert.Equal(0, msg.TileType);
-        Assert.Equal(0, msg.GlyphId);
-        Assert.Equal(0, msg.FgColor);
-        Assert.Equal(0, msg.BgColor);
+        Assert.Equal(0, msg.TileId);
         Assert.Equal(0, msg.LightLevel);
     }
 
@@ -98,7 +89,7 @@ public class WorldDeltaMsgTests
         {
             FromTick = 5,
             ToTick = 6,
-            TileUpdates = [new TileUpdateMsg { X = 1, Y = 2, TileType = 1, GlyphId = 100, FgColor = 0xFF, BgColor = 0, LightLevel = 50 }],
+            TileUpdates = [new TileUpdateMsg { X = 1, Y = 2, TileId = 42, LightLevel = 50 }],
             PlayerState = new PlayerStateMsg { Health = 50, MaxHealth = 100, Attack = 10, Defense = 5 }
         };
         var data = NetSerializer.Serialize(delta);
@@ -106,7 +97,7 @@ public class WorldDeltaMsgTests
         Assert.Single(result.TileUpdates);
         Assert.Equal(1, result.TileUpdates[0].X);
         Assert.Equal(2, result.TileUpdates[0].Y);
-        Assert.Equal(1, result.TileUpdates[0].TileType);
+        Assert.Equal(42, result.TileUpdates[0].TileId);
         Assert.NotNull(result.PlayerState);
         Assert.Equal(50, result.PlayerState.Health);
     }

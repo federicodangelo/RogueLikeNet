@@ -35,16 +35,11 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         if (chunkZ != Position.DefaultZ)
             return result;
 
-        // Fill with floor
+        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+        int wallTileId = GameData.Instance.Tiles.GetNumericId("wall");
         for (int x = 0; x < Chunk.Size; x++)
             for (int y = 0; y < Chunk.Size; y++)
-            {
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.Type = TileType.Floor;
-                tile.GlyphId = TileDefinitions.GlyphFloor;
-                tile.FgColor = TileDefinitions.ColorFloorFg;
-                tile.BgColor = TileDefinitions.ColorBlack;
-            }
+                chunk.Tiles[x, y].TileId = floorTileId;
 
         if (chunkX != 0 || chunkY != 0)
             return result;
@@ -62,8 +57,8 @@ public class ItemShowcaseGenerator : IDungeonGenerator
         result.SpawnPosition = Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ);
         result.Elements.Add(new DungeonElement(
             Position.FromCoords(worldOffsetX + Chunk.Size / 2, worldOffsetY + 3, chunkZ),
-            new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-            new LightSource(20, TileDefinitions.ColorTorchFg)));
+            new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+            new LightSource(20, RenderConstants.ColorTorchFg)));
 
         // Place items in a grid: rows = item types, columns = rarities
         // Start at (4, 5) with 4-tile spacing
@@ -180,10 +175,6 @@ public class ItemShowcaseGenerator : IDungeonGenerator
     private static void SetWall(Chunk chunk, int x, int y)
     {
         if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.Type = TileType.Blocked;
-        tile.GlyphId = TileDefinitions.GlyphWall;
-        tile.FgColor = TileDefinitions.ColorWallFg;
-        tile.BgColor = TileDefinitions.ColorBlack;
+        chunk.Tiles[x, y].TileId = GameData.Instance.Tiles.GetNumericId("wall");
     }
 }

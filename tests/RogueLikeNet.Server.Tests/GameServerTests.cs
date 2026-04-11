@@ -248,10 +248,7 @@ public class GameServerTests
         // Each chunk should have tile data
         foreach (var chunk in snapshot.Chunks)
         {
-            Assert.True(chunk.TileTypes.Length > 0);
-            Assert.True(chunk.TileGlyphs.Length > 0);
-            Assert.True(chunk.TileFgColors.Length > 0);
-            Assert.True(chunk.TileBgColors.Length > 0);
+            Assert.True(chunk.TileIds.Length > 0);
         }
 
         // Should have entities (at least the player)
@@ -653,10 +650,7 @@ public class GameServerTests
         Assert.Equal(0, msg.ChunkX);
         Assert.Equal(0, msg.ChunkY);
         int total = RogueLikeNet.Core.World.Chunk.Size * RogueLikeNet.Core.World.Chunk.Size;
-        Assert.Equal(total, msg.TileTypes.Length);
-        Assert.Equal(total, msg.TileGlyphs.Length);
-        Assert.Equal(total, msg.TileFgColors.Length);
-        Assert.Equal(total, msg.TileBgColors.Length);
+        Assert.Equal(total, msg.TileIds.Length);
     }
 
     [Fact]

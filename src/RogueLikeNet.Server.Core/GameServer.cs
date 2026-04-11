@@ -814,10 +814,7 @@ public class GameServer : IDisposable
                 X = pos.X,
                 Y = pos.Y,
                 Z = pos.Z,
-                TileType = (byte)tile.Type,
-                GlyphId = tile.GlyphId,
-                FgColor = tile.FgColor,
-                BgColor = tile.BgColor,
+                TileId = tile.TileId,
                 PlaceableItemId = tile.PlaceableItemId,
                 PlaceableItemExtra = tile.PlaceableItemExtra,
             };

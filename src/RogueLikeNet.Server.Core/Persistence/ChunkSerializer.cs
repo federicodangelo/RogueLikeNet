@@ -24,10 +24,7 @@ public static class ChunkSerializer
             for (int y = 0; y < Chunk.Size; y++)
             {
                 ref var tile = ref tiles[x, y];
-                bw.Write((byte)tile.Type);
-                bw.Write(tile.GlyphId);
-                bw.Write(tile.FgColor);
-                bw.Write(tile.BgColor);
+                bw.Write(tile.TileId);
                 bw.Write(tile.PlaceableItemId);
                 bw.Write(tile.PlaceableItemExtra);
             }
@@ -53,10 +50,7 @@ public static class ChunkSerializer
             {
                 tiles[x, y] = new TileInfo
                 {
-                    Type = (TileType)br.ReadByte(),
-                    GlyphId = br.ReadInt32(),
-                    FgColor = br.ReadInt32(),
-                    BgColor = br.ReadInt32(),
+                    TileId = br.ReadInt32(),
                     PlaceableItemId = br.ReadInt32(),
                     PlaceableItemExtra = br.ReadInt32(),
                 };

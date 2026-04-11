@@ -1,5 +1,5 @@
-using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Core.World;
 using Chunk = RogueLikeNet.Core.World.Chunk;
@@ -47,7 +47,7 @@ public class OverworldGeneratorTests
             for (int y = 0; y < Chunk.Size; y++)
             {
                 Assert.Equal(result1.Chunk.Tiles[x, y].Type, result2.Chunk.Tiles[x, y].Type);
-                Assert.Equal(result1.Chunk.Tiles[x, y].GlyphId, result2.Chunk.Tiles[x, y].GlyphId);
+                Assert.Equal(result1.Chunk.Tiles[x, y].TileId, result2.Chunk.Tiles[x, y].TileId);
             }
     }
 
@@ -128,12 +128,14 @@ public class OverworldGeneratorTests
         int totalDecorations = 0;
         for (int cx = 0; cx < 5; cx++)
         {
+            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
+            int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
             var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
             for (int x = 0; x < Chunk.Size; x++)
                 for (int y = 0; y < Chunk.Size; y++)
                 {
                     ref var t = ref result.Chunk.Tiles[x, y];
-                    if (t.Type == TileType.Floor && t.GlyphId != TileDefinitions.GlyphFloor)
+                    if (t.Type == TileType.Floor && t.TileId != floorTileId)
                         totalDecorations++;
                 }
         }

@@ -1,5 +1,6 @@
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.World;
 using RogueLikeNet.Protocol.Messages;
 
@@ -13,15 +14,12 @@ public class ClientGameStateTests
     private static ChunkDataMsg MakeFloorChunk(int cx, int cy, int cz = 0)
     {
         int size = Chunk.Size * Chunk.Size;
-        var types = new byte[size];
-        var glyphs = new int[size];
-        var fg = new int[size];
-        var bg = new int[size];
+        var tileIds = new int[size];
         var light = new int[size];
+        int floorId = GameData.Instance.Tiles.GetNumericId("floor");
         for (int i = 0; i < size; i++)
         {
-            types[i] = (byte)TileType.Floor;
-            glyphs[i] = '.';
+            tileIds[i] = floorId;
             light[i] = 5;
         }
         return new ChunkDataMsg
@@ -29,10 +27,7 @@ public class ClientGameStateTests
             ChunkX = cx,
             ChunkY = cy,
             ChunkZ = cz,
-            TileTypes = types,
-            TileGlyphs = glyphs,
-            TileFgColors = fg,
-            TileBgColors = bg,
+            TileIds = tileIds,
             TilePlaceableItemExtras = new int[size],
             TilePlaceableItemIds = new int[size],
         };
@@ -159,10 +154,7 @@ public class ClientGameStateTests
                 {
                     ChunkX = 0,
                     ChunkY = 0,
-                    TileTypes = new byte[64 * 64],
-                    TileGlyphs = new int[64 * 64],
-                    TileFgColors = new int[64 * 64],
-                    TileBgColors = new int[64 * 64],
+                    TileIds = new int[64 * 64],
                     TilePlaceableItemExtras = new int[64 * 64],
                     TilePlaceableItemIds = new int[64 * 64],
                 }
@@ -321,12 +313,12 @@ public class ClientGameStateTests
             Chunks = [],
             CombatEvents = [],
             EntityUpdates = [],
-            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileType = (byte)TileType.Blocked, GlyphId = '#', FgColor = 0xAAAAAA, BgColor = 0x111111, LightLevel = 3 }],
+            TileUpdates = [new TileUpdateMsg { X = 32, Y = 32, TileId = GameData.Instance.Tiles.GetNumericId("wall"), LightLevel = 3 }],
         });
 
         var (tile, lightlevel) = state.GetTileAndLightLevel(32, 32);
         Assert.Equal(TileType.Blocked, tile.Type);
-        Assert.Equal('#', tile.GlyphId);
+        Assert.Equal(GameData.Instance.Tiles.GetGlyphId(tile.TileId), tile.GlyphId);
         // LightLevel is now computed client-side (player at 32,32 illuminates this tile)
         Assert.True(lightlevel > 0);
     }

@@ -38,7 +38,7 @@ public class BiomeRegistryTests
     public void GetDecorations_UnknownBiome_ReturnsEmpty()
     {
         // If a biome isn't loaded, should return empty
-        var registry = new BiomeRegistry();
+        var registry = new BiomeRegistry(GameData.Instance.Tiles);
         registry.Register([]);
         var decorations = registry.GetDecorations(BiomeType.Forest);
         Assert.Empty(decorations);
@@ -52,10 +52,35 @@ public class BiomeRegistryTests
     }
 
     [Fact]
-    public void GetFloorColor_ReturnsColor()
+    public void GetFloorTileId_ReturnsValidId()
     {
-        var color = GameData.Instance.Biomes.GetFloorColor(BiomeType.Forest);
-        Assert.True(color >= 0);
+        var tileId = GameData.Instance.Biomes.GetFloorTileId(BiomeType.Forest);
+        Assert.NotEqual(0, tileId);
+    }
+
+    [Fact]
+    public void GetWallTileId_ReturnsValidId()
+    {
+        var tileId = GameData.Instance.Biomes.GetWallTileId(BiomeType.Forest);
+        Assert.NotEqual(0, tileId);
+    }
+
+    [Fact]
+    public void GetFloorTileId_ResolvesToFloorType()
+    {
+        var tileId = GameData.Instance.Biomes.GetFloorTileId(BiomeType.Forest);
+        var tileDef = GameData.Instance.Tiles.Get(tileId);
+        Assert.NotNull(tileDef);
+        Assert.Equal(TileType.Floor, tileDef!.Type);
+    }
+
+    [Fact]
+    public void GetWallTileId_ResolvesToBlockedType()
+    {
+        var tileId = GameData.Instance.Biomes.GetWallTileId(BiomeType.Forest);
+        var tileDef = GameData.Instance.Tiles.Get(tileId);
+        Assert.NotNull(tileDef);
+        Assert.Equal(TileType.Blocked, tileDef!.Type);
     }
 
     [Fact]
@@ -66,53 +91,21 @@ public class BiomeRegistryTests
         _ = GameData.Instance.Biomes.GetLiquid(BiomeType.Lava);
     }
 
-    // ── ApplyBiomeTint ──
-
     [Fact]
-    public void ApplyBiomeTint_ByBiomeType_TintsColor()
+    public void GetLiquid_LavaBiome_HasValidTileId()
     {
-        int white = 0xFFFFFF;
-        int result = GameData.Instance.Biomes.ApplyBiomeTint(white, BiomeType.Forest);
-        // Tinted color should differ from white (unless tint is 100,100,100)
-        Assert.True(result >= 0);
+        var liquid = GameData.Instance.Biomes.GetLiquid(BiomeType.Lava);
+        Assert.NotNull(liquid);
+        Assert.NotEqual(0, liquid!.TileNumericId);
     }
 
     [Fact]
-    public void ApplyBiomeTint_ZeroColor_ReturnsZero()
+    public void Decorations_HaveResolvedTileIds()
     {
-        Assert.Equal(0, GameData.Instance.Biomes.ApplyBiomeTint(0, BiomeType.Forest));
-    }
-
-    [Fact]
-    public void ApplyBiomeTint_ByNumericId_TintsColor()
-    {
-        var def = GameData.Instance.Biomes.Get(BiomeType.Forest);
-        if (def == null) return;
-        int white = 0xFFFFFF;
-        int result = GameData.Instance.Biomes.ApplyBiomeTint(white, def.NumericId);
-        Assert.True(result >= 0);
-    }
-
-    [Fact]
-    public void ApplyBiomeTint_ByNumericId_ZeroColor_ReturnsZero()
-    {
-        Assert.Equal(0, GameData.Instance.Biomes.ApplyBiomeTint(0, 1));
-    }
-
-    [Fact]
-    public void ApplyBiomeTint_ByNumericId_UnknownId_ReturnsOriginal()
-    {
-        int color = 0xFF8040;
-        Assert.Equal(color, GameData.Instance.Biomes.ApplyBiomeTint(color, 9999));
-    }
-
-    [Fact]
-    public void ApplyBiomeTint_ByBiomeType_UnknownBiome_ReturnsOriginal()
-    {
-        var registry = new BiomeRegistry();
-        registry.Register([]);
-        int color = 0xFF8040;
-        Assert.Equal(color, registry.ApplyBiomeTint(color, BiomeType.Forest));
+        var decorations = GameData.Instance.Biomes.GetDecorations(BiomeType.Forest);
+        Assert.NotEmpty(decorations);
+        foreach (var deco in decorations)
+            Assert.NotEqual(0, deco.TileNumericId);
     }
 
     // ── PickEnemy ──

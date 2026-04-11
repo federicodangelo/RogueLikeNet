@@ -62,28 +62,32 @@ public class BiomePaletteTests
     }
 
     [Fact]
-    public void ApplyBiomeTint_Stone_NoChange()
+    public void GetFloorTileId_ReturnsNonZeroForAllBiomes()
     {
-        int color = 0x808080;
-        int result = GameData.Instance.Biomes.ApplyBiomeTint(color, BiomeType.Stone);
-        Assert.Equal(color, result);
+        for (int i = 0; i < BiomeRegistry.BiomeCount; i++)
+        {
+            int floorId = GameData.Instance.Biomes.GetFloorTileId((BiomeType)i);
+            Assert.True(floorId != 0, $"Biome {(BiomeType)i} should have a valid floor tile ID");
+        }
     }
 
     [Fact]
-    public void ApplyBiomeTint_Lava_ShiftsWarm()
+    public void GetWallTileId_ReturnsNonZeroForAllBiomes()
     {
-        int color = 0x808080;
-        int result = GameData.Instance.Biomes.ApplyBiomeTint(color, BiomeType.Lava);
-        int r = (result >> 16) & 0xFF;
-        int g = (result >> 8) & 0xFF;
-        int b = result & 0xFF;
-        Assert.True(r > g && r > b, "Lava biome should shift colors warm (red dominant)");
+        for (int i = 0; i < BiomeRegistry.BiomeCount; i++)
+        {
+            int wallId = GameData.Instance.Biomes.GetWallTileId((BiomeType)i);
+            Assert.True(wallId != 0, $"Biome {(BiomeType)i} should have a valid wall tile ID");
+        }
     }
 
     [Fact]
-    public void ApplyBiomeTint_Zero_ReturnsZero()
+    public void GetFloorTileId_DifferentBiomes_CanHaveDifferentTiles()
     {
-        Assert.Equal(0, GameData.Instance.Biomes.ApplyBiomeTint(0, BiomeType.Ice));
+        var floorIds = new HashSet<int>();
+        for (int i = 0; i < BiomeRegistry.BiomeCount; i++)
+            floorIds.Add(GameData.Instance.Biomes.GetFloorTileId((BiomeType)i));
+        Assert.True(floorIds.Count >= 2, "Different biomes should have different floor tile IDs");
     }
 
     [Fact]

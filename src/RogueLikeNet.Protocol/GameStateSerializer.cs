@@ -23,10 +23,7 @@ public static class GameStateSerializer
             ChunkX = chunk.ChunkPosition.X,
             ChunkY = chunk.ChunkPosition.Y,
             ChunkZ = chunk.ChunkPosition.Z,
-            TileTypes = new byte[total],
-            TileGlyphs = new int[total],
-            TileFgColors = new int[total],
-            TileBgColors = new int[total],
+            TileIds = new int[total],
             TilePlaceableItemIds = new int[total],
             TilePlaceableItemExtras = new int[total],
         };
@@ -36,10 +33,7 @@ public static class GameStateSerializer
             {
                 int idx = y * Chunk.Size + x;
                 ref var tile = ref chunk.Tiles[x, y];
-                msg.TileTypes[idx] = (byte)tile.Type;
-                msg.TileGlyphs[idx] = tile.GlyphId;
-                msg.TileFgColors[idx] = tile.FgColor;
-                msg.TileBgColors[idx] = tile.BgColor;
+                msg.TileIds[idx] = tile.TileId;
                 msg.TilePlaceableItemIds[idx] = tile.PlaceableItemId;
                 msg.TilePlaceableItemExtras[idx] = tile.PlaceableItemExtra;
             }

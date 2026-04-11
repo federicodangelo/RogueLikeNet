@@ -147,49 +147,24 @@ public class OverworldGenerator : IDungeonGenerator
                 ref var tile = ref chunk.Tiles[lx, ly];
                 if (height < LiquidHeightThreshold && liquidDef != null)
                 {
-                    // Liquid
-                    tile.Type = liquidDef.TileType;
-                    tile.GlyphId = liquidDef.GlyphId;
-                    tile.FgColor = liquidDef.FgColor;
-                    tile.BgColor = liquidDef.BgColor;
+                    tile.TileId = liquidDef.TileNumericId;
                 }
                 else if (height > FloorThreshold)
                 {
-                    // Floor
-                    tile.Type = TileType.Floor;
-                    tile.GlyphId = TileDefinitions.GlyphFloor;
-                    tile.FgColor = TileDefinitions.ColorFloorFg;
-                    tile.BgColor = TileDefinitions.ColorBlack;
+                    tile.TileId = GameData.Instance.Biomes.GetFloorTileId(biome);
                 }
                 else
                 {
-                    // Walls
-
-                    // Rocks spawn where resource noise overlaps with walls
                     if (canBeResourceNode)
                     {
-                        // Resource node, put floor and a resource node on top
-                        tile.Type = TileType.Floor;
-                        tile.GlyphId = TileDefinitions.GlyphFloor;
-                        tile.FgColor = TileDefinitions.ColorFloorFg;
-                        tile.BgColor = TileDefinitions.ColorBlack;
+                        tile.TileId = GameData.Instance.Biomes.GetFloorTileId(biome);
                         result.ResourceNodes.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), GameData.Instance.ResourceNodes.PickRock(rng, biome)));
                         addedResourceNode = true;
                     }
                     else
                     {
-                        tile.Type = TileType.Blocked;
-                        tile.GlyphId = TileDefinitions.GlyphWall;
-                        tile.FgColor = TileDefinitions.ColorWallFg;
-                        tile.BgColor = TileDefinitions.ColorBlack;
+                        tile.TileId = GameData.Instance.Biomes.GetWallTileId(biome);
                     }
-                }
-
-                if (tile.Type == TileType.Blocked || tile.Type == TileType.Floor)
-                {
-                    // Apply biome tint to walls and floors
-                    tile.FgColor = tile.Type == TileType.Floor ? GameData.Instance.Biomes.GetFloorColor(biome) : GameData.Instance.Biomes.ApplyBiomeTint(tile.FgColor, biome);
-                    tile.BgColor = GameData.Instance.Biomes.ApplyBiomeTint(tile.BgColor, biome);
                 }
 
                 if (tile.Type == TileType.Floor && !addedResourceNode) // Only add features on floor tiles that don't have a resource node
@@ -208,9 +183,7 @@ public class OverworldGenerator : IDungeonGenerator
                         {
                             if (rng.Next(1000) < deco.Chance1000)
                             {
-                                tile.Type = TileType.Floor;
-                                tile.GlyphId = deco.GlyphId;
-                                tile.FgColor = GameData.Instance.Biomes.ApplyBiomeTint(deco.FgColor, biome);
+                                tile.TileId = deco.TileNumericId;
                                 break;
                             }
                         }
@@ -232,10 +205,9 @@ public class OverworldGenerator : IDungeonGenerator
                         {
                             result.Elements.Add(new DungeonElement(
                                 Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ),
-                                new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                                new LightSource(6, TileDefinitions.ColorTorchFg)));
+                                new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                                new LightSource(6, RenderConstants.ColorTorchFg)));
                         }
-
                     }
                 }
             }
@@ -261,13 +233,13 @@ public class OverworldGenerator : IDungeonGenerator
 
                 const int ClearRadius = 7;
                 DungeonHelper.RemoveEnemiesInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
-                DungeonHelper.MakeTilesFloorInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius);
+                DungeonHelper.MakeTilesFloorInRadius(result, spawnPoint.Value.X, spawnPoint.Value.Y, ClearRadius, GameData.Instance.Tiles.GetNumericId("floor"));
 
                 // Add torch
                 result.Elements.Add(new DungeonElement(
                     Position.FromCoords(spawnPoint.Value.X, spawnPoint.Value.Y, chunkZ),
-                    new TileAppearance(TileDefinitions.GlyphTorch, TileDefinitions.ColorTorchFg),
-                    new LightSource(6, TileDefinitions.ColorTorchFg))
+                    new TileAppearance(RenderConstants.GlyphTorch, RenderConstants.ColorTorchFg),
+                    new LightSource(6, RenderConstants.ColorTorchFg))
                 );
             }
         }
@@ -275,9 +247,9 @@ public class OverworldGenerator : IDungeonGenerator
         // Place cave entrance (StairsDown) on the surface if this chunk has a cave below
         if (TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
         {
-            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy);
-            DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, TileType.StairsDown,
-                TileDefinitions.GlyphStairsDown, TileDefinitions.ColorWhite);
+            int entranceFloorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, entranceFloorTileId);
+            DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, GameData.Instance.Tiles.GetNumericId("stairs_down"));
         }
 
         return result;
@@ -336,8 +308,10 @@ public class OverworldGenerator : IDungeonGenerator
         var rng = new SeededRandom(chunkSeed);
         int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 
-        DungeonHelper.FillWalls(chunk);
+        DungeonHelper.FillWalls(chunk, wallTileId);
 
         // Build BSP tree
         var root = new BspNode(BspPadding, BspPadding, size - BspPadding * 2, size - BspPadding * 2);
@@ -349,15 +323,14 @@ public class OverworldGenerator : IDungeonGenerator
 
         // Carve rooms into chunk
         foreach (var room in rooms)
-            DungeonHelper.CarveRoom(chunk, room);
+            DungeonHelper.CarveRoom(chunk, room, floorTileId);
 
         // Connect rooms via BSP siblings
         ConnectBspRooms(root, chunk, rng);
 
         // Place entrance stair (up only — can't go deeper)
-        DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy);
-        DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, TileType.StairsUp,
-            TileDefinitions.GlyphStairsUp, TileDefinitions.ColorWhite);
+        DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, floorTileId);
+        DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, GameData.Instance.Tiles.GetNumericId("stairs_up"));
 
         // Connect the entrance stair to the nearest room
         if (rooms.Count > 0)
@@ -365,7 +338,7 @@ public class OverworldGenerator : IDungeonGenerator
             var nearest = rooms.OrderBy(r =>
                 Math.Abs(r.CenterX - entranceLx) + Math.Abs(r.CenterY - entranceLy)).First();
             DungeonHelper.CarveCorridor(chunk, entranceLx, entranceLy,
-                nearest.CenterX, nearest.CenterY, rng);
+                nearest.CenterX, nearest.CenterY, rng, floorTileId);
         }
 
         DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
@@ -375,7 +348,6 @@ public class OverworldGenerator : IDungeonGenerator
         int worldOffsetY = chunkY * Chunk.Size;
         DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
         DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.ApplyBiomeTint(chunk, biome);
 
         return result;
     }
@@ -442,7 +414,7 @@ public class OverworldGenerator : IDungeonGenerator
         if (leftRoom == null || rightRoom == null) return;
 
         DungeonHelper.CarveCorridor(chunk, leftRoom.CenterX, leftRoom.CenterY,
-            rightRoom.CenterX, rightRoom.CenterY, rng);
+            rightRoom.CenterX, rightRoom.CenterY, rng, GameData.Instance.Tiles.GetNumericId("floor"));
     }
 
     private static Room? GetBspRoom(BspNode node, SeededRandom rng)
