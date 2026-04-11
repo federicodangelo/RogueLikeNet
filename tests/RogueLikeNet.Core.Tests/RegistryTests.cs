@@ -148,8 +148,8 @@ public class RegistryTests
         int closedGlyph = GameData.Instance.Items.GetPlaceableGlyphId(doorId, 0);
         int openGlyph = GameData.Instance.Items.GetPlaceableGlyphId(doorId, 1);
         // open glyph should be the alternate
-        Assert.Equal(doorDef.Placeable!.PlacedGlyphId, closedGlyph);
-        Assert.Equal(doorDef.Placeable.AlternateGlyphId, openGlyph);
+        Assert.Equal(doorDef.GlyphId, closedGlyph);
+        Assert.Equal(doorDef.Placeable!.AlternateGlyphId, openGlyph);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class RegistryTests
         if (doorDef == null) return;
         int doorId = doorDef.NumericId;
 
-        Assert.Equal(doorDef.Placeable!.PlacedFgColor, GameData.Instance.Items.GetPlaceableFgColor(doorId, 0));
+        Assert.Equal(doorDef.FgColor, GameData.Instance.Items.GetPlaceableFgColor(doorId, 0));
     }
 
     [Fact]
@@ -241,7 +241,7 @@ public class RegistryTests
         var wallDef = GameData.Instance.Items.Get("stone_wall");
         if (wallDef == null) return;
         int wallId = wallDef.NumericId;
-        Assert.Equal(wallDef.Placeable!.PlacedGlyphId, GameData.Instance.Items.GetPlaceableGlyphId(wallId, 0));
+        Assert.Equal(wallDef.GlyphId, GameData.Instance.Items.GetPlaceableGlyphId(wallId, 0));
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class RegistryTests
         var wallDef = GameData.Instance.Items.Get("stone_wall");
         if (wallDef == null) return;
         int wallId = wallDef.NumericId;
-        Assert.Equal(wallDef.Placeable!.PlacedFgColor, GameData.Instance.Items.GetPlaceableFgColor(wallId, 0));
+        Assert.Equal(wallDef.FgColor, GameData.Instance.Items.GetPlaceableFgColor(wallId, 0));
     }
 
     [Fact]

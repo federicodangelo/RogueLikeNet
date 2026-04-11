@@ -44,7 +44,7 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
         if (def.Placeable != null)
         {
             bool hasState = def.Placeable.StateType != PlaceableStateType.None;
-            return hasState && extra != 0 ? def.Placeable.AlternateGlyphId : def.Placeable.PlacedGlyphId;
+            return hasState && extra != 0 ? def.Placeable.AlternateGlyphId : def.GlyphId;
         }
         return def.GlyphId;
     }
@@ -53,7 +53,7 @@ public sealed class ItemRegistry : BaseRegistry<ItemDefinition>
     {
         var def = Get(itemTypeId);
         if (def == null) return 0;
-        if (def.Placeable != null) return def.Placeable.PlacedFgColor;
+        if (def.Placeable != null) return def.FgColor;
         return def.FgColor;
     }
 

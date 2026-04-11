@@ -270,8 +270,6 @@ public class DataLoaderTests
             "materialTier": "wood",
             "placeable": {
               "placeableType": "door",
-              "placedGlyphId": 197,
-              "placedFgColor": 9136404,
               "walkable": false,
               "transparent": false,
               "stateType": "openClose",

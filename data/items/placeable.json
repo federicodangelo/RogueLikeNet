@@ -10,8 +10,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "door",
-            "placedGlyphId": 197,
-            "placedFgColor": 9136404,
             "walkable": false,
             "transparent": false,
             "stateType": "openClose",
@@ -31,8 +29,6 @@
         "materialTier": "copper",
         "placeable": {
             "placeableType": "door",
-            "placedGlyphId": 197,
-            "placedFgColor": 12092211,
             "walkable": false,
             "transparent": false,
             "stateType": "openClose",
@@ -52,8 +48,6 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "door",
-            "placedGlyphId": 197,
-            "placedFgColor": 11053176,
             "walkable": false,
             "transparent": false,
             "stateType": "openClose",
@@ -73,8 +67,6 @@
         "materialTier": "gold",
         "placeable": {
             "placeableType": "door",
-            "placedGlyphId": 197,
-            "placedFgColor": 16766720,
             "walkable": false,
             "transparent": false,
             "stateType": "openClose",
@@ -94,8 +86,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 219,
-            "placedFgColor": 9136404,
             "walkable": false,
             "transparent": false,
             "stateType": "none",
@@ -115,8 +105,6 @@
         "materialTier": "copper",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 219,
-            "placedFgColor": 12092211,
             "walkable": false,
             "transparent": false,
             "stateType": "none",
@@ -136,8 +124,6 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 219,
-            "placedFgColor": 11053176,
             "walkable": false,
             "transparent": false,
             "stateType": "none",
@@ -157,8 +143,6 @@
         "materialTier": "gold",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 219,
-            "placedFgColor": 16766720,
             "walkable": false,
             "transparent": false,
             "stateType": "none",
@@ -178,8 +162,6 @@
         "materialTier": "stone",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 219,
-            "placedFgColor": 8947848,
             "walkable": false,
             "transparent": false,
             "stateType": "none",
@@ -199,8 +181,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 176,
-            "placedFgColor": 8956620,
             "walkable": false,
             "transparent": true,
             "stateType": "none",
@@ -220,8 +200,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "table",
-            "placedGlyphId": 209,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -241,8 +219,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "chair",
-            "placedGlyphId": 210,
-            "placedFgColor": 8019984,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -262,8 +238,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "bed",
-            "placedGlyphId": 235,
-            "placedFgColor": 13386820,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -283,8 +257,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "storage",
-            "placedGlyphId": 222,
-            "placedFgColor": 7032338,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -304,8 +276,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "floorTile",
-            "placedGlyphId": 249,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -325,8 +295,6 @@
         "materialTier": "stone",
         "placeable": {
             "placeableType": "floorTile",
-            "placedGlyphId": 249,
-            "placedFgColor": 8947848,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -346,8 +314,6 @@
         "materialTier": "copper",
         "placeable": {
             "placeableType": "floorTile",
-            "placedGlyphId": 249,
-            "placedFgColor": 12092211,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -367,8 +333,6 @@
         "materialTier": "iron",
         "placeable": {
             "placeableType": "floorTile",
-            "placedGlyphId": 249,
-            "placedFgColor": 11053176,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -388,8 +352,6 @@
         "materialTier": "gold",
         "placeable": {
             "placeableType": "floorTile",
-            "placedGlyphId": 249,
-            "placedFgColor": 16766720,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -410,8 +372,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "workbench",
-            "placedGlyphId": 209,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -432,8 +392,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "furnace",
-            "placedGlyphId": 232,
-            "placedFgColor": 16744448,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -454,8 +412,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "anvil",
-            "placedGlyphId": 234,
-            "placedFgColor": 11053176,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -476,8 +432,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "cookingPot",
-            "placedGlyphId": 232,
-            "placedFgColor": 11162880,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -498,8 +452,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "alchemy",
-            "placedGlyphId": 209,
-            "placedFgColor": 8388736,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -520,8 +472,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "loom",
-            "placedGlyphId": 222,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -542,8 +492,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "tanningRack",
-            "placedGlyphId": 209,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -564,8 +512,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "stoneCutter",
-            "placedGlyphId": 234,
-            "placedFgColor": 8947848,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -586,8 +532,6 @@
         "placeable": {
             "placeableType": "craftingStation",
             "craftingStationType": "sawmill",
-            "placedGlyphId": 222,
-            "placedFgColor": 7032338,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -607,8 +551,6 @@
         "materialTier": "wood",
         "placeable": {
             "placeableType": "storage",
-            "placedGlyphId": 232,
-            "placedFgColor": 9136404,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -628,8 +570,6 @@
         "materialTier": "none",
         "placeable": {
             "placeableType": "decoration",
-            "placedGlyphId": 15,
-            "placedFgColor": 16764006,
             "walkable": true,
             "transparent": true,
             "stateType": "none",
@@ -649,8 +589,6 @@
         "materialTier": "none",
         "placeable": {
             "placeableType": "wall",
-            "placedGlyphId": 35,
-            "placedFgColor": 9136404,
             "walkable": false,
             "transparent": true
         }
@@ -666,8 +604,6 @@
         "materialTier": "none",
         "placeable": {
             "placeableType": "door",
-            "placedGlyphId": 35,
-            "placedFgColor": 9136404,
             "walkable": false,
             "transparent": true,
             "stateType": "openClose",
