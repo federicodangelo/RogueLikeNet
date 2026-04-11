@@ -159,7 +159,7 @@
         "id": "spider",
         "name": "Spider",
         "glyphId": 120,
-        "fgColor": 3355443,
+        "fgColor": 6645093,
         "health": 12,
         "attack": 4,
         "defense": 1,
