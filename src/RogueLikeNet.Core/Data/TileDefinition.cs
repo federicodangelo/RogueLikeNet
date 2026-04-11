@@ -5,7 +5,7 @@ namespace RogueLikeNet.Core.Data;
 
 /// <summary>
 /// Defines a single tile type with its visual appearance and properties.
-/// Loaded from JSON data files (data/tiles/tiles.json).
+/// Loaded from JSON data files (data/tiles/*.json).
 /// </summary>
 public sealed class TileDefinition : BaseDefinition
 {

@@ -1,0 +1,62 @@
+[
+    {
+        "id": "fungal_floor",
+        "name": "Fungal Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#776688",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "fungal_wall",
+        "name": "Fungal Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#A190B2",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "fungal_water",
+        "name": "Fungal Water",
+        "type": "water",
+        "glyphId": "≈",
+        "fgColor": "#4A7E3A",
+        "bgColor": "#001133",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "fungal_deco_mushroom",
+        "name": "Fungal Mushroom",
+        "type": "floor",
+        "glyphId": "♠",
+        "fgColor": "#CC66AA",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "fungal_deco_sprout",
+        "name": "Fungal Sprout",
+        "type": "floor",
+        "glyphId": "'",
+        "fgColor": "#4A7E3A",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "fungal_deco_spore",
+        "name": "Fungal Spore",
+        "type": "floor",
+        "glyphId": ",",
+        "fgColor": "#338033",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

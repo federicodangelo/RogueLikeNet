@@ -1,0 +1,52 @@
+[
+    {
+        "id": "void",
+        "name": "Void",
+        "type": "void",
+        "glyphId": 0,
+        "fgColor": "#000000",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "floor",
+        "name": "Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#666666",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "wall",
+        "name": "Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#AAAAAA",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "stairs_down",
+        "name": "Stairs Down",
+        "type": "stairsDown",
+        "glyphId": ">",
+        "fgColor": "#FFFFFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "stairs_up",
+        "name": "Stairs Up",
+        "type": "stairsUp",
+        "glyphId": "<",
+        "fgColor": "#FFFFFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

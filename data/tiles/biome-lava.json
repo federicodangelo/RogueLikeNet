@@ -1,0 +1,52 @@
+[
+    {
+        "id": "lava_floor",
+        "name": "Lava Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#CC5522",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "lava_wall",
+        "name": "Lava Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#BB907F",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "lava_lava",
+        "name": "Lava Pool",
+        "type": "lava",
+        "glyphId": "≈",
+        "fgColor": "#FF4400",
+        "bgColor": "#331000",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "lava_deco_ember",
+        "name": "Lava Ember",
+        "type": "floor",
+        "glyphId": "•",
+        "fgColor": "#FF6622",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "lava_deco_ash",
+        "name": "Lava Ash",
+        "type": "floor",
+        "glyphId": "~",
+        "fgColor": "#663222",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

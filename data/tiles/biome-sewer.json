@@ -1,0 +1,62 @@
+[
+    {
+        "id": "sewer_floor",
+        "name": "Sewer Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#667766",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "sewer_wall",
+        "name": "Sewer Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#90A199",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "sewer_water",
+        "name": "Sewer Water",
+        "type": "water",
+        "glyphId": "≈",
+        "fgColor": "#4484FF",
+        "bgColor": "#001133",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "sewer_deco_moss",
+        "name": "Sewer Moss",
+        "type": "floor",
+        "glyphId": "'",
+        "fgColor": "#4A7E3A",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "sewer_deco_pipe",
+        "name": "Sewer Pipe",
+        "type": "floor",
+        "glyphId": "Φ",
+        "fgColor": "#996633",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "sewer_deco_slime",
+        "name": "Sewer Slime",
+        "type": "floor",
+        "glyphId": "~",
+        "fgColor": "#888777",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

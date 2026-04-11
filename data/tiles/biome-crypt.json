@@ -1,0 +1,52 @@
+[
+    {
+        "id": "crypt_floor",
+        "name": "Crypt Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#887766",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crypt_wall",
+        "name": "Crypt Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#A19990",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "crypt_deco_bone",
+        "name": "Crypt Bone",
+        "type": "floor",
+        "glyphId": "σ",
+        "fgColor": "#CCBB99",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crypt_deco_tomb",
+        "name": "Crypt Tomb",
+        "type": "floor",
+        "glyphId": "■",
+        "fgColor": "#CCBB99",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crypt_deco_remains",
+        "name": "Crypt Remains",
+        "type": "floor",
+        "glyphId": "%",
+        "fgColor": "#BBBBCC",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

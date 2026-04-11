@@ -1,0 +1,52 @@
+[
+    {
+        "id": "ice_floor",
+        "name": "Ice Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#AAFFFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "ice_wall",
+        "name": "Ice Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#88A1C3",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "ice_water",
+        "name": "Ice Water",
+        "type": "water",
+        "glyphId": "≈",
+        "fgColor": "#AAFFFF",
+        "bgColor": "#0A1122",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "ice_deco_icicle",
+        "name": "Icicle",
+        "type": "floor",
+        "glyphId": "|",
+        "fgColor": "#AAFFFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "ice_deco_frost",
+        "name": "Frost",
+        "type": "floor",
+        "glyphId": "~",
+        "fgColor": "#AAFFFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

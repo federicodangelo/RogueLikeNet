@@ -1,0 +1,62 @@
+[
+    {
+        "id": "infernal_floor",
+        "name": "Infernal Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#FF3300",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "infernal_wall",
+        "name": "Infernal Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#C38877",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "infernal_lava",
+        "name": "Infernal Lava",
+        "type": "lava",
+        "glyphId": "≈",
+        "fgColor": "#FF4400",
+        "bgColor": "#331000",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "infernal_deco_ember",
+        "name": "Infernal Ember",
+        "type": "floor",
+        "glyphId": "•",
+        "fgColor": "#FF6622",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "infernal_deco_ash",
+        "name": "Infernal Ash",
+        "type": "floor",
+        "glyphId": "~",
+        "fgColor": "#663222",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "infernal_deco_bone",
+        "name": "Infernal Bone",
+        "type": "floor",
+        "glyphId": "σ",
+        "fgColor": "#CCBB99",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

@@ -1,0 +1,52 @@
+[
+    {
+        "id": "tilled_soil",
+        "name": "Tilled Soil",
+        "type": "floor",
+        "glyphId": "~",
+        "fgColor": "#553311",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crop_stage_0",
+        "name": "Crop Seedling",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#665533",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crop_stage_1",
+        "name": "Crop Sprout",
+        "type": "floor",
+        "glyphId": ",",
+        "fgColor": "#44AA22",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crop_stage_2",
+        "name": "Crop Growing",
+        "type": "floor",
+        "glyphId": "⌠",
+        "fgColor": "#44AA22",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "crop_stage_3",
+        "name": "Crop Mature",
+        "type": "floor",
+        "glyphId": 157,
+        "fgColor": "#DDAA00",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

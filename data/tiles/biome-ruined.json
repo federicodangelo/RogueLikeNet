@@ -1,0 +1,52 @@
+[
+    {
+        "id": "ruined_floor",
+        "name": "Ruined Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#888777",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "ruined_wall",
+        "name": "Ruined Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#B2A190",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "ruined_deco_rubble",
+        "name": "Ruined Rubble",
+        "type": "floor",
+        "glyphId": "▒",
+        "fgColor": "#888777",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "ruined_deco_pebble",
+        "name": "Ruined Pebble",
+        "type": "floor",
+        "glyphId": "○",
+        "fgColor": "#999999",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "ruined_deco_ruin",
+        "name": "Ruined Ruin",
+        "type": "floor",
+        "glyphId": "Ω",
+        "fgColor": "#999999",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

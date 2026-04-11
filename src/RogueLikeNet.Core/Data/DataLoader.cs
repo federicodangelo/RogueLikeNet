@@ -358,6 +358,23 @@ public static class DataLoader
                         errors.Add($"Biome '{biome.Id}': resource node '{rw.NodeId}' not found.");
                 }
             }
+            if (data.Tiles.Get(biome.FloorTileId) == null)
+                errors.Add($"Biome '{biome.Id}': floor tile '{biome.FloorTileId}' not found.");
+            if (data.Tiles.Get(biome.WallTileId) == null)
+                errors.Add($"Biome '{biome.Id}': wall tile '{biome.WallTileId}' not found.");
+            if (biome.Decorations != null)
+            {
+                foreach (var deco in biome.Decorations)
+                {
+                    if (data.Tiles.Get(deco.TileId) == null)
+                        errors.Add($"Biome '{biome.Id}': decoration tile '{deco.TileId}' not found.");
+                }
+            }
+            if (biome.Liquid != null)
+            {
+                if (data.Tiles.Get(biome.Liquid.TileId) == null)
+                    errors.Add($"Biome '{biome.Id}': liquid tile '{biome.Liquid.TileId}' not found.");
+            }
         }
 
         // Validate animals

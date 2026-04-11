@@ -1,0 +1,62 @@
+[
+    {
+        "id": "forest_floor",
+        "name": "Forest Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#558844",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "forest_wall",
+        "name": "Forest Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#90BB88",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "forest_water",
+        "name": "Forest Water",
+        "type": "water",
+        "glyphId": "≈",
+        "fgColor": "#4484FF",
+        "bgColor": "#001133",
+        "walkable": false,
+        "transparent": true
+    },
+    {
+        "id": "forest_deco_grass",
+        "name": "Forest Grass",
+        "type": "floor",
+        "glyphId": ",",
+        "fgColor": "#558844",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "forest_deco_sprout",
+        "name": "Forest Sprout",
+        "type": "floor",
+        "glyphId": "'",
+        "fgColor": "#4A7E3A",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "forest_deco_fern",
+        "name": "Forest Fern",
+        "type": "floor",
+        "glyphId": "⌠",
+        "fgColor": "#338033",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

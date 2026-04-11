@@ -1,0 +1,42 @@
+[
+    {
+        "id": "stone_floor",
+        "name": "Stone Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#888888",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "stone_wall",
+        "name": "Stone Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#AAAAAA",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "stone_deco_rubble",
+        "name": "Stone Rubble",
+        "type": "floor",
+        "glyphId": "▒",
+        "fgColor": "#888777",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "stone_deco_pebble",
+        "name": "Stone Pebble",
+        "type": "floor",
+        "glyphId": "○",
+        "fgColor": "#999999",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]

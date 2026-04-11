@@ -1,0 +1,42 @@
+[
+    {
+        "id": "arcane_floor",
+        "name": "Arcane Floor",
+        "type": "floor",
+        "glyphId": "·",
+        "fgColor": "#664488",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "arcane_wall",
+        "name": "Arcane Wall",
+        "type": "blocked",
+        "glyphId": "█",
+        "fgColor": "#9988BB",
+        "bgColor": "#000000",
+        "walkable": false,
+        "transparent": false
+    },
+    {
+        "id": "arcane_deco_sparkle",
+        "name": "Arcane Sparkle",
+        "type": "floor",
+        "glyphId": "*",
+        "fgColor": "#CC86FF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    },
+    {
+        "id": "arcane_deco_crystal",
+        "name": "Arcane Crystal",
+        "type": "floor",
+        "glyphId": "♦",
+        "fgColor": "#88CCFF",
+        "bgColor": "#000000",
+        "walkable": true,
+        "transparent": true
+    }
+]
