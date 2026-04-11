@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RogueLikeNet.Core.Data;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class AnimalDefinition : BaseDefinition
 {
+    [JsonConverter(typeof(GlyphConverter))]
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Health { get; set; }

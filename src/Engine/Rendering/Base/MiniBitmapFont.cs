@@ -9,444 +9,53 @@ public static class MiniBitmapFont
     public const int GlyphWidth = 8;
     public const int GlyphHeight = 16;
 
-    // ── CP437 Glyph Index Constants ────────────────────────────────────
+    // CP437 index → Unicode character (all 256 entries)
+    public static readonly char[] Cp437ToUnicode =
+    [
+        // 0-31: control code symbols
+        '\0',  '☺', '☻', '♥', '♦', '♣', '♠', '•',
+        '◘',   '○', '◙', '♂', '♀', '♪', '♫', '☼',
+        '►',   '◄', '↕', '‼', '¶', '§', '▬', '↨',
+        '↑',   '↓', '→', '←', '∟', '↔', '▲', '▼',
+        // 32-127: standard ASCII
+        ' ', '!', '"', '#', '$', '%', '&', '\'',
+        '(', ')', '*', '+', ',', '-', '.', '/',
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?',
+        '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+        '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+        'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+        'x', 'y', 'z', '{', '|', '}', '~', '⌂',
+        // 128-255: extended characters
+        'Ç', 'ü', 'é', 'â', 'ä', 'à', 'å', 'ç',
+        'ê', 'ë', 'è', 'ï', 'î', 'ì', 'Ä', 'Å',
+        'É', 'æ', 'Æ', 'ô', 'ö', 'ò', 'û', 'ù',
+        'ÿ', 'Ö', 'Ü', '¢', '£', '¥', '₧', 'ƒ',
+        'á', 'í', 'ó', 'ú', 'ñ', 'Ñ', 'ª', 'º',
+        '¿', '⌐', '¬', '½', '¼', '¡', '«', '»',
+        '░', '▒', '▓', '│', '┤', '╡', '╢', '╖',
+        '╕', '╣', '║', '╗', '╝', '╜', '╛', '┐',
+        '└', '┴', '┬', '├', '─', '┼', '╞', '╟',
+        '╚', '╔', '╩', '╦', '╠', '═', '╬', '╧',
+        '╨', '╤', '╥', '╙', '╘', '╒', '╓', '╫',
+        '╪', '┘', '┌', '█', '▄', '▌', '▐', '▀',
+        'α', 'ß', 'Γ', 'π', 'Σ', 'σ', 'µ', 'τ',
+        'Φ', 'Θ', 'Ω', 'δ', '∞', 'φ', 'ε', '∩',
+        '≡', '±', '≥', '≤', '⌠', '⌡', '÷', '≈',
+        '°', '∙', '·', '√', 'ⁿ', '²', '■', '\u00A0',
+    ];
 
-    public const int Null = 0x00;
-    public const int SmileyFace = 0x01;
-    public const int SmileyFaceInv = 0x02;
-    public const int Heart = 0x03;
-    public const int Diamond = 0x04;
-    public const int Club = 0x05;
-    public const int Spade = 0x06;
-    public const int Bullet = 0x07;
-    public const int BulletInv = 0x08;
-    public const int Circle = 0x09;
-    public const int CircleInv = 0x0A;
-    public const int Male = 0x0B;
-    public const int Female = 0x0C;
-    public const int EighthNote = 0x0D;
-    public const int BeamedNotes = 0x0E;
-    public const int Sun = 0x0F;
-    public const int RightPointer = 0x10;
-    public const int LeftPointer = 0x11;
-    public const int UpDownArrow = 0x12;
-    public const int DoubleExclaim = 0x13;
-    public const int Pilcrow = 0x14;
-    public const int Section = 0x15;
-    public const int ThickUnderline = 0x16;
-    public const int UpDownArrowUL = 0x17;
-    public const int UpArrow = 0x18;
-    public const int DownArrow = 0x19;
-    public const int RightArrow = 0x1A;
-    public const int LeftArrow = 0x1B;
-    public const int RightAngle = 0x1C;
-    public const int LeftRightArrow = 0x1D;
-    public const int UpTriangle = 0x1E;
-    public const int DownTriangle = 0x1F;
-    public const int Space = 0x20;
-    public const int Exclamation = 0x21;
-    public const int DoubleQuote = 0x22;
-    public const int Hash = 0x23;
-    public const int Dollar = 0x24;
-    public const int Percent = 0x25;
-    public const int Ampersand = 0x26;
-    public const int Apostrophe = 0x27;
-    public const int LeftParen = 0x28;
-    public const int RightParen = 0x29;
-    public const int Asterisk = 0x2A;
-    public const int Plus = 0x2B;
-    public const int Comma = 0x2C;
-    public const int Hyphen = 0x2D;
-    public const int Period = 0x2E;
-    public const int Slash = 0x2F;
-    public const int Digit0 = 0x30;
-    public const int Digit1 = 0x31;
-    public const int Digit2 = 0x32;
-    public const int Digit3 = 0x33;
-    public const int Digit4 = 0x34;
-    public const int Digit5 = 0x35;
-    public const int Digit6 = 0x36;
-    public const int Digit7 = 0x37;
-    public const int Digit8 = 0x38;
-    public const int Digit9 = 0x39;
-    public const int Colon = 0x3A;
-    public const int Semicolon = 0x3B;
-    public const int LessThan = 0x3C;
-    public const int EqualsSign = 0x3D;
-    public const int GreaterThan = 0x3E;
-    public const int Question = 0x3F;
-    public const int At = 0x40;
-    public const int UpperA = 0x41;
-    public const int UpperB = 0x42;
-    public const int UpperC = 0x43;
-    public const int UpperD = 0x44;
-    public const int UpperE = 0x45;
-    public const int UpperF = 0x46;
-    public const int UpperG = 0x47;
-    public const int UpperH = 0x48;
-    public const int UpperI = 0x49;
-    public const int UpperJ = 0x4A;
-    public const int UpperK = 0x4B;
-    public const int UpperL = 0x4C;
-    public const int UpperM = 0x4D;
-    public const int UpperN = 0x4E;
-    public const int UpperO = 0x4F;
-    public const int UpperP = 0x50;
-    public const int UpperQ = 0x51;
-    public const int UpperR = 0x52;
-    public const int UpperS = 0x53;
-    public const int UpperT = 0x54;
-    public const int UpperU = 0x55;
-    public const int UpperV = 0x56;
-    public const int UpperW = 0x57;
-    public const int UpperX = 0x58;
-    public const int UpperY = 0x59;
-    public const int UpperZ = 0x5A;
-    public const int LeftBracket = 0x5B;
-    public const int Backslash = 0x5C;
-    public const int RightBracket = 0x5D;
-    public const int Caret = 0x5E;
-    public const int Underscore = 0x5F;
-    public const int Backtick = 0x60;
-    public const int LowerA = 0x61;
-    public const int LowerB = 0x62;
-    public const int LowerC = 0x63;
-    public const int LowerD = 0x64;
-    public const int LowerE = 0x65;
-    public const int LowerF = 0x66;
-    public const int LowerG = 0x67;
-    public const int LowerH = 0x68;
-    public const int LowerI = 0x69;
-    public const int LowerJ = 0x6A;
-    public const int LowerK = 0x6B;
-    public const int LowerL = 0x6C;
-    public const int LowerM = 0x6D;
-    public const int LowerN = 0x6E;
-    public const int LowerO = 0x6F;
-    public const int LowerP = 0x70;
-    public const int LowerQ = 0x71;
-    public const int LowerR = 0x72;
-    public const int LowerS = 0x73;
-    public const int LowerT = 0x74;
-    public const int LowerU = 0x75;
-    public const int LowerV = 0x76;
-    public const int LowerW = 0x77;
-    public const int LowerX = 0x78;
-    public const int LowerY = 0x79;
-    public const int LowerZ = 0x7A;
-    public const int LeftBrace = 0x7B;
-    public const int Pipe = 0x7C;
-    public const int RightBrace = 0x7D;
-    public const int Tilde = 0x7E;
-    public const int House = 0x7F;
-    public const int CedillaC = 0x80;
-    public const int UmlautLowerU = 0x81;
-    public const int AcuteLowerE = 0x82;
-    public const int CircumLowerA = 0x83;
-    public const int UmlautLowerA = 0x84;
-    public const int GraveLowerA = 0x85;
-    public const int RingLowerA = 0x86;
-    public const int CedillaLowerC = 0x87;
-    public const int CircumLowerE = 0x88;
-    public const int UmlautLowerE = 0x89;
-    public const int GraveLowerE = 0x8A;
-    public const int UmlautLowerI = 0x8B;
-    public const int CircumLowerI = 0x8C;
-    public const int GraveLowerI = 0x8D;
-    public const int UmlautUpperA = 0x8E;
-    public const int RingUpperA = 0x8F;
-    public const int AcuteUpperE = 0x90;
-    public const int LowerAE = 0x91;
-    public const int UpperAE = 0x92;
-    public const int CircumLowerO = 0x93;
-    public const int UmlautLowerO = 0x94;
-    public const int GraveLowerO = 0x95;
-    public const int CircumLowerU = 0x96;
-    public const int GraveLowerU = 0x97;
-    public const int UmlautLowerY = 0x98;
-    public const int UmlautUpperO = 0x99;
-    public const int UmlautUpperU = 0x9A;
-    public const int Cent = 0x9B;
-    public const int Pound = 0x9C;
-    public const int Yen = 0x9D;
-    public const int Peseta = 0x9E;
-    public const int FlorinSign = 0x9F;
-    public const int AcuteLowerA = 0xA0;
-    public const int AcuteLowerI = 0xA1;
-    public const int AcuteLowerO = 0xA2;
-    public const int AcuteLowerU = 0xA3;
-    public const int TildeLowerN = 0xA4;
-    public const int TildeUpperN = 0xA5;
-    public const int FemOrdinal = 0xA6;
-    public const int MascOrdinal = 0xA7;
-    public const int InvQuestion = 0xA8;
-    public const int ReversedNot = 0xA9;
-    public const int Not = 0xAA;
-    public const int Half = 0xAB;
-    public const int Quarter = 0xAC;
-    public const int InvExclamation = 0xAD;
-    public const int LeftAngleQuote = 0xAE;
-    public const int RightAngleQuote = 0xAF;
-    public const int LightShade = 0xB0;
-    public const int MediumShade = 0xB1;
-    public const int DarkShade = 0xB2;
-    public const int BoxVert = 0xB3;
-    public const int BoxVertLeft = 0xB4;
-    public const int BoxVertLeftDbl = 0xB5;
-    public const int BoxDblVertLeft = 0xB6;
-    public const int BoxDblDownLeft = 0xB7;
-    public const int BoxDownLeftDbl = 0xB8;
-    public const int BoxDblVertLeftDbl = 0xB9;
-    public const int BoxDblVert = 0xBA;
-    public const int BoxDblDownLeftDbl = 0xBB;
-    public const int BoxDblUpLeft = 0xBC;
-    public const int BoxDblUpLeftDbl = 0xBD;
-    public const int BoxUpLeftDbl = 0xBE;
-    public const int BoxDownLeft = 0xBF;
-    public const int BoxUpRight = 0xC0;
-    public const int BoxUpHoriz = 0xC1;
-    public const int BoxDownHoriz = 0xC2;
-    public const int BoxVertRight = 0xC3;
-    public const int BoxHoriz = 0xC4;
-    public const int BoxCross = 0xC5;
-    public const int BoxVertRightDbl = 0xC6;
-    public const int BoxDblVertRight = 0xC7;
-    public const int BoxDblUpRight = 0xC8;
-    public const int BoxDblDownRight = 0xC9;
-    public const int BoxDblUpHoriz = 0xCA;
-    public const int BoxDblDownHoriz = 0xCB;
-    public const int BoxDblVertRightDbl = 0xCC;
-    public const int BoxDblHoriz = 0xCD;
-    public const int BoxDblCross = 0xCE;
-    public const int BoxUpHorizDbl = 0xCF;
-    public const int BoxDblUpHorizDbl = 0xD0;
-    public const int BoxDownHorizDbl = 0xD1;
-    public const int BoxDblDownHorizDbl = 0xD2;
-    public const int BoxDblUpRightDbl = 0xD3;
-    public const int BoxUpRightDbl = 0xD4;
-    public const int BoxDownRightDbl = 0xD5;
-    public const int BoxDblDownRightDbl = 0xD6;
-    public const int BoxDblVertHoriz = 0xD7;
-    public const int BoxVertHorizDbl = 0xD8;
-    public const int BoxUpLeft = 0xD9;
-    public const int BoxDownRight = 0xDA;
-    public const int FullBlock = 0xDB;
-    public const int LowerHalfBlock = 0xDC;
-    public const int LeftHalfBlock = 0xDD;
-    public const int RightHalfBlock = 0xDE;
-    public const int UpperHalfBlock = 0xDF;
-    public const int Alpha = 0xE0;
-    public const int Beta = 0xE1;
-    public const int Gamma = 0xE2;
-    public const int Pi = 0xE3;
-    public const int UpperSigma = 0xE4;
-    public const int LowerSigma = 0xE5;
-    public const int Mu = 0xE6;
-    public const int Tau = 0xE7;
-    public const int UpperPhi = 0xE8;
-    public const int Theta = 0xE9;
-    public const int Omega = 0xEA;
-    public const int Delta = 0xEB;
-    public const int Infinity = 0xEC;
-    public const int LowerPhi = 0xED;
-    public const int Epsilon = 0xEE;
-    public const int Intersection = 0xEF;
-    public const int Identical = 0xF0;
-    public const int PlusMinus = 0xF1;
-    public const int GreaterEqual = 0xF2;
-    public const int LessEqual = 0xF3;
-    public const int UpperIntegral = 0xF4;
-    public const int LowerIntegral = 0xF5;
-    public const int Division = 0xF6;
-    public const int ApproxEqual = 0xF7;
-    public const int Degree = 0xF8;
-    public const int BulletOp = 0xF9;
-    public const int MiddleDot = 0xFA;
-    public const int SquareRoot = 0xFB;
-    public const int SuperscriptN = 0xFC;
-    public const int Superscript2 = 0xFD;
-    public const int FilledSquare = 0xFE;
-    public const int NBSP = 0xFF;
+    public static readonly Dictionary<char, int> UnicodeToCp437;
 
-    /// <summary>Maps CP437 byte index (0-255) to its Unicode character.</summary>
-    public static readonly char[] Cp437ToUnicode = CreateCp437Map();
-
-    private static char[] CreateCp437Map()
+    static MiniBitmapFont()
     {
-        var map = new char[256];
-
-        // Control / graphic characters (0x00-0x1F)
-        map[Null] = '\0';
-        map[SmileyFace] = '\u263A';
-        map[SmileyFaceInv] = '\u263B';
-        map[Heart] = '\u2665';
-        map[Diamond] = '\u2666';
-        map[Club] = '\u2663';
-        map[Spade] = '\u2660';
-        map[Bullet] = '\u2022';
-        map[BulletInv] = '\u25D8';
-        map[Circle] = '\u25CB';
-        map[CircleInv] = '\u25D9';
-        map[Male] = '\u2642';
-        map[Female] = '\u2640';
-        map[EighthNote] = '\u266A';
-        map[BeamedNotes] = '\u266B';
-        map[Sun] = '\u263C';
-        map[RightPointer] = '\u25BA';
-        map[LeftPointer] = '\u25C4';
-        map[UpDownArrow] = '\u2195';
-        map[DoubleExclaim] = '\u203C';
-        map[Pilcrow] = '\u00B6';
-        map[Section] = '\u00A7';
-        map[ThickUnderline] = '\u25AC';
-        map[UpDownArrowUL] = '\u21A8';
-        map[UpArrow] = '\u2191';
-        map[DownArrow] = '\u2193';
-        map[RightArrow] = '\u2192';
-        map[LeftArrow] = '\u2190';
-        map[RightAngle] = '\u221F';
-        map[LeftRightArrow] = '\u2194';
-        map[UpTriangle] = '\u25B2';
-        map[DownTriangle] = '\u25BC';
-
-        // Standard ASCII (0x20-0x7E) — identity mapping
-        for (int i = 0x20; i <= 0x7E; i++)
-            map[i] = (char)i;
-
-        // House (0x7F)
-        map[House] = '\u2302';
-
-        // Extended characters (0x80-0xFF)
-        map[CedillaC] = '\u00C7';
-        map[UmlautLowerU] = '\u00FC';
-        map[AcuteLowerE] = '\u00E9';
-        map[CircumLowerA] = '\u00E2';
-        map[UmlautLowerA] = '\u00E4';
-        map[GraveLowerA] = '\u00E0';
-        map[RingLowerA] = '\u00E5';
-        map[CedillaLowerC] = '\u00E7';
-        map[CircumLowerE] = '\u00EA';
-        map[UmlautLowerE] = '\u00EB';
-        map[GraveLowerE] = '\u00E8';
-        map[UmlautLowerI] = '\u00EF';
-        map[CircumLowerI] = '\u00EE';
-        map[GraveLowerI] = '\u00EC';
-        map[UmlautUpperA] = '\u00C4';
-        map[RingUpperA] = '\u00C5';
-        map[AcuteUpperE] = '\u00C9';
-        map[LowerAE] = '\u00E6';
-        map[UpperAE] = '\u00C6';
-        map[CircumLowerO] = '\u00F4';
-        map[UmlautLowerO] = '\u00F6';
-        map[GraveLowerO] = '\u00F2';
-        map[CircumLowerU] = '\u00FB';
-        map[GraveLowerU] = '\u00F9';
-        map[UmlautLowerY] = '\u00FF';
-        map[UmlautUpperO] = '\u00D6';
-        map[UmlautUpperU] = '\u00DC';
-        map[Cent] = '\u00A2';
-        map[Pound] = '\u00A3';
-        map[Yen] = '\u00A5';
-        map[Peseta] = '\u20A7';
-        map[FlorinSign] = '\u0192';
-        map[AcuteLowerA] = '\u00E1';
-        map[AcuteLowerI] = '\u00ED';
-        map[AcuteLowerO] = '\u00F3';
-        map[AcuteLowerU] = '\u00FA';
-        map[TildeLowerN] = '\u00F1';
-        map[TildeUpperN] = '\u00D1';
-        map[FemOrdinal] = '\u00AA';
-        map[MascOrdinal] = '\u00BA';
-        map[InvQuestion] = '\u00BF';
-        map[ReversedNot] = '\u2310';
-        map[Not] = '\u00AC';
-        map[Half] = '\u00BD';
-        map[Quarter] = '\u00BC';
-        map[InvExclamation] = '\u00A1';
-        map[LeftAngleQuote] = '\u00AB';
-        map[RightAngleQuote] = '\u00BB';
-        map[LightShade] = '\u2591';
-        map[MediumShade] = '\u2592';
-        map[DarkShade] = '\u2593';
-        map[BoxVert] = '\u2502';
-        map[BoxVertLeft] = '\u2524';
-        map[BoxVertLeftDbl] = '\u2561';
-        map[BoxDblVertLeft] = '\u2562';
-        map[BoxDblDownLeft] = '\u2556';
-        map[BoxDownLeftDbl] = '\u2555';
-        map[BoxDblVertLeftDbl] = '\u2563';
-        map[BoxDblVert] = '\u2551';
-        map[BoxDblDownLeftDbl] = '\u2557';
-        map[BoxDblUpLeft] = '\u255D';
-        map[BoxDblUpLeftDbl] = '\u255C';
-        map[BoxUpLeftDbl] = '\u255B';
-        map[BoxDownLeft] = '\u2510';
-        map[BoxUpRight] = '\u2514';
-        map[BoxUpHoriz] = '\u2534';
-        map[BoxDownHoriz] = '\u252C';
-        map[BoxVertRight] = '\u251C';
-        map[BoxHoriz] = '\u2500';
-        map[BoxCross] = '\u253C';
-        map[BoxVertRightDbl] = '\u255E';
-        map[BoxDblVertRight] = '\u255F';
-        map[BoxDblUpRight] = '\u255A';
-        map[BoxDblDownRight] = '\u2554';
-        map[BoxDblUpHoriz] = '\u2569';
-        map[BoxDblDownHoriz] = '\u2566';
-        map[BoxDblVertRightDbl] = '\u2560';
-        map[BoxDblHoriz] = '\u2550';
-        map[BoxDblCross] = '\u256C';
-        map[BoxUpHorizDbl] = '\u2567';
-        map[BoxDblUpHorizDbl] = '\u2568';
-        map[BoxDownHorizDbl] = '\u2564';
-        map[BoxDblDownHorizDbl] = '\u2565';
-        map[BoxDblUpRightDbl] = '\u2559';
-        map[BoxUpRightDbl] = '\u2558';
-        map[BoxDownRightDbl] = '\u2552';
-        map[BoxDblDownRightDbl] = '\u2553';
-        map[BoxDblVertHoriz] = '\u256B';
-        map[BoxVertHorizDbl] = '\u256A';
-        map[BoxUpLeft] = '\u2518';
-        map[BoxDownRight] = '\u250C';
-        map[FullBlock] = '\u2588';
-        map[LowerHalfBlock] = '\u2584';
-        map[LeftHalfBlock] = '\u258C';
-        map[RightHalfBlock] = '\u2590';
-        map[UpperHalfBlock] = '\u2580';
-        map[Alpha] = '\u03B1';
-        map[Beta] = '\u00DF';
-        map[Gamma] = '\u0393';
-        map[Pi] = '\u03C0';
-        map[UpperSigma] = '\u03A3';
-        map[LowerSigma] = '\u03C3';
-        map[Mu] = '\u00B5';
-        map[Tau] = '\u03C4';
-        map[UpperPhi] = '\u03A6';
-        map[Theta] = '\u0398';
-        map[Omega] = '\u03A9';
-        map[Delta] = '\u03B4';
-        map[Infinity] = '\u221E';
-        map[LowerPhi] = '\u03C6';
-        map[Epsilon] = '\u03B5';
-        map[Intersection] = '\u2229';
-        map[Identical] = '\u2261';
-        map[PlusMinus] = '\u00B1';
-        map[GreaterEqual] = '\u2265';
-        map[LessEqual] = '\u2264';
-        map[UpperIntegral] = '\u2320';
-        map[LowerIntegral] = '\u2321';
-        map[Division] = '\u00F7';
-        map[ApproxEqual] = '\u2248';
-        map[Degree] = '\u00B0';
-        map[BulletOp] = '\u2219';
-        map[MiddleDot] = '\u00B7';
-        map[SquareRoot] = '\u221A';
-        map[SuperscriptN] = '\u207F';
-        map[Superscript2] = '\u00B2';
-        map[FilledSquare] = '\u25A0';
-        map[NBSP] = '\u00A0';
-
-        return map;
+        UnicodeToCp437 = new Dictionary<char, int>();
+        for (int i = 1; i < Cp437ToUnicode.Length; i++) // skip NUL at index 0
+            UnicodeToCp437[Cp437ToUnicode[i]] = i;
     }
 
     // ── Font Bitmap Data (ASCII Art) ───────────────────────────────────

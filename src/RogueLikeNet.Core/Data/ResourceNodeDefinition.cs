@@ -7,6 +7,7 @@ namespace RogueLikeNet.Core.Data;
 /// </summary>
 public sealed class ResourceNodeDefinition : BaseDefinition
 {
+    [JsonConverter(typeof(GlyphConverter))]
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Health { get; set; }

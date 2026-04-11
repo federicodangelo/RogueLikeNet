@@ -35,6 +35,7 @@ public sealed class BiomeDefinition : BaseDefinition
 
 public sealed class BiomeDecorationDef
 {
+    [JsonConverter(typeof(GlyphConverter))]
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int Chance1000 { get; set; }
@@ -49,6 +50,7 @@ public sealed class BiomeEnemySpawnDef
 public sealed class BiomeLiquidDef
 {
     public TileType TileType { get; set; }
+    [JsonConverter(typeof(GlyphConverter))]
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public int BgColor { get; set; }

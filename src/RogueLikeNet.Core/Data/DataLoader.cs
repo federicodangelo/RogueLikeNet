@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Engine.Rendering.Base;
 
 namespace RogueLikeNet.Core.Data;
 
@@ -26,6 +27,42 @@ public class HexConverter : JsonConverter<int>
     public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
     {
         writer.WriteStringValue($"#{value:X}");
+    }
+}
+
+/// <summary>
+/// Converts between CP437 glyph indices (int) and their Unicode character representation (string).
+/// In JSON, glyphs are stored as single-character strings (e.g. "♣" for CP437 index 5).
+/// Falls back to integer parsing for backward compatibility.
+/// </summary>
+public class GlyphConverter : JsonConverter<int>
+{
+    public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+            return reader.GetInt32();
+
+        var value = reader.GetString();
+        if (value == null || value.Length == 0)
+            return 0;
+
+        // Single character → look up CP437 index
+        if (value.Length == 1 && MiniBitmapFont.UnicodeToCp437.TryGetValue(value[0], out var cp437Index))
+            return cp437Index;
+
+        // Fall back to integer parsing for backward compatibility
+        if (int.TryParse(value, out var intValue))
+            return intValue;
+
+        return 0;
+    }
+
+    public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+    {
+        if (value > 0 && value < MiniBitmapFont.Cp437ToUnicode.Length)
+            writer.WriteStringValue(MiniBitmapFont.Cp437ToUnicode[value].ToString());
+        else
+            writer.WriteNumberValue(value);
     }
 }
 

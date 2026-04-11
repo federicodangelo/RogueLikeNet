@@ -52,6 +52,7 @@ public enum EquipSlot
 public sealed class ItemDefinition : BaseDefinition
 {
     public ItemCategory Category { get; set; }
+    [JsonConverter(typeof(GlyphConverter))]
     public int GlyphId { get; set; }
     public int FgColor { get; set; }
     public bool Stackable { get; set; }

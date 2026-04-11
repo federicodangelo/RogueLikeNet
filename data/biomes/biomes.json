@@ -8,12 +8,12 @@
         "tintB": 100,
         "decorations": [
             {
-                "glyphId": 177,
+                "glyphId": "▒",
                 "fgColor": "#888777",
                 "chance1000": 4
             },
             {
-                "glyphId": 9,
+                "glyphId": "○",
                 "fgColor": "#999999",
                 "chance1000": 2
             }
@@ -69,12 +69,12 @@
         "tintB": 75,
         "decorations": [
             {
-                "glyphId": 7,
+                "glyphId": "•",
                 "fgColor": "#FF6622",
                 "chance1000": 8
             },
             {
-                "glyphId": 126,
+                "glyphId": "~",
                 "fgColor": "#663222",
                 "chance1000": 6
             }
@@ -91,7 +91,7 @@
         ],
         "liquid": {
             "tileType": "lava",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#FF4400",
             "bgColor": "#331000",
             "chance100": 30
@@ -124,12 +124,12 @@
         "tintB": 115,
         "decorations": [
             {
-                "glyphId": 124,
+                "glyphId": "|",
                 "fgColor": "#AAFFFF",
                 "chance1000": 8
             },
             {
-                "glyphId": 126,
+                "glyphId": "~",
                 "fgColor": "#AAFFFF",
                 "chance1000": 4
             }
@@ -150,7 +150,7 @@
         ],
         "liquid": {
             "tileType": "water",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#AAFFFF",
             "bgColor": "#0A1122",
             "chance100": 25
@@ -179,17 +179,17 @@
         "tintB": 80,
         "decorations": [
             {
-                "glyphId": 44,
+                "glyphId": ",",
                 "fgColor": "#558844",
                 "chance1000": 12
             },
             {
-                "glyphId": 39,
+                "glyphId": "'",
                 "fgColor": "#4A7E3A",
                 "chance1000": 8
             },
             {
-                "glyphId": 244,
+                "glyphId": "⌠",
                 "fgColor": "#338033",
                 "chance1000": 4
             }
@@ -214,7 +214,7 @@
         ],
         "liquid": {
             "tileType": "water",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#4484FF",
             "bgColor": "#001133",
             "chance100": 20
@@ -247,12 +247,12 @@
         "tintB": 110,
         "decorations": [
             {
-                "glyphId": 42,
+                "glyphId": "*",
                 "fgColor": "#CC86FF",
                 "chance1000": 6
             },
             {
-                "glyphId": 4,
+                "glyphId": "♦",
                 "fgColor": "#88CCFF",
                 "chance1000": 6
             }
@@ -308,17 +308,17 @@
         "tintB": 85,
         "decorations": [
             {
-                "glyphId": 229,
+                "glyphId": "σ",
                 "fgColor": "#CCBB99",
                 "chance1000": 10
             },
             {
-                "glyphId": 254,
+                "glyphId": "■",
                 "fgColor": "#CCBB99",
                 "chance1000": 4
             },
             {
-                "glyphId": 37,
+                "glyphId": "%",
                 "fgColor": "#BBBBCC",
                 "chance1000": 6
             }
@@ -366,17 +366,17 @@
         "tintB": 90,
         "decorations": [
             {
-                "glyphId": 39,
+                "glyphId": "'",
                 "fgColor": "#4A7E3A",
                 "chance1000": 8
             },
             {
-                "glyphId": 232,
+                "glyphId": "Φ",
                 "fgColor": "#996633",
                 "chance1000": 4
             },
             {
-                "glyphId": 126,
+                "glyphId": "~",
                 "fgColor": "#888777",
                 "chance1000": 4
             }
@@ -401,7 +401,7 @@
         ],
         "liquid": {
             "tileType": "water",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#4484FF",
             "bgColor": "#001133",
             "chance100": 40
@@ -430,17 +430,17 @@
         "tintB": 105,
         "decorations": [
             {
-                "glyphId": 6,
+                "glyphId": "♠",
                 "fgColor": "#CC66AA",
                 "chance1000": 12
             },
             {
-                "glyphId": 39,
+                "glyphId": "'",
                 "fgColor": "#4A7E3A",
                 "chance1000": 6
             },
             {
-                "glyphId": 44,
+                "glyphId": ",",
                 "fgColor": "#338033",
                 "chance1000": 4
             }
@@ -469,7 +469,7 @@
         ],
         "liquid": {
             "tileType": "water",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#4A7E3A",
             "bgColor": "#001133",
             "chance100": 15
@@ -502,17 +502,17 @@
         "tintB": 85,
         "decorations": [
             {
-                "glyphId": 177,
+                "glyphId": "▒",
                 "fgColor": "#888777",
                 "chance1000": 10
             },
             {
-                "glyphId": 9,
+                "glyphId": "○",
                 "fgColor": "#999999",
                 "chance1000": 4
             },
             {
-                "glyphId": 234,
+                "glyphId": "Ω",
                 "fgColor": "#999999",
                 "chance1000": 2
             }
@@ -564,17 +564,17 @@
         "tintB": 70,
         "decorations": [
             {
-                "glyphId": 7,
+                "glyphId": "•",
                 "fgColor": "#FF6622",
                 "chance1000": 10
             },
             {
-                "glyphId": 126,
+                "glyphId": "~",
                 "fgColor": "#663222",
                 "chance1000": 6
             },
             {
-                "glyphId": 229,
+                "glyphId": "σ",
                 "fgColor": "#CCBB99",
                 "chance1000": 4
             }
@@ -595,7 +595,7 @@
         ],
         "liquid": {
             "tileType": "lava",
-            "glyphId": 247,
+            "glyphId": "≈",
             "fgColor": "#FF4400",
             "bgColor": "#331000",
             "chance100": 35

@@ -2,7 +2,7 @@
     {
         "id": "goblin",
         "name": "Goblin",
-        "glyphId": 103,
+        "glyphId": "g",
         "fgColor": "#00FF00",
         "health": 15,
         "attack": 4,
@@ -27,7 +27,7 @@
     {
         "id": "orc",
         "name": "Orc",
-        "glyphId": 111,
+        "glyphId": "o",
         "fgColor": "#FF0000",
         "health": 30,
         "attack": 7,
@@ -58,7 +58,7 @@
     {
         "id": "skeleton",
         "name": "Skeleton",
-        "glyphId": 115,
+        "glyphId": "s",
         "fgColor": "#FFFFFF",
         "health": 20,
         "attack": 5,
@@ -83,7 +83,7 @@
     {
         "id": "dragon",
         "name": "Dragon",
-        "glyphId": 68,
+        "glyphId": "D",
         "fgColor": "#FF8000",
         "health": 100,
         "attack": 15,
@@ -114,7 +114,7 @@
     {
         "id": "slime",
         "name": "Slime",
-        "glyphId": 111,
+        "glyphId": "o",
         "fgColor": "#00FF00",
         "health": 10,
         "attack": 2,
@@ -133,7 +133,7 @@
     {
         "id": "wolf",
         "name": "Wolf",
-        "glyphId": 119,
+        "glyphId": "w",
         "fgColor": "#888888",
         "health": 18,
         "attack": 6,
@@ -158,7 +158,7 @@
     {
         "id": "spider",
         "name": "Spider",
-        "glyphId": 120,
+        "glyphId": "x",
         "fgColor": "#656565",
         "health": 12,
         "attack": 4,
@@ -177,7 +177,7 @@
     {
         "id": "zombie",
         "name": "Zombie",
-        "glyphId": 122,
+        "glyphId": "z",
         "fgColor": "#52A711",
         "health": 25,
         "attack": 5,
