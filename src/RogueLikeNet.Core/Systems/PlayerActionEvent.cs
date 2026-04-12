@@ -16,6 +16,7 @@ public enum PlayerActionEventType
     Harvest = 11,
     FeedAnimal = 12,
     Craft = 13,
+    LevelUp = 14,
 }
 
 /// <summary>
@@ -36,4 +37,6 @@ public struct PlayerActionEvent
     public int StackCount;
     public bool Failed;
     public ActionFailReason FailReason;
+    public int OldLevel;
+    public int NewLevel;
 }

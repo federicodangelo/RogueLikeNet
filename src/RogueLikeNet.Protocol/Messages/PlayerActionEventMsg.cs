@@ -10,4 +10,6 @@ public class PlayerActionEventMsg
     [Key(2)] public int StackCount { get; set; }
     [Key(3)] public bool Failed { get; set; }
     [Key(4)] public int FailReason { get; set; }
+    [Key(5)] public int OldLevel { get; set; }
+    [Key(6)] public int NewLevel { get; set; }
 }

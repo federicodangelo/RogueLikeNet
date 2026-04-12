@@ -13,6 +13,8 @@ public sealed class GameData
     public readonly NpcRegistry Npcs = new();
     public readonly BiomeRegistry Biomes;
     public readonly AnimalRegistry Animals = new();
+    public readonly ClassRegistry Classes = new();
+    public readonly PlayerLevelTable PlayerLevels = new();
 
     public GameData()
     {
@@ -34,5 +36,7 @@ public sealed class GameData
         output.WriteLine($"[GameData] Loaded {Npcs.Count} NPCs");
         output.WriteLine($"[GameData] Loaded {Biomes.Count} biomes");
         output.WriteLine($"[GameData] Loaded {Animals.Count} animals");
+        output.WriteLine($"[GameData] Loaded {Classes.Count} classes");
+        output.WriteLine($"[GameData] Loaded {PlayerLevels.Count} player levels");
     }
 }

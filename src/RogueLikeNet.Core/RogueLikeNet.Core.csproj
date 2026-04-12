@@ -20,6 +20,8 @@
     <EmbeddedResource Include="..\..\data\items\*.json" LogicalName="data/items/%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\data\recipes\*.json" LogicalName="data/recipes/%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\data\tiles\*.json" LogicalName="data/tiles/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\classes\*.json" LogicalName="data/classes/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\meta\*.json" LogicalName="data/meta/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

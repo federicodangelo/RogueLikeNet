@@ -158,7 +158,28 @@ public static class DataLoader
             animals = DeserializeFile<AnimalDefinition[]>(animalsFile);
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
+        // Load classes from data/classes/
+        var classes = new List<ClassDataDefinition>();
+        var classesDir = Path.Combine(dataDir, "classes");
+        if (Directory.Exists(classesDir))
+        {
+            foreach (var file in Directory.GetFiles(classesDir, "*.json"))
+            {
+                var loaded = DeserializeFile<ClassDataDefinition>(file);
+                if (loaded != null)
+                    classes.Add(loaded);
+            }
+        }
+
+        // Load player levels
+        var levelsFile = Path.Combine(dataDir, "meta", "player-levels.json");
+        var playerLevels = Array.Empty<PlayerLevelDefinition>();
+        if (File.Exists(levelsFile))
+        {
+            playerLevels = DeserializeFile<PlayerLevelDefinition[]>(levelsFile);
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? []);
     }
     /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
     /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
@@ -216,10 +237,25 @@ public static class DataLoader
         // Load animals
         var animals = DeserializeResource<AnimalDefinition[]>(assembly, "data/entities/animals.json");
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? []);
+        // Load classes from data/classes/*.json resources
+        var classes = new List<ClassDataDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/classes/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<ClassDataDefinition>(assembly, name);
+                if (loaded != null)
+                    classes.Add(loaded);
+            }
+        }
+
+        // Load player levels
+        var playerLevels = DeserializeResource<PlayerLevelDefinition[]>(assembly, "data/meta/player-levels.json");
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? []);
     }
 
-    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals)
+    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels)
     {
         var data = new GameData();
 
@@ -230,6 +266,8 @@ public static class DataLoader
         data.Npcs.Register(npcs);
         data.Biomes.Register(biomes);
         data.Animals.Register(animals);
+        data.Classes.Register(classes);
+        data.PlayerLevels.Load(playerLevels);
 
         Validate(data);
 
@@ -246,7 +284,9 @@ public static class DataLoader
         string? resourceNodesJson = null,
         string? monstersJson = null,
         string? biomesJson = null,
-        string? animalsJson = null)
+        string? animalsJson = null,
+        string[]? classesJson = null,
+        string? playerLevelsJson = null)
     {
         var data = new GameData();
 
@@ -297,6 +337,25 @@ public static class DataLoader
             var animals = JsonSerializer.Deserialize<AnimalDefinition[]>(animalsJson, JsonOptions);
             if (animals != null)
                 data.Animals.Register(animals);
+        }
+
+        if (classesJson != null)
+        {
+            var classes = new List<ClassDataDefinition>();
+            foreach (var json in classesJson)
+            {
+                var cls = JsonSerializer.Deserialize<ClassDataDefinition>(json, JsonOptions);
+                if (cls != null)
+                    classes.Add(cls);
+            }
+            data.Classes.Register(classes);
+        }
+
+        if (playerLevelsJson != null)
+        {
+            var levels = JsonSerializer.Deserialize<PlayerLevelDefinition[]>(playerLevelsJson, JsonOptions);
+            if (levels != null)
+                data.PlayerLevels.Load(levels);
         }
 
         return data;

@@ -1,22 +1,21 @@
 using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Core.Definitions;
 
 /// <summary>
-/// Class-specific stat bonuses
+/// Class-specific stat bonuses. Delegates to data-driven definitions loaded from JSON.
 /// </summary>
 public static class ClassDefinitions
 {
     public const int InventorySlots = 30;
     public const int FOVRadius = 20;
 
+    // Convenience constants matching JSON "order" values
     public const int Warrior = 0;
     public const int Rogue = 1;
     public const int Mage = 2;
     public const int Ranger = 3;
-
-    public const int NumClasses = 4;
-
 
     private const int BaseHealth = 100;
     private const int BaseAttack = 10;
@@ -24,60 +23,49 @@ public static class ClassDefinitions
     private const int BaseSpeed = 10;
     public static ClassStats BaseStats => new(BaseAttack, BaseDefense, BaseHealth, BaseSpeed);
 
-    public static readonly ClassDefinition[] All =
-    [
-        // Warrior - sword and shield
-        new(Warrior, "Warrior", new ClassStats(3, 3, 20, 0),
-        [
-            @"    O/  ",
-            @"   /[+] ",
-            @"    /|  ",
-            @"   / |  ",
-            @"  _/ \_ ",
-        ]),
-        // Rogue - dual daggers
-        new(Rogue,   "Rogue",   new ClassStats(1, 0, 0, 4),
-        [
-            @"   _O_  ",
-            @"  /- -\ ",
-            @"   \|/  ",
-            @"   /|\  ",
-            @"  _/ \_ ",
-        ]),
-        // Mage - staff and spell
-        new(Mage,    "Mage",    new ClassStats(0, 0, -10, 2),
-        [
-            @"   \O/  ",
-            @"  .*|*. ",
-            @"    |   ",
-            @"   /|\  ",
-            @"  _/ \_ ",
-        ]),
-        // Ranger - bow
-        new(Ranger,  "Ranger",  new ClassStats(2, 1, 0, 2),
-        [
-            @"    O}  ",
-            @"   )|}  ",
-            @"    |}  ",
-            @"   /|   ",
-            @"  _/ \_ ",
-        ]),
-    ];
+    public static int NumClasses => GameData.Instance.Classes.ClassCount;
 
-    public static ClassDefinition Get(int classId) =>
-        Array.Find(All, d => d.ClassId == classId);
+    public static ClassDataDefinition[] All => GameData.Instance.Classes.AllByIndex;
 
-    /// <summary>Returns (bonusAttack, bonusDefense, bonusHealth, bonusSpeed).</summary>
-    public static ClassStats GetStartingStats(int classId)
+    public static ClassDataDefinition GetDef(int classIndex) =>
+        GameData.Instance.Classes.GetByIndex(classIndex)!;
+
+    public static ClassStats GetStartingStats(int classIndex)
     {
-        var def = Get(classId);
-        return def.StartingStats;
+        var def = GetDef(classIndex);
+        return new ClassStats(def.StartingStats.Attack, def.StartingStats.Defense, def.StartingStats.Health, def.StartingStats.Speed);
     }
 
-    public static string[] GetAsciiArt(int classId)
+    public static string[] GetAsciiArt(int classIndex)
     {
-        var def = Get(classId);
+        var def = GetDef(classIndex);
         return def.AsciiArt;
+    }
+
+    public static string GetName(int classIndex)
+    {
+        var def = GetDef(classIndex);
+        return def.Name;
+    }
+
+    public static ClassStats GetLevelBonuses(int classIndex, int level)
+    {
+        var def = GetDef(classIndex);
+        foreach (var bonus in def.LevelBonuses)
+        {
+            if (bonus.Level == level)
+                return new ClassStats(bonus.Attack, bonus.Defense, bonus.Health, bonus.Speed);
+        }
+        // If no exact match, use highest level that doesn't exceed requested level
+        ClassLevelBonus? best = null;
+        foreach (var bonus in def.LevelBonuses)
+        {
+            if (bonus.Level <= level && (best == null || bonus.Level > best.Level))
+                best = bonus;
+        }
+        if (best != null)
+            return new ClassStats(best.Attack, best.Defense, best.Health, best.Speed);
+        return default;
     }
 }
 
@@ -86,5 +74,3 @@ public readonly record struct ClassStats(int Attack, int Defense, int Health, in
     public static ClassStats operator +(ClassStats a, ClassStats b) =>
         new(a.Attack + b.Attack, a.Defense + b.Defense, a.Health + b.Health, a.Speed + b.Speed);
 };
-
-public readonly record struct ClassDefinition(int ClassId, string Name, ClassStats StartingStats, string[] AsciiArt);

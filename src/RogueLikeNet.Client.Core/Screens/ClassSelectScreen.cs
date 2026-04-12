@@ -69,7 +69,7 @@ public sealed class ClassSelectScreen : IScreen
         }
         else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
-            int classId = ClassDefinitions.All[_selectedClassIndex].ClassId;
+            int classId = _selectedClassIndex;
             if (_isOnline)
                 _ctx.OnStartOnline(classId, _playerName);
             else

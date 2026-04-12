@@ -121,7 +121,7 @@ public sealed class MenuRenderer
             AsciiDraw.DrawBox(r, cx, cardStartY, cardW, cardH, borderColor);
 
             var classDef = ClassDefinitions.All[i];
-            var stats = classDef.StartingStats;
+            var stats = ClassDefinitions.GetStartingStats(i);
 
             int nameX = cx + (cardW - classDef.Name.Length) / 2;
             AsciiDraw.DrawString(r, nameX, cardStartY + 1, classDef.Name, selected ? RenderingTheme.ClassHighlight : RenderingTheme.Title);

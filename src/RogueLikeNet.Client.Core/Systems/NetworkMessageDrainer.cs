@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Protocol.Messages;
 
@@ -50,7 +51,7 @@ public sealed class NetworkMessageDrainer
 
         foreach (var evt in gameState.PendingPlayerActionEvents)
         {
-            var msg = FormatPlayerActionEvent(evt);
+            var msg = FormatPlayerActionEvent(evt, gameState.PlayerState);
             if (msg != null)
                 chat?.AddChatLine(msg);
         }
@@ -65,7 +66,7 @@ public sealed class NetworkMessageDrainer
         while (_pendingDeltas.TryDequeue(out _)) { }
     }
 
-    private static string? FormatPlayerActionEvent(PlayerActionEventMsg evt)
+    private static string? FormatPlayerActionEvent(PlayerActionEventMsg evt, PlayerStateMsg? playerState)
     {
         var eventType = (PlayerActionEventType)evt.EventType;
         var itemName = GetItemName(evt.ItemTypeId);
@@ -119,8 +120,33 @@ public sealed class NetworkMessageDrainer
             PlayerActionEventType.Craft => evt.StackCount > 1
                 ? $"Crafted {itemName} x{evt.StackCount}"
                 : $"Crafted {itemName}",
+            PlayerActionEventType.LevelUp => FormatLevelUpMessage(evt, playerState),
             _ => null,
         };
+    }
+
+    private static string FormatLevelUpMessage(PlayerActionEventMsg evt, PlayerStateMsg? playerState)
+    {
+        if (playerState == null)
+            return $"Level up! Now level {evt.NewLevel}.";
+
+        var oldBonus = ClassDefinitions.GetLevelBonuses(playerState.ClassId, evt.OldLevel);
+        var newBonus = ClassDefinitions.GetLevelBonuses(playerState.ClassId, evt.NewLevel);
+
+        var parts = new System.Text.StringBuilder();
+        parts.Append($"Level up! Now level {evt.NewLevel}.");
+
+        int dAtk = newBonus.Attack - oldBonus.Attack;
+        int dDef = newBonus.Defense - oldBonus.Defense;
+        int dHp = newBonus.Health - oldBonus.Health;
+        int dSpd = newBonus.Speed - oldBonus.Speed;
+
+        if (dAtk != 0) parts.Append($" ATK {(dAtk > 0 ? "+" : "")}{dAtk}");
+        if (dDef != 0) parts.Append($" DEF {(dDef > 0 ? "+" : "")}{dDef}");
+        if (dHp != 0) parts.Append($" HP {(dHp > 0 ? "+" : "")}{dHp}");
+        if (dSpd != 0) parts.Append($" SPD {(dSpd > 0 ? "+" : "")}{dSpd}");
+
+        return parts.ToString();
     }
 
     private static string GetItemName(int itemTypeId)

@@ -261,6 +261,8 @@ public static class GameStateSerializer
             StackCount = e.StackCount,
             Failed = e.Failed,
             FailReason = (int)e.FailReason,
+            OldLevel = e.OldLevel,
+            NewLevel = e.NewLevel,
         }).ToArray();
     }
 
@@ -287,6 +289,7 @@ public static class GameStateSerializer
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = (long)player.Id,
             NearbyStationsTypes = stateData.NearbyStationsTypes,
+            ClassId = stateData.ClassId,
         };
     }
 

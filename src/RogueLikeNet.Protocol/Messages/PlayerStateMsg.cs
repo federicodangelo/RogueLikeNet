@@ -22,6 +22,7 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(15)] public int Thirst { get; set; }
     [Key(16)] public int MaxThirst { get; set; }
     [Key(17)] public int[] NearbyStationsTypes { get; set; } = [];
+    [Key(18)] public int ClassId { get; set; }
 
     public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
     {
@@ -44,6 +45,7 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (a.Thirst != b.Thirst) return false;
         if (a.MaxThirst != b.MaxThirst) return false;
         if (!a.NearbyStationsTypes.SequenceEqual(b.NearbyStationsTypes)) return false;
+        if (a.ClassId != b.ClassId) return false;
 
         return true;
     }
