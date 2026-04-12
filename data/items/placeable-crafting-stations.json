@@ -1,0 +1,128 @@
+[
+    {
+        "id": "crafting_bench",
+        "name": "Crafting Bench",
+        "category": "placeable",
+        "glyphId": "╤",
+        "fgColor": "#8B6914",
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "workbench",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "furnace",
+        "name": "Furnace",
+        "category": "placeable",
+        "glyphId": "Φ",
+        "fgColor": "#FF8000",
+        "materialTier": "stone",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "furnace",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "anvil",
+        "name": "Anvil",
+        "category": "placeable",
+        "glyphId": "Ω",
+        "fgColor": "#A8A878",
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "anvil",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "cooking_pot",
+        "name": "Cooking Pot",
+        "category": "placeable",
+        "glyphId": "Φ",
+        "fgColor": "#AA5500",
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "cookingPot",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "alchemy_table",
+        "name": "Alchemy Table",
+        "category": "placeable",
+        "glyphId": "╤",
+        "fgColor": "#800080",
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "alchemy",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "loom",
+        "name": "Loom",
+        "category": "placeable",
+        "glyphId": "▐",
+        "fgColor": "#8B6914",
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "loom",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "tanning_rack",
+        "name": "Tanning Rack",
+        "category": "placeable",
+        "glyphId": "╤",
+        "fgColor": "#8B6914",
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "tanningRack",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "stone_cutter",
+        "name": "Stone Cutter",
+        "category": "placeable",
+        "glyphId": "Ω",
+        "fgColor": "#888888",
+        "materialTier": "stone",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "stoneCutter",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "sawmill",
+        "name": "Sawmill",
+        "category": "placeable",
+        "glyphId": "▐",
+        "fgColor": "#6B4E12",
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "craftingStation",
+            "craftingStationType": "sawmill",
+            "walkable": false,
+            "transparent": true
+        }
+    }
+]

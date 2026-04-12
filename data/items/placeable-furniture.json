@@ -1,0 +1,62 @@
+[
+    {
+        "id": "wooden_table",
+        "name": "Wooden Table",
+        "category": "placeable",
+        "glyphId": "╤",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "table",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "wooden_chair",
+        "name": "Wooden Chair",
+        "category": "placeable",
+        "glyphId": "╥",
+        "fgColor": "#7A6010",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "chair",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "wooden_bed",
+        "name": "Wooden Bed",
+        "category": "placeable",
+        "glyphId": "δ",
+        "fgColor": "#CC4444",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "bed",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "wooden_bookshelf",
+        "name": "Wooden Bookshelf",
+        "category": "placeable",
+        "glyphId": "▐",
+        "fgColor": "#6B4E12",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "storage",
+            "walkable": false,
+            "transparent": true
+        }
+    }
+]

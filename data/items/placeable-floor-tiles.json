@@ -1,0 +1,77 @@
+[
+    {
+        "id": "wooden_floor_tile",
+        "name": "Wooden Floor Tile",
+        "category": "placeable",
+        "glyphId": "∙",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "floorTile",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "stone_floor_tile",
+        "name": "Stone Floor Tile",
+        "category": "placeable",
+        "glyphId": "∙",
+        "fgColor": "#888888",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "stone",
+        "placeable": {
+            "placeableType": "floorTile",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "copper_floor_tile",
+        "name": "Copper Floor Tile",
+        "category": "placeable",
+        "glyphId": "∙",
+        "fgColor": "#B88333",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "copper",
+        "placeable": {
+            "placeableType": "floorTile",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "iron_floor_tile",
+        "name": "Iron Floor Tile",
+        "category": "placeable",
+        "glyphId": "∙",
+        "fgColor": "#A8A878",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "floorTile",
+            "walkable": true,
+            "transparent": true
+        }
+    },
+    {
+        "id": "gold_floor_tile",
+        "name": "Gold Floor Tile",
+        "category": "placeable",
+        "glyphId": "∙",
+        "fgColor": "#FFD700",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "gold",
+        "placeable": {
+            "placeableType": "floorTile",
+            "walkable": true,
+            "transparent": true
+        }
+    }
+]

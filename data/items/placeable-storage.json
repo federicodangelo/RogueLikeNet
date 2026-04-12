@@ -1,0 +1,17 @@
+[
+    {
+        "id": "chest",
+        "name": "Chest",
+        "category": "placeable",
+        "glyphId": "Φ",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 5,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "storage",
+            "walkable": false,
+            "transparent": true
+        }
+    }
+]

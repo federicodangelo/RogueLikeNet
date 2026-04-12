@@ -272,12 +272,12 @@ public class RegistryTests
     }
 
     [Fact]
-    public void ItemRegistry_Table_WalkableAndTransparent()
+    public void ItemRegistry_Table_NonWalkableAndTransparent()
     {
         var tableDef = GameData.Instance.Items.Get("wooden_table");
         if (tableDef == null) return;
         int tId = tableDef.NumericId;
-        Assert.True(GameData.Instance.Items.IsPlaceableWalkable(tId, 0));
+        Assert.False(GameData.Instance.Items.IsPlaceableWalkable(tId, 0));
         Assert.True(GameData.Instance.Items.IsPlaceableTransparent(tId, 0));
     }
 

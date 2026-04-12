@@ -1,0 +1,97 @@
+[
+    {
+        "id": "wooden_door",
+        "name": "Wooden Door",
+        "category": "placeable",
+        "glyphId": "┼",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "door",
+            "walkable": false,
+            "transparent": false,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
+    },
+    {
+        "id": "copper_door",
+        "name": "Copper Door",
+        "category": "placeable",
+        "glyphId": "┼",
+        "fgColor": "#B88333",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "copper",
+        "placeable": {
+            "placeableType": "door",
+            "walkable": false,
+            "transparent": false,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
+    },
+    {
+        "id": "iron_door",
+        "name": "Iron Door",
+        "category": "placeable",
+        "glyphId": "┼",
+        "fgColor": "#A8A878",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "door",
+            "walkable": false,
+            "transparent": false,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
+    },
+    {
+        "id": "gold_door",
+        "name": "Gold Door",
+        "category": "placeable",
+        "glyphId": "┼",
+        "fgColor": "#FFD700",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "gold",
+        "placeable": {
+            "placeableType": "door",
+            "walkable": false,
+            "transparent": false,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
+    },
+    {
+        "id": "fence_gate",
+        "name": "Fence Gate",
+        "category": "placeable",
+        "glyphId": "#",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "door",
+            "walkable": false,
+            "transparent": true,
+            "stateType": "openClose",
+            "alternateGlyphId": 0,
+            "alternateWalkable": true,
+            "alternateTransparent": true
+        }
+    }
+]

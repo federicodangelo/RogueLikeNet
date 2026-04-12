@@ -1,0 +1,107 @@
+[
+    {
+        "id": "wooden_wall",
+        "name": "Wooden Wall",
+        "category": "placeable",
+        "glyphId": "█",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": false
+        }
+    },
+    {
+        "id": "copper_wall",
+        "name": "Copper Wall",
+        "category": "placeable",
+        "glyphId": "█",
+        "fgColor": "#B88333",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "copper",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": false
+        }
+    },
+    {
+        "id": "iron_wall",
+        "name": "Iron Wall",
+        "category": "placeable",
+        "glyphId": "█",
+        "fgColor": "#A8A878",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "iron",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": false
+        }
+    },
+    {
+        "id": "gold_wall",
+        "name": "Gold Wall",
+        "category": "placeable",
+        "glyphId": "█",
+        "fgColor": "#FFD700",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "gold",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": false
+        }
+    },
+    {
+        "id": "stone_wall",
+        "name": "Stone Wall",
+        "category": "placeable",
+        "glyphId": "█",
+        "fgColor": "#888888",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "stone",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": false
+        }
+    },
+    {
+        "id": "wooden_window",
+        "name": "Wooden Window",
+        "category": "placeable",
+        "glyphId": "░",
+        "fgColor": "#88AACC",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": true
+        }
+    },
+    {
+        "id": "fence",
+        "name": "Fence",
+        "category": "placeable",
+        "glyphId": "#",
+        "fgColor": "#8B6914",
+        "stackable": true,
+        "maxStackSize": 99,
+        "materialTier": "wood",
+        "placeable": {
+            "placeableType": "wall",
+            "walkable": false,
+            "transparent": true
+        }
+    }
+]
