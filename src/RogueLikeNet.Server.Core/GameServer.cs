@@ -46,6 +46,7 @@ public class GameServer : IDisposable
     private string? _currentSlotId;
     private long _lastSaveTick;
     private readonly Dictionary<long, long> _chunkLastViewedTick = new();
+    private int _nextServerPlayerId = 1;
 
     public bool IsRunning => _serverTask != null && !_serverTask.IsCompleted;
     public int ConnectionCount => _connections.Count;
@@ -214,6 +215,8 @@ public class GameServer : IDisposable
             _engine.RawEntityJsonHandler = EntitySerializer.DeserializeEntities;
             StartEngine();
             StartEngine();
+
+            _nextServerPlayerId = meta.NextServerPlayerId > 0 ? meta.NextServerPlayerId : 1;
 
             _logWriter.WriteLine($"[Server] Loaded save: slot={slotId} name={slot.Name} seed={meta.Seed} gen={meta.GeneratorId} tick={meta.CurrentTick}");
         };
@@ -455,6 +458,12 @@ public class GameServer : IDisposable
             var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
             if (savedPlayer != null)
             {
+                if (savedPlayer.ServerPlayerId == 0)
+                {
+                    // Assign a new ServerPlayerId if not present in the save (for backward compatibility)
+                    savedPlayer.ServerPlayerId = _nextServerPlayerId++;
+                }
+
                 var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ));
                 _engine.EnsureChunkLoaded(chunkPos);
 
@@ -474,6 +483,7 @@ public class GameServer : IDisposable
         // No saved player — spawn fresh
         var spawn = _engine.FindSpawnPosition();
         ref var newPlayer = ref _engine.SpawnPlayer(connectionId, spawn, classId);
+        newPlayer.ServerPlayerId = _nextServerPlayerId++;
         conn.PlayerEntityId = newPlayer.Id;
 
         if (DebugGiveResources)
@@ -638,6 +648,7 @@ public class GameServer : IDisposable
                         ChunkZ = chunk.ChunkPosition.Z,
                         TileData = ChunkSerializer.SerializeTiles(chunk.Tiles),
                         EntityData = EntitySerializer.SerializeEntities(chunk),
+                        ExploredData = ChunkSerializer.SerializeExploredData(chunk.ServerExploredTilesByServerPlayerId),
                     });
                     chunk.ClearSaveFlag();
                 }
@@ -664,6 +675,7 @@ public class GameServer : IDisposable
                 Seed = _engine.WorldMap.Seed,
                 GeneratorId = GetCurrentGeneratorId(),
                 CurrentTick = _engine.CurrentTick,
+                NextServerPlayerId = _nextServerPlayerId,
             });
         }
         catch (Exception ex)
@@ -830,7 +842,7 @@ public class GameServer : IDisposable
 
         var chunkDelta =
             shouldSendChunks ?
-                GameStateSerializer.SerializeChunksDelta(_engine, player.Position, conn.SentChunkTracker, conn.VisibleChunks, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
+                GameStateSerializer.SerializeChunksDelta(_engine, player.Position, conn.SentChunkTracker, conn.VisibleChunks, player.ServerPlayerId, isSnapshot ? int.MaxValue : MaxChunksPerTick) :
                 new ChunkDeltaResult { NewChunks = [], DiscardedKeys = [] };
 
         if (chunkDelta.NewChunks.Length > 0)

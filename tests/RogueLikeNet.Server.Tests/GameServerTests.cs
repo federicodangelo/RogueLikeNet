@@ -644,11 +644,11 @@ public class GameServerTests
         using var loop = new TestGameServer(42, _gen);
         var chunk = loop.Engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
-        var msg = GameStateSerializer.SerializeChunk(chunk);
+        var msg = GameStateSerializer.SerializeChunk(chunk, -1);
 
         Assert.Equal(0, msg.ChunkX);
         Assert.Equal(0, msg.ChunkY);
-        int total = RogueLikeNet.Core.World.Chunk.Size * RogueLikeNet.Core.World.Chunk.Size;
+        int total = Chunk.Size * Chunk.Size;
         Assert.Equal(total, msg.TileIds.Length);
     }
 
@@ -779,11 +779,11 @@ public class GameServerTests
             return Task.CompletedTask;
         });
 
-        loop.SpawnPlayerForConnection(conn.ConnectionId, classId: RogueLikeNet.Core.Definitions.ClassDefinitions.Mage);
+        loop.SpawnPlayerForConnection(conn.ConnectionId, classId: ClassDefinitions.Mage);
 
         Assert.NotNull(conn.PlayerEntityId);
         var player = loop.Engine.WorldMap.GetPlayer(conn.PlayerEntityId!.Value)!.Value;
-        Assert.Equal(RogueLikeNet.Core.Definitions.ClassDefinitions.Mage, player.ClassData.ClassId);
+        Assert.Equal(ClassDefinitions.Mage, player.ClassData.ClassId);
     }
 
     [Fact]

@@ -7,6 +7,7 @@ public struct PlayerEntity
 {
     public PlayerEntity(int id) { Id = id; }
     public readonly int Id;
+    public int ServerPlayerId;
     public Position Position;
     public Health Health;
     public long ConnectionId;

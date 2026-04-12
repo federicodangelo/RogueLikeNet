@@ -50,6 +50,12 @@ public class PersistentDungeonGenerator : IDungeonGenerator
                 result.RawEntityJson = saved.EntityData;
             }
 
+            // Restore per-player explored data
+            if (saved.ExploredData.Length > 0)
+            {
+                chunk.ServerExploredTilesByServerPlayerId = ChunkSerializer.DeserializeExploredData(saved.ExploredData);
+            }
+
             return result;
         }
 

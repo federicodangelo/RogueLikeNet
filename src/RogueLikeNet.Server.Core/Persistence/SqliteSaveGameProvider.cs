@@ -45,7 +45,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 SlotId TEXT PRIMARY KEY,
                 Seed INTEGER NOT NULL,
                 GeneratorId TEXT NOT NULL,
-                CurrentTick INTEGER NOT NULL
+                CurrentTick INTEGER NOT NULL,
+                NextServerPlayerId INTEGER NOT NULL DEFAULT 1
             );
             CREATE TABLE IF NOT EXISTS Chunks (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +55,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 ChunkY INTEGER NOT NULL,
                 ChunkZ INTEGER NOT NULL,
                 TileData BLOB NOT NULL,
-                EntityData TEXT NOT NULL DEFAULT '[]'
+                EntityData TEXT NOT NULL DEFAULT '[]',
+                ExploredData BLOB NOT NULL DEFAULT X''
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_Chunks_Slot_XYZ ON Chunks(SlotId, ChunkX, ChunkY, ChunkZ);
             CREATE TABLE IF NOT EXISTS Players (
@@ -78,18 +80,23 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 Hunger INTEGER NOT NULL DEFAULT 100,
                 MaxHunger INTEGER NOT NULL DEFAULT 100,
                 Thirst INTEGER NOT NULL DEFAULT 100,
-                MaxThirst INTEGER NOT NULL DEFAULT 100
+                MaxThirst INTEGER NOT NULL DEFAULT 100,
+                ServerPlayerId INTEGER NOT NULL DEFAULT 0
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_Players_Slot_Name ON Players(SlotId, PlayerName);
             """;
         cmd.ExecuteNonQuery();
 
-        // Migrate: add Hunger column to older databases
+        // Migrate old schema if necessary (add new columns, remove deprecated columns)
         MigrateAddColumn("Players", "Hunger", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "MaxHunger", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "Thirst", "INTEGER NOT NULL DEFAULT 100");
         MigrateAddColumn("Players", "MaxThirst", "INTEGER NOT NULL DEFAULT 100");
         MigrateRemoveColumn("Players", "SkillsJson");
+        MigrateAddColumn("Players", "ServerPlayerId", "INTEGER NOT NULL DEFAULT 0");
+
+        MigrateAddColumn("Chunks", "ExploredData", "BLOB NOT NULL DEFAULT X''");
+        MigrateAddColumn("WorldMetas", "NextServerPlayerId", "INTEGER NOT NULL DEFAULT 1");
     }
 
     private void MigrateRemoveColumn(string table, string column)
@@ -191,14 +198,15 @@ public class SqliteSaveGameProvider : ISaveGameProvider
     {
         using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
-            INSERT INTO WorldMetas (SlotId, Seed, GeneratorId, CurrentTick)
-            VALUES ($slotId, $seed, $genId, $tick)
-            ON CONFLICT(SlotId) DO UPDATE SET Seed=$seed, GeneratorId=$genId, CurrentTick=$tick
+            INSERT INTO WorldMetas (SlotId, Seed, GeneratorId, CurrentTick, NextServerPlayerId)
+            VALUES ($slotId, $seed, $genId, $tick, $nextPid)
+            ON CONFLICT(SlotId) DO UPDATE SET Seed=$seed, GeneratorId=$genId, CurrentTick=$tick, NextServerPlayerId=$nextPid
             """;
         cmd.Parameters.AddWithValue("$slotId", slotId);
         cmd.Parameters.AddWithValue("$seed", data.Seed);
         cmd.Parameters.AddWithValue("$genId", data.GeneratorId);
         cmd.Parameters.AddWithValue("$tick", data.CurrentTick);
+        cmd.Parameters.AddWithValue("$nextPid", data.NextServerPlayerId);
         cmd.ExecuteNonQuery();
 
         Execute("UPDATE SaveSlots SET LastSavedAt = $now WHERE SlotId = $slotId",
@@ -208,7 +216,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
     public WorldSaveData? LoadWorldMeta(string slotId)
     {
         using var cmd = _conn.CreateCommand();
-        cmd.CommandText = "SELECT Seed, GeneratorId, CurrentTick FROM WorldMetas WHERE SlotId = $slotId";
+        cmd.CommandText = "SELECT Seed, GeneratorId, CurrentTick, NextServerPlayerId FROM WorldMetas WHERE SlotId = $slotId";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
@@ -217,6 +225,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             Seed = reader.GetInt64(0),
             GeneratorId = reader.GetString(1),
             CurrentTick = reader.GetInt64(2),
+            NextServerPlayerId = reader.GetInt32(3),
         };
     }
 
@@ -227,9 +236,9 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData, EntityData)
-                VALUES ($slotId, $cx, $cy, $cz, $tile, $entity)
-                ON CONFLICT(SlotId, ChunkX, ChunkY, ChunkZ) DO UPDATE SET TileData=$tile, EntityData=$entity
+                INSERT INTO Chunks (SlotId, ChunkX, ChunkY, ChunkZ, TileData, EntityData, ExploredData)
+                VALUES ($slotId, $cx, $cy, $cz, $tile, $entity, $explored)
+                ON CONFLICT(SlotId, ChunkX, ChunkY, ChunkZ) DO UPDATE SET TileData=$tile, EntityData=$entity, ExploredData=$explored
                 """;
             cmd.Parameters.AddWithValue("$slotId", slotId);
             cmd.Parameters.AddWithValue("$cx", chunk.ChunkX);
@@ -237,6 +246,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             cmd.Parameters.AddWithValue("$cz", chunk.ChunkZ);
             cmd.Parameters.AddWithValue("$tile", chunk.TileData);
             cmd.Parameters.AddWithValue("$entity", chunk.EntityData ?? "[]");
+            cmd.Parameters.AddWithValue("$explored", chunk.ExploredData);
             cmd.ExecuteNonQuery();
         }
         transaction.Commit();
@@ -246,7 +256,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
     {
         var (chunkX, chunkY, chunkZ) = chunkPos;
         using var cmd = _conn.CreateCommand();
-        cmd.CommandText = "SELECT ChunkX, ChunkY, ChunkZ, TileData, EntityData FROM Chunks WHERE SlotId=$slotId AND ChunkX=$cx AND ChunkY=$cy AND ChunkZ=$cz";
+        cmd.CommandText = "SELECT ChunkX, ChunkY, ChunkZ, TileData, EntityData, ExploredData FROM Chunks WHERE SlotId=$slotId AND ChunkX=$cx AND ChunkY=$cy AND ChunkZ=$cz";
         cmd.Parameters.AddWithValue("$slotId", slotId);
         cmd.Parameters.AddWithValue("$cx", chunkX);
         cmd.Parameters.AddWithValue("$cy", chunkY);
@@ -260,6 +270,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             ChunkZ = reader.GetInt32(2),
             TileData = (byte[])reader[3],
             EntityData = reader.GetString(4),
+            ExploredData = reader.IsDBNull(5) ? [] : (byte[])reader[5],
         };
     }
 
@@ -270,10 +281,10 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Players (SlotId, PlayerName, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst)
-                VALUES ($slotId, $name, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst)
+                INSERT INTO Players (SlotId, PlayerName, ServerPlayerId, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst)
+                VALUES ($slotId, $name, $serverPlayerId, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst)
                 ON CONFLICT(SlotId, PlayerName) DO UPDATE SET
-                    ClassId=$classId, Level=$level, Experience=$exp,
+                    ServerPlayerId=$serverPlayerId, ClassId=$classId, Level=$level, Experience=$exp,
                     PositionX=$px, PositionY=$py, PositionZ=$pz,
                     HealthCurrent=$hpCur, HealthMax=$hpMax,
                     Attack=$atk, Defense=$def, Speed=$spd,
@@ -283,6 +294,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                 """;
             cmd.Parameters.AddWithValue("$slotId", slotId);
             cmd.Parameters.AddWithValue("$name", p.PlayerName);
+            cmd.Parameters.AddWithValue("$serverPlayerId", p.ServerPlayerId);
             cmd.Parameters.AddWithValue("$classId", p.ClassId);
             cmd.Parameters.AddWithValue("$level", p.Level);
             cmd.Parameters.AddWithValue("$exp", p.Experience);
@@ -334,6 +346,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         var data = new PlayerSaveData
         {
             PlayerName = reader.GetString(reader.GetOrdinal("PlayerName")),
+            ServerPlayerId = reader.GetInt32(reader.GetOrdinal("ServerPlayerId")),
             ClassId = reader.GetInt32(reader.GetOrdinal("ClassId")),
             Level = reader.GetInt32(reader.GetOrdinal("Level")),
             Experience = reader.GetInt32(reader.GetOrdinal("Experience")),
@@ -352,7 +365,6 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             MaxHunger = reader.GetInt32(reader.GetOrdinal("MaxHunger")),
             Thirst = reader.GetInt32(reader.GetOrdinal("Thirst")),
             MaxThirst = reader.GetInt32(reader.GetOrdinal("MaxThirst")),
-
         };
         return data;
     }

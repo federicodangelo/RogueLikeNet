@@ -15,6 +15,7 @@ public class WorldSaveData
     public long Seed { get; set; }
     public string GeneratorId { get; set; } = "";
     public long CurrentTick { get; set; }
+    public int NextServerPlayerId { get; set; } = 1;
 }
 
 public class ChunkSaveEntry
@@ -24,11 +25,13 @@ public class ChunkSaveEntry
     public int ChunkZ { get; set; }
     public byte[] TileData { get; set; } = [];
     public string EntityData { get; set; } = "[]";
+    public byte[] ExploredData { get; set; } = [];
 }
 
 public class PlayerSaveData
 {
     public string PlayerName { get; set; } = "";
+    public int ServerPlayerId { get; set; }
     public int ClassId { get; set; }
     public int Level { get; set; }
     public int Experience { get; set; }

@@ -47,6 +47,10 @@ public class Chunk
 
     public int[,] LightLevels { get; }
 
+    public byte[]? ClientExploredTiles { get; set; }
+
+    public Dictionary<int, byte[]>? ServerExploredTilesByServerPlayerId { get; set; }
+
     // ── Entity storage ────────────────────────────────────────────────
     public Span<MonsterEntity> Monsters => CollectionsMarshal.AsSpan(_monsters);
     public Span<GroundItemEntity> GroundItems => CollectionsMarshal.AsSpan(_groundItems);
@@ -354,6 +358,74 @@ public class Chunk
     private void UntrackLightEmittingTile(int localX, int localY)
     {
         _lightEmittingTiles.Remove(localX * Size + localY);
+    }
+
+    public void SetTileExploredByServerPlayerId(Position pos, int serverPlayerId)
+    {
+        if (!WorldToLocal(pos.X, pos.Y, out var lx, out var ly))
+            return;
+
+        ServerExploredTilesByServerPlayerId ??= new Dictionary<int, byte[]>();
+        if (!ServerExploredTilesByServerPlayerId.TryGetValue(serverPlayerId, out var explored))
+        {
+            explored = new byte[Size * Size / 8];
+            ServerExploredTilesByServerPlayerId[serverPlayerId] = explored;
+        }
+
+        if (ModifyTilesMask(explored, lx, ly))
+            MarkModified();
+    }
+
+    public bool IsTileExploredByServerPlayerId(Position pos, int serverPlayerId)
+    {
+        if (ServerExploredTilesByServerPlayerId == null || !ServerExploredTilesByServerPlayerId.TryGetValue(serverPlayerId, out var explored))
+            return false;
+
+        if (!WorldToLocal(pos.X, pos.Y, out var lx, out var ly))
+            return false;
+
+        return IsTileExplored(explored, lx, ly);
+    }
+
+    public void SetTileExploredByClient(Position pos)
+    {
+        if (!WorldToLocal(pos.X, pos.Y, out var lx, out var ly))
+            return;
+
+        ClientExploredTiles ??= new byte[Size * Size / 8];
+
+        if (ModifyTilesMask(ClientExploredTiles, lx, ly))
+            MarkModified();
+    }
+
+    public bool IsTileExploredByClient(Position pos)
+    {
+        if (ClientExploredTiles == null)
+            return false;
+
+        if (!WorldToLocal(pos.X, pos.Y, out var lx, out var ly))
+            return false;
+
+        return IsTileExplored(ClientExploredTiles, lx, ly);
+    }
+
+    static private bool IsTileExplored(byte[] mask, int localX, int localY)
+    {
+        int bitIndex = localX + localY * Size;
+        int byteIdx = bitIndex / 8;
+        byte bitMask = (byte)(1 << (bitIndex % 8));
+        return (mask[byteIdx] & bitMask) != 0;
+    }
+
+    static private bool ModifyTilesMask(byte[] mask, int localX, int localY)
+    {
+        int bitIndex = localX + localY * Size;
+        int byteIdx = bitIndex / 8;
+        byte bitMask = (byte)(1 << (bitIndex % 8));
+        if ((mask[byteIdx] & bitMask) != 0)
+            return false; // already set
+        mask[byteIdx] |= bitMask;
+        return true;
     }
 
     /// <summary>Removes dead entities from all lists (compacts in-place).</summary>

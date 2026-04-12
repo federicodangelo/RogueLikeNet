@@ -1,4 +1,3 @@
-using System.Collections;
 using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
@@ -21,7 +20,6 @@ public class ClientGameState
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
     private readonly List<NpcDialogueMsg> _pendingNpcDialogues = new();
     private readonly List<PlayerActionEventMsg> _pendingPlayerActionEvents = new();
-    private readonly Dictionary<long, BitArray> _exploredTilesByChunk = new();
     private readonly HashSet<long> _visibleTiles = new();
     private (int x, int y, int x1, int y1) _visibleTilesBounds = (0, 0, 0, 0);
 
@@ -47,7 +45,6 @@ public class ClientGameState
         _pendingCombatEvents.Clear();
         _pendingNpcDialogues.Clear();
         _pendingPlayerActionEvents.Clear();
-        _exploredTilesByChunk.Clear();
         _visibleTiles.Clear();
         PlayerX = 0;
         PlayerY = 0;
@@ -70,7 +67,6 @@ public class ClientGameState
             _pendingNpcDialogues.Clear();
             _pendingPlayerActionEvents.Clear();
             _visibleTiles.Clear();
-            _exploredTilesByChunk.Clear();
         }
 
         WorldTick = delta.ToTick;
@@ -213,6 +209,7 @@ public class ClientGameState
             }
         long key = Position.PackCoord(msg.ChunkX, msg.ChunkY, msg.ChunkZ);
         _chunks[key] = chunk;
+        chunk.ClientExploredTiles = msg.ExploredTiles;
         chunk.Init();
     }
 
@@ -241,14 +238,11 @@ public class ClientGameState
     {
         if (DebugSeeAll) return true;
 
-        var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(worldX, worldY, PlayerZ));
+        var pos = Position.FromCoords(worldX, worldY, PlayerZ);
+        var chunkPos = Chunk.WorldToChunkCoord(pos);
         var chunkKey = chunkPos.Pack();
-
-        if (_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
-        {
-            Chunk.WorldToLocal(worldX, worldY, chunkPos.X, chunkPos.Y, out var lx, out var ly);
-            return exploredBits.Get(lx + ly * Chunk.Size);
-        }
+        if (_chunks.TryGetValue(chunkKey, out var chunk))
+            return chunk.IsTileExploredByClient(pos);
         return false;
     }
 
@@ -286,8 +280,6 @@ public class ClientGameState
                 if (!_chunks.TryGetValue(chunkKey, out var chunk))
                     continue;
 
-                _exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits);
-
                 int chunkWorldX = cx * Chunk.Size;
                 int chunkWorldY = cy * Chunk.Size;
 
@@ -303,14 +295,13 @@ public class ClientGameState
                 for (int ly = localMinY; ly <= localMaxY; ly++)
                 {
                     int worldY = chunkWorldY + ly;
-                    int bitRowOffset = ly * Chunk.Size;
 
                     for (int lx = localMinX; lx <= localMaxX; lx++)
                     {
                         int worldX = chunkWorldX + lx;
 
                         bool visible = debugSeeAll || _visibleTiles.Contains(Position.PackCoord(worldX, worldY, worldZ));
-                        bool explored = debugSeeAll || (exploredBits != null && exploredBits.Get(lx + bitRowOffset));
+                        bool explored = chunk.IsTileExploredByClient(Position.FromCoords(worldX, worldY, worldZ));
 
                         callback(worldX, worldY, ref tiles[lx, ly], lightLevels[lx, ly], visible, explored);
                     }
@@ -337,15 +328,11 @@ public class ClientGameState
                     Math.Max(_visibleTilesBounds.x1, x),
                     Math.Max(_visibleTilesBounds.y1, y)
                 );
-                var (cx, cy, cz) = Chunk.WorldToChunkCoord(Position.FromCoords(x, y, PlayerZ));
+                var worldPos = Position.FromCoords(x, y, PlayerZ);
+                var (cx, cy, cz) = Chunk.WorldToChunkCoord(worldPos);
                 var chunkKey = Position.PackCoord(cx, cy, cz);
-                if (!_exploredTilesByChunk.TryGetValue(chunkKey, out var exploredBits))
-                {
-                    exploredBits = new BitArray(Chunk.Size * Chunk.Size);
-                    _exploredTilesByChunk[chunkKey] = exploredBits;
-                }
-                Chunk.WorldToLocal(x, y, cx, cy, out var lx, out var ly);
-                exploredBits.Set(lx + ly * Chunk.Size, true);
+                if (_chunks.TryGetValue(chunkKey, out var chunk))
+                    chunk.SetTileExploredByClient(worldPos);
             });
     }
 

@@ -173,7 +173,7 @@ public class GameStateSerializerTests
             FromTick = 0,
             ToTick = engine.CurrentTick,
             IsSnapshot = true,
-            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.Position),
+            Chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, player.Position, -1),
             EntityUpdates = fullUpdates,
             EntityPositionHealthUpdates = posUpdates,
             EntityRemovals = removals,
@@ -397,7 +397,7 @@ public class GameStateSerializerTests
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
         var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
 
-        var msg = GameStateSerializer.SerializeChunk(chunk);
+        var msg = GameStateSerializer.SerializeChunk(chunk, -1);
 
         Assert.Equal(0, msg.ChunkX);
         Assert.Equal(0, msg.ChunkY);
@@ -416,7 +416,7 @@ public class GameStateSerializerTests
         using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var pos = Position.FromCoords(16, 16, Position.DefaultZ);
-        var chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos);
+        var chunks = GameStateSerializer.SerializeChunksAroundPosition(engine, pos, -1);
         Assert.Equal(9, chunks.Length);
     }
 
@@ -429,7 +429,7 @@ public class GameStateSerializerTests
         var tracker = new ChunkTracker();
         var pos = Position.FromCoords(16, 16, Position.DefaultZ);
 
-        var result = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
+        var result = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50, -1);
         Assert.True(result.NewChunks.Length > 0);
     }
 
@@ -440,8 +440,8 @@ public class GameStateSerializerTests
         var tracker = new ChunkTracker();
         var pos = Position.FromCoords(16, 16, Position.DefaultZ);
 
-        GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
-        var result2 = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50);
+        GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50, -1);
+        var result2 = GameStateSerializer.SerializeChunksDelta(engine, pos, tracker, 50, -1);
         Assert.Empty(result2.NewChunks);
     }
 
@@ -671,7 +671,7 @@ public class GameStateSerializerTests
         var (engine, player) = CreateEngineWithPlayer();
         var tracker = new ChunkTracker();
 
-        var result = GameStateSerializer.SerializeChunksDelta(engine, player.Position, tracker, visibleChunks: 9, maxChunksToSerialize: 2);
+        var result = GameStateSerializer.SerializeChunksDelta(engine, player.Position, tracker, visibleChunks: 9, maxChunksToSerialize: 2, serverPlayerId: -1);
 
         Assert.True(result.NewChunks.Length <= 2);
         engine.Dispose();

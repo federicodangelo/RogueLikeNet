@@ -15,9 +15,14 @@ namespace RogueLikeNet.Protocol;
 /// </summary>
 public static class GameStateSerializer
 {
-    public static ChunkDataMsg SerializeChunk(Chunk chunk)
+    public static ChunkDataMsg SerializeChunk(Chunk chunk, int serverPlayerId)
     {
         int total = Chunk.Size * Chunk.Size;
+
+        byte[]? exploredTiles = null;
+        if (serverPlayerId != 0)
+            chunk.ServerExploredTilesByServerPlayerId?.TryGetValue(serverPlayerId, out exploredTiles);
+
         var msg = new ChunkDataMsg
         {
             ChunkX = chunk.ChunkPosition.X,
@@ -26,6 +31,7 @@ public static class GameStateSerializer
             TileIds = new int[total],
             TilePlaceableItemIds = new int[total],
             TilePlaceableItemExtras = new int[total],
+            ExploredTiles = exploredTiles,
         };
 
         for (int x = 0; x < Chunk.Size; x++)
@@ -41,7 +47,7 @@ public static class GameStateSerializer
         return msg;
     }
 
-    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, Position pos)
+    public static ChunkDataMsg[] SerializeChunksAroundPosition(GameEngine engine, Position pos, int serverPlayerId)
     {
         var chunkPos = Chunk.WorldToChunkCoord(pos);
         var chunks = new List<ChunkDataMsg>();
@@ -49,7 +55,7 @@ public static class GameStateSerializer
             for (int dy = -1; dy <= 1; dy++)
             {
                 var chunk = engine.EnsureChunkLoaded(ChunkPosition.FromCoords(chunkPos.X + dx, chunkPos.Y + dy, chunkPos.Z));
-                chunks.Add(SerializeChunk(chunk));
+                chunks.Add(SerializeChunk(chunk, serverPlayerId));
             }
         return chunks.ToArray();
     }
@@ -63,7 +69,7 @@ public static class GameStateSerializer
     /// </summary>
     public static ChunkDeltaResult SerializeChunksDelta(
         GameEngine engine, Position pos, ChunkTracker tracker,
-        int visibleChunks, int maxChunksToSerialize = int.MaxValue)
+        int visibleChunks, int serverPlayerId, int maxChunksToSerialize = int.MaxValue)
     {
         tracker.UpdateCapacity(visibleChunks);
         var chunkRange = ChunkTracker.ComputeChunkRange(visibleChunks);
@@ -84,7 +90,7 @@ public static class GameStateSerializer
                     var chunk = engine.EnsureChunkLoadedOrDoesntExist(ChunkPosition.FromCoords(ccx, ccy, ccz));
                     if (chunk != null)
                     {
-                        newChunks.Add(SerializeChunk(chunk));
+                        newChunks.Add(SerializeChunk(chunk, serverPlayerId));
                         maxChunksToSerialize--;
                         if (maxChunksToSerialize <= 0)
                             break;

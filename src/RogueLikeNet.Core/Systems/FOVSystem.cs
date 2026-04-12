@@ -27,6 +27,27 @@ public class FOVSystem
                 {
                     visibleTiles.Add(Position.PackCoord(x, y, p.Z));
                 });
+
+            // Update per-player explored tiles bitmask on each chunk
+            Chunk? lastChunk = null;
+            ChunkPosition lastChunkPos = default;
+            foreach (var packed in visibleTiles)
+            {
+                var pos = Position.UnpackCoord(packed);
+                var chunkPos = Chunk.WorldToChunkCoord(pos);
+                if (chunkPos != lastChunkPos || lastChunk == null)
+                {
+                    // Fast path if we're still in the same chunk as previous tile
+                    // (which is often the case since FOV expands outwards from player position)
+                    // We can skip the TryGetChunk call and just update the same chunk's explored data.
+                    lastChunkPos = chunkPos;
+                    lastChunk = map.TryGetChunk(chunkPos);
+                }
+                var chunk = lastChunk;
+                if (chunk == null) continue;
+
+                chunk.SetTileExploredByServerPlayerId(pos, player.ServerPlayerId);
+            }
         }
     }
 }

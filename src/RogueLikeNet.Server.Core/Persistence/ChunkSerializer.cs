@@ -59,4 +59,57 @@ public static class ChunkSerializer
 
         return tiles;
     }
+
+    private const byte ExploredFormatVersion = 1;
+    private const int BitmaskSize = Chunk.Size * Chunk.Size / 8; // 512 bytes
+
+    /// <summary>
+    /// Serializes per-player explored bitmasks.
+    /// Format: [version:1][count:4] then for each entry [playerId:4][bitmask:512].
+    /// </summary>
+    public static byte[] SerializeExploredData(Dictionary<int, byte[]>? exploredByPlayer)
+    {
+        if (exploredByPlayer == null || exploredByPlayer.Count == 0)
+            return [];
+
+        using var ms = new MemoryStream();
+        using var bw = new BinaryWriter(ms);
+
+        bw.Write(ExploredFormatVersion);
+        bw.Write(exploredByPlayer.Count);
+        foreach (var (playerId, bitmask) in exploredByPlayer)
+        {
+            bw.Write(playerId);
+            bw.Write(bitmask, 0, BitmaskSize);
+        }
+
+        return ms.ToArray();
+    }
+
+    /// <summary>
+    /// Deserializes per-player explored bitmasks from binary data. Returns null if empty.
+    /// </summary>
+    public static Dictionary<int, byte[]>? DeserializeExploredData(byte[] data)
+    {
+        if (data.Length == 0)
+            return null;
+
+        using var ms = new MemoryStream(data);
+        using var br = new BinaryReader(ms);
+
+        var version = br.ReadByte();
+        var count = br.ReadInt32();
+        if (count == 0)
+            return null;
+
+        var result = new Dictionary<int, byte[]>(count);
+        for (int i = 0; i < count; i++)
+        {
+            var playerId = br.ReadInt32();
+            var bitmask = br.ReadBytes(BitmaskSize);
+            result[playerId] = bitmask;
+        }
+
+        return result;
+    }
 }

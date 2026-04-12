@@ -30,6 +30,7 @@ public static class PlayerSerializer
         var data = new PlayerSaveData
         {
             PlayerName = playerName,
+            ServerPlayerId = player.ServerPlayerId,
             ClassId = player.ClassData.ClassId,
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
@@ -87,6 +88,9 @@ public static class PlayerSerializer
     {
         // Spawn shell player (gets default stats)
         ref var player = ref engine.SpawnPlayer(connectionId, Position.FromCoords(data.PositionX, data.PositionY, data.PositionZ), data.ClassId);
+
+        // Restore persistent player ID
+        player.ServerPlayerId = data.ServerPlayerId;
 
         // Override with saved state
         player.Health.Current = data.HealthCurrent;
