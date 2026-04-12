@@ -490,7 +490,7 @@ public class ClientGameStateTests
 
         var items = state.GetFloorItems();
         Assert.Single(items);
-        Assert.Equal(5, items[0]);
+        Assert.Equal(5, items[0].ItemTypeId);
     }
 
     [Fact]

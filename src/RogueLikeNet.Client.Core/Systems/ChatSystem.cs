@@ -25,9 +25,14 @@ public sealed class ChatSystem
     {
         while (_pendingChats.TryDequeue(out var chat))
         {
-            ChatLog.Add($"{chat.SenderName}: {chat.Text}");
-            if (ChatLog.Count > 50) ChatLog.RemoveAt(0);
+            AddChatLine($"{chat.SenderName}: {chat.Text}");
         }
+    }
+
+    public void AddChatLine(string line)
+    {
+        ChatLog.Add(line);
+        if (ChatLog.Count > 50) ChatLog.RemoveAt(0);
     }
 
     public void HandleInput(IInputManager input, IGameServerConnection? connection)

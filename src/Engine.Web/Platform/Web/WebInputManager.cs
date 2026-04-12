@@ -85,6 +85,7 @@ public class WebInputManager : BaseInputManager
         [InputAction.Wait] = [InputBinding.Key("Space")],
         [InputAction.Attack] = [InputBinding.Key("KeyF"), InputBinding.Btn(GpBtnWest)],
         [InputAction.PickUp] = [InputBinding.Key("KeyG")],
+        [InputAction.Look] = [InputBinding.Key("KeyL")],
         [InputAction.OpenInventory] = [InputBinding.Key("KeyI"), InputBinding.Btn(GpBtnNorth)],
         [InputAction.OpenChat] = [InputBinding.Key("KeyT")],
         [InputAction.UseItem1] = [InputBinding.Key("Digit1")],

@@ -29,6 +29,7 @@ public enum InputAction
     Wait,
     Attack,
     PickUp,
+    Look,
     OpenInventory,
     OpenChat,
     UseItem1,

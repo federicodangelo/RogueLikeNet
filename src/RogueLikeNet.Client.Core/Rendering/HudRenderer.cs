@@ -43,7 +43,7 @@ public sealed class HudRenderer
         return layout;
     }
 
-    public enum DirectionalInteractionMode { None, PickUp, Place, Interact }
+    public enum DirectionalInteractionMode { None, PickUp, Place, Interact, Look }
 
     public void Render(ISpriteRenderer r, ClientGameState state, int hudStartCol, int totalRows,
         int tileW = 0, int tileH = 0, float fontScale = 0f, DirectionalInteractionMode directionalInteractionMode = DirectionalInteractionMode.None)
@@ -236,9 +236,9 @@ public sealed class HudRenderer
         int floorToShow = Math.Min(floorItems.Length, 4);
         for (int i = 0; i < floorToShow && row < maxRow; i++)
         {
-            var itemTypeId = floorItems[i];
-            string name = AsciiDraw.ItemDisplayName(itemTypeId);
-            Ds(r, col, row, $"  {name}", RenderingTheme.RarityCommon);
+            var item = floorItems[i];
+            string name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
+            Ds(r, col, row, $"  {name}{(item.StackCount > 1 ? $" x{item.StackCount}" : "")}", RenderingTheme.RarityCommon);
             row++;
         }
         if (row < maxRow)
@@ -257,6 +257,7 @@ public sealed class HudRenderer
                 DirectionalInteractionMode.PickUp => "Pick up",
                 DirectionalInteractionMode.Place => "Place",
                 DirectionalInteractionMode.Interact => "Interact",
+                DirectionalInteractionMode.Look => "Look",
                 _ => ""
             };
 

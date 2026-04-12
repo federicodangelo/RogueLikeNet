@@ -188,13 +188,13 @@ public class ClientGameState
     /// <summary>
     /// Returns floor items at the player's current position.
     /// </summary>
-    public int[] GetFloorItems()
+    public ItemDataMsg[] GetFloorItems()
     {
-        var items = new List<int>();
+        var items = new List<ItemDataMsg>();
         foreach (var entity in _entities.Values)
         {
             if (entity.Item != null && entity.X == PlayerX && entity.Y == PlayerY && entity.Z == PlayerZ)
-                items.Add(entity.Item.ItemTypeId);
+                items.Add(entity.Item);
         }
         return items.ToArray();
     }

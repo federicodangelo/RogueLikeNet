@@ -45,25 +45,18 @@ public sealed class NetworkMessageDrainer
 
         foreach (var dlg in gameState.PendingNpcDialogues)
         {
-            AddChatLine($"[{dlg.NpcName}]: {dlg.Text}", chat);
+            chat?.AddChatLine($"[{dlg.NpcName}]: {dlg.Text}");
         }
 
         foreach (var evt in gameState.PendingPlayerActionEvents)
         {
             var msg = FormatPlayerActionEvent(evt);
             if (msg != null)
-                AddChatLine(msg, chat);
+                chat?.AddChatLine(msg);
         }
 
         gameState.DrainNpcDialogues();
         gameState.DrainPlayerActionEvents();
-    }
-
-    private void AddChatLine(string line, ChatSystem? chat)
-    {
-        if (chat == null) return;
-        chat.ChatLog.Add(line);
-        if (chat.ChatLog.Count > 50) chat.ChatLog.RemoveAt(0);
     }
 
     public void Reset()
@@ -109,13 +102,13 @@ public sealed class NetworkMessageDrainer
             PlayerActionEventType.PickUp => evt.StackCount > 1
                 ? $"Picked up {itemName} x{evt.StackCount}"
                 : $"Picked up {itemName}",
-            PlayerActionEventType.Drop => $"Dropped {itemName}",
+            PlayerActionEventType.Drop => $"Dropped {itemName}{(evt.StackCount > 1 ? $" x{evt.StackCount}" : "")}",
             PlayerActionEventType.UsePotion => $"Used {itemName}",
             PlayerActionEventType.EatFood => $"Ate {itemName}",
             PlayerActionEventType.Equip => $"Equipped {itemName}",
             PlayerActionEventType.Unequip => $"Unequipped {itemName}",
             PlayerActionEventType.PlaceItem => $"Placed {itemName}",
-            PlayerActionEventType.PickUpPlaced => $"Picked up {itemName}",
+            PlayerActionEventType.PickUpPlaced => $"Picked up {itemName}{(evt.StackCount > 1 ? $" x{evt.StackCount}" : "")}",
             PlayerActionEventType.Till => "Tilled soil",
             PlayerActionEventType.Plant => $"Planted {itemName}",
             PlayerActionEventType.Water => "Watered crop",

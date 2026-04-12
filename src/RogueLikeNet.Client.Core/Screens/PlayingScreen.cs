@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Text;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Screens;
@@ -25,6 +27,10 @@ public sealed class PlayingScreen : IScreen
     // Pick-up-placed direction selection mode
     private bool _pickingUpPlaced;
     public bool IsPickingUpPlaced => _pickingUpPlaced;
+
+    // Look around
+    private bool _lookingAround;
+    public bool IsLookingAround => _lookingAround;
 
     // Quick-slot placement direction selection mode (-1 = inactive, >= 0 = inventory slot to place)
     private int _placingFromSlot = -1;
@@ -52,86 +58,24 @@ public sealed class PlayingScreen : IScreen
             _ctx.Chat.HandleInput(input, _ctx.Connection);
             return;
         }
-
-        // Direction selection mode for picking up placed buildable tiles
-        if (_pickingUpPlaced)
+        else if (_pickingUpPlaced) // Direction selection mode for picking up placed buildable tiles
         {
-            if (input.IsActionPressed(InputAction.MenuBack))
-            {
-                _pickingUpPlaced = false;
-                return;
-            }
-            int dx = 0, dy = 0;
-            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
-            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
-            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
-            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
-            if (dx != 0 || dy != 0)
-            {
-                SendInput(new ClientInputMsg
-                {
-                    ActionType = ActionTypes.PickUpPlaced,
-                    TargetX = dx,
-                    TargetY = dy,
-                    Tick = _ctx.GameState.WorldTick
-                });
-                _pickingUpPlaced = false;
-            }
+            HandlePickingUpPlacedInput(input);
             return;
         }
-
-        // Direction selection mode for placing a buildable item from quick slot
-        if (_placingFromSlot >= 0)
+        else if (_placingFromSlot >= 0)// Direction selection mode for placing a buildable item from quick slot
         {
-            if (input.IsActionPressed(InputAction.MenuBack))
-            {
-                _placingFromSlot = -1;
-                return;
-            }
-            int dx = 0, dy = 0;
-            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
-            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
-            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
-            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
-            if (dx != 0 || dy != 0)
-            {
-                SendInput(new ClientInputMsg
-                {
-                    ActionType = ActionTypes.PlaceItem,
-                    ItemSlot = _placingFromSlot,
-                    TargetX = dx,
-                    TargetY = dy,
-                    Tick = _ctx.GameState.WorldTick
-                });
-                _placingFromSlot = -1;
-            }
+            HandlePlacingFromSlotInput(input);
             return;
         }
-
-        // Direction selection mode for farming interact (context-sensitive)
-        if (_interacting)
+        else if (_interacting)// Direction selection mode for farming interact (context-sensitive)
         {
-            if (input.IsActionPressed(InputAction.MenuBack))
-            {
-                _interacting = false;
-                return;
-            }
-            int dx = 0, dy = 0;
-            if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
-            else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
-            else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
-            else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
-            if (dx != 0 || dy != 0)
-            {
-                SendInput(new ClientInputMsg
-                {
-                    ActionType = ActionTypes.Interact,
-                    TargetX = dx,
-                    TargetY = dy,
-                    Tick = _ctx.GameState.WorldTick
-                });
-                _interacting = false;
-            }
+            HandleInteractingInput(input);
+            return;
+        }
+        else if (_lookingAround)
+        {
+            HandleLookingAroundInput(input);
             return;
         }
 
@@ -233,12 +177,155 @@ public sealed class PlayingScreen : IScreen
                 _pickingUpPlaced = true;
             else if (input.IsActionPressed(InputAction.Interact))
                 _interacting = true;
+            else if (input.IsActionPressed(InputAction.Look))
+                _lookingAround = true;
             else if (input.IsActionPressed(InputAction.UseStairs))
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseStairs };
         }
 
         if (msg != null)
             SendInput(msg);
+    }
+
+    private void HandleLookingAroundInput(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _lookingAround = false;
+            return;
+        }
+        int dx = 0, dy = 0;
+        if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+        else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+        else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+        else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+        if (dx != 0 || dy != 0)
+        {
+            // Find item at the given position and show its info in the HUD
+            int lookX = _ctx.GameState.PlayerX + dx;
+            int lookY = _ctx.GameState.PlayerY + dy;
+
+            var tile = _ctx.GameState.GetTile(lookX, lookY);
+            var entity = _ctx.GameState.Entities.Values.FirstOrDefault(e => e.X == lookX && e.Y == lookY && e.Z == _ctx.GameState.PlayerZ);
+
+            string? description = null;
+
+            if (tile.PlaceableItemId != 0)
+            {
+                description = AsciiDraw.ItemDisplayName(tile.PlaceableItemId);
+            }
+            else if (entity != null)
+            {
+                if (entity.Item != null)
+                {
+                    description = $"{AsciiDraw.ItemDisplayName(entity.Item.ItemTypeId)}{(entity.Item.StackCount > 1 ? $" x{entity.Item.StackCount}" : "")}";
+                }
+                else
+                {
+                    switch (entity.EntityType)
+                    {
+                        case EntityType.ResourceNode:
+                            description = "Resource Node";
+                            break;
+                        case EntityType.TownNpc:
+                            description = "Town NPC";
+                            break;
+                        case EntityType.Monster:
+                            description = "Enemy";
+                            break;
+                        default:
+                            description = $"{entity.EntityType}";
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                if (tile.TileId != 0)
+                    description = GameData.Instance.Tiles.Get(tile.TileId)?.Name;
+            }
+
+            var direction = dx == 0 ? (dy == -1 ? "North" : "South") : (dx == -1 ? "West" : "East");
+            _ctx.Chat.AddChatLine($"{direction}: {description ?? "Empty"}");
+
+            _lookingAround = false;
+        }
+    }
+
+    private void HandleInteractingInput(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _interacting = false;
+            return;
+        }
+        int dx = 0, dy = 0;
+        if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+        else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+        else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+        else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+        if (dx != 0 || dy != 0)
+        {
+            SendInput(new ClientInputMsg
+            {
+                ActionType = ActionTypes.Interact,
+                TargetX = dx,
+                TargetY = dy,
+                Tick = _ctx.GameState.WorldTick
+            });
+            _interacting = false;
+        }
+    }
+
+    private void HandlePlacingFromSlotInput(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _placingFromSlot = -1;
+            return;
+        }
+        int dx = 0, dy = 0;
+        if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+        else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+        else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+        else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+        if (dx != 0 || dy != 0)
+        {
+            SendInput(new ClientInputMsg
+            {
+                ActionType = ActionTypes.PlaceItem,
+                ItemSlot = _placingFromSlot,
+                TargetX = dx,
+                TargetY = dy,
+                Tick = _ctx.GameState.WorldTick
+            });
+            _placingFromSlot = -1;
+        }
+    }
+
+    private void HandlePickingUpPlacedInput(IInputManager input)
+    {
+        if (input.IsActionPressed(InputAction.MenuBack))
+        {
+            _pickingUpPlaced = false;
+            return;
+        }
+        int dx = 0, dy = 0;
+        if (input.IsActionPressed(InputAction.MoveUp)) dy = -1;
+        else if (input.IsActionPressed(InputAction.MoveDown)) dy = 1;
+        else if (input.IsActionPressed(InputAction.MoveLeft)) dx = -1;
+        else if (input.IsActionPressed(InputAction.MoveRight)) dx = 1;
+        if (dx != 0 || dy != 0)
+        {
+            SendInput(new ClientInputMsg
+            {
+                ActionType = ActionTypes.PickUpPlaced,
+                TargetX = dx,
+                TargetY = dy,
+                Tick = _ctx.GameState.WorldTick
+            });
+            _pickingUpPlaced = false;
+        }
     }
 
     /// <summary>
@@ -301,7 +388,9 @@ public sealed class PlayingScreen : IScreen
             directionalInteractionMode:
                 _pickingUpPlaced ? HudRenderer.DirectionalInteractionMode.PickUp :
                 _placingFromSlot >= 0 ? HudRenderer.DirectionalInteractionMode.Place :
-                _interacting ? HudRenderer.DirectionalInteractionMode.Interact : HudRenderer.DirectionalInteractionMode.None
+                _interacting ? HudRenderer.DirectionalInteractionMode.Interact :
+                _lookingAround ? HudRenderer.DirectionalInteractionMode.Look :
+                HudRenderer.DirectionalInteractionMode.None
         );
 
         // Render particles

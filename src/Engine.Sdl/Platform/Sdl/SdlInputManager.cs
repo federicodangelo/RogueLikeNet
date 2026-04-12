@@ -70,6 +70,7 @@ public class SdlInputManager : BaseInputManager
         [InputAction.Wait] = [InputBinding.Key(SDL.Scancode.Space)],
         [InputAction.Attack] = [InputBinding.Key(SDL.Scancode.F), InputBinding.Gamepad(SDL.GamepadButton.West)],
         [InputAction.PickUp] = [InputBinding.Key(SDL.Scancode.G)],
+        [InputAction.Look] = [InputBinding.Key(SDL.Scancode.L)],
         [InputAction.OpenInventory] = [InputBinding.Key(SDL.Scancode.I), InputBinding.Gamepad(SDL.GamepadButton.North)],
         [InputAction.OpenChat] = [InputBinding.Key(SDL.Scancode.T)],
         [InputAction.UseItem1] = [InputBinding.Key(SDL.Scancode.Alpha1)],
