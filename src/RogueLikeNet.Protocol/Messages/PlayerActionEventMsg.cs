@@ -9,4 +9,5 @@ public class PlayerActionEventMsg
     [Key(1)] public int ItemTypeId { get; set; }
     [Key(2)] public int StackCount { get; set; }
     [Key(3)] public bool Failed { get; set; }
+    [Key(4)] public int FailReason { get; set; }
 }

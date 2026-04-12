@@ -18,10 +18,22 @@ public enum PlayerActionEventType
     Craft = 13,
 }
 
+/// <summary>
+/// Reason for a failed player action. Zero means no specific reason / generic failure.
+/// </summary>
+public enum ActionFailReason
+{
+    None = 0,
+    InventoryFull = 1,
+    NoItemsOnGround = 2,
+    NothingToPickUp = 3,
+}
+
 public struct PlayerActionEvent
 {
     public PlayerActionEventType EventType;
     public int ItemTypeId;
     public int StackCount;
     public bool Failed;
+    public ActionFailReason FailReason;
 }

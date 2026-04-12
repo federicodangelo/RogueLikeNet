@@ -254,6 +254,7 @@ public static class GameStateSerializer
             ItemTypeId = e.ItemTypeId,
             StackCount = e.StackCount,
             Failed = e.Failed,
+            FailReason = (int)e.FailReason,
         }).ToArray();
     }
 

@@ -521,7 +521,7 @@ public class GameEngineTests
             player.Input.ActionType = ActionTypes.PickUp;
             engine.Tick();
             player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-            player.Input.ActionType = ActionTypes.Equip;
+            player.Input.ActionType = ActionTypes.UseItem;
             player.Input.ItemSlot = 0;
             engine.Tick();
             player = ref engine.WorldMap.GetPlayerRef(_p.Id);
@@ -544,7 +544,7 @@ public class GameEngineTests
         var state = engine.GetPlayerStateData(player);
         Assert.NotNull(state);
         Assert.NotNull(state.QuickSlotIndices);
-        Assert.Equal(4, state.QuickSlotIndices.Length);
+        Assert.Equal(8, state.QuickSlotIndices.Length);
     }
 
     // ── GiveDebugResources ──

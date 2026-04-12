@@ -14,6 +14,7 @@ public sealed class ClassSelectScreen : IScreen
     private readonly ScreenContext _ctx;
     private readonly MenuRenderer _menuRenderer;
     private readonly MainMenuScreen _mainMenuScreen;
+    private readonly NewGameScreen _newGameScreen;
 
     private int _selectedClassIndex;
     private string _playerName = DefaultPlayerName;
@@ -24,11 +25,12 @@ public sealed class ClassSelectScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.ClassSelect;
 
-    public ClassSelectScreen(ScreenContext ctx, MenuRenderer menuRenderer, MainMenuScreen mainMenuScreen)
+    public ClassSelectScreen(ScreenContext ctx, MenuRenderer menuRenderer, MainMenuScreen mainMenuScreen, NewGameScreen newGameScreen)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;
         _mainMenuScreen = mainMenuScreen;
+        _newGameScreen = newGameScreen;
     }
 
     public void OnEnter()
@@ -71,7 +73,7 @@ public sealed class ClassSelectScreen : IScreen
             if (_isOnline)
                 _ctx.OnStartOnline(classId, _playerName);
             else
-                _ctx.OnStartOffline(_mainMenuScreen.WorldSeed, classId, _playerName, _mainMenuScreen.GeneratorIndex);
+                _ctx.OnStartOffline(_newGameScreen.WorldSeed, classId, _playerName, _newGameScreen.GeneratorIndex);
         }
     }
 

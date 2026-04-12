@@ -13,4 +13,5 @@ public enum ScreenState
     Paused,
     PausedHelp,
     ServerAdmin,
+    NewGame,
 }

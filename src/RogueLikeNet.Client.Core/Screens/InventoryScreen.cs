@@ -38,14 +38,54 @@ public sealed class InventoryScreen : IScreen
         _overlayRenderer = overlayRenderer;
     }
 
+    /// <summary>When set, OnEnter will try to select this item in the inventory list.</summary>
+    private int _selectItemTypeIdOnEnter;
+
+    /// <summary>When true, OnEnter preserves the current selection/scroll state instead of resetting.</summary>
+    private bool _preserveStateOnEnter;
+
+    public void SetSelectItemOnEnter(int itemTypeId)
+    {
+        _selectItemTypeIdOnEnter = itemTypeId;
+    }
+
     public void OnEnter()
     {
         _placingSlot = -1;
-        _inventoryRenderer.InventoryLayout.SetFocus(1); // InvItems section
-        foreach (var s in _inventoryRenderer.InventoryLayout.Sections)
+
+        if (_preserveStateOnEnter)
         {
-            s.SelectedIndex = 0;
-            s.ScrollOffset = 0;
+            _preserveStateOnEnter = false;
+        }
+        else
+        {
+            _inventoryRenderer.InventoryLayout.SetFocus(1); // InvItems section
+            foreach (var s in _inventoryRenderer.InventoryLayout.Sections)
+            {
+                s.SelectedIndex = 0;
+                s.ScrollOffset = 0;
+            }
+        }
+
+        // If a specific item should be selected (e.g. just crafted), find it
+        if (_selectItemTypeIdOnEnter != 0)
+        {
+            var hud = _ctx.GameState.PlayerState;
+            if (hud != null)
+            {
+                for (int i = 0; i < hud.InventoryItems.Length; i++)
+                {
+                    if (hud.InventoryItems[i].ItemTypeId == _selectItemTypeIdOnEnter)
+                    {
+                        _inventoryRenderer.InventoryLayout.SetFocus(1); // InvItems
+                        var itemsSection = _inventoryRenderer.InventoryLayout.Sections[1];
+                        itemsSection.SelectedIndex = i;
+                        itemsSection.EnsureSelectionVisible(hud.InventoryCapacity);
+                        break;
+                    }
+                }
+            }
+            _selectItemTypeIdOnEnter = 0;
         }
     }
 
@@ -74,10 +114,18 @@ public sealed class InventoryScreen : IScreen
 
         int cap = _ctx.GameState.PlayerState?.InventoryCapacity ?? 4;
         if (cap < 1) cap = 4;
+        int itemCount = _ctx.GameState.PlayerState?.InventoryItems.Length ?? 0;
 
-        if (input.IsActionPressed(InputAction.MenuBack))
+        if (input.IsActionPressed(InputAction.MenuBack) || input.IsActionPressed(InputAction.OpenInventory))
         {
             _ctx.RequestTransition(Rendering.ScreenState.Playing);
+            return;
+        }
+
+        if (input.IsActionPressed(InputAction.OpenCrafting))
+        {
+            _preserveStateOnEnter = true; // remember positions when switching back
+            _ctx.RequestTransition(Rendering.ScreenState.Crafting);
             return;
         }
 
@@ -122,10 +170,10 @@ public sealed class InventoryScreen : IScreen
         switch (focused.Name)
         {
             case "InvItems":
-                HandleInvItemsInput(input, focused, cap, up, down);
+                HandleInvItemsInput(input, focused, itemCount, up, down);
                 break;
             case "InvEquipment":
-                HandleInvEquipmentInput(input, focused, cap, up, down);
+                HandleInvEquipmentInput(input, focused, itemCount, up, down);
                 break;
         }
     }
@@ -157,7 +205,34 @@ public sealed class InventoryScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, IsPlacingMode);
+
+        // Find current inventory selection for rendering the preview
+
+        var focused = _inventoryRenderer.InventoryLayout.FocusedSection;
+        ItemDefinition? selectedItemDef = null;
+        if (focused != null && focused.Name == "InvItems")
+        {
+            var inventory = _ctx.GameState.PlayerState?.InventoryItems;
+            var selectedInventoryIndex = focused.SelectedIndex;
+            if (inventory != null && selectedInventoryIndex >= 0 && selectedInventoryIndex < inventory.Length)
+            {
+                var itemId = inventory[selectedInventoryIndex].ItemTypeId;
+                selectedItemDef = GameData.Instance.Items.Get(itemId);
+            }
+        }
+        else if (focused != null && focused.Name == "InvEquipment")
+        {
+            var equipment = _ctx.GameState.PlayerState?.EquippedItems;
+            var selectedEquipmentIndex = focused.SelectedIndex;
+
+            if (equipment != null && selectedEquipmentIndex >= 0 && selectedEquipmentIndex < equipment.Length)
+            {
+                var itemId = equipment[selectedEquipmentIndex].ItemTypeId;
+                selectedItemDef = GameData.Instance.Items.Get(itemId);
+            }
+        }
+
+        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, IsPlacingMode, selectedItemDef);
 
         // Render particles
         int halfW = zoomedGameCols / 2;
@@ -169,8 +244,15 @@ public sealed class InventoryScreen : IScreen
         _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 
-    private void HandleInvItemsInput(IInputManager input, HudSection section, int cap, bool up, bool down)
+    private void HandleInvItemsInput(IInputManager input, HudSection section, int itemCount, bool up, bool down)
     {
+        if (itemCount == 0)
+        {
+            // No items, so just cycle to next section
+            _inventoryRenderer.InventoryLayout.CycleFocus();
+            return;
+        }
+
         if (up)
         {
             if (section.SelectedIndex > 0)
@@ -180,21 +262,21 @@ public sealed class InventoryScreen : IScreen
                 var prev = _inventoryRenderer.InventoryLayout.FocusPreviousInputSection();
                 if (prev != null && prev != section)
                 {
-                    int prevMax = GetInvSectionItemCount(prev, cap);
+                    int prevMax = GetInvSectionItemCount(prev, itemCount);
                     prev.SelectedIndex = Math.Max(0, prevMax - 1);
-                    prev.EnsureSelectionVisible();
+                    prev.EnsureSelectionVisible(prevMax);
                 }
                 else
                 {
-                    section.SelectedIndex = Math.Max(0, cap - 1);
-                    section.EnsureSelectionVisible();
+                    section.SelectedIndex = Math.Max(0, itemCount - 1);
+                    section.EnsureSelectionVisible(itemCount);
                 }
             }
         }
         else if (down)
         {
-            if (section.SelectedIndex < cap - 1)
-                section.ScrollDown(cap);
+            if (section.SelectedIndex < itemCount - 1)
+                section.ScrollDown(itemCount);
             else
             {
                 var next = _inventoryRenderer.InventoryLayout.FocusNextInputSection();
@@ -218,13 +300,19 @@ public sealed class InventoryScreen : IScreen
             SendInventoryAction(ActionTypes.SetQuickSlot, 2, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.UseItem4))
             SendInventoryAction(ActionTypes.SetQuickSlot, 3, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.UseItem5))
+            SendInventoryAction(ActionTypes.SetQuickSlot, 4, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.UseItem6))
+            SendInventoryAction(ActionTypes.SetQuickSlot, 5, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.UseItem7))
+            SendInventoryAction(ActionTypes.SetQuickSlot, 6, section.SelectedIndex);
+        else if (input.IsActionPressed(InputAction.UseItem8))
+            SendInventoryAction(ActionTypes.SetQuickSlot, 7, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.MenuConfirm))
             SendInventoryAction(ActionTypes.UseItem, section.SelectedIndex);
-        else if (input.IsActionPressed(InputAction.Equip) && section.SelectedIndex < cap)
-            SendInventoryAction(ActionTypes.Equip, section.SelectedIndex);
-        else if (input.IsActionPressed(InputAction.Drop) && section.SelectedIndex < cap)
+        else if (input.IsActionPressed(InputAction.Drop) && section.SelectedIndex < itemCount)
             SendInventoryAction(ActionTypes.Drop, section.SelectedIndex);
-        else if (input.IsActionPressed(InputAction.Place) && section.SelectedIndex < cap)
+        else if (input.IsActionPressed(InputAction.Place) && section.SelectedIndex < itemCount)
             TryBeginPlace(section.SelectedIndex);
     }
 
@@ -234,7 +322,7 @@ public sealed class InventoryScreen : IScreen
         if (up)
         {
             if (section.SelectedIndex > 0)
-                section.SelectedIndex--;
+                section.ScrollUp();
             else
             {
                 var prev = _inventoryRenderer.InventoryLayout.FocusPreviousInputSection();
@@ -242,18 +330,19 @@ public sealed class InventoryScreen : IScreen
                 {
                     int prevMax = GetInvSectionItemCount(prev, cap);
                     prev.SelectedIndex = Math.Max(0, prevMax - 1);
-                    prev.EnsureSelectionVisible();
+                    prev.EnsureSelectionVisible(prevMax);
                 }
                 else
                 {
                     section.SelectedIndex = EquipmentSlots - 1;
+                    section.EnsureSelectionVisible(EquipmentSlots);
                 }
             }
         }
         else if (down)
         {
             if (section.SelectedIndex < EquipmentSlots - 1)
-                section.SelectedIndex++;
+                section.ScrollDown(EquipmentSlots);
             else
             {
                 var next = _inventoryRenderer.InventoryLayout.FocusNextInputSection();
@@ -265,12 +354,17 @@ public sealed class InventoryScreen : IScreen
                 else
                 {
                     section.SelectedIndex = 0;
+                    section.ScrollOffset = 0;
                 }
             }
         }
-        else if (input.IsActionPressed(InputAction.MenuConfirm) || input.IsActionPressed(InputAction.Equip))
+        else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             SendInventoryAction(ActionTypes.Unequip, section.SelectedIndex);
+        }
+        else if (input.IsActionPressed(InputAction.Drop))
+        {
+            SendInventoryAction(ActionTypes.DropEquipped, section.SelectedIndex);
         }
     }
 
@@ -310,9 +404,9 @@ public sealed class InventoryScreen : IScreen
         _ = _ctx.Connection.SendInputAsync(msg);
     }
 
-    private static int GetInvSectionItemCount(HudSection section, int cap) => section.Name switch
+    private static int GetInvSectionItemCount(HudSection section, int itemCount) => section.Name switch
     {
-        "InvItems" => cap,
+        "InvItems" => itemCount,
         "InvEquipment" => Equipment.SlotCount,
         _ => 0
     };

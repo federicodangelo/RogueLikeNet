@@ -12,16 +12,13 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["New Game/Load Game", "Play Online", "Admin Online", "Seed:", "Generator:", "Randomize Seed", "Debug Mode:", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["New Game/Load Game", "Play Online", "Admin Online", "Debug Mode:", "Help", "Quit"];
     public const int MainMenuPlayOfflineIndex = 0;
     public const int MainMenuPlayOnlineIndex = 1;
     public const int MainMenuAdminOnlineIndex = 2;
-    public const int MainMenuSeedIndex = 3;
-    public const int MainMenuGeneratorIndex = 4;
-    public const int MainMenuRandomizeSeedIndex = 5;
-    public const int MainMenuDebugModeIndex = 6;
-    public const int MainMenuHelpIndex = 7;
-    public const int MainMenuQuitIndex = 8;
+    public const int MainMenuDebugModeIndex = 3;
+    public const int MainMenuHelpIndex = 4;
+    public const int MainMenuQuitIndex = 5;
 
 
     private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
@@ -34,31 +31,26 @@ public sealed class MenuRenderer
     [
         "CONTROLS",
         "",
-        "W / \u2191    Move up",
-        "S / \u2193    Move down",
-        "A / \u2190    Move left",
-        "D / \u2192    Move right",
-        "Space    Wait a turn",
-        "F        Attack nearest",
+        "W / \u2191    Move / Attack up",
+        "S / \u2193    Move / Attack down",
+        "A / \u2190    Move / Attack left",
+        "D / \u2192    Move / Attack right",
+        "1-8      Use quick slot",
         "G        Pick up item",
-        "1-4      Use quick slot",
-        "E        Interact",
         "X        Drop item",
+        "P        Pickup placeable",
+        "E        Interact",
         "I        Inventory",
-        "Tab      Switch section",
-        "Escape   Pause / Back",
-        "",
-        "INVENTORY",
-        "1-4      Assign quick slot",
+        "C        Crafting",
+        "Escape   Ingame menu",
     ];
 
-    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
-        long worldSeed, int generatorIndex, bool seedEditing, string seedEditText, bool debugEnabled)
+    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex, bool debugEnabled)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
         int boxW = 46;
-        int boxH = 26;
+        int boxH = 20;
         int bx = (totalCols - boxW) / 2;
         int by = (totalRows - boxH) / 2;
 
@@ -79,17 +71,7 @@ public sealed class MenuRenderer
             string prefix = sel ? " \u25ba " : "   ";
 
             string label;
-            if (i == MainMenuSeedIndex)
-            {
-                string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
-                label = prefix + "Seed: " + seedDisplay;
-            }
-            else if (i == MainMenuGeneratorIndex)
-            {
-                string genName = GeneratorRegistry.GetName(generatorIndex);
-                label = prefix + "Generator: \u25c4 " + genName + " \u25ba";
-            }
-            else if (i == MainMenuDebugModeIndex)
+            if (i == MainMenuDebugModeIndex)
             {
                 label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
             }
@@ -102,11 +84,7 @@ public sealed class MenuRenderer
             AsciiDraw.DrawString(r, tx, itemStartY + i, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
         }
 
-        string footer = seedEditing
-            ? "Type seed   Enter Confirm   Esc Cancel"
-            : selectedIndex == 3
-                ? "\u2190\u2192 Change Generator   \u2191\u2193 Navigate"
-                : "\u2191\u2193 Navigate   Enter Select";
+        string footer = "\u2191\u2193 Navigate   Enter Select";
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, footer, RenderingTheme.Dim);
     }
 
@@ -173,6 +151,64 @@ public sealed class MenuRenderer
             ? "Type name   Enter Confirm   Esc Cancel"
             : $"\u2190\u2192 Select Class {(canEditName ? " T Edit Name " : " ")} Enter Confirm   Esc Back";
         AsciiDraw.DrawCentered(r, totalCols, footerY, footer, RenderingTheme.Dim);
+    }
+
+    public void RenderNewGame(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
+        string slotName, long worldSeed, int generatorIndex, bool seedEditing, string seedEditText,
+        bool nameEditing, string nameEditText)
+    {
+        r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
+
+        int boxW = 46;
+        int boxH = 16;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        AsciiDraw.DrawBox(r, bx, by, boxW, boxH, RenderingTheme.Border, new Color4(10, 10, 15, 255));
+
+        AsciiDraw.DrawCentered(r, totalCols, by + 1, "NEW GAME", RenderingTheme.Title);
+
+        int sepY = by + 2;
+        for (int i = bx + 2; i < bx + boxW - 2; i++)
+            AsciiDraw.DrawChar(r, i, sepY, '\u2500', RenderingTheme.Dim);
+
+        int itemStartY = sepY + 2;
+        string nameDisplay = nameEditing ? nameEditText + "_" : (slotName.Length > 0 ? slotName : "(press Enter)");
+        string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
+        string genName = GeneratorRegistry.GetName(generatorIndex);
+        string[] labels =
+        [
+            "Name: " + nameDisplay,
+            "Seed: " + seedDisplay,
+            "Generator: \u25c4 " + genName + " \u25ba",
+            "Randomize Seed",
+            slotName.Length > 0 ? "Start" : "Start (name required)",
+        ];
+
+        int tx = bx + 6;
+        for (int i = 0; i < labels.Length; i++)
+        {
+            bool sel = i == selectedIndex;
+            string prefix = sel ? " \u25ba " : "   ";
+            string label = prefix + labels[i];
+            var color = sel ? RenderingTheme.Selected : RenderingTheme.Normal;
+            if (i == 4 && slotName.Length == 0)
+                color = sel ? RenderingTheme.Dim : RenderingTheme.Dim;
+            AsciiDraw.DrawString(r, tx, itemStartY + i, label, color);
+        }
+
+        string footer;
+        if (nameEditing)
+            footer = "Type name   Enter Confirm   Esc Cancel";
+        else if (seedEditing)
+            footer = "Type seed   Enter Confirm   Esc Cancel";
+        else if (selectedIndex == 1)
+            footer = "\u2190\u2192 Adjust   Enter Edit   \u2191\u2193 Navigate";
+        else if (selectedIndex == 2)
+            footer = "\u2190\u2192 Change Generator   \u2191\u2193 Navigate";
+        else
+            footer = "\u2191\u2193 Navigate   Enter Select   Esc Back";
+        AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, footer, RenderingTheme.Dim);
     }
 
     public void RenderConnecting(ISpriteRenderer r, int totalCols, int totalRows, string? errorMessage = null)

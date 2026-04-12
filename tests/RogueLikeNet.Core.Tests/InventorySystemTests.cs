@@ -495,8 +495,8 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        // Equip via Equip action (not UseItem)
-        player.Input.ActionType = ActionTypes.Equip;
+        // Equip via UseItem
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -523,8 +523,8 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        // Equip via Equip action
-        player.Input.ActionType = ActionTypes.Equip;
+        // Equip via UseItem action
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -798,7 +798,7 @@ public class InventorySystemTests
         int defBefore = player.CombatStats.Defense;
 
         // Equip it
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0; // First inventory slot
         engine.Tick();
 
@@ -832,7 +832,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -855,7 +855,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -877,7 +877,7 @@ public class InventorySystemTests
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
 
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -903,7 +903,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -913,7 +913,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(Item("long_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -935,7 +935,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(shieldDef, Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -959,7 +959,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -979,7 +979,7 @@ public class InventorySystemTests
         engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -1011,7 +1011,7 @@ public class InventorySystemTests
             engine.SpawnItemOnGround(def, Position.FromCoords(sx, sy, Position.DefaultZ));
             player.Input.ActionType = ActionTypes.PickUp;
             engine.Tick();
-            player.Input.ActionType = ActionTypes.Equip;
+            player.Input.ActionType = ActionTypes.UseItem;
             player.Input.ItemSlot = 0;
             engine.Tick();
         }
@@ -1230,7 +1230,7 @@ public class InventorySystemTests
 
         // Equip a weapon
         player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("long_sword"), StackCount = 1 });
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 
@@ -1264,7 +1264,7 @@ public class InventorySystemTests
         // Add a tool (pickaxe)
         player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("stone_pickaxe"), StackCount = 1 });
 
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
 

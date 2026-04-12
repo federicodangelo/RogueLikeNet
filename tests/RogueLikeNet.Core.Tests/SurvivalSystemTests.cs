@@ -234,7 +234,7 @@ public class SurvivalSystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Set hunger to hungry range (20-50)
-        player.Survival.Hunger = 30;
+        player.Survival.Hunger = 10;
         player.Survival.HungerDecayRate = 99999; // prevent natural decay
 
         engine.Tick();
@@ -253,7 +253,7 @@ public class SurvivalSystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Set thirst to thirsty range (20-50)
-        player.Survival.Thirst = 30;
+        player.Survival.Thirst = 10;
         player.Survival.ThirstDecayRate = 99999;
 
         engine.Tick();
@@ -293,8 +293,8 @@ public class SurvivalSystemTests
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
         // Both hungry and thirsty
-        player.Survival.Hunger = 30;
-        player.Survival.Thirst = 30;
+        player.Survival.Hunger = 10;
+        player.Survival.Thirst = 10;
         player.Survival.HungerDecayRate = 99999;
         player.Survival.ThirstDecayRate = 99999;
 
@@ -304,8 +304,8 @@ public class SurvivalSystemTests
         Assert.Equal(2, player.ActiveEffects.Count);
         Assert.True(player.ActiveEffects.HasEffect(EffectType.Hungry));
         Assert.True(player.ActiveEffects.HasEffect(EffectType.Thirsty));
-        // 50 * 50 / 100 = 25
-        Assert.Equal(25, player.ActiveEffects.CombinedSpeedMultiplierBase100);
+        // 75 * 75 / 100 = 56
+        Assert.Equal(56, player.ActiveEffects.CombinedSpeedMultiplierBase100);
     }
 
     [Fact]

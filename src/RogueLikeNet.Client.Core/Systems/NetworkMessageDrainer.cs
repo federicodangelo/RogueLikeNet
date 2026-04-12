@@ -81,7 +81,12 @@ public sealed class NetworkMessageDrainer
         {
             return eventType switch
             {
-                PlayerActionEventType.PickUp => "Failed to pick up items",
+                PlayerActionEventType.PickUp => evt.FailReason switch
+                {
+                    1 => "Inventory is full",     // ActionFailReason.InventoryFull
+                    2 => "Nothing to pick up",    // ActionFailReason.NoItemsOnGround
+                    _ => "Failed to pick up items",
+                },
                 PlayerActionEventType.Drop => "Failed to drop item",
                 PlayerActionEventType.UsePotion => evt.ItemTypeId != 0 ? $"Failed to use {itemName}" : "Failed to use item",
                 PlayerActionEventType.EatFood => evt.ItemTypeId != 0 ? $"Failed to eat {itemName}" : "Failed to eat item",

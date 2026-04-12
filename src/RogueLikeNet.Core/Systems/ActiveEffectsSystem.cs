@@ -27,13 +27,13 @@ public class ActiveEffectsSystem
     {
         ref var s = ref player.Survival;
 
-        if (s.IsHungry && !s.IsStarving)
+        if (s.IsStarving)
         {
-            player.ActiveEffects.Add(new ActiveEffect(EffectType.Hungry, 50));
+            player.ActiveEffects.Add(new ActiveEffect(EffectType.Hungry, 75));
         }
-        if (s.IsThirsty && !s.IsDehydrated)
+        if (s.IsDehydrated)
         {
-            player.ActiveEffects.Add(new ActiveEffect(EffectType.Thirsty, 50));
+            player.ActiveEffects.Add(new ActiveEffect(EffectType.Thirsty, 75));
         }
     }
 }

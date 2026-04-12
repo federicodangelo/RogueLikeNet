@@ -8,6 +8,14 @@ namespace RogueLikeNet.Core.Tests;
 
 public class ActiveEffectsSystemTests
 {
+    private const int HungerStarving = 19;
+    private const int HungerHungry = 49;
+    private const int HungerWellFed = 81;
+    private const int ThirstDehydrated = 19;
+    private const int ThirstThirsty = 49;
+    private const int ThirstWellHydrated = 81;
+
+
     private static WorldMap CreateMapWithPlayer(int hunger, int thirst, out int playerId)
     {
         var map = new WorldMap(42);
@@ -23,51 +31,50 @@ public class ActiveEffectsSystemTests
     }
 
     [Fact]
-    public void Update_HungryPlayer_AddsHungryEffect()
+    public void Update_HungryPlayer_NoEffect()
     {
         // Hungry = Hunger < 50, not starving (>= 20)
-        var map = CreateMapWithPlayer(30, 100, out int id);
-        var system = new ActiveEffectsSystem();
-
-        system.Update(map);
-
-        ref var player = ref map.GetPlayerRef(id);
-        Assert.True(player.ActiveEffects.HasEffect(EffectType.Hungry));
-        Assert.False(player.ActiveEffects.HasEffect(EffectType.Thirsty));
-    }
-
-    [Fact]
-    public void Update_ThirstyPlayer_AddsThirstyEffect()
-    {
-        // Thirsty = Thirst < 50, not dehydrated (>= 20)
-        var map = CreateMapWithPlayer(100, 30, out int id);
+        var map = CreateMapWithPlayer(HungerHungry, ThirstWellHydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
         Assert.False(player.ActiveEffects.HasEffect(EffectType.Hungry));
-        Assert.True(player.ActiveEffects.HasEffect(EffectType.Thirsty));
+        Assert.False(player.ActiveEffects.HasEffect(EffectType.Thirsty));
     }
 
     [Fact]
-    public void Update_BothHungryAndThirsty_AddsBothEffects()
+    public void Update_ThirstyPlayer_NoEffect()
     {
-        var map = CreateMapWithPlayer(30, 30, out int id);
+        // Thirsty = Thirst < 50, not dehydrated (>= 20)
+        var map = CreateMapWithPlayer(HungerWellFed, ThirstThirsty, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
-        Assert.True(player.ActiveEffects.HasEffect(EffectType.Hungry));
-        Assert.True(player.ActiveEffects.HasEffect(EffectType.Thirsty));
-        Assert.Equal(2, player.ActiveEffects.Count);
+        Assert.False(player.ActiveEffects.HasEffect(EffectType.Hungry));
+        Assert.False(player.ActiveEffects.HasEffect(EffectType.Thirsty));
+    }
+
+    [Fact]
+    public void Update_BothHungryAndThirsty_NoEffect()
+    {
+        var map = CreateMapWithPlayer(HungerHungry, ThirstThirsty, out int id);
+        var system = new ActiveEffectsSystem();
+
+        system.Update(map);
+
+        ref var player = ref map.GetPlayerRef(id);
+        Assert.False(player.ActiveEffects.HasEffect(EffectType.Hungry));
+        Assert.False(player.ActiveEffects.HasEffect(EffectType.Thirsty));
     }
 
     [Fact]
     public void Update_WellFedPlayer_NoEffects()
     {
-        var map = CreateMapWithPlayer(100, 100, out int id);
+        var map = CreateMapWithPlayer(HungerWellFed, ThirstWellHydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
@@ -77,35 +84,33 @@ public class ActiveEffectsSystemTests
     }
 
     [Fact]
-    public void Update_StarvingPlayer_NoHungryEffect()
+    public void Update_StarvingPlayer_HungryEffect()
     {
-        // Starving = Hunger < 20 → IsHungry is true but IsStarving is also true
-        // ApplySurvivalEffects only adds Hungry when IsHungry && !IsStarving
-        var map = CreateMapWithPlayer(10, 100, out int id);
+        var map = CreateMapWithPlayer(HungerStarving, ThirstWellHydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
-        Assert.False(player.ActiveEffects.HasEffect(EffectType.Hungry));
+        Assert.True(player.ActiveEffects.HasEffect(EffectType.Hungry));
     }
 
     [Fact]
-    public void Update_DehydratedPlayer_NoThirstyEffect()
+    public void Update_DehydratedPlayer_ThirstyEffect()
     {
-        var map = CreateMapWithPlayer(100, 10, out int id);
+        var map = CreateMapWithPlayer(HungerWellFed, ThirstDehydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
-        Assert.False(player.ActiveEffects.HasEffect(EffectType.Thirsty));
+        Assert.True(player.ActiveEffects.HasEffect(EffectType.Thirsty));
     }
 
     [Fact]
     public void Update_DeadPlayer_SkipsEffects()
     {
-        var map = CreateMapWithPlayer(30, 30, out int id);
+        var map = CreateMapWithPlayer(HungerStarving, ThirstDehydrated, out int id);
         ref var player = ref map.GetPlayerRef(id);
         player.Health = new Health { Current = 0, Max = 100 };
 
@@ -119,7 +124,7 @@ public class ActiveEffectsSystemTests
     [Fact]
     public void Update_ClearsPreviousEffects()
     {
-        var map = CreateMapWithPlayer(30, 100, out int id);
+        var map = CreateMapWithPlayer(HungerStarving, ThirstWellHydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         // First update — should add hungry
@@ -138,25 +143,25 @@ public class ActiveEffectsSystemTests
     [Fact]
     public void Update_HungryEffectHasSpeedMultiplier50()
     {
-        var map = CreateMapWithPlayer(30, 100, out int id);
+        var map = CreateMapWithPlayer(HungerStarving, ThirstWellHydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
-        Assert.Equal(50, player.ActiveEffects.CombinedSpeedMultiplierBase100);
+        Assert.Equal(75, player.ActiveEffects.CombinedSpeedMultiplierBase100);
     }
 
     [Fact]
     public void Update_BothEffects_SpeedMultiplierStacks()
     {
-        var map = CreateMapWithPlayer(30, 30, out int id);
+        var map = CreateMapWithPlayer(HungerStarving, ThirstDehydrated, out int id);
         var system = new ActiveEffectsSystem();
 
         system.Update(map);
 
         ref var player = ref map.GetPlayerRef(id);
-        // 50 * 50 / 100 = 25
-        Assert.Equal(25, player.ActiveEffects.CombinedSpeedMultiplierBase100);
+        // 75 * 75 / 100 = 50
+        Assert.Equal(56, player.ActiveEffects.CombinedSpeedMultiplierBase100);
     }
 }

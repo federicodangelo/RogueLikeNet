@@ -221,6 +221,14 @@ public sealed class PlayingScreen : IScreen
                 msg = TryQuickSlotAction(2);
             else if (input.IsActionPressed(InputAction.UseItem4))
                 msg = TryQuickSlotAction(3);
+            else if (input.IsActionPressed(InputAction.UseItem5))
+                msg = TryQuickSlotAction(4);
+            else if (input.IsActionPressed(InputAction.UseItem6))
+                msg = TryQuickSlotAction(5);
+            else if (input.IsActionPressed(InputAction.UseItem7))
+                msg = TryQuickSlotAction(6);
+            else if (input.IsActionPressed(InputAction.UseItem8))
+                msg = TryQuickSlotAction(7);
             else if (input.IsActionPressed(InputAction.Place))
                 _pickingUpPlaced = true;
             else if (input.IsActionPressed(InputAction.Interact))

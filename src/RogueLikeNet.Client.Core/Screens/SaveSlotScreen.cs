@@ -11,6 +11,7 @@ public sealed class SaveSlotScreen : IScreen
 {
     private readonly ScreenContext _ctx;
     private readonly MenuRenderer _menuRenderer;
+    private readonly NewGameScreen _newGame;
 
     private SaveSlotInfoMsg[] _slots = [];
     private int _selectedIndex;
@@ -19,8 +20,6 @@ public sealed class SaveSlotScreen : IScreen
     private string? _statusMessage;
     private bool _isError;
     private bool _confirmingDelete;
-    private bool _creatingNew;
-    private string _newSlotName = "";
     private bool _waitingForResponse;
 
     public ScreenState ScreenState => ScreenState.SaveSlotSelect;
@@ -31,10 +30,11 @@ public sealed class SaveSlotScreen : IScreen
     /// <summary>Fired when the player picks an existing slot to load.</summary>
     public Action<string>? OnLoadSlotRequested;
 
-    public SaveSlotScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public SaveSlotScreen(ScreenContext ctx, MenuRenderer menuRenderer, NewGameScreen newGame)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;
+        _newGame = newGame;
     }
 
     public void OnEnter()
@@ -44,8 +44,6 @@ public sealed class SaveSlotScreen : IScreen
         _statusMessage = null;
         _isError = false;
         _confirmingDelete = false;
-        _creatingNew = false;
-        _newSlotName = "";
         _waitingForResponse = false;
         RequestSlotList();
     }
@@ -85,12 +83,6 @@ public sealed class SaveSlotScreen : IScreen
             return;
         }
 
-        if (_creatingNew)
-        {
-            HandleNewSlotNaming(input);
-            return;
-        }
-
         if (input.IsActionPressed(InputAction.MenuBack))
         {
             // Full cleanup: tears down the embedded server/connection created for slot browsing
@@ -114,9 +106,9 @@ public sealed class SaveSlotScreen : IScreen
         {
             if (IsNewGameSelected)
             {
-                _creatingNew = true;
-                _newSlotName = "";
-                _statusMessage = null;
+                _newGame.OnConfirmed = (slotName) => OnNewGameRequested?.Invoke(slotName, "");
+                _newGame.SetReturnState(ScreenState.SaveSlotSelect);
+                _ctx.RequestTransition(Rendering.ScreenState.NewGame);
             }
             else
             {
@@ -143,7 +135,7 @@ public sealed class SaveSlotScreen : IScreen
         _lastTotalRows = totalRows;
         SaveSlotMenuRenderer.RenderSaveSlotScreen(renderer, totalCols, totalRows,
             _slots, SelectedSlot, _scrollOffset, _statusMessage, _isError,
-            _confirmingDelete, _creatingNew, _newSlotName, _waitingForResponse);
+            _confirmingDelete, false, "", _waitingForResponse);
     }
 
     private void HandleDeleteConfirmation(IInputManager input)
@@ -164,38 +156,6 @@ public sealed class SaveSlotScreen : IScreen
         else if (input.IsActionPressed(InputAction.MenuBack))
         {
             _confirmingDelete = false;
-        }
-    }
-
-    private void HandleNewSlotNaming(IInputManager input)
-    {
-        if (input.IsActionPressed(InputAction.MenuBack))
-        {
-            _creatingNew = false;
-            return;
-        }
-
-        for (int i = 0; i < input.TextInputBackspacesCount; i++)
-        {
-            if (_newSlotName.Length > 0)
-                _newSlotName = _newSlotName[..^1];
-        }
-
-        if (input.TextInputReturnsCount > 0)
-        {
-            if (_newSlotName.Length > 0)
-            {
-                _creatingNew = false;
-                OnNewGameRequested?.Invoke(_newSlotName, "");
-            }
-            return;
-        }
-
-        string typed = input.TextInput;
-        foreach (char c in typed)
-        {
-            if ((char.IsLetterOrDigit(c) || c == ' ' || c == '_' || c == '-' || c == '\'') && _newSlotName.Length < 24)
-                _newSlotName += c;
         }
     }
 

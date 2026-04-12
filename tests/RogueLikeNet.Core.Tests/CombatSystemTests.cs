@@ -429,7 +429,7 @@ public class CombatSystemTests
         engine.SpawnItemOnGround(def, pos);
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
-        player.Input.ActionType = ActionTypes.Equip;
+        player.Input.ActionType = ActionTypes.UseItem;
         player.Input.ItemSlot = 0;
         engine.Tick();
     }

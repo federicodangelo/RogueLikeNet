@@ -41,8 +41,8 @@ public class InventorySystem
                 case ActionTypes.Unequip:
                     ProcessUnequip(ref player);
                     break;
-                case ActionTypes.Equip:
-                    ProcessEquip(ref player);
+                case ActionTypes.DropEquipped:
+                    ProcessDropEquipped(ref player, engine);
                     break;
             }
         }
@@ -52,16 +52,11 @@ public class InventorySystem
     {
         player.Input.ActionType = ActionTypes.None;
 
-        if (player.Inventory.IsFull)
-        {
-            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true });
-            return;
-        }
-
         var chunk = map.GetChunkForWorldPos(player.Position);
         if (chunk == null) return;
 
         bool pickedAny = false;
+        bool failedDueToInventoryFull = false;
         foreach (ref var gi in chunk.GroundItems)
         {
             if (gi.IsDestroyed || gi.Position != player.Position) continue;
@@ -72,10 +67,19 @@ public class InventorySystem
                 gi.IsDestroyed = true;
                 pickedAny = true;
             }
+            else
+            {
+                failedDueToInventoryFull = true;
+            }
         }
 
         if (!pickedAny)
-            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true });
+        {
+            if (failedDueToInventoryFull)
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true, FailReason = ActionFailReason.InventoryFull });
+            else
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PickUp, Failed = true, FailReason = ActionFailReason.NoItemsOnGround });
+        }
     }
 
     private static void ProcessDrop(ref PlayerEntity player, GameEngine engine)
@@ -282,24 +286,22 @@ public class InventorySystem
         }
     }
 
-    private static void ProcessEquip(ref PlayerEntity player)
+    private static void ProcessDropEquipped(ref PlayerEntity player, GameEngine engine)
     {
-        int slot = player.Input.ItemSlot;
+        int equipSlot = player.Input.ItemSlot;
         player.Input.ActionType = ActionTypes.None;
 
-        if (slot < 0 || slot >= player.Inventory.Items.Count) return;
+        if (equipSlot < 0 || equipSlot >= Equipment.SlotCount) return;
 
-        var itemData = player.Inventory.Items[slot];
-        var def = GameData.Instance.Items.Get(itemData.ItemTypeId);
-        if (def == null) return;
-
-        switch (def.Category)
+        if (player.Equipment.HasItem(equipSlot))
         {
-            case ItemCategory.Weapon:
-            case ItemCategory.Armor:
-            case ItemCategory.Tool:
-                EquipItem(ref player, slot);
-                break;
+            var old = player.Equipment[equipSlot];
+            RemoveItemStats(ref player, old);
+            RemoveWeaponSpeed(ref player, old);
+            player.Equipment[equipSlot] = ItemData.None;
+            player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Drop, ItemTypeId = old.ItemTypeId, StackCount = old.StackCount });
+
+            engine.SpawnItemOnGround(old, engine.FindDropPosition(player.Position));
         }
     }
 

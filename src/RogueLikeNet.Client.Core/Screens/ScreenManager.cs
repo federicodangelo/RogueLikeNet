@@ -22,6 +22,7 @@ public sealed class ScreenManager
     private readonly CraftingScreen? _crafting;
     private readonly SaveSlotScreen? _saveSlot;
     private readonly ServerAdminScreen? _serverAdmin;
+    private readonly NewGameScreen? _newGame;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -35,7 +36,8 @@ public sealed class ScreenManager
         PausedScreen paused,
         HelpScreen help,
         SaveSlotScreen saveSlot,
-        ServerAdminScreen serverAdmin)
+        ServerAdminScreen serverAdmin,
+        NewGameScreen newGame)
     {
         _mainMenu = mainMenu;
         _classSelect = classSelect;
@@ -46,6 +48,7 @@ public sealed class ScreenManager
         _crafting = crafting;
         _saveSlot = saveSlot;
         _serverAdmin = serverAdmin;
+        _newGame = newGame;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
@@ -58,6 +61,7 @@ public sealed class ScreenManager
         _screens[ScreenState.MainMenuHelp] = help;
         _screens[ScreenState.PausedHelp] = help;
         _screens[ScreenState.ServerAdmin] = serverAdmin;
+        _screens[ScreenState.NewGame] = newGame;
 
         _current = mainMenu;
         CurrentState = ScreenState.MainMenu;
@@ -65,6 +69,8 @@ public sealed class ScreenManager
 
     public void TransitionTo(ScreenState state)
     {
+        var previousState = CurrentState;
+
         if (_screens.TryGetValue(state, out var screen))
         {
             _current = screen;
@@ -93,6 +99,9 @@ public sealed class ScreenManager
                 _help?.SetMode(ScreenState.PausedHelp, ScreenState.Paused);
                 break;
             case ScreenState.Inventory:
+                // If coming from crafting, select the last crafted item
+                if (previousState == ScreenState.Crafting && _crafting != null && _crafting.LastCraftedItemTypeId != 0)
+                    _inventory?.SetSelectItemOnEnter(_crafting.LastCraftedItemTypeId);
                 _inventory?.OnEnter();
                 break;
             case ScreenState.Crafting:
@@ -100,6 +109,9 @@ public sealed class ScreenManager
                 break;
             case ScreenState.ServerAdmin:
                 _serverAdmin?.OnEnter();
+                break;
+            case ScreenState.NewGame:
+                _newGame?.OnEnter();
                 break;
         }
     }

@@ -37,9 +37,9 @@ public sealed class HudRenderer
         layout.AddSection(new HudSection { Name = "Survival", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
-        layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 8, AcceptsInput = true });
+        layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 12, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
-        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 5 });
+        layout.AddSection(new HudSection { Name = "Controls", Anchor = HudAnchor.Bottom, IsFixedHeight = true, FixedHeight = 3 });
         return layout;
     }
 
@@ -83,6 +83,7 @@ public sealed class HudRenderer
                 case "HP":
                     if (row >= maxRow) break;
                     Ds(r, col, row, "HP", RenderingTheme.HpText);
+                    Ds(r, col + innerW - 5, row, "[ESC]", RenderingTheme.Dim);
                     row++;
                     if (row >= maxRow) break;
                     int barW = innerW;
@@ -200,7 +201,7 @@ public sealed class HudRenderer
         row++;
 
         int[] qsIndices = hud.QuickSlotIndices;
-        for (int i = 0; i < 4 && row < maxRow; i++)
+        for (int i = 0; i < 8 && row < maxRow; i++)
         {
             int invIdx = i < qsIndices.Length ? qsIndices[i] : -1;
             if (invIdx >= 0 && invIdx < hud.InventoryItems.Length)
@@ -248,11 +249,6 @@ public sealed class HudRenderer
         ClientGameState state, DirectionalInteractionMode directionalInteractionMode)
     {
         if (row >= maxRow) return;
-        Ds(r, col, row, "[I] Inventory", RenderingTheme.Dim); row++;
-        if (row >= maxRow) return;
-        Ds(r, col, row, "[C] Crafting", RenderingTheme.Dim); row++;
-        if (row >= maxRow) return;
-        Ds(r, col, row, "[Esc] Menu", RenderingTheme.Dim); row++;
 
         if (directionalInteractionMode != DirectionalInteractionMode.None)
         {
@@ -264,26 +260,31 @@ public sealed class HudRenderer
                 _ => ""
             };
 
-            if (row >= maxRow) return;
-            Ds(r, col, row, $"{modeText}: ↑↓←→", RenderingTheme.Selected); row++;
-            if (row >= maxRow) return;
-            Ds(r, col, row, "[Esc] Cancel", RenderingTheme.Dim);
+            Ds(r, col, row, $"{modeText}: ↑↓←→ [ESC] Cancel", RenderingTheme.Selected);
+            row++;
         }
         else if (HasAdjacentTileWithPlaceable(state))
         {
-            if (row >= maxRow) return;
             Ds(r, col, row, "[P] Pick up near placeable", RenderingTheme.Stats);
+            row++;
         }
         else if (AboveStairsTile(state))
         {
-            if (row >= maxRow) return;
             Ds(r, col, row, "[>] Use stairs", RenderingTheme.Stats);
+            row++;
         }
         else if (HasAdjacentAnimalOrCrop(state))
         {
-            if (row >= maxRow) return;
             Ds(r, col, row, "[E] Interact with animal/crop", RenderingTheme.Stats);
+            row++;
         }
+        else
+        {
+            row++;
+        }
+
+        if (row >= maxRow) return;
+        Ds(r, col, row, "[I] Inventory [C] Crafting", RenderingTheme.Dim); row++;
     }
 
     private static bool HasAdjacentTileWithPlaceable(ClientGameState state)

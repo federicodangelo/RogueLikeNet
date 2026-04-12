@@ -97,15 +97,16 @@ public sealed class RogueLikeGame : GameBase
 
         // Create screens
         var mainMenu = new MainMenuScreen(_ctx, menuRenderer);
-        var classSelect = new ClassSelectScreen(_ctx, menuRenderer, mainMenu);
+        var newGame = new NewGameScreen(_ctx, menuRenderer);
+        var classSelect = new ClassSelectScreen(_ctx, menuRenderer, mainMenu, newGame);
         var connecting = new ConnectingScreen(_ctx, menuRenderer);
         var playing = new PlayingScreen(_ctx, worldRenderer, hudRenderer, overlayRenderer);
         var inventory = new InventoryScreen(_ctx, worldRenderer, inventoryRenderer, overlayRenderer);
         var crafting = new CraftingScreen(_ctx, worldRenderer, overlayRenderer);
         var paused = new PausedScreen(_ctx, playing, menuRenderer);
         var help = new HelpScreen(_ctx, menuRenderer, playing);
-        var saveSlot = new SaveSlotScreen(_ctx, menuRenderer);
-        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, mainMenu);
+        var saveSlot = new SaveSlotScreen(_ctx, menuRenderer, newGame);
+        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, newGame);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);
@@ -115,7 +116,7 @@ public sealed class RogueLikeGame : GameBase
         _serverAdminScreen = serverAdmin;
         _classSelectScreen = classSelect;
 
-        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, saveSlot, serverAdmin);
+        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, saveSlot, serverAdmin, newGame);
     }
 
     public void Initialize(IPlatform platform)

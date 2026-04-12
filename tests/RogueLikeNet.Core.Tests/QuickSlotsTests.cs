@@ -53,6 +53,12 @@ public class QuickSlotsTests
         qs[2] = 3;
         Assert.Equal(3, qs.FirstEmptySlot());
         qs[3] = 4;
+        Assert.Equal(4, qs.FirstEmptySlot());
+        qs[4] = 5;
+        qs[5] = 6;
+        qs[6] = 7;
+        Assert.Equal(7, qs.FirstEmptySlot());
+        qs[7] = 8;
         Assert.Equal(-1, qs.FirstEmptySlot());
     }
 
@@ -291,7 +297,7 @@ public class QuickSlotsTests
 
         var stateData = engine.GetPlayerStateData(player);
         Assert.NotNull(stateData);
-        Assert.Equal(4, stateData!.QuickSlotIndices.Length);
+        Assert.Equal(8, stateData!.QuickSlotIndices.Length);
         Assert.Equal(0, stateData.QuickSlotIndices[0]);
         Assert.Equal(1, stateData.QuickSlotIndices[1]);
         Assert.Equal(-1, stateData.QuickSlotIndices[2]);

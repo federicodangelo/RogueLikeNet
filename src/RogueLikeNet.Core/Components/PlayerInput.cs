@@ -20,7 +20,7 @@ public static class ActionTypes
     public const int Wait = 7;
     public const int SwapItems = 8;
     public const int Unequip = 9;
-    public const int Equip = 10;
+    //public const int Equip = 10; // Replaced by context-sensitive UseItem action that the server resolves to Equip
     public const int SetQuickSlot = 11;
     public const int UseQuickSlot = 12;
     public const int Craft = 13;
@@ -33,4 +33,5 @@ public static class ActionTypes
     public const int Harvest = 20;
     public const int FeedAnimal = 21;
     public const int Interact = 22;         // Context-sensitive: server resolves to Till/Plant/Water/Harvest/Feed
+    public const int DropEquipped = 23;      // Unequip + drop to ground in one action
 }

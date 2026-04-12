@@ -301,7 +301,7 @@ public class ComponentTests
     public void QuickSlots_DefaultConstructor_AllEmpty()
     {
         var qs = new QuickSlots();
-        Assert.Equal(4, qs.Count);
+        Assert.Equal(8, qs.Count);
         for (int i = 0; i < qs.Count; i++)
             Assert.Equal(-1, qs[i]);
     }
@@ -340,6 +340,14 @@ public class ComponentTests
         qs[2] = 7;
         Assert.Equal(3, qs.FirstEmptySlot());
         qs[3] = 8;
+        Assert.Equal(4, qs.FirstEmptySlot());
+        qs[4] = 9;
+        Assert.Equal(5, qs.FirstEmptySlot());
+        qs[5] = 10;
+        Assert.Equal(6, qs.FirstEmptySlot());
+        qs[6] = 11;
+        Assert.Equal(7, qs.FirstEmptySlot());
+        qs[7] = 12;
         Assert.Equal(-1, qs.FirstEmptySlot());
     }
 

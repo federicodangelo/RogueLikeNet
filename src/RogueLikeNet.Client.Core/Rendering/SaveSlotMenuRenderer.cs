@@ -133,7 +133,7 @@ static public class SaveSlotMenuRenderer
         int row = contentStart;
         if (showTopIndicator)
         {
-            AsciiDraw.DrawCentered(r, totalCols, row, "\u2191 more above", RenderingTheme.Dim);
+            AsciiDraw.DrawChar(r, bx + boxW - 3, row, '\u2191', RenderingTheme.Dim);
             row++;
         }
 
@@ -174,7 +174,7 @@ static public class SaveSlotMenuRenderer
 
         if (showBottomIndicator)
         {
-            AsciiDraw.DrawCentered(r, totalCols, contentStart + (showTopIndicator ? 1 : 0) + availableContentRows, "\u2193 more below", RenderingTheme.Dim);
+            AsciiDraw.DrawChar(r, bx + boxW - 3, contentStart + (showTopIndicator ? 1 : 0) + availableContentRows, '\u2193', RenderingTheme.Dim);
         }
 
         // Status message

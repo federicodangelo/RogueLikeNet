@@ -353,9 +353,12 @@ public class MovementSystemTests
         var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
 
-        // Set survival to hungry state (Hunger in [20..49]) so ActiveEffectsSystem applies Hungry(50)
-        player.Survival.Hunger = 30;
-        player.Survival.HungerDecayRate = 0; // prevent decay during test
+        // Set survival to hungry state so ActiveEffectsSystem applies Hungry(75)
+        player.Survival.Hunger = 10;
+        player.Survival.Thirst = 10;
+        // prevent decay during test
+        player.Survival.HungerDecayRate = 0;
+        player.Survival.ThirstDecayRate = 0;
 
         int baseInterval = player.MoveDelay.Interval;
 
@@ -367,7 +370,7 @@ public class MovementSystemTests
         {
             engine.Tick();
             player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-            // With 50% speed from Hungry effect, delay should be higher than base
+            // With 75% speed from Hungry effect, delay should be higher than base
             Assert.True(player.MoveDelay.Current > baseInterval);
         }
     }
