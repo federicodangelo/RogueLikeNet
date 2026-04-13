@@ -115,55 +115,71 @@ public static class AsciiDraw
         public Color4 color;
     }
 
-    static public RelativeStat[] ItemRelativeStats(ItemDefinition def, PlayerStateMsg playerState)
+    static public RelativeStat[] ItemRelativeStats(ItemDefinition itemDefinition, PlayerStateMsg playerState)
     {
         // Only show preview for equippable items (weapons, armor, tools) or consumable items (food, potions) 
-        if (!def.IsEquippable && !def.IsConsumable)
+        if (!itemDefinition.IsEquippable && !itemDefinition.IsConsumable)
             return [];
 
         List<RelativeStat> relativeStats = [];
 
         // Resolve the correct equipment slot from JSON registry
         int targetSlot;
-        if (def.IsConsumable)
+        if (itemDefinition.IsConsumable)
             targetSlot = -1;
-        else if (def.EquipSlot is { } regSlot)
+        else if (itemDefinition.EquipSlot is { } regSlot)
             targetSlot = (int)regSlot;
         else
-            targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
+            targetSlot = itemDefinition.Category is ItemCategory.Weapon or ItemCategory.Tool
                 ? (int)EquipSlot.Hand : (int)EquipSlot.Chest;
-        var equipped = Array.Find(playerState.EquippedItems, e => e.EquipSlot == targetSlot);
 
-        var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
-        int eqAtk = eqDef?.EffectiveAttack ?? 0;
-        int eqDefVal = eqDef?.EffectiveDefense ?? 0;
-        int eqMaxHp = eqDef?.BaseHealth ?? 0;
+        var equippedItem = Array.Find(playerState.EquippedItems, e => e.EquipSlot == targetSlot);
+        var equippedDefinition = equippedItem != null ? GameData.Instance.Items.Get(equippedItem.ItemTypeId) : null;
 
+        var equippedAttack = equippedDefinition?.EffectiveAttack ?? 0;
+        var equippedDefense = equippedDefinition?.EffectiveDefense ?? 0;
+        var equippedMaxHealth = equippedDefinition?.BaseHealth ?? 0;
+        var equippedSpeed = equippedDefinition?.SpeedBoost ?? 0;
 
-        int diffAtk = def.EffectiveAttack - eqAtk;
-        int diffDef = def.EffectiveDefense - eqDefVal;
-        int difMaxfHp = def.BaseHealth - eqMaxHp;
-        int diffHunger = def.HungerReduction;
-        int diffThirst = def.ThirstReduction;
-        int diffHealth = def.HealthRestore;
+        var boostAttack = itemDefinition.AttackBoost;
+        var boostDefense = itemDefinition.DefenseBoost;
+        var boostSpeed = itemDefinition.SpeedBoost;
 
-        if (diffAtk != 0)
+        var diffAttack = itemDefinition.EffectiveAttack - equippedAttack + boostAttack;
+        var diffDefense = itemDefinition.EffectiveDefense - equippedDefense + boostDefense;
+        var diffMaxHealth = itemDefinition.BaseHealth - equippedMaxHealth;
+
+        // Diff speed only makes sense for weapons/tools or speed-boosting potions, so we only calculate it for those categories.
+        var diffSpeed = equippedSpeed == 0 && boostSpeed == 0 ? 0 :
+            itemDefinition.BaseSpeed - equippedSpeed + boostSpeed;
+
+        int diffHunger = itemDefinition.HungerReduction;
+        int diffThirst = itemDefinition.ThirstReduction;
+        int diffHealth = itemDefinition.HealthRestore;
+
+        if (diffAttack != 0)
         {
-            string sign = diffAtk > 0 ? "+" : "";
-            var color = diffAtk > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            relativeStats.Add(new RelativeStat { text = $"ATK: {sign}{diffAtk}", color = color });
+            string sign = diffAttack > 0 ? "+" : "";
+            var color = diffAttack > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"ATK: {sign}{diffAttack}", color = color });
         }
-        if (diffDef != 0)
+        if (diffDefense != 0)
         {
-            string sign = diffDef > 0 ? "+" : "";
-            var color = diffDef > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            relativeStats.Add(new RelativeStat { text = $"DEF: {sign}{diffDef}", color = color });
+            string sign = diffDefense > 0 ? "+" : "";
+            var color = diffDefense > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"DEF: {sign}{diffDefense}", color = color });
         }
-        if (difMaxfHp != 0)
+        if (diffMaxHealth != 0)
         {
-            string sign = difMaxfHp > 0 ? "+" : "";
-            var color = difMaxfHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            relativeStats.Add(new RelativeStat { text = $"MAX HP: {sign}{difMaxfHp}", color = color });
+            string sign = diffMaxHealth > 0 ? "+" : "";
+            var color = diffMaxHealth > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"MAX HP: {sign}{diffMaxHealth}", color = color });
+        }
+        if (diffSpeed != 0)
+        {
+            string sign = diffSpeed > 0 ? "+" : "";
+            var color = diffSpeed > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"SPD: {sign}{diffSpeed}", color = color });
         }
         if (diffHunger != 0)
         {

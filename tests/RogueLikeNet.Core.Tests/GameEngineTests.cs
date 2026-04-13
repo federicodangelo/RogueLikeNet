@@ -324,7 +324,7 @@ public class GameEngineTests
         engine.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         var _p = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), ClassDefinitions.Rogue);
         ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
-        Assert.Equal(0, player.MoveDelay.Interval);
+        Assert.Equal(2, player.MoveDelay.Interval);
     }
 
     [Fact]

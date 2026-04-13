@@ -177,7 +177,7 @@ public static class PlayerSerializer
         }
 
         // Recalculate combat stats from class + level + equipment (replaces saved stats)
-        ActiveEffectsSystem.RecalculateCombatStats(ref player);
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
 
         // Restore health after recalculation (saved health may be lower than max)
         player.Health.Current = Math.Min(data.HealthCurrent, player.Health.Max);

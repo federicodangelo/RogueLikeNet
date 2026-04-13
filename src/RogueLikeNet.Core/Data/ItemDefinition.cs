@@ -71,9 +71,14 @@ public sealed class ItemDefinition : BaseDefinition
     public AmmoData? Ammo { get; set; }
 
     // Computed convenience properties for backward compatibility
-    public int BaseAttack => Weapon?.BaseDamage ?? Potion?.AttackBoost ?? 0;
-    public int BaseDefense => Armor?.BaseDefense ?? Potion?.DefenseBoost ?? 0;
+    public int BaseAttack => Weapon?.BaseDamage ?? 0;
+    public int BaseDefense => Armor?.BaseDefense ?? 0;
     public int BaseHealth => 0;
+    public int BaseSpeed => Weapon?.AttackSpeed ?? 0;
+
+    public int AttackBoost => Potion?.AttackBoost ?? 0;
+    public int DefenseBoost => Potion?.DefenseBoost ?? 0;
+    public int SpeedBoost => Potion?.SpeedBoost ?? 0;
 
     // Material-tier-adjusted effective stats (damage = BaseDamage × tier, defense = BaseDefense × tier)
     public int EffectiveAttack => MaterialTiers.Apply(BaseAttack, MaterialTier);

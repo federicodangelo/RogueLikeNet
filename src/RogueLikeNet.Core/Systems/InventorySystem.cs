@@ -183,30 +183,11 @@ public class InventorySystem
                 potion.DurationTicks));
 
             // Recalculate stats with new potion effect
-            ActiveEffectsSystem.RecalculateCombatStats(ref player);
+            ActiveEffectsSystem.RecalculatePlayerStats(ref player);
         }
     }
 
-    /// <summary>
-    /// Adjusts attack delay when a weapon is equipped (lower AttackSpeed = slower).
-    /// AttackDelay.Interval = max(0, baseInterval - (weaponSpeed - 4)).
-    /// A weapon with AttackSpeed 4 is neutral; higher is faster, lower is slower.
-    /// </summary>
-    private static void ApplyWeaponSpeed(ref PlayerEntity player, ItemData item)
-    {
-        var def = GameData.Instance.Items.Get(item.ItemTypeId);
-        if (def?.Weapon == null) return;
-        int speedBonus = def.Weapon.AttackSpeed - 4; // 4 is neutral baseline
-        player.AttackDelay.Interval = Math.Max(0, player.AttackDelay.Interval - speedBonus);
-    }
 
-    private static void RemoveWeaponSpeed(ref PlayerEntity player, ItemData item)
-    {
-        var def = GameData.Instance.Items.Get(item.ItemTypeId);
-        if (def?.Weapon == null) return;
-        int speedBonus = def.Weapon.AttackSpeed - 4;
-        player.AttackDelay.Interval = Math.Max(0, player.AttackDelay.Interval + speedBonus);
-    }
 
     private static int ResolveEquipSlot(ItemDefinition def)
     {
@@ -231,13 +212,11 @@ public class InventorySystem
 
         if (player.Equipment.HasItem(equipSlot))
         {
-            RemoveWeaponSpeed(ref player, player.Equipment[equipSlot]);
             player.Inventory.Items.Add(player.Equipment[equipSlot]);
         }
         player.Equipment[equipSlot] = newItem;
 
-        ApplyWeaponSpeed(ref player, newItem);
-        ActiveEffectsSystem.RecalculateCombatStats(ref player);
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
         player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Equip, ItemTypeId = newItem.ItemTypeId });
     }
 
@@ -275,10 +254,9 @@ public class InventorySystem
         if (player.Equipment.HasItem(equipSlot))
         {
             var old = player.Equipment[equipSlot];
-            RemoveWeaponSpeed(ref player, old);
             player.Inventory.Items.Add(old);
             player.Equipment[equipSlot] = ItemData.None;
-            ActiveEffectsSystem.RecalculateCombatStats(ref player);
+            ActiveEffectsSystem.RecalculatePlayerStats(ref player);
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Unequip, ItemTypeId = old.ItemTypeId });
         }
     }
@@ -293,9 +271,8 @@ public class InventorySystem
         if (player.Equipment.HasItem(equipSlot))
         {
             var old = player.Equipment[equipSlot];
-            RemoveWeaponSpeed(ref player, old);
             player.Equipment[equipSlot] = ItemData.None;
-            ActiveEffectsSystem.RecalculateCombatStats(ref player);
+            ActiveEffectsSystem.RecalculatePlayerStats(ref player);
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Drop, ItemTypeId = old.ItemTypeId, StackCount = old.StackCount });
 
             engine.SpawnItemOnGround(old, engine.FindDropPosition(player.Position));

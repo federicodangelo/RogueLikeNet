@@ -75,7 +75,7 @@ public class ClassDefinitionsTests
         Assert.Equal(1, stats.Attack);
         Assert.Equal(0, stats.Defense);
         Assert.Equal(0, stats.Health);
-        Assert.Equal(4, stats.Speed);
+        Assert.Equal(2, stats.Speed);
     }
 
     [Fact]

@@ -20,7 +20,7 @@ public class ActiveEffectsSystem
             if (player.IsDead) continue;
 
             // Tick down temporary effects and remove expired ones
-            bool effectsChanged = player.ActiveEffects.TickAndRemoveExpired();
+            player.ActiveEffects.TickAndRemoveExpired();
 
             // Clear only permanent effects (survival), keep temporary ones
             player.ActiveEffects.ClearPermanent();
@@ -28,9 +28,8 @@ public class ActiveEffectsSystem
             // Rebuild permanent effects
             ApplySurvivalEffects(ref player);
 
-            // Recalculate stats if any temporary effects expired
-            if (effectsChanged)
-                RecalculateCombatStats(ref player);
+            // Always recalculate: delays depend on current effects (speed multiplier)
+            RecalculatePlayerStats(ref player);
         }
     }
 
@@ -49,10 +48,11 @@ public class ActiveEffectsSystem
     }
 
     /// <summary>
-    /// Recalculates combat stats from first principles: base class stats + level bonuses + equipment + active effects.
+    /// Recalculates player stats from first principles: base class stats + level bonuses + equipment + active effects.
+    /// Also updates MoveDelay.Interval and AttackDelay.Interval from the resulting speed.
     /// Call this whenever equipment, effects, potions, or level changes.
     /// </summary>
-    public static void RecalculateCombatStats(ref Entities.PlayerEntity player)
+    public static void RecalculatePlayerStats(ref Entities.PlayerEntity player)
     {
         // 1. Base stats from class
         var classStats = ClassDefinitions.GetStartingStats(player.ClassData.ClassId);
@@ -63,6 +63,7 @@ public class ActiveEffectsSystem
 
         // 3. Equipment bonuses
         int equipAtk = 0, equipDef = 0, equipHp = 0;
+        int weaponSpeedBonus = 0;
         for (int i = 0; i < Equipment.SlotCount; i++)
         {
             if (player.Equipment.HasItem(i))
@@ -73,6 +74,8 @@ public class ActiveEffectsSystem
                     equipAtk += def.EffectiveAttack;
                     equipDef += def.EffectiveDefense;
                     equipHp += def.BaseHealth;
+                    if (def.Weapon != null)
+                        weaponSpeedBonus += def.Weapon.AttackSpeed - 4; // 4 is neutral baseline
                 }
             }
         }
@@ -81,7 +84,7 @@ public class ActiveEffectsSystem
         int effectAtk = player.ActiveEffects.CombinedAttackBonus;
         int effectDef = player.ActiveEffects.CombinedDefenseBonus;
 
-        // Set final stats
+        // Set final combat stats
         player.CombatStats.Attack = baseStats.Attack + levelBonus.Attack + equipAtk + effectAtk;
         player.CombatStats.Defense = baseStats.Defense + levelBonus.Defense + equipDef + effectDef;
         player.CombatStats.Speed = baseStats.Speed + levelBonus.Speed;
@@ -90,5 +93,32 @@ public class ActiveEffectsSystem
         int newMaxHealth = baseStats.Health + levelBonus.Health + equipHp;
         player.Health.Max = newMaxHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
+
+        // Recalculate move delay and attack delay from speed + effects
+        int baseDelay = Math.Max(0, 10 - (6 + classStats.Speed + levelBonus.Speed));
+        int speedMult = player.ActiveEffects.CombinedSpeedMultiplierBase100;
+
+        player.MoveDelay.Interval = ApplySpeedMultiplier(baseDelay, speedMult);
+        player.MoveDelay.Current = Math.Min(player.MoveDelay.Current, player.MoveDelay.Interval);
+        player.AttackDelay.Interval = ApplySpeedMultiplier(Math.Max(0, baseDelay - weaponSpeedBonus), speedMult);
+        player.AttackDelay.Current = Math.Min(player.AttackDelay.Current, player.AttackDelay.Interval);
+    }
+
+    /// <summary>
+    /// Applies an active-effects speed multiplier (base 100) to a base delay value.
+    /// </summary>
+    private static int ApplySpeedMultiplier(int baseDelay, int speedMultBase100)
+    {
+        if (speedMultBase100 < 100 && speedMultBase100 > 0)
+        {
+            // Slowdown: e.g. 50% speed → double delay
+            return Math.Max((baseDelay + 1) * 100 / speedMultBase100 - 1, 1);
+        }
+        if (speedMultBase100 > 100)
+        {
+            // Speedup: e.g. 200% speed → half delay
+            return Math.Max(baseDelay * 100 / speedMultBase100, 0);
+        }
+        return baseDelay;
     }
 }

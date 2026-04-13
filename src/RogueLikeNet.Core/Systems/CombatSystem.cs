@@ -163,7 +163,7 @@ public class CombatSystem
         player.ClassData.Experience = 0;
 
         // Recalculate all stats from first principles
-        ActiveEffectsSystem.RecalculateCombatStats(ref player);
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
 
         // Full heal on level up
         player.Health.Current = player.Health.Max;
