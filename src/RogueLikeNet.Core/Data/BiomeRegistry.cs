@@ -25,6 +25,8 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
         // Map string Id to BiomeType enum for fast lookup by enum value
         if (Enum.TryParse<BiomeType>(biome.Id, ignoreCase: true, out var biomeType))
             _byBiomeType[(int)biomeType] = biome;
+        else
+            throw new Exception($"Invalid biome ID '{biome.Id}' - must match a BiomeType enum value");
 
         // Resolve tile IDs to numeric IDs
         biome.FloorTileNumericId = _tilesRegistry.GetNumericId(biome.FloorTileId);
@@ -64,7 +66,7 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.
     /// Higher difficulty unlocks harder monsters (gated by NPC attack stat).
     /// </summary>
-    public NpcDefinition PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
+    public NpcDefinition? PickEnemy(BiomeType biome, SeededRandom rng, int difficulty)
     {
         var spawns = GetEnemySpawns(biome);
         var npcReg = GameData.Instance.Npcs;
@@ -84,8 +86,7 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
         if (resolved.Count == 0)
         {
             // Fallback: return weakest NPC
-            var weakest = npcReg.All.OrderBy(n => n.Attack).FirstOrDefault();
-            return weakest!;
+            return npcReg.All.OrderBy(n => n.Attack).FirstOrDefault();
         }
 
         int totalWeight = 0;

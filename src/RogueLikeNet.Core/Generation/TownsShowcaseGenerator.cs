@@ -46,7 +46,7 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         long hash = (chunkX * 48611L ^ chunkY * 29423L) & 0x7FFFFFFFL;
         var biome = biomes[(int)(hash % biomes.Length)];
 
-        var rng = new SeededRandom(_seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678)));
+        var rng = TownGenerator.GetSeededRandomForChunk(chunkPos, _seed);
         TownGenerator.Generate(chunk, result, rng, biome, worldOffsetX, worldOffsetY, chunkZ);
 
         // Spawn point for origin chunk

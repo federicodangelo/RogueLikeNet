@@ -10,6 +10,7 @@ public class BiomeEnemySpawnTests
     {
         var rng = new SeededRandom(42);
         var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Forest, rng, 0);
+        Assert.NotNull(def);
         Assert.True(def.Health > 0);
         Assert.True(def.Attack > 0);
     }
@@ -31,7 +32,7 @@ public class BiomeEnemySpawnTests
         for (int i = 0; i < 50; i++)
         {
             var def = GameData.Instance.Biomes.PickEnemy(biome, rng, 10);
-            Assert.True(def.Health > 0, $"Biome {biome} returned monster with 0 health");
+            Assert.True(def != null && def.Health > 0, $"Biome {biome} returned monster with 0 health");
         }
     }
 
@@ -43,7 +44,7 @@ public class BiomeEnemySpawnTests
         {
             var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Infernal, rng, 0);
             // Difficulty 0 gates by attack/4, so only NPCs with attack < 4 should appear
-            Assert.True(def.Attack < 4,
+            Assert.True(def != null && def.Attack < 4,
                 $"Difficulty 0 should not produce {def.Name} (Attack {def.Attack})");
         }
     }
@@ -57,7 +58,7 @@ public class BiomeEnemySpawnTests
         for (int i = 0; i < 200; i++)
         {
             var def = GameData.Instance.Biomes.PickEnemy(BiomeType.Infernal, rng, 10);
-            if (def.Attack >= 8) foundStrong = true;
+            if (def != null && def.Attack >= 8) foundStrong = true;
         }
         Assert.True(foundStrong, "High difficulty in Infernal biome should sometimes produce strong monsters");
     }
@@ -75,9 +76,11 @@ public class BiomeEnemySpawnTests
         for (int i = 0; i < trials; i++)
         {
             var forestDef = GameData.Instance.Biomes.PickEnemy(BiomeType.Forest, forestRng, 10);
+            Assert.True(forestDef != null, "Forest biome should return a monster definition");
             forestNames[forestDef.Name] = forestNames.GetValueOrDefault(forestDef.Name) + 1;
 
             var cryptDef = GameData.Instance.Biomes.PickEnemy(BiomeType.Crypt, cryptRng, 10);
+            Assert.True(cryptDef != null, "Crypt biome should return a monster definition");
             cryptNames[cryptDef.Name] = cryptNames.GetValueOrDefault(cryptDef.Name) + 1;
         }
 

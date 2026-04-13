@@ -397,6 +397,8 @@ public static class DataLoader
                     errors.Add($"NPC '{npc.Id}': loot item '{loot.ItemId}' not found.");
             }
         }
+        if (data.Npcs.Count == 0)
+            errors.Add("No NPC definitions found.");
 
         // Validate biomes
         foreach (var biome in data.Biomes.All)
@@ -434,6 +436,12 @@ public static class DataLoader
                 if (data.Tiles.Get(biome.Liquid.TileId) == null)
                     errors.Add($"Biome '{biome.Id}': liquid tile '{biome.Liquid.TileId}' not found.");
             }
+        }
+
+        for (var i = 0; i < BiomeRegistry.BiomeCount; i++)
+        {
+            if (data.Biomes.Get((BiomeType)i) == null)
+                errors.Add($"Missing biome definition for biome type {(BiomeType)i}");
         }
 
         // Validate animals

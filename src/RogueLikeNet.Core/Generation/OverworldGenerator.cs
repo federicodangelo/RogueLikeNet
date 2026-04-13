@@ -79,7 +79,7 @@ public class OverworldGenerator : IDungeonGenerator
             return true;
 
         if (chunkZ == CaveZ)
-            return TryGetCaveEntrance(chunkX, chunkY, out _, out _);
+            return TryGetCaveEntrance(chunkPos, out _, out _);
 
         return false;
     }
@@ -96,33 +96,58 @@ public class OverworldGenerator : IDungeonGenerator
         return height;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private BiomeType GetBiomeAt(int wx, int wy)
+    {
+        double temp = _tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+        double moist = _moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
+        return BiomeRegistry.GetBiomeFromClimate(temp, moist);
+    }
+
+    static private bool IsSpawnChunk(ChunkPosition chunkPos) =>
+        chunkPos.X == 0 && chunkPos.Y == 0 && chunkPos.Z == Position.DefaultZ;
+
+    private bool ShouldHaveTown(ChunkPosition chunkPos)
+    {
+        // Never place a town at the origin chunk (player spawn)
+        if (IsSpawnChunk(chunkPos)) return false;
+
+        var (chunkX, chunkY, _) = chunkPos;
+
+        long hash = chunkX * 48611L ^ chunkY * 29423L ^ _seed * 0x3C79AC492BA7B908L;
+        int roll = (int)((hash & 0x7FFFFFFFL) % 100);
+        return roll < 10; // 10% chance
+    }
+
     public GenerationResult Generate(ChunkPosition chunkPos)
     {
-        var (chunkX, chunkY, chunkZ) = chunkPos;
-        if (chunkZ == CaveZ)
+        if (chunkPos.Z == CaveZ)
             return GenerateCave(chunkPos);
 
+
+        if (chunkPos.Z != Position.DefaultZ)
+        {
+            var chunk = new Chunk(chunkPos);
+            var result = new GenerationResult(chunk);
+            return result;
+        }
+
+        return GenerateOverworld(chunkPos);
+    }
+
+    private GenerationResult GenerateOverworld(ChunkPosition chunkPos)
+    {
         var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
-        if (chunkZ != Position.DefaultZ)
-            return result;
+        var (chunkX, chunkY, chunkZ) = chunkPos;
 
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
 
-        // Three independent noise layers with different seeds
-
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
         int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
-
-        BiomeType GetBiomeAt(int wx, int wy)
-        {
-            double temp = _tempNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-            double moist = _moistNoise.FBM(wx * BiomeScale, wy * BiomeScale, 3);
-            return BiomeRegistry.GetBiomeFromClimate(temp, moist);
-        }
 
         // Pass 1: Carve terrain (floor vs wall vs liquid) using continuous noise
         for (int lx = 0; lx < Chunk.Size; lx++)
@@ -191,6 +216,7 @@ public class OverworldGenerator : IDungeonGenerator
                         if (rng.Next(1000) < MonsterChance1000)
                         {
                             var def = GameData.Instance.Biomes.PickEnemy(biome, rng, difficulty);
+                            if (def == null) continue; // No valid monsters for this biome/difficulty, skip
                             var monsterData = NpcRegistry.GenerateMonsterData(def, difficulty);
                             result.Monsters.Add((Position.FromCoords(worldOffsetX + lx, worldOffsetY + ly, chunkZ), monsterData));
                         }
@@ -211,16 +237,25 @@ public class OverworldGenerator : IDungeonGenerator
         }
 
         // Town generation: ~10% of non-origin chunks get a town
-        if (TownGenerator.ShouldHaveTown(chunkX, chunkY, _seed))
+        if (ShouldHaveTown(chunkPos))
         {
             // Determine biome at chunk center for construction material
             int centerWx = worldOffsetX + Chunk.Size / 2;
             int centerWy = worldOffsetY + Chunk.Size / 2;
             var townBiome = GetBiomeAt(centerWx, centerWy);
-            TownGenerator.Generate(chunk, result, rng, townBiome, worldOffsetX, worldOffsetY, chunkZ);
+            var townRng = TownGenerator.GetSeededRandomForChunk(chunkPos, _seed);
+            TownGenerator.Generate(chunk, result, townRng, townBiome, worldOffsetX, worldOffsetY, chunkZ);
         }
 
-        if (chunkX == 0 && chunkY == 0)
+        // Place cave entrance (StairsDown) on the surface if this chunk has a cave below
+        if (TryGetCaveEntrance(chunkPos, out var entranceLx, out var entranceLy))
+        {
+            int entranceFloorTileId = GameData.Instance.Tiles.GetNumericId("floor");
+            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, entranceFloorTileId);
+            DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, GameData.Instance.Tiles.GetNumericId("stairs_down"));
+        }
+
+        if (IsSpawnChunk(chunkPos))
         {
             // Find spawn point for starting chunk: look for a floor tile near the center, and clear nearby area for safety
             var spawnPoint = DungeonHelper.FindSpawnPoint(chunk);
@@ -239,14 +274,6 @@ public class OverworldGenerator : IDungeonGenerator
             }
         }
 
-        // Place cave entrance (StairsDown) on the surface if this chunk has a cave below
-        if (TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
-        {
-            int entranceFloorTileId = GameData.Instance.Tiles.GetNumericId("floor");
-            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, entranceFloorTileId);
-            DungeonHelper.PlaceFeature(chunk, entranceLx, entranceLy, GameData.Instance.Tiles.GetNumericId("stairs_down"));
-        }
-
         return result;
     }
 
@@ -255,10 +282,18 @@ public class OverworldGenerator : IDungeonGenerator
     /// Uses cave noise at the chunk center to decide presence, then picks a deterministic
     /// local position from the seed and validates it lands on a floor tile.
     /// </summary>
-    private bool TryGetCaveEntrance(int chunkX, int chunkY, out int localX, out int localY)
+    private bool TryGetCaveEntrance(ChunkPosition chunkPos, out int localX, out int localY)
     {
+        var (chunkX, chunkY, _) = chunkPos;
+
         localX = 0;
         localY = 0;
+
+        if (IsSpawnChunk(chunkPos))
+        {
+            localX = localY = 0;
+            return false; // Don't place a cave entrance at the spawn chunk
+        }
 
         int centerWx = chunkX * Chunk.Size + Chunk.Size / 2;
         int centerWy = chunkY * Chunk.Size + Chunk.Size / 2;
@@ -287,6 +322,13 @@ public class OverworldGenerator : IDungeonGenerator
         return entranceIsFloor;
     }
 
+    private SeededRandom GetSeededRandomForChunk(ChunkPosition chunkPos)
+    {
+        var (chunkX, chunkY, chunkZ) = chunkPos;
+        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678) + chunkZ * 0x3C6EF35FL);
+        return new SeededRandom(chunkSeed);
+    }
+
     /// <summary>
     /// Generates a BSP cave dungeon at DefaultZ - 1 with only an up-stair at the entrance position.
     /// </summary>
@@ -296,13 +338,14 @@ public class OverworldGenerator : IDungeonGenerator
         var chunk = new Chunk(chunkPos);
         var result = new GenerationResult(chunk);
 
-        if (!TryGetCaveEntrance(chunkX, chunkY, out int entranceLx, out int entranceLy))
+        if (!TryGetCaveEntrance(chunkPos, out var entranceLx, out var entranceLy))
             return result;
 
-        long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678) + chunkZ * 0x3C6EF35FL);
-        var rng = new SeededRandom(chunkSeed);
+        var entranceWorldPosition = chunk.LocalToWorld(entranceLx, entranceLy);
+
+        var rng = GetSeededRandomForChunk(chunkPos);
         int size = Chunk.Size;
-        var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
+        var biome = GetBiomeAt(entranceWorldPosition.X, entranceWorldPosition.Y); // Biome based on cave entrance position for thematic consistency with surface
         int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
         int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
 

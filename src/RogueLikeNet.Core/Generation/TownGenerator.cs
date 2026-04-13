@@ -25,18 +25,10 @@ internal static class TownGenerator
     private const int MinNpcCount = 4;
     private const int MaxNpcCount = 8;
 
-    /// <summary>
-    /// Determines if a chunk should contain a town based on coordinates and seed.
-    /// Returns true for ~10% of non-origin chunks.
-    /// </summary>
-    public static bool ShouldHaveTown(int chunkX, int chunkY, long seed)
+    public static SeededRandom GetSeededRandomForChunk(ChunkPosition chunkPos, long worldSeed)
     {
-        // Never place a town at the origin chunk (player spawn)
-        if (chunkX == 0 && chunkY == 0) return false;
-
-        long hash = chunkX * 48611L ^ chunkY * 29423L ^ seed * 0x3C79AC492BA7B908L;
-        int roll = (int)((hash & 0x7FFFFFFFL) % 100);
-        return roll < 10;
+        var (chunkX, chunkY, _) = chunkPos;
+        return new SeededRandom(worldSeed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678)));
     }
 
     /// <summary>
