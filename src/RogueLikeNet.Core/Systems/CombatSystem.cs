@@ -107,6 +107,16 @@ public class CombatSystem
                             EventType = PlayerActionEventType.Kill,
                             KilledNpcTypeId = monster.MonsterData.MonsterTypeId,
                         });
+
+                        if (HasNextLevel(ref player))
+                        {
+                            var npcDef = GameData.Instance.Npcs.Get(monster.MonsterData.MonsterTypeId);
+                            if (npcDef != null)
+                            {
+                                player.ClassData.Experience += npcDef.XpReward;
+                                ProcessLevelUp(ref player);
+                            }
+                        }
                     }
                 }
 
@@ -135,6 +145,44 @@ public class CombatSystem
             player.Input.ActionType = ActionTypes.None;
             player.AttackDelay.Current = player.AttackDelay.Interval;
         }
+    }
+
+    static private bool HasNextLevel(ref PlayerEntity player)
+    {
+        return player.ClassData.Level < GameData.Instance.PlayerLevels.MaxLevel;
+    }
+
+    private void ProcessLevelUp(ref PlayerEntity player)
+    {
+        var levelTable = GameData.Instance.PlayerLevels;
+        int newLevel = levelTable.GetLevelForXp(player.ClassData.Experience);
+        if (newLevel <= player.ClassData.Level) return;
+
+        int oldLevel = player.ClassData.Level;
+        player.ClassData.Level = newLevel;
+        player.ClassData.Experience = 0;
+
+        // Apply stat bonuses from level-up
+        var oldBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, oldLevel);
+        var newBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, newLevel);
+
+        int deltaAttack = newBonus.Attack - oldBonus.Attack;
+        int deltaDefense = newBonus.Defense - oldBonus.Defense;
+        int deltaHealth = newBonus.Health - oldBonus.Health;
+        int deltaSpeed = newBonus.Speed - oldBonus.Speed;
+
+        player.Health.Max += deltaHealth;
+        player.Health.Current = player.Health.Max; // Full heal on level up
+        player.CombatStats.Attack += deltaAttack;
+        player.CombatStats.Defense += deltaDefense;
+        player.CombatStats.Speed += deltaSpeed;
+
+        player.ActionEvents.Add(new PlayerActionEvent
+        {
+            EventType = PlayerActionEventType.LevelUp,
+            OldLevel = oldLevel,
+            NewLevel = newLevel,
+        });
     }
 
     private void ProcessMonsterAttacks(WorldMap map, bool debugInvulnerable)

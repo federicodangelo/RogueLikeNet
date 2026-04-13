@@ -133,13 +133,14 @@ public sealed class HudRenderer
                     if (row >= maxRow) break;
                     Ds(r, col, row, $"DEF: {playerState.Defense}", RenderingTheme.Stats); row++;
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"Lv:  {playerState.Level}", RenderingTheme.Level); row++;
+                    bool hasNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1) < int.MaxValue;
+                    Ds(r, col, row, $"Lv:  {playerState.Level}{(hasNextLevel ? "" : " [MAX]")}", RenderingTheme.Level); row++;
                     if (row >= maxRow) break;
                     var xpForNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1);
-                    if (xpForNextLevel < int.MaxValue)
+                    if (hasNextLevel)
                         Ds(r, col, row, $"XP:  {playerState.Experience}/{xpForNextLevel}", RenderingTheme.Stats);
                     else
-                        Ds(r, col, row, $"XP:  {playerState.Experience} (MAX)", RenderingTheme.Stats);
+                        Ds(r, col, row, $"XP:  ---", RenderingTheme.Stats);
                     break;
 
                 case "Equipment":

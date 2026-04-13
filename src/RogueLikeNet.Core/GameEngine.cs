@@ -394,18 +394,6 @@ public class GameEngine : IDisposable
 
         foreach (var (pos, typeId) in deadMonsters)
         {
-            // Award XP to closest player
-            var npcDef = GameData.Instance.Npcs.Get(typeId);
-            if (npcDef != null && npcDef.XpReward > 0)
-            {
-                ref var closest = ref FindClosestPlayer(pos);
-                if (!Unsafe.IsNullRef(ref closest))
-                {
-                    closest.ClassData.Experience += npcDef.XpReward;
-                    ProcessLevelUp(ref closest);
-                }
-            }
-
             if (_worldRng.Next(100) < 60)
             {
                 int difficulty = typeId;
@@ -477,55 +465,6 @@ public class GameEngine : IDisposable
     {
         foreach (var chunk in _worldMap.LoadedChunks)
             chunk.RemoveDeadOrDestroyedEntities();
-    }
-
-    private ref PlayerEntity FindClosestPlayer(Position pos)
-    {
-        int bestDist = int.MaxValue;
-        ref PlayerEntity best = ref Unsafe.NullRef<PlayerEntity>();
-        foreach (ref var player in _worldMap.Players)
-        {
-            if (player.IsDead) continue;
-            int dist = Math.Abs(player.Position.X - pos.X) + Math.Abs(player.Position.Y - pos.Y);
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                best = ref player;
-            }
-        }
-        return ref best;
-    }
-
-    private void ProcessLevelUp(ref PlayerEntity player)
-    {
-        var levelTable = GameData.Instance.PlayerLevels;
-        int newLevel = levelTable.GetLevelForXp(player.ClassData.Experience);
-        if (newLevel <= player.ClassData.Level) return;
-
-        int oldLevel = player.ClassData.Level;
-        player.ClassData.Level = newLevel;
-
-        // Apply stat bonuses from level-up
-        var oldBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, oldLevel);
-        var newBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, newLevel);
-
-        int deltaAttack = newBonus.Attack - oldBonus.Attack;
-        int deltaDefense = newBonus.Defense - oldBonus.Defense;
-        int deltaHealth = newBonus.Health - oldBonus.Health;
-        int deltaSpeed = newBonus.Speed - oldBonus.Speed;
-
-        player.Health.Max += deltaHealth;
-        player.Health.Current = player.Health.Max; // Full heal on level up
-        player.CombatStats.Attack += deltaAttack;
-        player.CombatStats.Defense += deltaDefense;
-        player.CombatStats.Speed += deltaSpeed;
-
-        player.ActionEvents.Add(new PlayerActionEvent
-        {
-            EventType = PlayerActionEventType.LevelUp,
-            OldLevel = oldLevel,
-            NewLevel = newLevel,
-        });
     }
 
     /// <summary>
