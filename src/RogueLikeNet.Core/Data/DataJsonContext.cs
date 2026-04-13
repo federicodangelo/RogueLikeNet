@@ -18,4 +18,6 @@ namespace RogueLikeNet.Core.Data;
 [JsonSerializable(typeof(AnimalDefinition[]))]
 [JsonSerializable(typeof(ClassDataDefinition))]
 [JsonSerializable(typeof(PlayerLevelDefinition[]))]
+[JsonSerializable(typeof(StructureDefinition[]))]
+[JsonSerializable(typeof(TownDefinition[]))]
 internal partial class DataJsonContext : JsonSerializerContext;

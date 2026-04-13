@@ -14,10 +14,12 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
 
     private readonly BiomeDefinition?[] _byBiomeType = new BiomeDefinition?[BiomeCount];
     private readonly TilesRegistry _tilesRegistry;
+    private readonly ItemRegistry _itemRegistry;
 
-    public BiomeRegistry(TilesRegistry tilesRegistry)
+    public BiomeRegistry(TilesRegistry tilesRegistry, ItemRegistry itemRegistry)
     {
         _tilesRegistry = tilesRegistry;
+        _itemRegistry = itemRegistry;
     }
 
     protected override void ExtraRegister(BiomeDefinition biome)
@@ -37,6 +39,16 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
 
         if (biome.Liquid != null)
             biome.Liquid.TileNumericId = _tilesRegistry.GetNumericId(biome.Liquid.TileId);
+
+        // Resolve town material item IDs
+        if (!string.IsNullOrEmpty(biome.TownWallItemId))
+            biome.TownWallItemNumericId = _itemRegistry.GetNumericId(biome.TownWallItemId);
+        if (!string.IsNullOrEmpty(biome.TownDoorItemId))
+            biome.TownDoorItemNumericId = _itemRegistry.GetNumericId(biome.TownDoorItemId);
+        if (!string.IsNullOrEmpty(biome.TownWindowItemId))
+            biome.TownWindowItemNumericId = _itemRegistry.GetNumericId(biome.TownWindowItemId);
+        if (!string.IsNullOrEmpty(biome.TownFloorItemId))
+            biome.TownFloorItemNumericId = _itemRegistry.GetNumericId(biome.TownFloorItemId);
     }
 
     public BiomeDefinition? Get(BiomeType biome) =>
@@ -61,6 +73,18 @@ public sealed class BiomeRegistry : BaseRegistry<BiomeDefinition>
 
     /// <summary>Returns the wall tile numeric ID for a biome.</summary>
     public int GetWallTileId(BiomeType biome) => Get(biome)?.WallTileNumericId ?? 0;
+
+    /// <summary>Returns the town wall item numeric ID for a biome.</summary>
+    public int GetTownWallItemId(BiomeType biome) => Get(biome)?.TownWallItemNumericId ?? 0;
+
+    /// <summary>Returns the town door item numeric ID for a biome.</summary>
+    public int GetTownDoorItemId(BiomeType biome) => Get(biome)?.TownDoorItemNumericId ?? 0;
+
+    /// <summary>Returns the town window item numeric ID for a biome.</summary>
+    public int GetTownWindowItemId(BiomeType biome) => Get(biome)?.TownWindowItemNumericId ?? 0;
+
+    /// <summary>Returns the town floor item numeric ID for a biome.</summary>
+    public int GetTownFloorItemId(BiomeType biome) => Get(biome)?.TownFloorItemNumericId ?? 0;
 
     /// <summary>
     /// Picks a random enemy type for the given biome, weighted by spawn table entries.

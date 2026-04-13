@@ -29,9 +29,21 @@ public sealed class BiomeDefinition : BaseDefinition
     public BiomeLiquidDef? Liquid { get; set; }
     public BiomeResourceWeight[] ResourceWeights { get; set; } = [];
 
+    // Town construction material item IDs (string, from JSON)
+    public string TownWallItemId { get; set; } = "";
+    public string TownDoorItemId { get; set; } = "";
+    public string TownWindowItemId { get; set; } = "";
+    public string TownFloorItemId { get; set; } = "";
+
     // Resolved numeric tile IDs (set during registration)
     [JsonIgnore] public int FloorTileNumericId { get; set; }
     [JsonIgnore] public int WallTileNumericId { get; set; }
+
+    // Resolved numeric item IDs for town materials (set during registration)
+    [JsonIgnore] public int TownWallItemNumericId { get; set; }
+    [JsonIgnore] public int TownDoorItemNumericId { get; set; }
+    [JsonIgnore] public int TownWindowItemNumericId { get; set; }
+    [JsonIgnore] public int TownFloorItemNumericId { get; set; }
 }
 
 public sealed class BiomeDecorationDef

@@ -1,0 +1,134 @@
+[
+    {
+        "id": "cottage_basic",
+        "name": "Basic Cottage",
+        "category": "house",
+        "width": 6,
+        "height": 5,
+        "grid": [
+            "#W##W#",
+            "#t..b#",
+            "W....W",
+            "#cTc.#",
+            "##D###"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "T": "wooden_table",
+            "c": "wooden_chair",
+            "b": "wooden_bed"
+        },
+        "npcs": [
+            {
+                "x": 3,
+                "y": 2,
+                "role": "villager"
+            }
+        ],
+        "allowRotation": true
+    },
+    {
+        "id": "cottage_large",
+        "name": "Large Cottage",
+        "category": "house",
+        "width": 8,
+        "height": 7,
+        "grid": [
+            "##W##W##",
+            "#t..B.t#",
+            "W......W",
+            "#.cTc..#",
+            "W......W",
+            "#S...b.#",
+            "###D####"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "T": "wooden_table",
+            "c": "wooden_chair",
+            "b": "wooden_bed",
+            "B": "wooden_bookshelf",
+            "S": "chest"
+        },
+        "npcs": [
+            {
+                "x": 4,
+                "y": 3,
+                "role": "villager"
+            }
+        ],
+        "allowRotation": true
+    },
+    {
+        "id": "library",
+        "name": "Library",
+        "category": "house",
+        "width": 7,
+        "height": 6,
+        "grid": [
+            "##W#W##",
+            "#B.B.B#",
+            "W.....W",
+            "#.cTc.#",
+            "#t...t#",
+            "###D###"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "T": "wooden_table",
+            "c": "wooden_chair",
+            "B": "wooden_bookshelf"
+        },
+        "npcs": [
+            {
+                "x": 3,
+                "y": 3,
+                "role": "villager"
+            }
+        ],
+        "allowRotation": true
+    },
+    {
+        "id": "bedroom",
+        "name": "Bedroom",
+        "category": "house",
+        "width": 5,
+        "height": 5,
+        "grid": [
+            "#W#W#",
+            "#b.t#",
+            "W...W",
+            "#.T.#",
+            "##D##"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "T": "wooden_table",
+            "b": "wooden_bed"
+        },
+        "npcs": [
+            {
+                "x": 2,
+                "y": 2,
+                "role": "villager"
+            }
+        ],
+        "allowRotation": true
+    }
+]

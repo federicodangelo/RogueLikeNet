@@ -1,3 +1,5 @@
+using RogueLikeNet.Core.Data;
+
 namespace RogueLikeNet.Core.Components;
 
 /// <summary>
@@ -31,4 +33,6 @@ public struct TownNpcTag
     public int TalkTimer;
     /// <summary>Index into TownNpcDefinitions.Dialogues for current conversation line.</summary>
     public int DialogueIndex;
+    /// <summary>Role of this NPC in the town.</summary>
+    public TownNpcRole Role;
 }

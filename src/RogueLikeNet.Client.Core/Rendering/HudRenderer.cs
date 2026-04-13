@@ -298,11 +298,6 @@ public sealed class HudRenderer
             Ds(r, col, row, $"{modeText}: ↑↓←→ [ESC] Cancel", RenderingTheme.Selected);
             row++;
         }
-        else if (HasAdjacentTileWithPlaceable(state))
-        {
-            Ds(r, col, row, "[P] Pick up near placeable", RenderingTheme.Stats);
-            row++;
-        }
         else if (AboveStairsTile(state))
         {
             Ds(r, col, row, "[>] Use stairs", RenderingTheme.Stats);
@@ -311,6 +306,11 @@ public sealed class HudRenderer
         else if (HasAdjacentAnimalOrCrop(state))
         {
             Ds(r, col, row, "[E] Interact with animal/crop", RenderingTheme.Stats);
+            row++;
+        }
+        else if (HasAdjacentTileWithPlaceable(state))
+        {
+            Ds(r, col, row, "[P] Pick up near placeable", RenderingTheme.Stats);
             row++;
         }
         else

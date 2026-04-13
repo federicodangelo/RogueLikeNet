@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Engine.Rendering.Base;
+using RogueLikeNet.Core.Generation;
 
 namespace RogueLikeNet.Core.Data;
 
@@ -179,7 +180,33 @@ public static class DataLoader
             playerLevels = DeserializeFile<PlayerLevelDefinition[]>(levelsFile);
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? []);
+        // Load structures from data/structures/
+        var structures = new List<StructureDefinition>();
+        var structuresDir = Path.Combine(dataDir, "structures");
+        if (Directory.Exists(structuresDir))
+        {
+            foreach (var file in Directory.GetFiles(structuresDir, "*.json"))
+            {
+                var loaded = DeserializeFile<StructureDefinition[]>(file);
+                if (loaded != null)
+                    structures.AddRange(loaded);
+            }
+        }
+
+        // Load towns from data/towns/
+        var towns = new List<TownDefinition>();
+        var townsDir = Path.Combine(dataDir, "towns");
+        if (Directory.Exists(townsDir))
+        {
+            foreach (var file in Directory.GetFiles(townsDir, "*.json"))
+            {
+                var loaded = DeserializeFile<TownDefinition[]>(file);
+                if (loaded != null)
+                    towns.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns);
     }
     /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
     /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
@@ -252,10 +279,34 @@ public static class DataLoader
         // Load player levels
         var playerLevels = DeserializeResource<PlayerLevelDefinition[]>(assembly, "data/meta/player-levels.json");
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? []);
+        // Load structures from data/structures/*.json resources
+        var structures = new List<StructureDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/structures/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<StructureDefinition[]>(assembly, name);
+                if (loaded != null)
+                    structures.AddRange(loaded);
+            }
+        }
+
+        // Load towns from data/towns/*.json resources
+        var towns = new List<TownDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/towns/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<TownDefinition[]>(assembly, name);
+                if (loaded != null)
+                    towns.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns);
     }
 
-    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels)
+    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels, IEnumerable<StructureDefinition> structures, IEnumerable<TownDefinition> towns)
     {
         var data = new GameData();
 
@@ -268,6 +319,8 @@ public static class DataLoader
         data.Animals.Register(animals);
         data.Classes.Register(classes);
         data.PlayerLevels.Load(playerLevels);
+        data.Structures.Register(structures);
+        data.Towns.Register(towns);
 
         Validate(data);
 
@@ -636,6 +689,164 @@ public static class DataLoader
             {
                 if (item.EquipSlot == null)
                     errors.Add($"Item '{item.Id}': is equippable but EquipSlot is not set.");
+            }
+        }
+
+        foreach (var s in data.Structures.All)
+        {
+            if (string.IsNullOrEmpty(s.Category))
+                errors.Add($"Structure '{s.Id}': category is empty.");
+            if (s.Width <= 0)
+                errors.Add($"Structure '{s.Id}': width must be > 0 (got {s.Width}).");
+            if (s.Height <= 0)
+                errors.Add($"Structure '{s.Id}': height must be > 0 (got {s.Height}).");
+
+            // Grid dimensions
+            if (s.Grid.Length != s.Height)
+                errors.Add($"Structure '{s.Id}': grid has {s.Grid.Length} rows but height is {s.Height}.");
+            for (int row = 0; row < s.Grid.Length; row++)
+            {
+                if (s.Grid[row].Length != s.Width)
+                    errors.Add($"Structure '{s.Id}': grid row {row} has length {s.Grid[row].Length} but width is {s.Width}.");
+            }
+
+            // Legend values reference valid items or special keys
+            foreach (var (key, value) in s.Legend)
+            {
+                if (key.Length != 1)
+                    errors.Add($"Structure '{s.Id}': legend key '{key}' must be a single character.");
+
+                if (!StructureDefinition.SpecialLegendValues.Contains(value) && data.Items.Get(value) == null && data.Tiles.Get(value) == null)
+                    errors.Add($"Structure '{s.Id}': legend value '{value}' is not a known item, tile or special key.");
+            }
+
+            // All grid characters must appear in legend
+            for (int row = 0; row < s.Grid.Length; row++)
+            {
+                foreach (char ch in s.Grid[row])
+                {
+                    if (!s.Legend.ContainsKey(ch.ToString()))
+                        errors.Add($"Structure '{s.Id}': grid character '{ch}' at row {row} not found in legend.");
+                }
+            }
+
+            // NPC coordinates must be within bounds
+            foreach (var npc in s.Npcs)
+            {
+                if (npc.X < 0 || npc.X >= s.Width || npc.Y < 0 || npc.Y >= s.Height)
+                    errors.Add($"Structure '{s.Id}': NPC at ({npc.X},{npc.Y}) is outside grid bounds ({s.Width}x{s.Height}).");
+            }
+
+            // Ground item references
+            foreach (var gi in s.GroundItems)
+            {
+                if (gi.X < 0 || gi.X >= s.Width || gi.Y < 0 || gi.Y >= s.Height)
+                    errors.Add($"Structure '{s.Id}': ground item at ({gi.X},{gi.Y}) is outside grid bounds ({s.Width}x{s.Height}).");
+
+                if (data.Items.Get(gi.ItemId) == null)
+                    errors.Add($"Structure '{s.Id}': ground item '{gi.ItemId}' not found.");
+            }
+
+            // CropGrid dimensions and legend
+            if (s.CropGrid != null)
+            {
+                if (s.CropLegend == null)
+                    errors.Add($"Structure '{s.Id}': cropGrid is set but cropLegend is missing.");
+
+                if (s.CropGrid.Length != s.Height)
+                    errors.Add($"Structure '{s.Id}': cropGrid has {s.CropGrid.Length} rows but height is {s.Height}.");
+
+                for (int row = 0; row < s.CropGrid.Length; row++)
+                {
+                    if (s.CropGrid[row].Length != s.Width)
+                        errors.Add($"Structure '{s.Id}': cropGrid row {row} has length {s.CropGrid[row].Length} but width is {s.Width}.");
+                }
+                if (s.CropLegend != null)
+                {
+                    foreach (var (key, seedId) in s.CropLegend)
+                    {
+                        var seedDef = data.Items.Get(seedId);
+                        if (seedDef == null)
+                            errors.Add($"Structure '{s.Id}': cropLegend value '{seedId}' is not a known item.");
+                        else if (seedDef.Seed == null)
+                            errors.Add($"Structure '{s.Id}': cropLegend value '{seedId}' is not a seed item.");
+                    }
+                }
+            }
+            else if (s.CropLegend != null)
+            {
+                errors.Add($"Structure '{s.Id}': cropLegend is set but cropGrid is missing.");
+            }
+
+            // AnimalGrid dimensions and legend
+            if (s.AnimalGrid != null)
+            {
+                if (s.AnimalLegend == null)
+                    errors.Add($"Structure '{s.Id}': animalGrid is set but animalLegend is missing.");
+
+                if (s.AnimalGrid.Length != s.Height)
+                    errors.Add($"Structure '{s.Id}': animalGrid has {s.AnimalGrid.Length} rows but height is {s.Height}.");
+
+                for (int row = 0; row < s.AnimalGrid.Length; row++)
+                {
+                    if (s.AnimalGrid[row].Length != s.Width)
+                        errors.Add($"Structure '{s.Id}': animalGrid row {row} has length {s.AnimalGrid[row].Length} but width is {s.Width}.");
+                }
+                if (s.AnimalLegend != null)
+                {
+                    foreach (var (key, animalId) in s.AnimalLegend)
+                    {
+                        if (data.Animals.Get(animalId) == null)
+                            errors.Add($"Structure '{s.Id}': animalLegend value '{animalId}' is not a known animal.");
+                    }
+                }
+            }
+            else if (s.AnimalLegend != null)
+            {
+                errors.Add($"Structure '{s.Id}': animalLegend is set but animalGrid is missing.");
+            }
+        }
+
+        // Validate towns
+        foreach (var town in data.Towns.All)
+        {
+            if (town.MinTownSize <= 0)
+                errors.Add($"Town '{town.Id}': minTownSize must be > 0.");
+            if (town.MaxTownSize < town.MinTownSize)
+                errors.Add($"Town '{town.Id}': maxTownSize ({town.MaxTownSize}) < minTownSize ({town.MinTownSize}).");
+            if (town.MaxNpcs < town.MinNpcs)
+                errors.Add($"Town '{town.Id}': maxNpcs ({town.MaxNpcs}) < minNpcs ({town.MinNpcs}).");
+
+            if (town.Structures.Length == 0)
+                errors.Add($"Town '{town.Id}': no structure rules defined.");
+
+            foreach (var rule in town.Structures)
+            {
+                if (string.IsNullOrEmpty(rule.Category))
+                    errors.Add($"Town '{town.Id}': structure rule has empty category.");
+                else if (data.Structures.GetByCategory(rule.Category).Count == 0 && rule.StructureIds is not { Length: > 0 })
+                    errors.Add($"Town '{town.Id}': no structures found for category '{rule.Category}'.");
+
+                if (rule.MaxCount < rule.MinCount)
+                    errors.Add($"Town '{town.Id}': rule for '{rule.Category}' has maxCount ({rule.MaxCount}) < minCount ({rule.MinCount}).");
+
+                if (rule.StructureIds != null)
+                {
+                    foreach (var sid in rule.StructureIds)
+                    {
+                        if (data.Structures.Get(sid) == null)
+                            errors.Add($"Town '{town.Id}': structureId '{sid}' not found.");
+                    }
+                }
+            }
+
+            if (town.BiomeOverrides != null)
+            {
+                foreach (var b in town.BiomeOverrides)
+                {
+                    if (!Enum.TryParse<BiomeType>(b, true, out _))
+                        errors.Add($"Town '{town.Id}': biomeOverride '{b}' is not a valid BiomeType.");
+                }
             }
         }
 

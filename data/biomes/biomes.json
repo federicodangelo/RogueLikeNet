@@ -54,7 +54,11 @@
                 "nodeId": "coal_deposit",
                 "weight": 15
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "stone_floor_tile"
     },
     {
         "id": "lava",
@@ -102,7 +106,11 @@
                 "nodeId": "coal_deposit",
                 "weight": 20
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "iron_floor_tile"
     },
     {
         "id": "ice",
@@ -150,7 +158,11 @@
                 "nodeId": "gold_rock",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "iron_floor_tile"
     },
     {
         "id": "forest",
@@ -210,7 +222,11 @@
                 "nodeId": "gold_rock",
                 "weight": 5
             }
-        ]
+        ],
+        "townWallItemId": "wooden_wall",
+        "townDoorItemId": "wooden_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "wooden_floor_tile"
     },
     {
         "id": "arcane",
@@ -267,7 +283,11 @@
                 "nodeId": "mithril_rock",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "copper_wall",
+        "townDoorItemId": "copper_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "copper_floor_tile"
     },
     {
         "id": "crypt",
@@ -320,7 +340,11 @@
                 "nodeId": "gold_rock",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "stone_floor_tile"
     },
     {
         "id": "sewer",
@@ -376,7 +400,11 @@
                 "nodeId": "tree",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "copper_wall",
+        "townDoorItemId": "copper_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "copper_floor_tile"
     },
     {
         "id": "fungal",
@@ -440,7 +468,11 @@
                 "nodeId": "gold_rock",
                 "weight": 5
             }
-        ]
+        ],
+        "townWallItemId": "wooden_wall",
+        "townDoorItemId": "wooden_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "wooden_floor_tile"
     },
     {
         "id": "ruined",
@@ -497,7 +529,11 @@
                 "nodeId": "tree",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "stone_floor_tile"
     },
     {
         "id": "infernal",
@@ -553,6 +589,10 @@
                 "nodeId": "adamantite_rock",
                 "weight": 10
             }
-        ]
+        ],
+        "townWallItemId": "iron_wall",
+        "townDoorItemId": "iron_door",
+        "townWindowItemId": "wooden_window",
+        "townFloorItemId": "iron_floor_tile"
     }
 ]

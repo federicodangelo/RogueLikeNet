@@ -38,7 +38,7 @@ public class BiomeRegistryTests
     public void GetDecorations_UnknownBiome_ReturnsEmpty()
     {
         // If a biome isn't loaded, should return empty
-        var registry = new BiomeRegistry(GameData.Instance.Tiles);
+        var registry = new BiomeRegistry(GameData.Instance.Tiles, GameData.Instance.Items);
         registry.Register([]);
         var decorations = registry.GetDecorations(BiomeType.Forest);
         Assert.Empty(decorations);

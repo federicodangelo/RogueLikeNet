@@ -15,11 +15,13 @@ public sealed class GameData
     public readonly AnimalRegistry Animals = new();
     public readonly ClassRegistry Classes = new();
     public readonly PlayerLevelTable PlayerLevels = new();
+    public readonly StructureRegistry Structures = new();
+    public readonly TownRegistry Towns = new();
 
     public GameData()
     {
         Recipes = new RecipeRegistry(Items);
-        Biomes = new BiomeRegistry(Tiles);
+        Biomes = new BiomeRegistry(Tiles, Items);
     }
 
     /// <summary>
@@ -38,5 +40,7 @@ public sealed class GameData
         output.WriteLine($"[GameData] Loaded {Animals.Count} animals");
         output.WriteLine($"[GameData] Loaded {Classes.Count} classes");
         output.WriteLine($"[GameData] Loaded {PlayerLevels.Count} player levels");
+        output.WriteLine($"[GameData] Loaded {Structures.Count} structures");
+        output.WriteLine($"[GameData] Loaded {Towns.Count} town types");
     }
 }

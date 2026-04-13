@@ -1,0 +1,236 @@
+[
+    {
+        "id": "generic",
+        "name": "Village",
+        "minTownSize": 25,
+        "maxTownSize": 45,
+        "minNpcs": 4,
+        "maxNpcs": 8,
+        "structures": [
+            {
+                "category": "house",
+                "minCount": 3,
+                "maxCount": 6,
+                "weight": 50
+            },
+            {
+                "category": "shop",
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 30
+            },
+            {
+                "category": "decoration",
+                "minCount": 2,
+                "maxCount": 5,
+                "weight": 20
+            }
+        ]
+    },
+    {
+        "id": "farming_village",
+        "name": "Farming Village",
+        "minTownSize": 35,
+        "maxTownSize": 55,
+        "minNpcs": 5,
+        "maxNpcs": 10,
+        "structures": [
+            {
+                "category": "house",
+                "minCount": 2,
+                "maxCount": 4,
+                "weight": 25
+            },
+            {
+                "category": "farm",
+                "structureIds": [
+                    "wheat_field",
+                    "vegetable_garden"
+                ],
+                "minCount": 2,
+                "maxCount": 4,
+                "weight": 35
+            },
+            {
+                "category": "farm",
+                "structureIds": [
+                    "chicken_coop",
+                    "cattle_pasture",
+                    "sheep_pen"
+                ],
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 25
+            },
+            {
+                "category": "shop",
+                "minCount": 0,
+                "maxCount": 1,
+                "weight": 10
+            },
+            {
+                "category": "decoration",
+                "minCount": 1,
+                "maxCount": 3,
+                "weight": 5
+            }
+        ],
+        "biomeOverrides": [
+            "forest",
+            "fungal"
+        ]
+    },
+    {
+        "id": "mining_outpost",
+        "name": "Mining Outpost",
+        "minTownSize": 20,
+        "maxTownSize": 35,
+        "minNpcs": 3,
+        "maxNpcs": 6,
+        "structures": [
+            {
+                "category": "house",
+                "minCount": 2,
+                "maxCount": 3,
+                "weight": 30
+            },
+            {
+                "category": "shop",
+                "structureIds": [
+                    "blacksmith",
+                    "workshop"
+                ],
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 40
+            },
+            {
+                "category": "decoration",
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 10
+            }
+        ],
+        "biomeOverrides": [
+            "stone",
+            "crypt",
+            "ruined"
+        ]
+    },
+    {
+        "id": "trading_post",
+        "name": "Trading Post",
+        "minTownSize": 25,
+        "maxTownSize": 40,
+        "minNpcs": 4,
+        "maxNpcs": 8,
+        "structures": [
+            {
+                "category": "house",
+                "minCount": 1,
+                "maxCount": 3,
+                "weight": 20
+            },
+            {
+                "category": "shop",
+                "minCount": 2,
+                "maxCount": 4,
+                "weight": 50
+            },
+            {
+                "category": "decoration",
+                "minCount": 2,
+                "maxCount": 4,
+                "weight": 20
+            }
+        ]
+    },
+    {
+        "id": "ranch",
+        "name": "Ranch",
+        "minTownSize": 35,
+        "maxTownSize": 55,
+        "minNpcs": 3,
+        "maxNpcs": 7,
+        "structures": [
+            {
+                "category": "house",
+                "minCount": 1,
+                "maxCount": 3,
+                "weight": 20
+            },
+            {
+                "category": "farm",
+                "structureIds": [
+                    "cattle_pasture",
+                    "sheep_pen",
+                    "chicken_coop"
+                ],
+                "minCount": 2,
+                "maxCount": 4,
+                "weight": 45
+            },
+            {
+                "category": "farm",
+                "structureIds": [
+                    "wheat_field"
+                ],
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 20
+            },
+            {
+                "category": "decoration",
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 5
+            }
+        ],
+        "biomeOverrides": [
+            "forest"
+        ]
+    },
+    {
+        "id": "arcane_settlement",
+        "name": "Arcane Settlement",
+        "minTownSize": 20,
+        "maxTownSize": 35,
+        "minNpcs": 3,
+        "maxNpcs": 6,
+        "structures": [
+            {
+                "category": "house",
+                "structureIds": [
+                    "library"
+                ],
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 30
+            },
+            {
+                "category": "house",
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 20
+            },
+            {
+                "category": "shop",
+                "structureIds": [
+                    "alchemy_shop"
+                ],
+                "minCount": 1,
+                "maxCount": 2,
+                "weight": 35
+            },
+            {
+                "category": "decoration",
+                "minCount": 1,
+                "maxCount": 3,
+                "weight": 15
+            }
+        ],
+        "biomeOverrides": [
+            "arcane"
+        ]
+    }
+]

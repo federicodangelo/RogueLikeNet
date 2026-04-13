@@ -1,0 +1,100 @@
+[
+    {
+        "id": "blacksmith",
+        "name": "Blacksmith",
+        "category": "shop",
+        "width": 7,
+        "height": 6,
+        "grid": [
+            "##W#W##",
+            "#A.F.t#",
+            "W.....W",
+            "#S....#",
+            "#t....#",
+            "###D###"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "A": "anvil",
+            "F": "furnace",
+            "S": "chest"
+        },
+        "npcs": [
+            {
+                "x": 3,
+                "y": 3,
+                "role": "blacksmith"
+            }
+        ],
+        "allowRotation": true
+    },
+    {
+        "id": "general_store",
+        "name": "General Store",
+        "category": "shop",
+        "width": 7,
+        "height": 6,
+        "grid": [
+            "##W#W##",
+            "#S.S.t#",
+            "W.....W",
+            "#.cTc.#",
+            "#t....#",
+            "###D###"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "T": "wooden_table",
+            "c": "wooden_chair",
+            "S": "chest"
+        },
+        "npcs": [
+            {
+                "x": 3,
+                "y": 3,
+                "role": "merchant"
+            }
+        ],
+        "allowRotation": true
+    },
+    {
+        "id": "alchemy_shop",
+        "name": "Alchemy Shop",
+        "category": "shop",
+        "width": 6,
+        "height": 5,
+        "grid": [
+            "#W##W#",
+            "#P.St#",
+            "W....W",
+            "#t.T.#",
+            "##D###"
+        ],
+        "legend": {
+            "#": "biome_wall",
+            "D": "biome_door",
+            "W": "biome_window",
+            ".": "biome_floor",
+            "t": "torch_placeable",
+            "P": "alchemy_table",
+            "S": "chest",
+            "T": "wooden_table"
+        },
+        "npcs": [
+            {
+                "x": 2,
+                "y": 2,
+                "role": "alchemist"
+            }
+        ],
+        "allowRotation": true
+    }
+]

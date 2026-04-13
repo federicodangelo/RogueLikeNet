@@ -6,24 +6,13 @@ using RogueLikeNet.Core.World;
 namespace RogueLikeNet.Core.Generation;
 
 /// <summary>
-/// Generates a town in the center of an overworld chunk.
-/// Places houses using actual buildable items so everything can be picked up.
-/// Biome determines construction material. Spawns peaceful town NPCs.
+/// Generates a town in the center of an overworld chunk using data-driven
+/// structure templates and town type definitions loaded from JSON.
+/// Biome determines construction materials. Spawns peaceful town NPCs with roles.
 /// </summary>
 internal static class TownGenerator
 {
-    /// <summary>Town area size (centered in chunk).</summary>
-    private const int MinTownSize = 20;
-    private const int MaxTownSize = 50;
-
-    private const int HouseMinSize = 5;
-    private const int HouseMaxSize = 8;
-    private const int MaxHouses = 12;
-
-    private const int GapBetweenHouses = 3; // Minimum gap between houses to prevent overlap
-
-    private const int MinNpcCount = 4;
-    private const int MaxNpcCount = 8;
+    private const int GapBetweenStructures = 3;
 
     public static SeededRandom GetSeededRandomForChunk(ChunkPosition chunkPos, long worldSeed)
     {
@@ -33,14 +22,26 @@ internal static class TownGenerator
 
     /// <summary>
     /// Generates a town in the chunk. Call after terrain generation but before enemy spawning.
-    /// Flattens the center area, builds houses, and adds NPC spawn data.
+    /// Picks a town type based on biome, places structures from templates, and spawns NPCs.
     /// </summary>
     public static void Generate(Chunk chunk, GenerationResult result, SeededRandom rng, BiomeType biome,
         int worldOffsetX, int worldOffsetY, int worldZ)
     {
-        var mat = GetMaterial(biome);
-        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
-        int townSize = MinTownSize + rng.Next(MaxTownSize - MinTownSize + 1);
+        var gameData = GameData.Instance;
+
+        // Pick a town type eligible for this biome
+        var townDef = gameData.Towns.PickRandom(biome, rng);
+        if (townDef == null)
+            return; // No town types available
+
+        // Get biome material IDs
+        int biomeWallId = gameData.Biomes.GetTownWallItemId(biome);
+        int biomeDoorId = gameData.Biomes.GetTownDoorItemId(biome);
+        int biomeWindowId = gameData.Biomes.GetTownWindowItemId(biome);
+        int biomeFloorId = gameData.Biomes.GetTownFloorItemId(biome);
+        int floorTileId = gameData.Biomes.GetFloorTileId(biome);
+
+        int townSize = townDef.MinTownSize + rng.Next(Math.Max(1, townDef.MaxTownSize - townDef.MinTownSize + 1));
         int townStart = (Chunk.Size - townSize) / 2;
         int townEnd = townStart + townSize;
         int townCenterX = worldOffsetX + Chunk.Size / 2;
@@ -80,240 +81,99 @@ internal static class TownGenerator
             return lx >= townStart && lx < townEnd && ly >= townStart && ly < townEnd;
         });
 
-        // Generate house positions (non-overlapping)
-        var houses = new List<Room>();
-        for (int attempt = 0; attempt < MaxHouses * 10 && houses.Count < MaxHouses; attempt++)
-        {
-            int w = HouseMinSize + rng.Next(HouseMaxSize - HouseMinSize + 1);
-            int h = HouseMinSize + rng.Next(HouseMaxSize - HouseMinSize + 1);
-            int hx = townStart + 2 + rng.Next(Math.Max(1, townSize - w - 4));
-            int hy = townStart + 2 + rng.Next(Math.Max(1, townSize - h - 4));
+        // Place structures according to town definition rules
+        var placedRects = new List<(int X, int Y, int W, int H)>();
+        int structureNpcCount = 0;
 
-            // Ensure the house fits within the chunk and doesn't overlap others
-            if (hx + w >= townEnd - 1 || hy + h >= townEnd - 1) continue;
-            bool overlaps = false;
-            foreach (var existing in houses)
+        foreach (var rule in townDef.Structures)
+        {
+            int count = rule.MinCount + rng.Next(Math.Max(1, rule.MaxCount - rule.MinCount + 1));
+            var candidates = gameData.Structures.GetByCategoryOrIds(rule.Category, rule.StructureIds);
+            if (candidates.Count == 0) continue;
+
+            for (int i = 0; i < count; i++)
             {
-                if (hx - GapBetweenHouses < existing.X + existing.Width && hx + w + GapBetweenHouses > existing.X &&
-                    hy - GapBetweenHouses < existing.Y + existing.Height && hy + h + GapBetweenHouses > existing.Y)
+                var structure = candidates[rng.Next(candidates.Count)];
+                int rotation = structure.AllowRotation ? rng.Next(4) : 0;
+                StructurePlacer.GetRotatedSize(structure.Width, structure.Height, rotation, out int placedW, out int placedH);
+
+                // Try to find a non-overlapping position
+                bool placed = false;
+                for (int attempt = 0; attempt < 30; attempt++)
                 {
-                    overlaps = true;
+                    int sx = townStart + 2 + rng.Next(Math.Max(1, townSize - placedW - 4));
+                    int sy = townStart + 2 + rng.Next(Math.Max(1, townSize - placedH - 4));
+
+                    if (sx + placedW >= townEnd - 1 || sy + placedH >= townEnd - 1)
+                        continue;
+
+                    if (Overlaps(placedRects, sx, sy, placedW, placedH))
+                        continue;
+
+                    // Place it
+                    placedRects.Add((sx, sy, placedW, placedH));
+                    int npcsBefore = result.TownNpcs.Count;
+
+                    StructurePlacer.Place(
+                        chunk, structure, sx, sy, rotation,
+                        biomeWallId, biomeDoorId, biomeWindowId, biomeFloorId,
+                        result, rng, worldOffsetX, worldOffsetY, worldZ,
+                        townCenterX, townCenterY, townSize / 2);
+
+                    structureNpcCount += result.TownNpcs.Count - npcsBefore;
+                    placed = true;
                     break;
                 }
-            }
-            if (overlaps) continue;
-            houses.Add(new Room(hx, hy, w, h));
-        }
 
-        // Build each house
-        foreach (var house in houses)
-        {
-            BuildHouse(chunk, house, rng, mat, worldOffsetX, worldOffsetY, worldZ, result);
+                if (!placed) break; // Stop trying this structure rule if we can't place
+            }
         }
 
         // Place a torch in the town center
         int townCenterLx = townCenterX - worldOffsetX;
         int townCenterLy = townCenterY - worldOffsetY;
         if (townCenterLx >= 0 && townCenterLx < Chunk.Size && townCenterLy >= 0 && townCenterLy < Chunk.Size)
-            chunk.Tiles[townCenterLx, townCenterLy].PlaceableItemId = ItemId("torch_placeable");
+        {
+            ref var centerTile = ref chunk.Tiles[townCenterLx, townCenterLy];
+            if (centerTile.PlaceableItemId == 0)
+                centerTile.PlaceableItemId = gameData.Items.GetNumericId("torch_placeable");
+        }
 
-        // Spawn town NPCs in the town area
-        int npcCount = MinNpcCount + rng.Next(MaxNpcCount - MinNpcCount + 1);
-        for (int i = 0; i < npcCount; i++)
+        // Spawn remaining NPCs as generic villagers in open spaces
+        int targetNpcs = townDef.MinNpcs + rng.Next(Math.Max(1, townDef.MaxNpcs - townDef.MinNpcs + 1));
+        int remainingNpcs = Math.Max(0, targetNpcs - structureNpcCount);
+
+        for (int i = 0; i < remainingNpcs; i++)
         {
             for (int attempt = 0; attempt < 20; attempt++)
             {
                 int nx = townStart + 2 + rng.Next(townSize - 4);
                 int ny = townStart + 2 + rng.Next(townSize - 4);
                 if (nx < 0 || nx >= Chunk.Size || ny < 0 || ny >= Chunk.Size) continue;
-                if (chunk.Tiles[nx, ny].Type != TileType.Floor) continue;
+                ref var tile = ref chunk.Tiles[nx, ny];
+                if (tile.Type != TileType.Floor) continue;
+                if (tile.PlaceableItemId != 0 && !gameData.Items.IsPlaceableWalkable(tile.PlaceableItemId, tile.PlaceableItemExtra))
+                    continue;
 
                 result.TownNpcs.Add((
                     Position.FromCoords(worldOffsetX + nx, worldOffsetY + ny, worldZ),
                     TownNpcDefinitions.PickName(rng),
-                    townCenterX, townCenterY, townSize / 2
+                    townCenterX, townCenterY, townSize / 2,
+                    TownNpcRole.Villager
                 ));
                 break;
             }
         }
     }
 
-    private static void BuildHouse(Chunk chunk, Room house, SeededRandom rng, TownMaterial mat,
-        int worldOffsetX, int worldOffsetY, int worldZ, GenerationResult result)
+    private static bool Overlaps(List<(int X, int Y, int W, int H)> rects, int x, int y, int w, int h)
     {
-        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
-
-        // Floor inside (inset by 1 for walls)
-        for (int x = house.X + 1; x < house.X + house.Width - 1; x++)
+        foreach (var (rx, ry, rw, rh) in rects)
         {
-            for (int y = house.Y + 1; y < house.Y + house.Height - 1; y++)
-            {
-                if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) continue;
-                ref var tile = ref chunk.Tiles[x, y];
-                tile.TileId = floorTileId;
-                tile.PlaceableItemId = mat.FloorTileItemId;
-                tile.PlaceableItemExtra = 0;
-            }
+            if (x - GapBetweenStructures < rx + rw && x + w + GapBetweenStructures > rx &&
+                y - GapBetweenStructures < ry + rh && y + h + GapBetweenStructures > ry)
+                return true;
         }
-
-        // Walls — base tile is floor, placeable is the wall item
-        for (int x = house.X; x < house.X + house.Width; x++)
-        {
-            SetPlaceable(chunk, x, house.Y, mat.WallItemId);
-            SetPlaceable(chunk, x, house.Y + house.Height - 1, mat.WallItemId);
-        }
-        for (int y = house.Y; y < house.Y + house.Height; y++)
-        {
-            SetPlaceable(chunk, house.X, y, mat.WallItemId);
-            SetPlaceable(chunk, house.X + house.Width - 1, y, mat.WallItemId);
-        }
-
-        // Place a door on a wall
-        int doorSide = rng.Next(4); // 0=N, 1=S, 2=W, 3=E
-        int doorX, doorY;
-        switch (doorSide)
-        {
-            case 0:
-                doorX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
-                doorY = house.Y;
-                break;
-            case 1:
-                doorX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
-                doorY = house.Y + house.Height - 1;
-                break;
-            case 2:
-                doorX = house.X;
-                doorY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
-                break;
-            default:
-                doorX = house.X + house.Width - 1;
-                doorY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
-                break;
-        }
-        if (doorX >= 0 && doorX < Chunk.Size && doorY >= 0 && doorY < Chunk.Size)
-        {
-            ref var doorTile = ref chunk.Tiles[doorX, doorY];
-            doorTile.PlaceableItemId = mat.DoorItemId;
-            doorTile.PlaceableItemExtra = 0; // closed
-        }
-
-        // Place a window on the opposite wall from the door
-        int windowSide = (doorSide + 2) % 4;
-        int windowX, windowY;
-        switch (windowSide)
-        {
-            case 0:
-                windowX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
-                windowY = house.Y;
-                break;
-            case 1:
-                windowX = house.X + 1 + rng.Next(Math.Max(1, house.Width - 2));
-                windowY = house.Y + house.Height - 1;
-                break;
-            case 2:
-                windowX = house.X;
-                windowY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
-                break;
-            default:
-                windowX = house.X + house.Width - 1;
-                windowY = house.Y + 1 + rng.Next(Math.Max(1, house.Height - 2));
-                break;
-        }
-        if (windowX >= 0 && windowX < Chunk.Size && windowY >= 0 && windowY < Chunk.Size &&
-            (windowX != doorX || windowY != doorY))
-        {
-            ref var windowTile = ref chunk.Tiles[windowX, windowY];
-            windowTile.PlaceableItemId = mat.WindowItemId;
-            windowTile.PlaceableItemExtra = 0;
-        }
-
-        // Place furniture inside the house
-        PlaceFurniture(chunk, house, rng, result, worldOffsetX, worldOffsetY, worldZ);
+        return false;
     }
-
-    private static void PlaceFurniture(Chunk chunk, Room house, SeededRandom rng,
-        GenerationResult result, int worldOffsetX, int worldOffsetY, int worldZ)
-    {
-        int interiorX = house.X + 1;
-        int interiorY = house.Y + 1;
-        int interiorW = house.Width - 2;
-        int interiorH = house.Height - 2;
-
-        // Try placing a table near center
-        PlaceBuildable(chunk, interiorX + interiorW / 2, interiorY + interiorH / 2, ItemId("wooden_table"));
-
-        // Try placing chairs around the table
-        if (interiorW >= 3 && interiorH >= 3)
-        {
-            PlaceBuildable(chunk, interiorX + interiorW / 2 - 1, interiorY + interiorH / 2, ItemId("wooden_chair"));
-            PlaceBuildable(chunk, interiorX + interiorW / 2 + 1, interiorY + interiorH / 2, ItemId("wooden_chair"));
-        }
-
-        // Bed in a corner
-        PlaceBuildable(chunk, interiorX, interiorY, ItemId("wooden_bed"));
-
-        // Bookshelf along a wall
-        if (interiorW >= 3)
-        {
-            PlaceBuildable(chunk, interiorX + interiorW - 1, interiorY, ItemId("wooden_bookshelf"));
-        }
-
-        // Torch inside the house
-        int torchX = interiorX + interiorW / 2;
-        int torchY = interiorY;
-        if (torchX >= 0 && torchX < Chunk.Size && torchY >= 0 && torchY < Chunk.Size &&
-            chunk.Tiles[torchX, torchY].Type == TileType.Floor)
-        {
-            chunk.Tiles[torchX, torchY].PlaceableItemId = ItemId("torch_placeable");
-        }
-    }
-
-    /// <summary>
-    /// Places a buildable item onto a floor tile — only sets the placeable fields.
-    /// </summary>
-    private static void PlaceBuildable(Chunk chunk, int x, int y, int itemTypeId)
-    {
-        if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        if (tile.Type != TileType.Floor) return;
-        tile.PlaceableItemId = itemTypeId;
-        tile.PlaceableItemExtra = 0;
-    }
-
-    /// <summary>
-    /// Sets a tile as floor with the given placeable item.
-    /// Used for structural elements (walls, doors, windows) where the base terrain must be floor.
-    /// </summary>
-    private static void SetPlaceable(Chunk chunk, int x, int y, int placeableItemId)
-    {
-        if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size) return;
-        ref var tile = ref chunk.Tiles[x, y];
-        tile.TileId = GameData.Instance.Tiles.GetNumericId("floor");
-        tile.PlaceableItemId = placeableItemId;
-        tile.PlaceableItemExtra = 0;
-    }
-
-    /// <summary>
-    /// Construction material per biome, using actual buildable item type IDs.
-    /// This ensures all town tiles can be picked up by the player.
-    /// </summary>
-    private static TownMaterial GetMaterial(BiomeType biome) => biome switch
-    {
-        BiomeType.Forest or BiomeType.Fungal => new(
-            ItemId("wooden_wall"), ItemId("wooden_door"), ItemId("wooden_window"), ItemId("wooden_floor_tile")),
-        BiomeType.Ice => new(
-            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("iron_floor_tile")),
-        BiomeType.Lava or BiomeType.Infernal => new(
-            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("iron_floor_tile")),
-        BiomeType.Arcane or BiomeType.Sewer => new(
-            ItemId("copper_wall"), ItemId("copper_door"), ItemId("wooden_window"), ItemId("copper_floor_tile")),
-        BiomeType.Crypt or BiomeType.Ruined => new(
-            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("stone_floor_tile")),
-        _ => new(
-            ItemId("iron_wall"), ItemId("iron_door"), ItemId("wooden_window"), ItemId("stone_floor_tile")),
-    };
-
-    private static int ItemId(string id) => GameData.Instance.Items.GetNumericId(id);
-
-    private readonly record struct TownMaterial(int WallItemId, int DoorItemId, int WindowItemId, int FloorTileItemId);
 }

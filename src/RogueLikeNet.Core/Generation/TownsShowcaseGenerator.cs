@@ -36,15 +36,16 @@ public class TownsShowcaseGenerator : IDungeonGenerator
         int worldOffsetX = chunkX * Chunk.Size;
         int worldOffsetY = chunkY * Chunk.Size;
 
-        int floorTileId = GameData.Instance.Tiles.GetNumericId("floor");
-        for (int x = 0; x < Chunk.Size; x++)
-            for (int y = 0; y < Chunk.Size; y++)
-                chunk.Tiles[x, y].TileId = floorTileId;
-
         // Cycle through biomes based on chunk position
         var biomes = (BiomeType[])Enum.GetValues(typeof(BiomeType));
         long hash = (chunkX * 48611L ^ chunkY * 29423L) & 0x7FFFFFFFL;
         var biome = biomes[(int)(hash % biomes.Length)];
+
+        int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
+        for (int x = 0; x < Chunk.Size; x++)
+            for (int y = 0; y < Chunk.Size; y++)
+                chunk.Tiles[x, y].TileId = floorTileId;
+
 
         var rng = TownGenerator.GetSeededRandomForChunk(chunkPos, _seed);
         TownGenerator.Generate(chunk, result, rng, biome, worldOffsetX, worldOffsetY, chunkZ);

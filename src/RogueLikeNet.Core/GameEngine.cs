@@ -135,8 +135,8 @@ public class GameEngine : IDisposable
             crop.Appearance = FarmingSystem.GetCropAppearance(crop.CropData.GetGrowthStage(itemSeed.Seed));
         }
 
-        foreach (var (pos, name, tcx, tcy, radius) in result.TownNpcs)
-            SpawnTownNpc(pos, name, tcx, tcy, radius);
+        foreach (var (pos, name, tcx, tcy, radius, role) in result.TownNpcs)
+            SpawnTownNpc(pos, name, tcx, tcy, radius, role);
     }
 
     // ── Entity creation ──────────────────────────────────────────────
@@ -267,7 +267,7 @@ public class GameEngine : IDisposable
     /// <summary>
     /// Spawns a peaceful town NPC that wanders within a radius.
     /// </summary>
-    public ref TownNpcEntity SpawnTownNpc(Position pos, string name, int townCenterX, int townCenterY, int wanderRadius)
+    public ref TownNpcEntity SpawnTownNpc(Position pos, string name, int townCenterX, int townCenterY, int wanderRadius, TownNpcRole role = TownNpcRole.Villager)
     {
         var npc = new TownNpcEntity(_worldMap.AllocateEntityId())
         {
@@ -286,6 +286,7 @@ public class GameEngine : IDisposable
                 WanderRadius = wanderRadius,
                 TalkTimer = 0,
                 DialogueIndex = 0,
+                Role = role,
             },
         };
 

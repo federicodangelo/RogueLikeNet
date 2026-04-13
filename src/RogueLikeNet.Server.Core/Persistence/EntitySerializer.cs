@@ -90,6 +90,7 @@ public static class EntitySerializer
         dict["TownCenterX"] = npc.TownCenterX;
         dict["TownCenterY"] = npc.TownCenterY;
         dict["WanderRadius"] = npc.WanderRadius;
+        dict["Role"] = npc.Role.ToString();
     }
 
     // ── Serialization ─────────────────────────────────────────────────
@@ -292,8 +293,10 @@ public static class EntitySerializer
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         string name = GetString(dict, "Name", "NPC");
         int tcx = GetInt(dict, "TownCenterX"), tcy = GetInt(dict, "TownCenterY"), radius = GetInt(dict, "WanderRadius");
+        string role = GetString(dict, "Role", "Villager");
+        var npcRole = Enum.TryParse<TownNpcRole>(role, true, out var parsed) ? parsed : TownNpcRole.Villager;
 
-        ref var npc = ref engine.SpawnTownNpc(Position.FromCoords(x, y, z), name, tcx, tcy, radius);
+        ref var npc = ref engine.SpawnTownNpc(Position.FromCoords(x, y, z), name, tcx, tcy, radius, npcRole);
 
         // Restore runtime state
         npc.Health.Current = GetInt(dict, "HealthCurrent", npc.Health.Current);

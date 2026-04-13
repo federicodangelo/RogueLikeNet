@@ -1,0 +1,211 @@
+[
+    {
+        "id": "wheat_field",
+        "name": "Wheat Field",
+        "category": "farm",
+        "width": 8,
+        "height": 7,
+        "grid": [
+            "ffffffff",
+            "f......f",
+            "f.tttt.f",
+            "f.tttt.f",
+            "f.tttt.f",
+            "f......f",
+            "fffGffff"
+        ],
+        "legend": {
+            "f": "fence",
+            "G": "fence_gate",
+            ".": "empty",
+            "t": "tilled_soil"
+        },
+        "npcs": [
+            {
+                "x": 1,
+                "y": 1,
+                "role": "farmer"
+            }
+        ],
+        "cropGrid": [
+            "........",
+            "........",
+            "..wwww..",
+            "..wwww..",
+            "..wwww..",
+            "........",
+            "........"
+        ],
+        "cropLegend": {
+            "w": "wheat_seeds"
+        },
+        "allowRotation": true
+    },
+    {
+        "id": "vegetable_garden",
+        "name": "Vegetable Garden",
+        "category": "farm",
+        "width": 8,
+        "height": 7,
+        "grid": [
+            "ffffffff",
+            "f......f",
+            "f.tttt.f",
+            "f.tttt.f",
+            "f.tttt.f",
+            "f......f",
+            "fffGffff"
+        ],
+        "legend": {
+            "f": "fence",
+            "G": "fence_gate",
+            ".": "empty",
+            "t": "tilled_soil"
+        },
+        "npcs": [
+            {
+                "x": 1,
+                "y": 5,
+                "role": "farmer"
+            }
+        ],
+        "cropGrid": [
+            "........",
+            "........",
+            "..ccpp..",
+            "..oouu..",
+            "..bbhh..",
+            "........",
+            "........"
+        ],
+        "cropLegend": {
+            "c": "carrot_seeds",
+            "p": "potato_seeds",
+            "o": "corn_seeds",
+            "u": "pumpkin_seeds",
+            "b": "berry_seeds",
+            "h": "herb_seeds"
+        },
+        "allowRotation": true
+    },
+    {
+        "id": "chicken_coop",
+        "name": "Chicken Coop",
+        "category": "farm",
+        "width": 6,
+        "height": 6,
+        "grid": [
+            "ffffff",
+            "f....f",
+            "f....f",
+            "f....f",
+            "f....f",
+            "ffGfff"
+        ],
+        "legend": {
+            "f": "fence",
+            "G": "fence_gate",
+            ".": "empty"
+        },
+        "npcs": [
+            {
+                "x": 1,
+                "y": 4,
+                "role": "farmer"
+            }
+        ],
+        "animalGrid": [
+            "......",
+            ".c..c.",
+            "......",
+            "..c...",
+            "......",
+            "......"
+        ],
+        "animalLegend": {
+            "c": "chicken"
+        },
+        "allowRotation": true
+    },
+    {
+        "id": "cattle_pasture",
+        "name": "Cattle Pasture",
+        "category": "farm",
+        "width": 8,
+        "height": 7,
+        "grid": [
+            "ffffffff",
+            "f......f",
+            "f......f",
+            "f......f",
+            "f......f",
+            "f......f",
+            "fffGffff"
+        ],
+        "legend": {
+            "f": "fence",
+            "G": "fence_gate",
+            ".": "empty"
+        },
+        "npcs": [
+            {
+                "x": 1,
+                "y": 5,
+                "role": "farmer"
+            }
+        ],
+        "animalGrid": [
+            "........",
+            "........",
+            "..c..c..",
+            "........",
+            "..s..s..",
+            "........",
+            "........"
+        ],
+        "animalLegend": {
+            "c": "cow",
+            "s": "sheep"
+        },
+        "allowRotation": true
+    },
+    {
+        "id": "sheep_pen",
+        "name": "Sheep Pen",
+        "category": "farm",
+        "width": 6,
+        "height": 6,
+        "grid": [
+            "ffffff",
+            "f....f",
+            "f....f",
+            "f....f",
+            "f....f",
+            "ffGfff"
+        ],
+        "legend": {
+            "f": "fence",
+            "G": "fence_gate",
+            ".": "empty"
+        },
+        "npcs": [
+            {
+                "x": 1,
+                "y": 4,
+                "role": "farmer"
+            }
+        ],
+        "animalGrid": [
+            "......",
+            ".s..s.",
+            "......",
+            "..s...",
+            "......",
+            "......"
+        ],
+        "animalLegend": {
+            "s": "sheep"
+        },
+        "allowRotation": true
+    }
+]
