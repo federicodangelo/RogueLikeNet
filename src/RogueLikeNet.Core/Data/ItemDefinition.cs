@@ -177,8 +177,6 @@ public sealed class FoodData
     public int HungerRestore { get; set; }
     public int ThirstRestore { get; set; }
     public int HealthRestore { get; set; }
-    public string[]? Buffs { get; set; }
-    public int BuffDuration { get; set; }
 }
 
 public sealed class PotionData
