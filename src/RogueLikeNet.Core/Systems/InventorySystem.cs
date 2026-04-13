@@ -161,32 +161,30 @@ public class InventorySystem
 
     private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
     {
-        if (def.HealthRestore > 0)
-            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.HealthRestore);
-        if (def.BaseAttack > 0)
-            player.CombatStats.Attack += def.BaseAttack;
-        if (def.BaseDefense > 0)
-            player.CombatStats.Defense += def.BaseDefense;
-    }
+        var potion = def.Potion;
+        if (potion == null) return;
 
-    private static void ApplyItemStats(ref PlayerEntity player, ItemData item)
-    {
-        var def = GameData.Instance.Items.Get(item.ItemTypeId);
-        if (def == null) return;
-        player.CombatStats.Attack += def.EffectiveAttack;
-        player.CombatStats.Defense += def.EffectiveDefense;
-        player.Health.Max += def.BaseHealth;
-        player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
-    }
+        // Instant heal
+        if (potion.HealthRestore > 0)
+            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + potion.HealthRestore);
 
-    private static void RemoveItemStats(ref PlayerEntity player, ItemData item)
-    {
-        var def = GameData.Instance.Items.Get(item.ItemTypeId);
-        if (def == null) return;
-        player.CombatStats.Attack -= def.EffectiveAttack;
-        player.CombatStats.Defense -= def.EffectiveDefense;
-        player.Health.Max -= def.BaseHealth;
-        player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
+        // Create temporary effect if there are stat boosts
+        bool hasBuff = potion.AttackBoost != 0 || potion.DefenseBoost != 0 || potion.SpeedBoost != 0;
+        if (hasBuff && potion.DurationTicks > 0)
+        {
+            var effectType = EffectType.StatsBoost;
+            int speedMult = 100 + potion.SpeedBoost * 10;
+
+            player.ActiveEffects.Add(new ActiveEffect(
+                effectType,
+                speedMult,
+                potion.AttackBoost,
+                potion.DefenseBoost,
+                potion.DurationTicks));
+
+            // Recalculate stats with new potion effect
+            ActiveEffectsSystem.RecalculateCombatStats(ref player);
+        }
     }
 
     /// <summary>
@@ -233,14 +231,13 @@ public class InventorySystem
 
         if (player.Equipment.HasItem(equipSlot))
         {
-            RemoveItemStats(ref player, player.Equipment[equipSlot]);
             RemoveWeaponSpeed(ref player, player.Equipment[equipSlot]);
             player.Inventory.Items.Add(player.Equipment[equipSlot]);
         }
         player.Equipment[equipSlot] = newItem;
 
-        ApplyItemStats(ref player, newItem);
         ApplyWeaponSpeed(ref player, newItem);
+        ActiveEffectsSystem.RecalculateCombatStats(ref player);
         player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Equip, ItemTypeId = newItem.ItemTypeId });
     }
 
@@ -278,10 +275,10 @@ public class InventorySystem
         if (player.Equipment.HasItem(equipSlot))
         {
             var old = player.Equipment[equipSlot];
-            RemoveItemStats(ref player, old);
             RemoveWeaponSpeed(ref player, old);
             player.Inventory.Items.Add(old);
             player.Equipment[equipSlot] = ItemData.None;
+            ActiveEffectsSystem.RecalculateCombatStats(ref player);
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Unequip, ItemTypeId = old.ItemTypeId });
         }
     }
@@ -296,9 +293,9 @@ public class InventorySystem
         if (player.Equipment.HasItem(equipSlot))
         {
             var old = player.Equipment[equipSlot];
-            RemoveItemStats(ref player, old);
             RemoveWeaponSpeed(ref player, old);
             player.Equipment[equipSlot] = ItemData.None;
+            ActiveEffectsSystem.RecalculateCombatStats(ref player);
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Drop, ItemTypeId = old.ItemTypeId, StackCount = old.StackCount });
 
             engine.SpawnItemOnGround(old, engine.FindDropPosition(player.Position));

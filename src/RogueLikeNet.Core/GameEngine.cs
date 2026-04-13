@@ -569,6 +569,8 @@ public class GameEngine : IDisposable
             MaxHealth = player.Health.Max,
             Attack = player.CombatStats.Attack,
             Defense = player.CombatStats.Defense,
+            BonusAttack = player.ActiveEffects.CombinedAttackBonus,
+            BonusDefense = player.ActiveEffects.CombinedDefenseBonus,
             Level = player.ClassData.Level,
             Experience = player.ClassData.Experience,
             Hunger = player.Survival.Hunger,

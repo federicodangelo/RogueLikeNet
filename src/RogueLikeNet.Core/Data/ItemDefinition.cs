@@ -185,7 +185,7 @@ public sealed class PotionData
     public int AttackBoost { get; set; }
     public int DefenseBoost { get; set; }
     public int SpeedBoost { get; set; }
-    public int Duration { get; set; }
+    public int DurationTicks { get; set; }
 }
 
 public sealed class SeedData

@@ -162,20 +162,11 @@ public class CombatSystem
         player.ClassData.Level = newLevel;
         player.ClassData.Experience = 0;
 
-        // Apply stat bonuses from level-up
-        var oldBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, oldLevel);
-        var newBonus = ClassDefinitions.GetLevelBonuses(player.ClassData.ClassId, newLevel);
+        // Recalculate all stats from first principles
+        ActiveEffectsSystem.RecalculateCombatStats(ref player);
 
-        int deltaAttack = newBonus.Attack - oldBonus.Attack;
-        int deltaDefense = newBonus.Defense - oldBonus.Defense;
-        int deltaHealth = newBonus.Health - oldBonus.Health;
-        int deltaSpeed = newBonus.Speed - oldBonus.Speed;
-
-        player.Health.Max += deltaHealth;
-        player.Health.Current = player.Health.Max; // Full heal on level up
-        player.CombatStats.Attack += deltaAttack;
-        player.CombatStats.Defense += deltaDefense;
-        player.CombatStats.Speed += deltaSpeed;
+        // Full heal on level up
+        player.Health.Current = player.Health.Max;
 
         player.ActionEvents.Add(new PlayerActionEvent
         {

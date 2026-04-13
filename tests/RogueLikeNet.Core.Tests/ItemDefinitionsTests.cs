@@ -103,10 +103,11 @@ public class ItemDefinitionsTests
     }
 
     [Fact]
-    public void BaseAttack_FromPotion()
+    public void BaseAttack_FromPotion_NotIncluded()
     {
+        // Potion AttackBoost is a temporary effect, not included in BaseAttack
         var def = new ItemDefinition { Potion = new PotionData { AttackBoost = 5 } };
-        Assert.Equal(5, def.BaseAttack);
+        Assert.Equal(0, def.BaseAttack);
     }
 
     [Fact]
@@ -124,10 +125,11 @@ public class ItemDefinitionsTests
     }
 
     [Fact]
-    public void BaseDefense_FromPotion()
+    public void BaseDefense_FromPotion_NotIncluded()
     {
+        // Potion DefenseBoost is a temporary effect, not included in BaseDefense
         var def = new ItemDefinition { Potion = new PotionData { DefenseBoost = 3 } };
-        Assert.Equal(3, def.BaseDefense);
+        Assert.Equal(0, def.BaseDefense);
     }
 
     [Fact]

@@ -6,6 +6,8 @@ public class PlayerStateData
     public int MaxHealth;
     public int Attack;
     public int Defense;
+    public int BonusAttack;
+    public int BonusDefense;
     public int Level;
     public int Experience;
     public int Hunger;

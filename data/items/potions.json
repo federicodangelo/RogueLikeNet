@@ -13,7 +13,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 0
+            "durationTicks": 0
         }
     },
     {
@@ -30,7 +30,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 0
+            "durationTicks": 0
         }
     },
     {
@@ -47,7 +47,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 0
+            "durationTicks": 0
         }
     },
     {
@@ -64,7 +64,7 @@
             "attackBoost": 5,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 300
+            "durationTicks": 300
         }
     },
     {
@@ -81,7 +81,7 @@
             "attackBoost": 0,
             "defenseBoost": 5,
             "speedBoost": 0,
-            "duration": 300
+            "durationTicks": 300
         }
     },
     {
@@ -98,7 +98,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 2,
-            "duration": 300
+            "durationTicks": 300
         }
     },
     {
@@ -113,9 +113,9 @@
         "potion": {
             "healthRestore": 5,
             "attackBoost": 0,
-            "defenseBoost": 0,
+            "defenseBoost": 1,
             "speedBoost": 0,
-            "duration": 0
+            "durationTicks": 60
         }
     },
     {
@@ -132,7 +132,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 0
+            "durationTicks": 0
         }
     },
     {
@@ -149,7 +149,7 @@
             "attackBoost": 0,
             "defenseBoost": 3,
             "speedBoost": 0,
-            "duration": 300
+            "durationTicks": 300
         }
     },
     {
@@ -166,7 +166,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 0,
-            "duration": 300
+            "durationTicks": 300
         }
     },
     {
@@ -183,7 +183,7 @@
             "attackBoost": 0,
             "defenseBoost": 0,
             "speedBoost": 1,
-            "duration": 300
+            "durationTicks": 300
         }
     }
 ]

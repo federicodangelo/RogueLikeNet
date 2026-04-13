@@ -23,6 +23,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(16)] public int MaxThirst { get; set; }
     [Key(17)] public int[] NearbyStationsTypes { get; set; } = [];
     [Key(18)] public int ClassId { get; set; }
+    [Key(19)] public int BonusAttack { get; set; }
+    [Key(20)] public int BonusDefense { get; set; }
 
     public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
     {
@@ -32,6 +34,8 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (a.MaxHealth != b.MaxHealth) return false;
         if (a.Attack != b.Attack) return false;
         if (a.Defense != b.Defense) return false;
+        if (a.BonusAttack != b.BonusAttack) return false;
+        if (a.BonusDefense != b.BonusDefense) return false;
         if (a.Level != b.Level) return false;
         if (a.Experience != b.Experience) return false;
         if (a.InventoryCount != b.InventoryCount) return false;

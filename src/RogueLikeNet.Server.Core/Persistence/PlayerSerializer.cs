@@ -4,6 +4,7 @@ using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Entities;
+using RogueLikeNet.Core.Systems;
 
 namespace RogueLikeNet.Server.Persistence;
 
@@ -96,10 +97,6 @@ public static class PlayerSerializer
         player.Health.Current = data.HealthCurrent;
         player.Health.Max = data.HealthMax;
 
-        player.CombatStats.Attack = data.Attack;
-        player.CombatStats.Defense = data.Defense;
-        player.CombatStats.Speed = data.Speed;
-
         player.ClassData.Level = data.Level;
         player.ClassData.Experience = data.Experience;
 
@@ -178,6 +175,12 @@ public static class PlayerSerializer
                 }
             }
         }
+
+        // Recalculate combat stats from class + level + equipment (replaces saved stats)
+        ActiveEffectsSystem.RecalculateCombatStats(ref player);
+
+        // Restore health after recalculation (saved health may be lower than max)
+        player.Health.Current = Math.Min(data.HealthCurrent, player.Health.Max);
 
         return ref player;
     }

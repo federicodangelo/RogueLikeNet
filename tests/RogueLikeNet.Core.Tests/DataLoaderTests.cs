@@ -31,7 +31,7 @@ public class DataLoaderTests
             "stackable": true,
             "maxStackSize": 10,
             "materialTier": "none",
-            "potion": { "healthRestore": 25, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "duration": 0 }
+            "potion": { "healthRestore": 25, "attackBoost": 0, "defenseBoost": 0, "speedBoost": 0, "durationTicks": 1 }
           }
         ]
         """;

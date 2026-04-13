@@ -4,6 +4,7 @@ public enum EffectType
 {
     Hungry,
     Thirsty,
+    StatsBoost,
 }
 
 public struct ActiveEffect
@@ -17,10 +18,32 @@ public struct ActiveEffect
     /// </summary>
     public int SpeedMultiplierBase100;
 
+    /// <summary>Flat attack bonus from this effect.</summary>
+    public int AttackBonus;
+
+    /// <summary>Flat defense bonus from this effect.</summary>
+    public int DefenseBonus;
+
+    /// <summary>
+    /// Remaining ticks for temporary effects. 0 = permanent (logic-based, rebuilt each tick).
+    /// </summary>
+    public int RemainingTicks;
+
+    public readonly bool IsTemporary => RemainingTicks > 0;
+
     public ActiveEffect(EffectType type, int speedMultiplierBase100)
     {
         Type = type;
         SpeedMultiplierBase100 = speedMultiplierBase100;
+    }
+
+    public ActiveEffect(EffectType type, int speedMultiplierBase100, int attackBonus, int defenseBonus, int remainingTicks)
+    {
+        Type = type;
+        SpeedMultiplierBase100 = speedMultiplierBase100;
+        AttackBonus = attackBonus;
+        DefenseBonus = defenseBonus;
+        RemainingTicks = remainingTicks;
     }
 }
 
@@ -33,24 +56,59 @@ public struct ActiveEffects
 
     public void Clear() => Count = 0;
 
+    /// <summary>
+    /// Removes all permanent (non-temporary) effects, keeping temporary ones intact.
+    /// </summary>
+    public void ClearPermanent()
+    {
+        int dst = 0;
+        for (int src = 0; src < Count; src++)
+        {
+            var e = Get(src);
+            if (e.IsTemporary)
+            {
+                Set(dst, e);
+                dst++;
+            }
+        }
+        Count = dst;
+    }
+
+    /// <summary>
+    /// Ticks down all temporary effects and removes expired ones.
+    /// Returns true if any effect was removed (stats should be recalculated).
+    /// </summary>
+    public bool TickAndRemoveExpired()
+    {
+        bool removed = false;
+        int dst = 0;
+        for (int src = 0; src < Count; src++)
+        {
+            var e = Get(src);
+            if (e.IsTemporary)
+            {
+                e.RemainingTicks--;
+                if (e.RemainingTicks <= 0)
+                {
+                    removed = true;
+                    continue;
+                }
+            }
+            Set(dst, e);
+            dst++;
+        }
+        Count = dst;
+        return removed;
+    }
+
     public void Add(ActiveEffect effect)
     {
         if (Count >= MaxEffects) return;
-        switch (Count)
-        {
-            case 0: _e0 = effect; break;
-            case 1: _e1 = effect; break;
-            case 2: _e2 = effect; break;
-            case 3: _e3 = effect; break;
-            case 4: _e4 = effect; break;
-            case 5: _e5 = effect; break;
-            case 6: _e6 = effect; break;
-            case 7: _e7 = effect; break;
-        }
+        Set(Count, effect);
         Count++;
     }
 
-    private readonly ActiveEffect Get(int index) => index switch
+    public readonly ActiveEffect Get(int index) => index switch
     {
         0 => _e0,
         1 => _e1,
@@ -62,6 +120,21 @@ public struct ActiveEffects
         7 => _e7,
         _ => default,
     };
+
+    private void Set(int index, ActiveEffect value)
+    {
+        switch (index)
+        {
+            case 0: _e0 = value; break;
+            case 1: _e1 = value; break;
+            case 2: _e2 = value; break;
+            case 3: _e3 = value; break;
+            case 4: _e4 = value; break;
+            case 5: _e5 = value; break;
+            case 6: _e6 = value; break;
+            case 7: _e7 = value; break;
+        }
+    }
 
     /// <summary>
     /// Returns the combined speed multiplier (base 100) from all active effects.
@@ -82,6 +155,30 @@ public struct ActiveEffects
         }
     }
 
+    /// <summary>Sum of AttackBonus from all active effects.</summary>
+    public readonly int CombinedAttackBonus
+    {
+        get
+        {
+            int result = 0;
+            for (int i = 0; i < Count; i++)
+                result += Get(i).AttackBonus;
+            return result;
+        }
+    }
+
+    /// <summary>Sum of DefenseBonus from all active effects.</summary>
+    public readonly int CombinedDefenseBonus
+    {
+        get
+        {
+            int result = 0;
+            for (int i = 0; i < Count; i++)
+                result += Get(i).DefenseBonus;
+            return result;
+        }
+    }
+
     public readonly bool HasEffect(EffectType type)
     {
         for (int i = 0; i < Count; i++)
@@ -89,5 +186,16 @@ public struct ActiveEffects
             if (Get(i).Type == type) return true;
         }
         return false;
+    }
+
+    /// <summary>True if any temporary effect is active.</summary>
+    public readonly bool HasTemporaryEffects
+    {
+        get
+        {
+            for (int i = 0; i < Count; i++)
+                if (Get(i).IsTemporary) return true;
+            return false;
+        }
     }
 }

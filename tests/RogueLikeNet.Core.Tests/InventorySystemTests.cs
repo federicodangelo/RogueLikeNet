@@ -331,7 +331,9 @@ public class InventorySystemTests
         player.Input.ItemSlot = 0;
         engine.Tick();
 
+        // Attack should be boosted via temporary effect
         Assert.True(player.CombatStats.Attack > atkBefore, $"Attack {player.CombatStats.Attack} should be > {atkBefore} after strength potion");
+        Assert.True(player.ActiveEffects.HasEffect(Components.EffectType.StatsBoost), "Should have StrengthBoost effect");
     }
 
     [Fact]

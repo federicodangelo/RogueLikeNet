@@ -35,7 +35,7 @@ public sealed class HudRenderer
         var layout = new HudLayout();
         layout.AddSection(new HudSection { Name = "HP", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
         layout.AddSection(new HudSection { Name = "Survival", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
-        layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 4 });
+        layout.AddSection(new HudSection { Name = "Stats", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 3 });
         layout.AddSection(new HudSection { Name = "Equipment", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 5 });
         layout.AddSection(new HudSection { Name = "QuickSlots", Anchor = HudAnchor.Top, IsFixedHeight = true, FixedHeight = 12, AcceptsInput = true });
         layout.AddSection(new HudSection { Name = "FloorItems", Anchor = HudAnchor.Top, IsFixedHeight = false, Scrollable = true });
@@ -129,18 +129,28 @@ public sealed class HudRenderer
 
                 case "Stats":
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"ATK: {playerState.Attack}", RenderingTheme.Stats); row++;
+                    {
+                        // ATK and DEF on same line with bonus from effects
+                        int baseAtk = playerState.Attack - playerState.BonusAttack;
+                        int baseDef = playerState.Defense - playerState.BonusDefense;
+                        string atkStr = playerState.BonusAttack > 0 ? $"ATK: {baseAtk} (+{playerState.BonusAttack})" : $"ATK: {playerState.Attack}";
+                        string defStr = playerState.BonusDefense > 0 ? $"DEF: {baseDef} (+{playerState.BonusDefense})" : $"DEF: {playerState.Defense}";
+
+                        Ds(r, col, row, atkStr, RenderingTheme.Stats);
+                        Ds(r, col + innerW / 2 + 1, row, defStr, RenderingTheme.Stats);
+                    }
+                    row++;
                     if (row >= maxRow) break;
-                    Ds(r, col, row, $"DEF: {playerState.Defense}", RenderingTheme.Stats); row++;
-                    if (row >= maxRow) break;
-                    bool hasNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1) < int.MaxValue;
-                    Ds(r, col, row, $"Lv:  {playerState.Level}{(hasNextLevel ? "" : " [MAX]")}", RenderingTheme.Level); row++;
-                    if (row >= maxRow) break;
-                    var xpForNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1);
-                    if (hasNextLevel)
-                        Ds(r, col, row, $"XP:  {playerState.Experience}/{xpForNextLevel}", RenderingTheme.Stats);
-                    else
-                        Ds(r, col, row, $"XP:  ---", RenderingTheme.Stats);
+                    {
+                        // Level and XP on same line
+                        bool hasNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1) < int.MaxValue;
+                        var xpForNextLevel = GameData.Instance.PlayerLevels.GetXpRequired(playerState.Level + 1);
+                        string lvStr = hasNextLevel ? $"Lv: {playerState.Level}" : $"Lv: {playerState.Level} [MAX]";
+                        string xpStr = hasNextLevel ? $"XP: {playerState.Experience}/{xpForNextLevel}" : "XP: ---";
+
+                        Ds(r, col, row, lvStr, RenderingTheme.Level);
+                        Ds(r, col + innerW / 2 + 1, row, xpStr, RenderingTheme.Level);
+                    }
                     break;
 
                 case "Equipment":

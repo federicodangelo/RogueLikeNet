@@ -277,6 +277,8 @@ public static class GameStateSerializer
             MaxHealth = stateData.MaxHealth,
             Attack = stateData.Attack,
             Defense = stateData.Defense,
+            BonusAttack = stateData.BonusAttack,
+            BonusDefense = stateData.BonusDefense,
             Level = stateData.Level,
             Experience = stateData.Experience,
             Hunger = stateData.Hunger,
