@@ -86,7 +86,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         {
             var (upX, upY) = GetStairPosition(chunkX, chunkY, chunkZ);
             DungeonHelper.CarveFloor(chunk, upX, upY, floorTileId);
-            DungeonHelper.PlaceFeature(chunk, upX, upY, GameData.Instance.Tiles.GetNumericId("stairs_up"));
+            DungeonHelper.PlaceTile(chunk, upX, upY, GameData.Instance.Tiles.GetNumericId("stairs_up"));
             EnsureConnected(chunk, rooms, upX, upY, rng, floorTileId);
         }
 
@@ -95,7 +95,7 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         {
             var (downX, downY) = GetStairPosition(chunkX, chunkY, chunkZ - 1);
             DungeonHelper.CarveFloor(chunk, downX, downY, floorTileId);
-            DungeonHelper.PlaceFeature(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
+            DungeonHelper.PlaceTile(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
             EnsureConnected(chunk, rooms, downX, downY, rng, floorTileId);
         }
 
@@ -104,22 +104,21 @@ public class MultiLevelDungeonGenerator : IDungeonGenerator
         {
             var (downX, downY) = GetStairPosition(chunkX, chunkY, chunkZ - 1);
             DungeonHelper.CarveFloor(chunk, downX, downY, floorTileId);
-            DungeonHelper.PlaceFeature(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
+            DungeonHelper.PlaceTile(chunk, downX, downY, GameData.Instance.Tiles.GetNumericId("stairs_down"));
             EnsureConnected(chunk, rooms, downX, downY, rng, floorTileId);
         }
 
         DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
-        DungeonHelper.PlaceDecorations(chunk, biome, rng);
+        DungeonHelper.PlaceDecorations(chunk, biome, rng, result);
 
         int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY)) + depth;
-        int worldOffsetX = chunkX * Chunk.Size;
-        int worldOffsetY = chunkY * Chunk.Size;
-        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
+        var worldOffset = chunk.LocalToWorld(0, 0);
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffset);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffset);
 
         // Spawn point at overworld level only
         if (chunkX == 0 && chunkY == 0 && chunkZ == Position.DefaultZ && rooms.Count > 0)
-            result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
+            result.SpawnPosition = worldOffset.Offset(rooms[0].CenterX, rooms[0].CenterY);
 
         return result;
     }

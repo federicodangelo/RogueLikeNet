@@ -21,6 +21,9 @@ public record struct Position(int X, int Y, int Z)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly Position Offset(int dx, int dy, int dz = 0) => new(X + dx, Y + dy, Z + dz);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ManhattanDistance(Position a, Position b) => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

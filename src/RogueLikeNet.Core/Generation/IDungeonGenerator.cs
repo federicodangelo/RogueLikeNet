@@ -38,4 +38,14 @@ public class GenerationResult
     {
         Chunk = chunk;
     }
+
+    public bool HasAnythingAt(Position pos)
+    {
+        return Monsters.Any(m => m.Position == pos) ||
+               Items.Any(i => i.Position == pos) ||
+               ResourceNodes.Any(n => n.Position == pos) ||
+               Animals.Any(a => a.Position == pos) ||
+               Crops.Any(c => c.Position == pos) ||
+               TownNpcs.Any(t => t.Position == pos);
+    }
 }

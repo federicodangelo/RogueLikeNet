@@ -126,23 +126,4 @@ public class BspDungeonGeneratorTests
 
         Assert.True(foundLiquid, "Liquid biomes should generate water or lava pools");
     }
-
-    [Fact]
-    public void Generate_DecorationsAreWalkable()
-    {
-        var gen = new BspDungeonGenerator(42);
-        for (int cx = 0; cx < 5; cx++)
-        {
-            var biome = BiomeRegistry.GetBiomeForChunk(ChunkPosition.FromCoords(cx, 0, 0), 42);
-            int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
-            var result = gen.Generate(ChunkPosition.FromCoords(cx, 0, Position.DefaultZ));
-            for (int x = 0; x < Chunk.Size; x++)
-                for (int y = 0; y < Chunk.Size; y++)
-                {
-                    ref var tile = ref result.Chunk.Tiles[x, y];
-                    if (tile.Type == TileType.Floor && tile.TileId != floorTileId)
-                        Assert.True(tile.IsWalkable, $"Decoration at ({x},{y}) should be walkable");
-                }
-        }
-    }
 }

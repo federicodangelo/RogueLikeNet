@@ -41,10 +41,31 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
 
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
-        int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
         int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
         int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
+
+        var rooms = GenerateLayout(chunk, rng, wallTileId, floorTileId);
+
+        DungeonHelper.PlaceStairs(chunk, rooms);
+        DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
+        DungeonHelper.PlaceDecorations(chunk, biome, rng, result);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+        var worldOffset = chunk.LocalToWorld(0, 0);
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffset);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffset);
+
+        // Spawn point: center of the first extracted room
+        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
+            result.SpawnPosition = worldOffset.Offset(rooms[0].CenterX, rooms[0].CenterY);
+
+        return result;
+    }
+
+    public static List<Room> GenerateLayout(Chunk chunk, SeededRandom rng, int wallTileId, int floorTileId,
+        int entranceLx = -1, int entranceLy = -1)
+    {
+        int size = Chunk.Size;
 
         // Step 1: Fill with walls
         DungeonHelper.FillWalls(chunk, wallTileId);
@@ -54,6 +75,11 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
         for (int x = Padding; x < size - Padding; x++)
             for (int y = Padding; y < size - Padding; y++)
                 map[x, y] = rng.Next(100) >= WallFillPercent;
+
+        // Force entrance tile open before smoothing so the cave grows around it
+        bool hasEntrance = entranceLx >= 0 && entranceLy >= 0;
+        if (hasEntrance)
+            map[entranceLx, entranceLy] = true;
 
         // Step 3: Cellular automata smoothing
         for (int pass = 0; pass < SmoothPasses; pass++)
@@ -65,6 +91,9 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
                     int walls = CountWallNeighbors(map, x, y, size);
                     next[x, y] = walls < 5; // B5678/S45678 rule
                 }
+            // Keep entrance open through smoothing
+            if (hasEntrance)
+                next[entranceLx, entranceLy] = true;
             map = next;
         }
 
@@ -91,49 +120,45 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
                 }
             }
 
-        // Find the largest region
-        int largestId = 0;
-        int largestSize = 0;
-        foreach (var (id, sz) in regionSizes)
+        // If entrance exists, prefer the region containing it; otherwise keep the largest
+        int keepId;
+        if (hasEntrance && regionMap[entranceLx, entranceLy] != 0)
+            keepId = regionMap[entranceLx, entranceLy];
+        else
         {
-            if (sz > largestSize) { largestId = id; largestSize = sz; }
+            keepId = 0;
+            int keepSize = 0;
+            foreach (var (id, sz) in regionSizes)
+            {
+                if (sz > keepSize) { keepId = id; keepSize = sz; }
+            }
         }
 
-        // Wall off disconnected small regions
+        // Wall off disconnected regions
         for (int x = 0; x < size; x++)
             for (int y = 0; y < size; y++)
             {
-                if (map[x, y] && regionMap[x, y] != largestId)
+                if (map[x, y] && regionMap[x, y] != keepId)
                 {
                     map[x, y] = false;
                     chunk.Tiles[x, y].TileId = wallTileId;
                 }
             }
 
-        // Step 6: Extract room-like areas for population
-        var rooms = ExtractRooms(map, size, rng);
+        // Step 6: Extract room-like areas for population, ensure at least 2 for stairs
+        var rooms = DungeonHelper.ExtractRooms(map, size, Padding, MinRoomArea, minRooms: 2);
 
-        // Step 7: Place stairs
-        DungeonHelper.PlaceStairs(chunk, rooms);
+        // Connect entrance to nearest room if provided and not already inside one
+        if (hasEntrance && rooms.Count > 0)
+        {
+            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, floorTileId);
+            var nearest = rooms.OrderBy(r =>
+                Math.Abs(r.CenterX - entranceLx) + Math.Abs(r.CenterY - entranceLy)).First();
+            DungeonHelper.CarveCorridor(chunk, entranceLx, entranceLy,
+                nearest.CenterX, nearest.CenterY, rng, floorTileId);
+        }
 
-        // Step 8: Liquid pools
-        DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
-
-        // Step 9: Decorations
-        DungeonHelper.PlaceDecorations(chunk, biome, rng);
-
-        // Step 10: Populate rooms
-        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
-        int worldOffsetX = chunkX * Chunk.Size;
-        int worldOffsetY = chunkY * Chunk.Size;
-        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
-
-        // Spawn point: center of the first extracted room
-        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
-            result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
-
-        return result;
+        return rooms;
     }
 
     private static int CountWallNeighbors(bool[,] map, int cx, int cy, int size)
@@ -177,75 +202,5 @@ public class CellularAutomataCaveGenerator : IDungeonGenerator
     private static (int, int)[] Neighbors4(int x, int y) =>
         [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
 
-    /// <summary>
-    /// Subdivide the cave's floor area into room-like regions for monster/item placement.
-    /// Uses a grid-based sampling to find clusters of open space.
-    /// </summary>
-    private static List<Room> ExtractRooms(bool[,] map, int size, SeededRandom rng)
-    {
-        var rooms = new List<Room>();
-        int gridStep = 12;
 
-        for (int gx = Padding + 2; gx < size - Padding - 6; gx += gridStep)
-            for (int gy = Padding + 2; gy < size - Padding - 6; gy += gridStep)
-            {
-                // Find the largest open rectangle starting near gx,gy
-                int bestX = gx, bestY = gy, bestW = 0, bestH = 0;
-                for (int sx = gx; sx < Math.Min(gx + 4, size - 5); sx++)
-                    for (int sy = gy; sy < Math.Min(gy + 4, size - 5); sy++)
-                    {
-                        var (w, h) = MeasureOpenRect(map, sx, sy, size);
-                        if (w * h > bestW * bestH)
-                        {
-                            bestX = sx; bestY = sy; bestW = w; bestH = h;
-                        }
-                    }
-
-                if (bestW >= 4 && bestH >= 4 && bestW * bestH >= MinRoomArea)
-                    rooms.Add(new Room(bestX, bestY, bestW, bestH));
-            }
-
-        // Ensure at least 2 rooms for stairs
-        if (rooms.Count < 2)
-        {
-            // Fallback: scan for any open areas
-            for (int x = 4; x < size - 8 && rooms.Count < 2; x += 8)
-                for (int y = 4; y < size - 8 && rooms.Count < 2; y += 8)
-                {
-                    if (map[x, y] && map[x + 1, y] && map[x, y + 1] && map[x + 1, y + 1])
-                        rooms.Add(new Room(x, y, 4, 4));
-                }
-        }
-
-        return rooms;
-    }
-
-    private static (int w, int h) MeasureOpenRect(bool[,] map, int sx, int sy, int size)
-    {
-        int maxW = Math.Min(12, size - sx);
-        int maxH = Math.Min(12, size - sy);
-        int w = 0, h = 0;
-
-        // Find max width of the first row
-        for (int x = sx; x < sx + maxW; x++)
-        {
-            if (!map[x, sy]) break;
-            w++;
-        }
-        if (w < 4) return (0, 0);
-
-        // Extend height while the full width remains open
-        for (int y = sy; y < sy + maxH; y++)
-        {
-            bool rowOpen = true;
-            for (int x = sx; x < sx + w; x++)
-            {
-                if (!map[x, y]) { rowOpen = false; break; }
-            }
-            if (!rowOpen) break;
-            h++;
-        }
-
-        return (w, h);
-    }
 }

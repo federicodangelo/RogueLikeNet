@@ -41,10 +41,31 @@ public class BspDungeonGenerator : IDungeonGenerator
 
         long chunkSeed = _seed ^ (((long)chunkX * 0x45D9F3B) + ((long)chunkY * 0x12345678));
         var rng = new SeededRandom(chunkSeed);
-        int size = Chunk.Size;
         var biome = BiomeRegistry.GetBiomeForChunk(chunkPos, _seed);
         int wallTileId = GameData.Instance.Biomes.GetWallTileId(biome);
         int floorTileId = GameData.Instance.Biomes.GetFloorTileId(biome);
+
+        var rooms = GenerateLayout(chunk, rng, wallTileId, floorTileId);
+
+        DungeonHelper.PlaceStairs(chunk, rooms);
+        DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
+        DungeonHelper.PlaceDecorations(chunk, biome, rng, result);
+        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
+        var worldOffset = chunk.LocalToWorld(0, 0);
+        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffset);
+        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffset);
+
+        // Spawn point: center of the first room (before any monsters are placed there)
+        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
+            result.SpawnPosition = worldOffset.Offset(rooms[0].CenterX, rooms[0].CenterY);
+
+        return result;
+    }
+
+    public static List<Room> GenerateLayout(Chunk chunk, SeededRandom rng, int wallTileId, int floorTileId,
+        int entranceLx = -1, int entranceLy = -1)
+    {
+        int size = Chunk.Size;
 
         DungeonHelper.FillWalls(chunk, wallTileId);
 
@@ -63,20 +84,17 @@ public class BspDungeonGenerator : IDungeonGenerator
         // Connect rooms via BSP siblings
         ConnectRooms(root, chunk, rng, floorTileId);
 
-        DungeonHelper.PlaceStairs(chunk, rooms);
-        DungeonHelper.PlaceLiquidPools(chunk, rooms, biome, rng);
-        DungeonHelper.PlaceDecorations(chunk, biome, rng);
-        int difficulty = Math.Max(Math.Abs(chunkX), Math.Abs(chunkY));
-        int worldOffsetX = chunkX * Chunk.Size;
-        int worldOffsetY = chunkY * Chunk.Size;
-        DungeonHelper.PopulateRooms(rooms, rng, result, difficulty, worldOffsetX, worldOffsetY, chunkZ);
-        DungeonHelper.PlaceResourceNodes(rooms, rng, result, biome, worldOffsetX, worldOffsetY, chunkZ);
+        // Connect entrance to nearest room if provided
+        if (entranceLx >= 0 && entranceLy >= 0 && rooms.Count > 0)
+        {
+            DungeonHelper.CarveFloor(chunk, entranceLx, entranceLy, floorTileId);
+            var nearest = rooms.OrderBy(r =>
+                Math.Abs(r.CenterX - entranceLx) + Math.Abs(r.CenterY - entranceLy)).First();
+            DungeonHelper.CarveCorridor(chunk, entranceLx, entranceLy,
+                nearest.CenterX, nearest.CenterY, rng, floorTileId);
+        }
 
-        // Spawn point: center of the first room (before any monsters are placed there)
-        if (chunkX == 0 && chunkY == 0 && rooms.Count > 0)
-            result.SpawnPosition = Position.FromCoords(worldOffsetX + rooms[0].CenterX, worldOffsetY + rooms[0].CenterY, chunkZ);
-
-        return result;
+        return rooms;
     }
 
     private static void SplitNode(BspNode node, SeededRandom rng)
