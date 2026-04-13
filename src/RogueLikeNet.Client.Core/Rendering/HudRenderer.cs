@@ -215,7 +215,7 @@ public sealed class HudRenderer
                 var item = hud.InventoryItems[invIdx];
                 string name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
                 int stack = item.StackCount;
-                string stackStr = stack > 1 ? $"x{stack}" : "";
+                string stackStr = stack > 1 ? $" x{stack}" : "";
                 Ds(r, col, row, $"[{i + 1}]{name}{stackStr}", RenderingTheme.Item);
             }
             else
@@ -243,9 +243,26 @@ public sealed class HudRenderer
         for (int i = 0; i < floorToShow && row < maxRow; i++)
         {
             var item = floorItems[i];
-            string name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
-            Ds(r, col, row, $"  {name}{(item.StackCount > 1 ? $" x{item.StackCount}" : "")}", RenderingTheme.RarityCommon);
+            var itemDef = GameData.Instance.Items.Get(item.ItemTypeId);
+            var name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
+            var stackStr = item.StackCount > 1 ? $" x{item.StackCount}" : "";
+            AsciiDraw.RelativeStat[] relativeStats = [];
+            if (itemDef != null && state.PlayerState != null)
+                relativeStats = AsciiDraw.ItemRelativeStats(itemDef, state.PlayerState);
+
+            var statsStr = relativeStats.Length > 0 ? $" ({relativeStats[0].text})" : "";
+            Ds(r, col, row, $" {name}{stackStr}{statsStr}", RenderingTheme.RarityCommon);
             row++;
+            if (relativeStats.Length == 2 && row < maxRow)
+            {
+                Ds(r, col, row, $"  ({relativeStats[1].text})", RenderingTheme.RarityCommon);
+                row++;
+            }
+            else if (relativeStats.Length >= 3 && row < maxRow)
+            {
+                Ds(r, col, row, $"  ({relativeStats[1].text}) ({relativeStats[2].text})", RenderingTheme.RarityCommon);
+                row++;
+            }
         }
         if (row < maxRow)
             Ds(r, col, row, "[G] Pick up", RenderingTheme.Dim);

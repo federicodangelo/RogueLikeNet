@@ -672,7 +672,9 @@ public class GameEngine : IDisposable
         }
         state.EquippedItems = equippedItems.ToArray();
 
-        state.QuickSlotIndices = [player.QuickSlots.Slot0, player.QuickSlots.Slot1, player.QuickSlots.Slot2, player.QuickSlots.Slot3, player.QuickSlots.Slot4, player.QuickSlots.Slot5, player.QuickSlots.Slot6, player.QuickSlots.Slot7];
+        state.QuickSlotIndices = new int[player.QuickSlots.Count];
+        for (var i = 0; i < player.QuickSlots.Count; i++)
+            state.QuickSlotIndices[i] = player.QuickSlots[i];
 
         // Scan nearby tiles for crafting stations
         var nearbyStationsTypes = new HashSet<int>();

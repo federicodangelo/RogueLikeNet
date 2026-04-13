@@ -73,7 +73,7 @@ public sealed class ItemDefinition : BaseDefinition
     // Computed convenience properties for backward compatibility
     public int BaseAttack => Weapon?.BaseDamage ?? Potion?.AttackBoost ?? 0;
     public int BaseDefense => Armor?.BaseDefense ?? Potion?.DefenseBoost ?? 0;
-    public int BaseHealth => Potion?.HealthRestore ?? Food?.HealthRestore ?? 0;
+    public int BaseHealth => 0;
 
     // Material-tier-adjusted effective stats (damage = BaseDamage × tier, defense = BaseDefense × tier)
     public int EffectiveAttack => MaterialTiers.Apply(BaseAttack, MaterialTier);

@@ -134,14 +134,14 @@ public class ItemDefinitionsTests
     public void BaseHealth_FromPotion()
     {
         var def = new ItemDefinition { Potion = new PotionData { HealthRestore = 25 } };
-        Assert.Equal(25, def.BaseHealth);
+        Assert.Equal(25, def.HealthRestore);
     }
 
     [Fact]
     public void BaseHealth_FromFood()
     {
         var def = new ItemDefinition { Food = new FoodData { HealthRestore = 10 } };
-        Assert.Equal(10, def.BaseHealth);
+        Assert.Equal(10, def.HealthRestore);
     }
 
     [Fact]

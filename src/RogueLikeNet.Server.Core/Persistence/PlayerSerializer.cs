@@ -70,11 +70,11 @@ public static class PlayerSerializer
         // QuickSlots
         var qsData = new QuickSlotsJson
         {
-            Slot0 = player.QuickSlots.Slot0,
-            Slot1 = player.QuickSlots.Slot1,
-            Slot2 = player.QuickSlots.Slot2,
-            Slot3 = player.QuickSlots.Slot3,
+            Slots = new int[player.QuickSlots.Count]
         };
+        for (var i = 0; i < player.QuickSlots.Count; i++)
+            qsData.Slots[i] = player.QuickSlots[i];
+
         data.QuickSlotsJson = JsonSerializer.Serialize(qsData, PlayerJsonContext.Default.QuickSlotsJson);
 
         return data;
@@ -158,10 +158,12 @@ public static class PlayerSerializer
             var qsData = JsonSerializer.Deserialize(data.QuickSlotsJson, PlayerJsonContext.Default.QuickSlotsJson);
             if (qsData != null)
             {
-                player.QuickSlots.Slot0 = qsData.Slot0;
-                player.QuickSlots.Slot1 = qsData.Slot1;
-                player.QuickSlots.Slot2 = qsData.Slot2;
-                player.QuickSlots.Slot3 = qsData.Slot3;
+                for (var i = 0; i < player.QuickSlots.Count; i++)
+                {
+                    player.QuickSlots[i] = -1; // Clear all quickslots first
+                    if (qsData.Slots != null && i < qsData.Slots.Length)
+                        player.QuickSlots[i] = qsData.Slots[i];
+                }
 
                 for (var i = 0; i < QuickSlots.SlotCount; i++)
                 {
@@ -215,9 +217,6 @@ public static class PlayerSerializer
 
     public class QuickSlotsJson
     {
-        public int Slot0 { get; set; }
-        public int Slot1 { get; set; }
-        public int Slot2 { get; set; }
-        public int Slot3 { get; set; }
+        public int[]? Slots { get; set; }
     }
 }

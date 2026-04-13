@@ -94,6 +94,7 @@ public sealed class NetworkMessageDrainer
                 PlayerActionEventType.Harvest => "Failed to harvest",
                 PlayerActionEventType.FeedAnimal => "Failed to feed animal",
                 PlayerActionEventType.Craft => evt.ItemTypeId != 0 ? $"Failed to craft {itemName}" : "Failed to craft",
+                PlayerActionEventType.Kill => "Failed to kill target",
                 _ => null,
             };
         }
@@ -121,6 +122,7 @@ public sealed class NetworkMessageDrainer
                 ? $"Crafted {itemName} x{evt.StackCount}"
                 : $"Crafted {itemName}",
             PlayerActionEventType.LevelUp => FormatLevelUpMessage(evt, playerState),
+            PlayerActionEventType.Kill => $"Killed {GameData.Instance.Npcs.Get(evt.KilledNpcTypeId)?.Name ?? "Unknown"}",
             _ => null,
         };
     }

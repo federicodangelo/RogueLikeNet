@@ -210,77 +210,16 @@ public sealed class InventoryRenderer
         var def = GameData.Instance.Items.Get(item.ItemTypeId);
         if (def == null) return;
 
-        // Only show preview for equippable items (weapons, armor, tools) or consumable items (food, potions) 
-        if (!def.IsEquippable && !def.IsConsumable)
-            return;
+        var relativeStats = AsciiDraw.ItemRelativeStats(def, hud);
 
-        // Resolve the correct equipment slot from JSON registry
-        int targetSlot;
-        if (def.IsConsumable)
-            targetSlot = -1;
-        else if (def.EquipSlot is { } regSlot)
-            targetSlot = (int)regSlot;
-        else
-            targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
-                ? (int)EquipSlot.Hand : (int)EquipSlot.Chest;
-        var equipped = Array.Find(hud.EquippedItems, e => e.EquipSlot == targetSlot);
-
-        var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
-        int eqAtk = eqDef?.EffectiveAttack ?? 0;
-        int eqDefVal = eqDef?.EffectiveDefense ?? 0;
-        int eqMaxHp = eqDef?.BaseHealth ?? 0;
-
-
-        int diffAtk = def.EffectiveAttack - eqAtk;
-        int diffDef = def.EffectiveDefense - eqDefVal;
-        int difMaxfHp = def.BaseHealth - eqMaxHp;
-        int diffHunger = def.HungerReduction;
-        int diffThirst = def.ThirstReduction;
-        int diffHealth = def.BaseHealth;
-
-        if (row < maxRow && diffAtk != 0)
+        foreach (var stat in relativeStats)
         {
-            string sign = diffAtk > 0 ? "+" : "";
-            var color = diffAtk > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  ATK: {sign}{diffAtk}", color);
-            row++;
-        }
-        if (row < maxRow && diffDef != 0)
-        {
-            string sign = diffDef > 0 ? "+" : "";
-            var color = diffDef > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  DEF: {sign}{diffDef}", color);
-            row++;
-        }
-        if (row < maxRow && difMaxfHp != 0)
-        {
-            string sign = difMaxfHp > 0 ? "+" : "";
-            var color = difMaxfHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  MAX HP: {sign}{difMaxfHp}", color);
-            row++;
-        }
-        if (row < maxRow && diffHunger != 0)
-        {
-            string sign = diffHunger > 0 ? "-" : ""; // For hunger reduction, a positive value is good (reduces hunger), so we use "-" to indicate that
-            var color = diffHunger > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  Hunger: {sign}{diffHunger}", color);
-            row++;
-        }
-        if (row < maxRow && diffThirst != 0)
-        {
-            string sign = diffThirst > 0 ? "-" : ""; // For thirst reduction, a positive value is good (reduces thirst), so we use "-" to indicate that
-            var color = diffThirst > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  Thirst: {sign}{diffThirst}", color);
-            row++;
-        }
-        if (row < maxRow && diffHealth != 0)
-        {
-            string sign = diffHealth > 0 ? "+" : "";
-            var color = diffHealth > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
-            AsciiDraw.DrawString(r, col, row, $"  Heal HP: {sign}{diffHealth}", color);
+            if (row >= maxRow) break;
+            AsciiDraw.DrawString(r, col, row, $"  {stat.text}", stat.color);
             row++;
         }
     }
+
 
     private static readonly string[] SlotLabels =
         ["Head", "Chest", "Legs", "Boots", "Gloves", "Weapon", "Offhand", "Ring", "Neck", "Belt"];

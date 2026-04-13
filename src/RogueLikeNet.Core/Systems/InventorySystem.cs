@@ -161,8 +161,8 @@ public class InventorySystem
 
     private static void ApplyPotion(ref PlayerEntity player, ItemDefinition def)
     {
-        if (def.BaseHealth > 0)
-            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.BaseHealth);
+        if (def.HealthRestore > 0)
+            player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + def.HealthRestore);
         if (def.BaseAttack > 0)
             player.CombatStats.Attack += def.BaseAttack;
         if (def.BaseDefense > 0)

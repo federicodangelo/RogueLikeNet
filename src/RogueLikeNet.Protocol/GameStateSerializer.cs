@@ -263,6 +263,7 @@ public static class GameStateSerializer
             FailReason = (int)e.FailReason,
             OldLevel = e.OldLevel,
             NewLevel = e.NewLevel,
+            KilledNpcTypeId = (int)e.KilledNpcTypeId,
         }).ToArray();
     }
 

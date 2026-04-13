@@ -99,6 +99,15 @@ public class CombatSystem
                         Damage = damage,
                         TargetDied = monster.IsDead
                     });
+
+                    if (monster.IsDead)
+                    {
+                        player.ActionEvents.Add(new PlayerActionEvent
+                        {
+                            EventType = PlayerActionEventType.Kill,
+                            KilledNpcTypeId = monster.MonsterData.MonsterTypeId,
+                        });
+                    }
                 }
 
                 // Resource nodes — tools provide bonus damage

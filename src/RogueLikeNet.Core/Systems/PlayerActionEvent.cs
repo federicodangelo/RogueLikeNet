@@ -17,6 +17,7 @@ public enum PlayerActionEventType
     FeedAnimal = 12,
     Craft = 13,
     LevelUp = 14,
+    Kill = 15,
 }
 
 /// <summary>
@@ -39,4 +40,5 @@ public struct PlayerActionEvent
     public ActionFailReason FailReason;
     public int OldLevel;
     public int NewLevel;
+    public int KilledNpcTypeId;
 }

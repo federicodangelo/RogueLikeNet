@@ -12,4 +12,5 @@ public class PlayerActionEventMsg
     [Key(4)] public int FailReason { get; set; }
     [Key(5)] public int OldLevel { get; set; }
     [Key(6)] public int NewLevel { get; set; }
+    [Key(7)] public int KilledNpcTypeId { get; set; }
 }

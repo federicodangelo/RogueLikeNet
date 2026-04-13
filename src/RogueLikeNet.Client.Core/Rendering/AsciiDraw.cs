@@ -3,6 +3,7 @@ using Engine.Core;
 using Engine.Platform;
 using Engine.Rendering.Base;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Protocol.Messages;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -105,5 +106,84 @@ public static class AsciiDraw
         var def = GameData.Instance.Items.Get(itemTypeId);
         string name = def?.Name ?? "Unknown";
         return name;
+    }
+
+
+    public struct RelativeStat
+    {
+        public string text;
+        public Color4 color;
+    }
+
+    static public RelativeStat[] ItemRelativeStats(ItemDefinition def, PlayerStateMsg playerState)
+    {
+        // Only show preview for equippable items (weapons, armor, tools) or consumable items (food, potions) 
+        if (!def.IsEquippable && !def.IsConsumable)
+            return [];
+
+        List<RelativeStat> relativeStats = [];
+
+        // Resolve the correct equipment slot from JSON registry
+        int targetSlot;
+        if (def.IsConsumable)
+            targetSlot = -1;
+        else if (def.EquipSlot is { } regSlot)
+            targetSlot = (int)regSlot;
+        else
+            targetSlot = def.Category is ItemCategory.Weapon or ItemCategory.Tool
+                ? (int)EquipSlot.Hand : (int)EquipSlot.Chest;
+        var equipped = Array.Find(playerState.EquippedItems, e => e.EquipSlot == targetSlot);
+
+        var eqDef = equipped != null ? GameData.Instance.Items.Get(equipped.ItemTypeId) : null;
+        int eqAtk = eqDef?.EffectiveAttack ?? 0;
+        int eqDefVal = eqDef?.EffectiveDefense ?? 0;
+        int eqMaxHp = eqDef?.BaseHealth ?? 0;
+
+
+        int diffAtk = def.EffectiveAttack - eqAtk;
+        int diffDef = def.EffectiveDefense - eqDefVal;
+        int difMaxfHp = def.BaseHealth - eqMaxHp;
+        int diffHunger = def.HungerReduction;
+        int diffThirst = def.ThirstReduction;
+        int diffHealth = def.HealthRestore;
+
+        if (diffAtk != 0)
+        {
+            string sign = diffAtk > 0 ? "+" : "";
+            var color = diffAtk > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"ATK: {sign}{diffAtk}", color = color });
+        }
+        if (diffDef != 0)
+        {
+            string sign = diffDef > 0 ? "+" : "";
+            var color = diffDef > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"DEF: {sign}{diffDef}", color = color });
+        }
+        if (difMaxfHp != 0)
+        {
+            string sign = difMaxfHp > 0 ? "+" : "";
+            var color = difMaxfHp > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"MAX HP: {sign}{difMaxfHp}", color = color });
+        }
+        if (diffHunger != 0)
+        {
+            string sign = diffHunger > 0 ? "-" : ""; // For hunger reduction, a positive value is good (reduces hunger), so we use "-" to indicate that
+            var color = diffHunger > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"Hunger: {sign}{diffHunger}", color = color });
+        }
+        if (diffThirst != 0)
+        {
+            string sign = diffThirst > 0 ? "-" : ""; // For thirst reduction, a positive value is good (reduces thirst), so we use "-" to indicate that
+            var color = diffThirst > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"Thirst: {sign}{diffThirst}", color = color });
+        }
+        if (diffHealth != 0)
+        {
+            string sign = diffHealth > 0 ? "+" : "";
+            var color = diffHealth > 0 ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
+            relativeStats.Add(new RelativeStat { text = $"Heal HP: {sign}{diffHealth}", color = color });
+        }
+
+        return relativeStats.ToArray();
     }
 }
