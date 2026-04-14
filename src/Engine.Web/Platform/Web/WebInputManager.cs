@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using Engine.Platform.Base;
 
@@ -16,6 +17,8 @@ public class WebInputManager : BaseInputManager
     private readonly HashSet<string> _keysDown = [];
     private readonly HashSet<string> _keysPressed = [];
     private readonly HashSet<string> _keysReleased = [];
+    private readonly HashSet<string> _keysRepeated = [];
+    private readonly Dictionary<string, long> _keysPressedNextRepeat = []; // scancode -> timestamp for repeat behavior
 
     // ── Gamepad state ────────────────────────────────────────────
     // Standard Gamepad button indices (W3C standard mapping)
@@ -47,6 +50,8 @@ public class WebInputManager : BaseInputManager
     private readonly HashSet<int> _gpDown = [];
     private readonly HashSet<int> _gpPressed = [];
     private readonly HashSet<int> _gpReleased = [];
+    private readonly HashSet<int> _gpRepeated = [];
+    private readonly Dictionary<int, long> _gpButtonsPressedNextRepeat = []; // button index
     private bool _gamepadConnected;
     // After Reset(), the first PollGamepad() must not generate "pressed" events for
     // still-held buttons — the physical state hasn't changed, only our tracking was wiped.
@@ -142,9 +147,13 @@ public class WebInputManager : BaseInputManager
         _keysDown.Clear();
         _keysPressed.Clear();
         _keysReleased.Clear();
+        _keysRepeated.Clear();
+        _keysPressedNextRepeat.Clear();
         _gpDown.Clear();
         _gpPressed.Clear();
         _gpReleased.Clear();
+        _gpRepeated.Clear();
+        _gpButtonsPressedNextRepeat.Clear();
         _textInputBuffer = "";
         // Suppress the spurious "pressed" events that would fire on the next PollGamepad()
         // call for any buttons that are still physically held after the state transition.
@@ -190,12 +199,17 @@ public class WebInputManager : BaseInputManager
                     case "KD": // Key down
                         ActiveInputMethod = InputMethod.MouseKeyboard;
                         if (_keysDown.Add(value))
+                        {
                             _keysPressed.Add(value);
+                            _keysPressedNextRepeat[value] = Stopwatch.GetTimestamp() + RepeatStartDelayTicks;
+                        }
                         break;
                     case "KU": // Key up
                         ActiveInputMethod = InputMethod.MouseKeyboard;
                         _keysDown.Remove(value);
                         _keysReleased.Add(value);
+                        _keysPressedNextRepeat.Remove(value);
+                        _keysRepeated.Remove(value);
                         break;
                     case "MD": // Mouse down
                         if (int.TryParse(value, out int mb))
@@ -217,6 +231,43 @@ public class WebInputManager : BaseInputManager
 
         // Poll gamepad
         PollGamepad();
+
+        UpdateRepeat();
+    }
+
+    private void UpdateRepeat()
+    {
+        long now = Stopwatch.GetTimestamp();
+
+        // Keyboard repeat
+        foreach (var kvp in _keysPressedNextRepeat.ToArray())
+        {
+            var key = kvp.Key;
+            if (now >= kvp.Value)
+            {
+                _keysRepeated.Add(key);
+                _keysPressedNextRepeat[key] = now + RepeatIntervalTicks;
+            }
+            else
+            {
+                _keysRepeated.Remove(key);
+            }
+        }
+
+        // Gamepad button repeat
+        foreach (var kvp in _gpButtonsPressedNextRepeat.ToArray())
+        {
+            var key = kvp.Key;
+            if (now >= kvp.Value)
+            {
+                _gpRepeated.Add(key);
+                _gpButtonsPressedNextRepeat[key] = now + RepeatIntervalTicks;
+            }
+            else
+            {
+                _gpRepeated.Remove(key);
+            }
+        }
     }
 
     // ── Gamepad polling ──────────────────────────────────────────
@@ -261,6 +312,7 @@ public class WebInputManager : BaseInputManager
                 {
                     _gpPressed.Add(i);
                     ActiveInputMethod = InputMethod.Gamepad;
+                    _gpButtonsPressedNextRepeat[i] = Stopwatch.GetTimestamp() + RepeatStartDelayTicks;
                 }
             }
             else if (!pressed && wasDown)
@@ -268,6 +320,8 @@ public class WebInputManager : BaseInputManager
                 _gpDown.Remove(i);
                 _gpReleased.Add(i);
                 ActiveInputMethod = InputMethod.Gamepad;
+                _gpButtonsPressedNextRepeat.Remove(i);
+                _gpRepeated.Remove(i);
             }
         }
 
@@ -303,6 +357,7 @@ public class WebInputManager : BaseInputManager
     public override bool IsActionDown(InputAction action) => IsAnyBindingDown(action, _keysDown, _mouseDown, _gpDown);
     public override bool IsActionPressed(InputAction action) => IsAnyBindingDown(action, _keysPressed, _mousePressed, _gpPressed);
     public override bool IsActionReleased(InputAction action) => IsAnyBindingDown(action, _keysReleased, _mouseReleased, _gpReleased);
+    public override bool IsActionRepeated(InputAction action) => IsAnyBindingDown(action, _keysRepeated, _mouseRepeated, _gpRepeated);
 
     public override string GetActionHelpText(InputAction action, bool includeSecondary = false)
     {

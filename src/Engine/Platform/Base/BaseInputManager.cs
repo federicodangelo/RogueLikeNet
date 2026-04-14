@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Engine.Platform.Base;
@@ -10,6 +11,9 @@ namespace Engine.Platform.Base;
 /// </summary>
 public abstract class BaseInputManager : IInputManager
 {
+    protected static readonly long RepeatStartDelayTicks = Stopwatch.Frequency / 4; // 250ms
+    protected static readonly long RepeatIntervalTicks = Stopwatch.Frequency / 10; // 100ms
+
     private readonly Func<(int Width, int Height)> _getWindowSize;
 
     protected const float GamepadDeadZone = 0.20f;
@@ -18,6 +22,7 @@ public abstract class BaseInputManager : IInputManager
     protected readonly HashSet<int> _mouseDown = [];
     protected readonly HashSet<int> _mousePressed = [];
     protected readonly HashSet<int> _mouseReleased = [];
+    protected readonly HashSet<int> _mouseRepeated = [];
 
     // ── Analog stick values ──────────────────────────────────────────
     protected float _leftStickX, _leftStickY;
@@ -74,6 +79,9 @@ public abstract class BaseInputManager : IInputManager
     public abstract bool IsActionDown(InputAction action);
     public abstract bool IsActionPressed(InputAction action);
     public abstract bool IsActionReleased(InputAction action);
+    public abstract bool IsActionRepeated(InputAction action);
+    public bool IsActionPressedOrRepeated(InputAction action) =>
+        IsActionPressed(action) || IsActionRepeated(action);
 
     public Vector2 GetActionAxisDirection(InputActionAxis axis)
     {

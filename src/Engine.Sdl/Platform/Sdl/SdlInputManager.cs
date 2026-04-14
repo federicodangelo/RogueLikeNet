@@ -1,6 +1,7 @@
 using System.Text;
 using SDL3;
 using Engine.Platform.Base;
+using System.Diagnostics;
 
 namespace Engine.Platform.Sdl;
 
@@ -20,16 +21,22 @@ public class SdlInputManager : BaseInputManager
     private readonly HashSet<SDL.Scancode> _keysDown = [];
     private readonly HashSet<SDL.Scancode> _keysPressed = [];  // just pressed this frame
     private readonly HashSet<SDL.Scancode> _keysReleased = []; // just released this frame
+    private readonly HashSet<SDL.Scancode> _keysRepeated = []; // just repeated this frame
+    private readonly Dictionary<SDL.Scancode, long> _keysPressedNextRepeat = []; // scancode -> timestamp for repeat behavior
 
     private readonly StringBuilder _textInputBuffer = new();
 
     private readonly HashSet<SDL.GamepadButton> _gamepadDown = [];
     private readonly HashSet<SDL.GamepadButton> _gamepadPressed = [];
     private readonly HashSet<SDL.GamepadButton> _gamepadReleased = [];
+    private readonly HashSet<SDL.GamepadButton> _gamepadRepeated = [];
+    private readonly Dictionary<SDL.GamepadButton, long> _gamepadButtonsPressedNextRepeat = []; // button -> timestamp for repeat behavior
 
     private readonly HashSet<SDL.GamepadAxis> _gamepadAxesDown = [];
     private readonly HashSet<SDL.GamepadAxis> _gamepadAxesPressed = [];
     private readonly HashSet<SDL.GamepadAxis> _gamepadAxesReleased = [];
+    private readonly HashSet<SDL.GamepadAxis> _gamepadAxesRepeated = [];
+    private readonly Dictionary<SDL.GamepadAxis, long> _gamepadAxesPressedNextRepeat = []; // axis -> timestamp for repeat behavior
 
     private uint _activeGamepadId;
 
@@ -121,10 +128,13 @@ public class SdlInputManager : BaseInputManager
         base.EndFrame(); // clears _mousePressed, _mouseReleased, MouseWheelY
         _keysPressed.Clear();
         _keysReleased.Clear();
+        _keysRepeated.Clear();
         _gamepadPressed.Clear();
         _gamepadReleased.Clear();
+        _gamepadRepeated.Clear();
         _gamepadAxesPressed.Clear();
         _gamepadAxesReleased.Clear();
+        _gamepadAxesRepeated.Clear();
     }
 
     /// <summary>
@@ -137,12 +147,18 @@ public class SdlInputManager : BaseInputManager
         _keysDown.Clear();
         _keysPressed.Clear();
         _keysReleased.Clear();
+        _keysRepeated.Clear();
+        _keysPressedNextRepeat.Clear();
         _gamepadDown.Clear();
         _gamepadPressed.Clear();
         _gamepadReleased.Clear();
+        _gamepadRepeated.Clear();
+        _gamepadButtonsPressedNextRepeat.Clear();
         _gamepadAxesDown.Clear();
         _gamepadAxesPressed.Clear();
         _gamepadAxesReleased.Clear();
+        _gamepadAxesRepeated.Clear();
+        _gamepadAxesPressedNextRepeat.Clear();
         _activeGamepadId = 0;
         _textInputBuffer.Clear();
     }
@@ -152,6 +168,59 @@ public class SdlInputManager : BaseInputManager
         while (SDL.PollEvent(out var e))
         {
             ProcessEvent(e);
+        }
+
+        UpdateRepeat();
+    }
+
+    private void UpdateRepeat()
+    {
+        long now = Stopwatch.GetTimestamp();
+
+        // Check keyboard keys for repeat
+        foreach (var kvp in _keysPressedNextRepeat.ToArray())
+        {
+            var key = kvp.Key;
+            if (now >= kvp.Value)
+            {
+                _keysRepeated.Add(key);
+                _keysPressedNextRepeat[key] = now + RepeatIntervalTicks;
+            }
+            else
+            {
+                _keysRepeated.Remove(key);
+            }
+        }
+
+        // Check gamepad buttons for repeat
+        foreach (var kvp in _gamepadButtonsPressedNextRepeat.ToArray())
+        {
+            var key = kvp.Key;
+            if (now >= kvp.Value)
+            {
+                _gamepadRepeated.Add(key);
+                _gamepadButtonsPressedNextRepeat[key] = now + RepeatIntervalTicks;
+            }
+            else
+            {
+                _gamepadRepeated.Remove(key);
+            }
+        }
+
+        // Check gamepad axes for repeat
+        foreach (var kvp in _gamepadAxesPressedNextRepeat.ToArray())
+        {
+            var key = kvp.Key;
+
+            if (now >= kvp.Value)
+            {
+                _gamepadAxesRepeated.Add(key);
+                _gamepadAxesPressedNextRepeat[key] = now + RepeatIntervalTicks;
+            }
+            else
+            {
+                _gamepadAxesRepeated.Remove(key);
+            }
         }
     }
 
@@ -170,6 +239,7 @@ public class SdlInputManager : BaseInputManager
                 {
                     _keysDown.Add(e.Key.Scancode);
                     _keysPressed.Add(e.Key.Scancode);
+                    _keysPressedNextRepeat[e.Key.Scancode] = Stopwatch.GetTimestamp() + RepeatStartDelayTicks;
                     AppendScancodeToTextBuffer(e.Key.Scancode, e.Key.Mod);
                 }
                 else
@@ -182,6 +252,8 @@ public class SdlInputManager : BaseInputManager
                 ActiveInputMethod = InputMethod.MouseKeyboard;
                 _keysDown.Remove(e.Key.Scancode);
                 _keysReleased.Add(e.Key.Scancode);
+                _keysRepeated.Remove(e.Key.Scancode);
+                _keysPressedNextRepeat.Remove(e.Key.Scancode);
                 break;
 
             case SDL.EventType.MouseMotion:
@@ -240,6 +312,7 @@ public class SdlInputManager : BaseInputManager
                     SDL.GamepadButton button = (SDL.GamepadButton)e.GButton.Button;
                     _gamepadDown.Add(button);
                     _gamepadPressed.Add(button);
+                    _gamepadButtonsPressedNextRepeat[button] = Stopwatch.GetTimestamp() + RepeatStartDelayTicks;
                 }
                 break;
 
@@ -250,6 +323,8 @@ public class SdlInputManager : BaseInputManager
                     SDL.GamepadButton button = (SDL.GamepadButton)e.GButton.Button;
                     _gamepadDown.Remove(button);
                     _gamepadReleased.Add(button);
+                    _gamepadRepeated.Remove(button);
+                    _gamepadButtonsPressedNextRepeat.Remove(button);
                 }
                 break;
 
@@ -288,6 +363,7 @@ public class SdlInputManager : BaseInputManager
     public override bool IsActionDown(InputAction action) => IsAnyBindingActive(action, _keysDown, _mouseDown, _gamepadDown, _gamepadAxesDown);
     public override bool IsActionPressed(InputAction action) => IsAnyBindingActive(action, _keysPressed, _mousePressed, _gamepadPressed, _gamepadAxesPressed);
     public override bool IsActionReleased(InputAction action) => IsAnyBindingActive(action, _keysReleased, _mouseReleased, _gamepadReleased, _gamepadAxesReleased);
+    public override bool IsActionRepeated(InputAction action) => IsAnyBindingActive(action, _keysRepeated, _mouseRepeated, _gamepadRepeated, _gamepadAxesRepeated);
 
     public override string GetActionHelpText(InputAction action, bool includeSecondary = false)
     {
@@ -366,11 +442,14 @@ public class SdlInputManager : BaseInputManager
         {
             _gamepadAxesDown.Add(axis);
             _gamepadAxesPressed.Add(axis);
+            _gamepadAxesPressedNextRepeat[axis] = Stopwatch.GetTimestamp() + RepeatStartDelayTicks;
         }
         else if (!isDown && wasDown)
         {
             _gamepadAxesDown.Remove(axis);
             _gamepadAxesReleased.Add(axis);
+            _gamepadAxesRepeated.Remove(axis);
+            _gamepadAxesPressedNextRepeat.Remove(axis);
         }
     }
 

@@ -24,6 +24,8 @@ public class DebugSettingsTests
         public bool IsActionDown(InputAction action) => false;
         public bool IsActionPressed(InputAction action) => false;
         public bool IsActionReleased(InputAction action) => false;
+        public bool IsActionRepeated(InputAction action) => false;
+        public bool IsActionPressedOrRepeated(InputAction action) => false;
         public Vector2 GetActionAxisDirection(InputActionAxis axis) => Vector2.Zero;
         public string GetActionHelpText(InputAction action, bool includeSecondary = false) => "";
         public string GetActionHelpTextFull(InputAction action) => "";

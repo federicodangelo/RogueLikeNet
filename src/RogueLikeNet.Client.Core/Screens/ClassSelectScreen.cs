@@ -58,9 +58,9 @@ public sealed class ClassSelectScreen : IScreen
             return;
         }
 
-        if (input.IsActionPressed(InputAction.MoveLeft) || input.IsActionPressed(InputAction.MenuUp))
+        if (input.IsActionPressedOrRepeated(InputAction.MoveLeft) || input.IsActionPressedOrRepeated(InputAction.MenuUp))
             _selectedClassIndex = (_selectedClassIndex + classCount - 1) % classCount;
-        else if (input.IsActionPressed(InputAction.MoveRight) || input.IsActionPressed(InputAction.MenuDown))
+        else if (input.IsActionPressedOrRepeated(InputAction.MoveRight) || input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _selectedClassIndex = (_selectedClassIndex + 1) % classCount;
         else if (input.IsActionPressed(InputAction.OpenChat) && _canEditName)
         {

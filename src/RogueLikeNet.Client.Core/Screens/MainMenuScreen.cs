@@ -24,9 +24,9 @@ public sealed class MainMenuScreen : IScreen
     public void HandleInput(IInputManager input)
     {
         int itemCount = 6;
-        if (input.IsActionPressed(InputAction.MenuUp))
+        if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
             _menuIndex = (_menuIndex + itemCount - 1) % itemCount;
-        else if (input.IsActionPressed(InputAction.MenuDown))
+        else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % itemCount;
 
         if (_menuIndex == MenuRenderer.MainMenuDebugModeIndex)

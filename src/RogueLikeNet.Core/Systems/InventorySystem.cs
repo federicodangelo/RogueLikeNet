@@ -122,16 +122,32 @@ public class InventorySystem
         {
             case ItemCategory.Potion:
                 ApplyPotion(ref player, template);
-                player.Inventory.Items.RemoveAt(slot);
-                player.QuickSlots.OnItemRemoved(slot);
                 player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.UsePotion, ItemTypeId = itemData.ItemTypeId });
+                if (itemData.StackCount > 1)
+                {
+                    itemData.StackCount--;
+                    player.Inventory.Items[slot] = itemData;
+                }
+                else
+                {
+                    player.Inventory.Items.RemoveAt(slot);
+                    player.QuickSlots.OnItemRemoved(slot);
+                }
                 break;
 
             case ItemCategory.Food:
                 ApplyFood(ref player, template);
-                player.Inventory.Items.RemoveAt(slot);
-                player.QuickSlots.OnItemRemoved(slot);
                 player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.EatFood, ItemTypeId = itemData.ItemTypeId });
+                if (itemData.StackCount > 1)
+                {
+                    itemData.StackCount--;
+                    player.Inventory.Items[slot] = itemData;
+                }
+                else
+                {
+                    player.Inventory.Items.RemoveAt(slot);
+                    player.QuickSlots.OnItemRemoved(slot);
+                }
                 break;
 
             case ItemCategory.Weapon:
@@ -319,16 +335,32 @@ public class InventorySystem
         {
             case ItemCategory.Potion:
                 ApplyPotion(ref player, template);
-                player.Inventory.Items.RemoveAt(invIndex);
-                player.QuickSlots.OnItemRemoved(invIndex);
                 player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.UsePotion, ItemTypeId = itemData.ItemTypeId });
+                if (itemData.StackCount > 1)
+                {
+                    itemData.StackCount--;
+                    player.Inventory.Items[invIndex] = itemData;
+                }
+                else
+                {
+                    player.Inventory.Items.RemoveAt(invIndex);
+                    player.QuickSlots.OnItemRemoved(invIndex);
+                }
                 break;
 
             case ItemCategory.Food:
                 ApplyFood(ref player, template);
-                player.Inventory.Items.RemoveAt(invIndex);
-                player.QuickSlots.OnItemRemoved(invIndex);
                 player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.EatFood, ItemTypeId = itemData.ItemTypeId });
+                if (itemData.StackCount > 1)
+                {
+                    itemData.StackCount--;
+                    player.Inventory.Items[invIndex] = itemData;
+                }
+                else
+                {
+                    player.Inventory.Items.RemoveAt(invIndex);
+                    player.QuickSlots.OnItemRemoved(invIndex);
+                }
                 break;
 
             case ItemCategory.Weapon:

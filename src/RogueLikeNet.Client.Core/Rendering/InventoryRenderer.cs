@@ -110,7 +110,7 @@ public sealed class InventoryRenderer
                             if (row >= maxRow) break;
                             AsciiDraw.DrawString(r, col, row, "[Enter] Unequip [X] Drop", RenderingTheme.Dim); row++;
                             if (row >= maxRow) break;
-                            AsciiDraw.DrawString(r, col, row, "[Tab] Switch section", RenderingTheme.Dim);
+                            AsciiDraw.DrawString(r, col, row, "[Tab] Inventory", RenderingTheme.Dim);
                         }
                         else
                         {
@@ -132,7 +132,7 @@ public sealed class InventoryRenderer
                             }
                             row++;
                             if (row >= maxRow) break;
-                            AsciiDraw.DrawString(r, col, row, "[1-8] Slot  [Tab] Section", RenderingTheme.Dim);
+                            AsciiDraw.DrawString(r, col, row, "[1-8] Slot  [Tab] Equipment", RenderingTheme.Dim);
                         }
                     }
                     break;

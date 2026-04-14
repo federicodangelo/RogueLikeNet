@@ -31,11 +31,6 @@ public sealed class CraftingScreen : IScreen
     private readonly List<int> _recentRecipeIds = [];
     private const int MaxRecent = 3;
 
-    // Key repeat
-    private static readonly long RepeatDelayTicks = Stopwatch.Frequency / 4; // 250ms
-    private InputAction? _heldAction;
-    private long _heldSinceTicks;
-
     public ScreenState ScreenState => ScreenState.Crafting;
 
     private bool IsDebugFreeCraft => _ctx.Debug is { Enabled: true, FreeCrafting: true };
@@ -105,40 +100,11 @@ public sealed class CraftingScreen : IScreen
             return;
         }
 
-        // Key repeat for up/down
-        bool up = false, down = false;
-        InputAction? activeNav = null;
-        if (input.IsActionDown(InputAction.MenuUp)) activeNav = InputAction.MenuUp;
-        else if (input.IsActionDown(InputAction.MenuDown)) activeNav = InputAction.MenuDown;
-
-        if (activeNav != null)
-        {
-            long now = Stopwatch.GetTimestamp();
-            if (_heldAction != activeNav)
-            {
-                _heldAction = activeNav;
-                _heldSinceTicks = now;
-            }
-            if (input.IsActionPressed(activeNav.Value))
-            {
-                if (activeNav == InputAction.MenuUp) up = true; else down = true;
-            }
-            else if (now - _heldSinceTicks >= RepeatDelayTicks)
-            {
-                _heldSinceTicks = now;
-                if (activeNav == InputAction.MenuUp) up = true; else down = true;
-            }
-        }
-        else
-        {
-            _heldAction = null;
-        }
-
         if (_inCategoryMode)
         {
             int count = _internalCategoryIdsInOrder.Length;
-            if (up) _listSection.ScrollUp();
-            else if (down) _listSection.ScrollDown(count);
+            if (input.IsActionPressedOrRepeated(InputAction.MenuUp)) _listSection.ScrollUp();
+            else if (input.IsActionPressedOrRepeated(InputAction.MenuDown)) _listSection.ScrollDown(count);
             else if (input.IsActionPressed(InputAction.MenuConfirm))
             {
                 int idx = _listSection.SelectedIndex;
@@ -157,8 +123,8 @@ public sealed class CraftingScreen : IScreen
         else
         {
             int count = _filteredRecipes.Length;
-            if (up) _listSection.ScrollUp();
-            else if (down) _listSection.ScrollDown(count);
+            if (input.IsActionPressedOrRepeated(InputAction.MenuUp)) _listSection.ScrollUp();
+            else if (input.IsActionPressedOrRepeated(InputAction.MenuDown)) _listSection.ScrollDown(count);
             else if (input.IsActionPressed(InputAction.MenuConfirm))
                 TryCraft();
         }

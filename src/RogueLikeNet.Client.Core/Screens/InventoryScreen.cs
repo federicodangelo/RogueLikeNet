@@ -21,10 +21,6 @@ public sealed class InventoryScreen : IScreen
     private int _placingSlot = -1;
 
     // Key repeat
-    private static readonly long RepeatDelayTicks = Stopwatch.Frequency / 4; // 250ms
-    private InputAction? _heldAction;
-    private long _heldSinceTicks;
-
     public bool IsPlacingMode => _placingSlot >= 0;
 
     public ScreenState ScreenState => ScreenState.Inventory;
@@ -102,8 +98,8 @@ public sealed class InventoryScreen : IScreen
             int dx = 0, dy = 0;
             if (input.IsActionPressed(InputAction.MoveUp) || input.IsActionPressed(InputAction.MenuUp)) { dy = -1; }
             else if (input.IsActionPressed(InputAction.MoveDown) || input.IsActionPressed(InputAction.MenuDown)) { dy = 1; }
-            else if (input.IsActionPressed(InputAction.MoveLeft)) { dx = -1; }
-            else if (input.IsActionPressed(InputAction.MoveRight)) { dx = 1; }
+            else if (input.IsActionPressed(InputAction.MoveLeft) || input.IsActionPressed(InputAction.MenuLeft)) { dx = -1; }
+            else if (input.IsActionPressed(InputAction.MoveRight) || input.IsActionPressed(InputAction.MenuRight)) { dx = 1; }
             if (dx != 0 || dy != 0)
             {
                 SendPlaceAction(_placingSlot, dx, dy);
@@ -135,45 +131,16 @@ public sealed class InventoryScreen : IScreen
             return;
         }
 
-        // Key repeat for up/down
-        bool up = false, down = false;
-        InputAction? activeNav = null;
-        if (input.IsActionDown(InputAction.MenuUp)) activeNav = InputAction.MenuUp;
-        else if (input.IsActionDown(InputAction.MenuDown)) activeNav = InputAction.MenuDown;
-
-        if (activeNav != null)
-        {
-            long now = Stopwatch.GetTimestamp();
-            if (_heldAction != activeNav)
-            {
-                _heldAction = activeNav;
-                _heldSinceTicks = now;
-            }
-            if (input.IsActionPressed(activeNav.Value))
-            {
-                if (activeNav == InputAction.MenuUp) up = true; else down = true;
-            }
-            else if (now - _heldSinceTicks >= RepeatDelayTicks)
-            {
-                _heldSinceTicks = now;
-                if (activeNav == InputAction.MenuUp) up = true; else down = true;
-            }
-        }
-        else
-        {
-            _heldAction = null;
-        }
-
         var focused = _inventoryRenderer.InventoryLayout.FocusedSection;
         if (focused == null) return;
 
         switch (focused.Name)
         {
             case "InvItems":
-                HandleInvItemsInput(input, focused, itemCount, up, down);
+                HandleInvItemsInput(input, focused, itemCount);
                 break;
             case "InvEquipment":
-                HandleInvEquipmentInput(input, focused, itemCount, up, down);
+                HandleInvEquipmentInput(input, focused, itemCount);
                 break;
         }
     }
@@ -244,7 +211,7 @@ public sealed class InventoryScreen : IScreen
         _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 
-    private void HandleInvItemsInput(IInputManager input, HudSection section, int itemCount, bool up, bool down)
+    private void HandleInvItemsInput(IInputManager input, HudSection section, int itemCount)
     {
         if (itemCount == 0)
         {
@@ -253,43 +220,35 @@ public sealed class InventoryScreen : IScreen
             return;
         }
 
-        if (up)
+        if (section.SelectedIndex >= itemCount)
+        {
+            // This can happen when items are removed while the inventory screen is open. Just move selection to the last item.
+            section.SelectedIndex = itemCount - 1;
+            section.EnsureSelectionVisible(itemCount);
+        }
+
+        if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
         {
             if (section.SelectedIndex > 0)
+            {
                 section.ScrollUp();
+            }
             else
             {
-                var prev = _inventoryRenderer.InventoryLayout.FocusPreviousInputSection();
-                if (prev != null && prev != section)
-                {
-                    int prevMax = GetInvSectionItemCount(prev, itemCount);
-                    prev.SelectedIndex = Math.Max(0, prevMax - 1);
-                    prev.EnsureSelectionVisible(prevMax);
-                }
-                else
-                {
-                    section.SelectedIndex = Math.Max(0, itemCount - 1);
-                    section.EnsureSelectionVisible(itemCount);
-                }
+                section.SelectedIndex = Math.Max(0, itemCount - 1);
+                section.EnsureSelectionVisible(itemCount);
             }
         }
-        else if (down)
+        else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
         {
             if (section.SelectedIndex < itemCount - 1)
+            {
                 section.ScrollDown(itemCount);
+            }
             else
             {
-                var next = _inventoryRenderer.InventoryLayout.FocusNextInputSection();
-                if (next != null && next != section)
-                {
-                    next.SelectedIndex = 0;
-                    next.ScrollOffset = 0;
-                }
-                else
-                {
-                    section.SelectedIndex = 0;
-                    section.ScrollOffset = 0;
-                }
+                section.SelectedIndex = 0;
+                section.ScrollOffset = 0;
             }
         }
         else if (input.IsActionPressed(InputAction.UseItem1))
@@ -316,46 +275,31 @@ public sealed class InventoryScreen : IScreen
             TryBeginPlace(section.SelectedIndex);
     }
 
-    private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap, bool up, bool down)
+    private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
     {
         int EquipmentSlots = Equipment.SlotCount;
-        if (up)
+        if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
         {
             if (section.SelectedIndex > 0)
+            {
                 section.ScrollUp();
+            }
             else
             {
-                var prev = _inventoryRenderer.InventoryLayout.FocusPreviousInputSection();
-                if (prev != null && prev != section)
-                {
-                    int prevMax = GetInvSectionItemCount(prev, cap);
-                    prev.SelectedIndex = Math.Max(0, prevMax - 1);
-                    prev.EnsureSelectionVisible(prevMax);
-                }
-                else
-                {
-                    section.SelectedIndex = EquipmentSlots - 1;
-                    section.EnsureSelectionVisible(EquipmentSlots);
-                }
+                section.SelectedIndex = EquipmentSlots - 1;
+                section.EnsureSelectionVisible(EquipmentSlots);
             }
         }
-        else if (down)
+        else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
         {
             if (section.SelectedIndex < EquipmentSlots - 1)
+            {
                 section.ScrollDown(EquipmentSlots);
+            }
             else
             {
-                var next = _inventoryRenderer.InventoryLayout.FocusNextInputSection();
-                if (next != null && next != section)
-                {
-                    next.SelectedIndex = 0;
-                    next.ScrollOffset = 0;
-                }
-                else
-                {
-                    section.SelectedIndex = 0;
-                    section.ScrollOffset = 0;
-                }
+                section.SelectedIndex = 0;
+                section.ScrollOffset = 0;
             }
         }
         else if (input.IsActionPressed(InputAction.MenuConfirm))

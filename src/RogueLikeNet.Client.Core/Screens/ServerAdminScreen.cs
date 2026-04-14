@@ -95,9 +95,9 @@ public sealed class ServerAdminScreen : IScreen
         }
 
         int count = TotalItemCount;
-        if (input.IsActionPressed(InputAction.MenuUp))
+        if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
             _selectedIndex = (_selectedIndex + count - 1) % count;
-        else if (input.IsActionPressed(InputAction.MenuDown))
+        else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _selectedIndex = (_selectedIndex + 1) % count;
 
         if (input.IsActionPressed(InputAction.MenuConfirm))

@@ -34,6 +34,8 @@ public interface IInputManager
     bool IsActionDown(InputAction action);
     bool IsActionPressed(InputAction action);
     bool IsActionReleased(InputAction action);
+    bool IsActionRepeated(InputAction action);
+    bool IsActionPressedOrRepeated(InputAction action);
 
     Vector2 GetActionAxisDirection(InputActionAxis axis);
 

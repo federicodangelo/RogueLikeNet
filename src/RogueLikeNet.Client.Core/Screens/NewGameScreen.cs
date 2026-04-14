@@ -68,24 +68,24 @@ public sealed class NewGameScreen : IScreen
             return;
         }
 
-        if (input.IsActionPressed(InputAction.MenuUp))
+        if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
             _menuIndex = (_menuIndex + MenuItemCount - 1) % MenuItemCount;
-        else if (input.IsActionPressed(InputAction.MenuDown))
+        else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % MenuItemCount;
 
         if (_menuIndex == MenuGenerator)
         {
             int genCount = GeneratorRegistry.Count;
-            if (input.IsActionPressed(InputAction.MoveLeft))
+            if (input.IsActionPressedOrRepeated(InputAction.MoveLeft))
                 _generatorIndex = (_generatorIndex + genCount - 1) % genCount;
-            else if (input.IsActionPressed(InputAction.MoveRight))
+            else if (input.IsActionPressedOrRepeated(InputAction.MoveRight))
                 _generatorIndex = (_generatorIndex + 1) % genCount;
         }
         else if (_menuIndex == MenuSeed)
         {
-            if (input.IsActionPressed(InputAction.MoveLeft) && _worldSeed > 0)
+            if (input.IsActionPressedOrRepeated(InputAction.MoveLeft) && _worldSeed > 0)
                 _worldSeed--;
-            else if (input.IsActionPressed(InputAction.MoveRight) && _worldSeed < long.MaxValue)
+            else if (input.IsActionPressedOrRepeated(InputAction.MoveRight) && _worldSeed < long.MaxValue)
                 _worldSeed++;
         }
 
