@@ -115,6 +115,22 @@ public sealed class ItemDefinition : BaseDefinition
         _ => "Other",
     };
 
+    public static string PlaceableTypeName(PlaceableType pt) => pt switch
+    {
+        PlaceableType.Decoration => "Decorations",
+        PlaceableType.CraftingStation => "Crafting Stations",
+        PlaceableType.Storage => "Storage",
+        PlaceableType.Lighting => "Lighting",
+        PlaceableType.Door => "Doors",
+        PlaceableType.Wall => "Walls",
+        PlaceableType.FloorTile => "Floor Tiles",
+        PlaceableType.Window => "Windows",
+        PlaceableType.Table => "Tables",
+        PlaceableType.Chair => "Chairs",
+        PlaceableType.Bed => "Beds",
+        _ => "Placeables",
+    };
+
     public static string CategoryTag(ItemCategory category) => category switch
     {
         ItemCategory.Weapon => "[Wpn]",

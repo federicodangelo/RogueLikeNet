@@ -21,9 +21,9 @@ public sealed class CraftingScreen : IScreen
 
     // Navigation state
     private bool _inCategoryMode = true;
-    private int[] _categoryOrder = []; // sorted category ids
+    private int[] _internalCategoryIdsInOrder = [];
     private RecipeDefinition[] _filteredRecipes = [];
-    private int _selectedCategory;
+    private int _selectedInternalCategoryId;
     private int _savedCategoryIndex;
     private int _savedCategoryScroll;
 
@@ -136,15 +136,15 @@ public sealed class CraftingScreen : IScreen
 
         if (_inCategoryMode)
         {
-            int count = _categoryOrder.Length;
+            int count = _internalCategoryIdsInOrder.Length;
             if (up) _listSection.ScrollUp();
             else if (down) _listSection.ScrollDown(count);
             else if (input.IsActionPressed(InputAction.MenuConfirm))
             {
                 int idx = _listSection.SelectedIndex;
-                if (idx >= 0 && idx < _categoryOrder.Length)
+                if (idx >= 0 && idx < _internalCategoryIdsInOrder.Length)
                 {
-                    _selectedCategory = _categoryOrder[idx];
+                    _selectedInternalCategoryId = _internalCategoryIdsInOrder[idx];
                     _savedCategoryIndex = idx;
                     _savedCategoryScroll = _listSection.ScrollOffset;
                     _inCategoryMode = false;
@@ -214,8 +214,8 @@ public sealed class CraftingScreen : IScreen
         int col = hudStartCol + 1;
         int innerW = AsciiDraw.HudColumns - 1;
 
-        var hud = _ctx.GameState.PlayerState;
-        if (hud == null)
+        var playerState = _ctx.GameState.PlayerState;
+        if (playerState == null)
         {
             AsciiDraw.DrawString(r, col, 1, "No data", RenderingTheme.Dim);
             return;
@@ -232,7 +232,7 @@ public sealed class CraftingScreen : IScreen
             {
                 case "CraftHeader":
                     if (row >= maxRow) break;
-                    string title = _inCategoryMode ? "CRAFTING" : $"CRAFTING > {ItemDefinition.CategoryName((ItemCategory)_selectedCategory)}";
+                    string title = _inCategoryMode ? "CRAFTING" : $"CRAFTING > {InternalCategoryName(_selectedInternalCategoryId)}";
                     if (title.Length > innerW) title = title[..innerW];
                     AsciiDraw.DrawString(r, col, row, title, RenderingTheme.Title);
                     AsciiDraw.DrawString(r, col + innerW - 5, row, "[Esc]", RenderingTheme.Dim);
@@ -243,16 +243,16 @@ public sealed class CraftingScreen : IScreen
 
                 case "CraftList":
                     if (_inCategoryMode)
-                        RenderCategoryList(r, col, innerW, row, maxRow, hud, section);
+                        RenderCategoryList(r, col, innerW, row, maxRow, playerState, section);
                     else
-                        RenderRecipesSection(r, col, innerW, row, maxRow, hud, section);
+                        RenderRecipesSection(r, col, innerW, row, maxRow, playerState, section);
                     break;
 
                 case "CraftDetail":
                     if (!_inCategoryMode)
-                        RenderDetailSection(r, col, innerW, row, maxRow, hud);
+                        RenderDetailSection(r, col, innerW, row, maxRow, playerState);
                     else
-                        RenderRecentRecipes(r, col, innerW, row, maxRow, hud);
+                        RenderRecentRecipes(r, col, innerW, row, maxRow, playerState);
                     break;
 
                 case "CraftActions":
@@ -274,9 +274,9 @@ public sealed class CraftingScreen : IScreen
     }
 
     private void RenderCategoryList(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        PlayerStateMsg hud, HudSection section)
+        PlayerStateMsg playerState, HudSection section)
     {
-        int count = _categoryOrder.Length;
+        int count = _internalCategoryIdsInOrder.Length;
         int scrollOffset = section.ScrollOffset;
         int selectedIndex = section.SelectedIndex;
         int visibleRows = maxRow - row;
@@ -287,14 +287,14 @@ public sealed class CraftingScreen : IScreen
         int renderEnd = Math.Min(scrollOffset + visibleRows, count);
         for (int i = scrollOffset; i < renderEnd && row < maxRow; i++)
         {
-            int cat = _categoryOrder[i];
-            bool hasCraftable = CategoryHasCraftable(cat, hud);
+            int cat = _internalCategoryIdsInOrder[i];
+            bool hasCraftable = CategoryHasCraftable(cat, playerState);
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
             int totalCount = CountRecipesInCategory(cat);
-            int craftableCount = CountCraftableInCategory(cat, hud);
-            string text = $"{prefix}{ItemDefinition.CategoryName((ItemCategory)cat)} ({craftableCount}/{totalCount})";
+            int craftableCount = CountCraftableInCategory(cat, playerState);
+            string text = $"{prefix}{InternalCategoryName(cat)} ({craftableCount}/{totalCount})";
             if (hasCraftable) text += " \u2605";
             if (text.Length > innerW) text = text[..innerW];
 
@@ -310,7 +310,7 @@ public sealed class CraftingScreen : IScreen
     }
 
     private void RenderRecipesSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        PlayerStateMsg hud, HudSection section)
+        PlayerStateMsg playerState, HudSection section)
     {
         int recipeCount = _filteredRecipes.Length;
         int scrollOffset = section.ScrollOffset;
@@ -324,7 +324,7 @@ public sealed class CraftingScreen : IScreen
         for (int i = scrollOffset; i < renderEnd && row < maxRow; i++)
         {
             var recipe = _filteredRecipes[i];
-            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
+            bool canCraft = CanCraftRecipe(recipe, playerState, IsDebugFreeCraft);
             bool sel = i == selectedIndex;
 
             string prefix = sel ? "\u25ba" : " ";
@@ -345,7 +345,7 @@ public sealed class CraftingScreen : IScreen
     }
 
     private void RenderRecentRecipes(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        PlayerStateMsg hud)
+        PlayerStateMsg playerState)
     {
         if (_recentRecipeIds.Count == 0 || row >= maxRow) return;
 
@@ -359,7 +359,7 @@ public sealed class CraftingScreen : IScreen
             if (row >= maxRow) break;
             var recipe = recipes.Get(recipeId);
             if (recipe == null) continue;
-            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
+            bool canCraft = CanCraftRecipe(recipe, playerState, IsDebugFreeCraft);
             var def = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
             string tag = def != null ? AsciiDraw.CategoryTag(def.CategoryInt) : "     ";
             string text = $"  {tag}{recipe.Name}";
@@ -370,7 +370,7 @@ public sealed class CraftingScreen : IScreen
     }
 
     private void RenderDetailSection(ISpriteRenderer r, int col, int innerW, int row, int maxRow,
-        PlayerStateMsg hud)
+        PlayerStateMsg playerState)
     {
         if (row >= maxRow) return;
         AsciiDraw.DrawString(r, col, row, "Ingredients:", RenderingTheme.Dim); row++;
@@ -385,7 +385,7 @@ public sealed class CraftingScreen : IScreen
         {
             if (row >= maxRow) break;
             var def = GameData.Instance.Items.Get(ingredient.NumericItemId);
-            int have = CountItem(hud, ingredient.NumericItemId);
+            int have = CountItem(playerState, ingredient.NumericItemId);
             bool enough = have >= ingredient.Count;
             var color = enough ? RenderingTheme.StatPositive : RenderingTheme.StatNegative;
             string text = $"  {def?.Name ?? "Unknown"}: {have}/{ingredient.Count}";
@@ -397,7 +397,7 @@ public sealed class CraftingScreen : IScreen
         if (row < maxRow) { AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++; }
         if (row < maxRow)
         {
-            int owned = CountItem(hud, recipe.Result.NumericItemId);
+            int owned = CountItem(playerState, recipe.Result.NumericItemId);
             string ownedText = $"  Owned: {owned}";
             AsciiDraw.DrawString(r, col, row, ownedText, owned > 0 ? RenderingTheme.Stats : RenderingTheme.Dim);
             row++;
@@ -405,8 +405,8 @@ public sealed class CraftingScreen : IScreen
 
         if (row < maxRow)
         {
-            bool canCraft = CanCraftRecipe(recipe, hud, IsDebugFreeCraft);
-            bool hasStation = HasNearbyStation(recipe, hud);
+            bool canCraft = CanCraftRecipe(recipe, playerState, IsDebugFreeCraft);
+            bool hasStation = HasNearbyStation(recipe, playerState);
             if (!hasStation)
             {
                 string stationText = $">> Need: {StationName(recipe.Station)}";
@@ -423,7 +423,7 @@ public sealed class CraftingScreen : IScreen
 
         if (row < maxRow && recipe.Station != CraftingStationType.Hand)
         {
-            bool hasStation = HasNearbyStation(recipe, hud);
+            bool hasStation = HasNearbyStation(recipe, playerState);
             var stationColor = hasStation ? RenderingTheme.Stats : RenderingTheme.Dim;
             string stationLabel = $"  Station: {StationName(recipe.Station)}";
             if (hasStation) stationLabel += " \u2713";
@@ -472,19 +472,21 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in recipes)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null) categories.Add(def.CategoryInt);
+            if (def != null) categories.Add(InternalCategoryId(def));
         }
 
-        // Sort: categories with craftable recipes first, then by category id
+        // Sort: categories with craftable recipes first, then by category Name
         var sorted = categories.ToList();
         sorted.Sort((a, b) =>
         {
             bool aCraft = playerState != null && CategoryHasCraftable(a, playerState);
             bool bCraft = playerState != null && CategoryHasCraftable(b, playerState);
             if (aCraft != bCraft) return aCraft ? -1 : 1;
-            return a.CompareTo(b);
+            var aName = InternalCategoryName(a);
+            var bName = InternalCategoryName(b);
+            return aName.CompareTo(bName, StringComparison.InvariantCultureIgnoreCase);
         });
-        _categoryOrder = sorted.ToArray();
+        _internalCategoryIdsInOrder = sorted.ToArray();
     }
 
     private void RebuildFilteredRecipes()
@@ -496,7 +498,7 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in recipes)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == _selectedCategory)
+            if (def != null && InternalCategoryId(def) == _selectedInternalCategoryId)
                 filtered.Add(r);
         }
 
@@ -506,7 +508,7 @@ public sealed class CraftingScreen : IScreen
             bool aCraft = hud != null && CanCraftRecipe(a, hud, IsDebugFreeCraft);
             bool bCraft = hud != null && CanCraftRecipe(b, hud, IsDebugFreeCraft);
             if (aCraft != bCraft) return aCraft ? -1 : 1;
-            return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+            return string.Compare(a.Name, b.Name, StringComparison.InvariantCultureIgnoreCase);
         });
         _filteredRecipes = filtered.ToArray();
     }
@@ -516,7 +518,7 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft))
+            if (def != null && InternalCategoryId(def) == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft))
                 return true;
         }
         return false;
@@ -528,7 +530,7 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category) count++;
+            if (def != null && InternalCategoryId(def) == category) count++;
         }
         return count;
     }
@@ -539,7 +541,7 @@ public sealed class CraftingScreen : IScreen
         foreach (var r in GameData.Instance.Recipes.All)
         {
             var def = GameData.Instance.Items.Get(r.Result.NumericItemId);
-            if (def != null && def.CategoryInt == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft)) count++;
+            if (def != null && InternalCategoryId(def) == category && CanCraftRecipe(r, playerState, IsDebugFreeCraft)) count++;
         }
         return count;
     }
@@ -596,4 +598,28 @@ public sealed class CraftingScreen : IScreen
         }
         return count;
     }
+
+
+    /// <summary>
+    /// Returns an effective category ID for filtering.
+    /// Placeable items return a sub-category ID encoding their PlaceableType
+    /// (PlaceableCategoryBase + PlaceableType). All other items return CategoryInt.
+    /// </summary>
+    static private int InternalCategoryId(ItemDefinition itemDefinition) => itemDefinition.Category == ItemCategory.Placeable && itemDefinition.Placeable != null
+        ? InternalPlaceableCategoryId(itemDefinition.Placeable.PlaceableType)
+        : itemDefinition.CategoryInt;
+
+    /// <summary>Base value for placeable sub-category IDs (PlaceableCategoryBase + PlaceableType).</summary>
+    private const int PlaceableCategoryBase = 1000;
+
+    /// <summary>Returns the encoded filter ID for a given placeable type.</summary>
+    private static int InternalPlaceableCategoryId(PlaceableType pt) => PlaceableCategoryBase + (int)pt;
+
+    /// <summary>Returns true if <paramref name="categoryId"/> is a placeable sub-category.</summary>
+    private static bool IsPlaceableSubCategory(int categoryId) => categoryId >= PlaceableCategoryBase;
+
+    /// <summary>Returns the display name for any category ID, including placeable sub-categories.</summary>
+    private static string InternalCategoryName(int categoryId) => IsPlaceableSubCategory(categoryId)
+        ? ItemDefinition.PlaceableTypeName((PlaceableType)(categoryId - PlaceableCategoryBase))
+        : ItemDefinition.CategoryName((ItemCategory)categoryId);
 }
