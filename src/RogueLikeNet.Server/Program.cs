@@ -7,7 +7,8 @@ var app = builder.Build();
 
 // Load game data from JSON files
 var dataDir = DataDirectory.FindOrThrow();
-DataLoader.Load(dataDir);
+GameData.Instance = DataLoader.Load(dataDir);
+GameData.Instance.LogLoadedData(Console.Out);
 
 // Create game loop with SQLite persistence
 long worldSeed = 12345; // TODO: configurable
