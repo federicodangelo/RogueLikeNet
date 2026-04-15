@@ -1,5 +1,6 @@
 using Engine.Core;
 using Engine.Platform;
+using Engine.Rendering.Base;
 
 namespace RogueLikeNet.Client.Core.Rendering;
 
@@ -12,15 +13,22 @@ public sealed class ParticleSystem
     private readonly List<Particle> _particles = new();
     private readonly Random _rng = new();
 
+    private float RandomWorldOffsetX() => _rng.NextSingle() - 0.5f; // random offset in range [-0.5, 0.5]
+    private float RandomVelocityX() => _rng.NextSingle() - 0.5f; // random velocity in range [-0.5, 0.5]
+
+    private const float VelocityY = -1.5f; // float upwards
+    private const float OffsetY = -0.2f; // slightly above the target tile
+
+
     /// <summary>Spawn floating damage number at a world position.</summary>
     public void SpawnDamageNumber(int worldX, int worldY, int damage, bool killed)
     {
         _particles.Add(new Particle
         {
-            WorldX = worldX + (_rng.NextSingle() - 0.5f) * 0.3f,
-            WorldY = worldY - 0.2f,
-            VelocityX = (_rng.NextSingle() - 0.5f) * 0.3f,
-            VelocityY = -1.5f, // float upward
+            WorldX = worldX + RandomWorldOffsetX(),
+            WorldY = worldY + OffsetY,
+            VelocityX = RandomVelocityX(),
+            VelocityY = VelocityY,
             Text = damage.ToString(),
             Color = killed ? new Color4(255, 50, 50, 255) : new Color4(255, 200, 80, 255),
             Life = 1.0f,
@@ -33,10 +41,10 @@ public sealed class ParticleSystem
     {
         _particles.Add(new Particle
         {
-            WorldX = worldX + (_rng.NextSingle() - 0.5f) * 0.3f,
-            WorldY = worldY - 0.2f,
-            VelocityX = (_rng.NextSingle() - 0.5f) * 0.3f,
-            VelocityY = -1.5f,
+            WorldX = worldX + RandomWorldOffsetX(),
+            WorldY = worldY + OffsetY,
+            VelocityX = RandomVelocityX(),
+            VelocityY = VelocityY,
             Text = "BLOCK",
             Color = new Color4(100, 180, 255, 255),
             Life = 1.0f,
@@ -91,11 +99,14 @@ public sealed class ParticleSystem
             float sx = p.WorldX - (cameraCenterX - halfW);
             float sy = p.WorldY - (cameraCenterY - halfH);
 
-            float px = sx * tileW + shakeX;
+            float px = (sx + 0.5f) * tileW + shakeX; // +half-tile offset to center text
             float py = sy * tileH + shakeY;
 
             byte alpha = (byte)(Math.Clamp(p.Life, 0f, 1f) * 255);
             var color = new Color4(p.Color.R, p.Color.G, p.Color.B, alpha);
+
+            var textWidth = r.MeasureText(p.Text, 1.0f);
+            px -= textWidth / 2f; // center text horizontally
             r.DrawTextScreen(px, py, p.Text, color, 1f);
         }
     }
