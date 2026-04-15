@@ -339,7 +339,7 @@ public sealed class PlayingScreen : IScreen
         {
             int invIndex = ps.QuickSlotIndices[slotNum];
             if (invIndex >= 0 && invIndex < ps.InventoryItems.Length &&
-                ps.InventoryItems[invIndex].Category == (int)ItemCategory.Placeable)
+             (GameData.Instance.Items.Get(ps.InventoryItems[invIndex].ItemTypeId)?.IsPlaceable ?? false))
             {
                 _placingFromSlot = invIndex;
                 return null;

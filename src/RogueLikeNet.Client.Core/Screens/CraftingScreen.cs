@@ -201,7 +201,7 @@ public sealed class CraftingScreen : IScreen
                     string title = _inCategoryMode ? "CRAFTING" : $"CRAFTING > {InternalCategoryName(_selectedInternalCategoryId)}";
                     if (title.Length > innerW) title = title[..innerW];
                     AsciiDraw.DrawString(r, col, row, title, RenderingTheme.Title);
-                    AsciiDraw.DrawString(r, col + innerW - 5, row, "[Esc]", RenderingTheme.Dim);
+                    AsciiDraw.DrawString(r, col + innerW - 5, row, "[ESC]", RenderingTheme.Dim);
                     row++;
                     if (row >= maxRow) break;
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW);

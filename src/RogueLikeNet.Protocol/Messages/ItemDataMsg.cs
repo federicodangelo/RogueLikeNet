@@ -8,8 +8,7 @@ public class ItemDataMsg : IEquatable<ItemDataMsg>
 {
     [Key(0)] public int ItemTypeId { get; set; }
     [Key(1)] public int StackCount { get; set; }
-    [Key(2)] public int Category { get; set; }
-    [Key(3)] public int EquipSlot { get; set; }
+    [Key(2)] public int EquipSlot { get; set; } // -1 for inventory items, otherwise the equipment slot index
 
     public static bool Equals(ItemDataMsg? a, ItemDataMsg? b)
     {
@@ -18,7 +17,6 @@ public class ItemDataMsg : IEquatable<ItemDataMsg>
         return
             a.ItemTypeId == b.ItemTypeId &&
             a.StackCount == b.StackCount &&
-            a.Category == b.Category &&
             a.EquipSlot == b.EquipSlot;
     }
 

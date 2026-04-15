@@ -180,7 +180,6 @@ public static class GameStateSerializer
                 var item = new ItemDataMsg
                 {
                     ItemTypeId = gi.Item.ItemTypeId,
-                    Category = GameData.Instance.Items.Get(gi.Item.ItemTypeId)?.CategoryInt ?? 0,
                     StackCount = gi.Item.StackCount,
                 };
                 ProcessEntity((long)gi.Id, EntityType.GroundItem, gi.Position, gi.Appearance, 0, 0, 0, item);
@@ -287,8 +286,8 @@ public static class GameStateSerializer
             MaxThirst = stateData.MaxThirst,
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
-            InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category }).ToArray(),
-            EquippedItems = stateData.EquippedItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, Category = i.Category, EquipSlot = i.EquipSlot }).ToArray(),
+            InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, EquipSlot = -1 }).ToArray(),
+            EquippedItems = stateData.EquippedItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, EquipSlot = i.EquipSlot }).ToArray(),
             QuickSlotIndices = stateData.QuickSlotIndices,
             PlayerEntityId = (long)player.Id,
             NearbyStationsTypes = stateData.NearbyStationsTypes,

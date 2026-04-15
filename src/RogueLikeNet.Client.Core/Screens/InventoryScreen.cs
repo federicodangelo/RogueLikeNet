@@ -151,6 +151,41 @@ public sealed class InventoryScreen : IScreen
         _ctx.ScreenShake.Update(_ctx.GameState.PlayerState?.Health ?? 0);
     }
 
+    private ItemDefinition? GetSelectedItemDef()
+    {
+        ItemDefinition? selectedItemDef = null;
+
+        var focused = _inventoryRenderer.InventoryLayout.FocusedSection;
+
+        if (focused != null && focused.Name == "InvItems")
+        {
+            var inventory = _ctx.GameState.PlayerState?.InventoryItems;
+            var selectedInventoryIndex = focused.SelectedIndex;
+            if (inventory != null && selectedInventoryIndex >= 0 && selectedInventoryIndex < inventory.Length)
+            {
+                var itemId = inventory[selectedInventoryIndex].ItemTypeId;
+                selectedItemDef = GameData.Instance.Items.Get(itemId);
+            }
+        }
+        else if (focused != null && focused.Name == "InvEquipment")
+        {
+            var equipment = _ctx.GameState.PlayerState?.EquippedItems;
+            var selectedEquipmentIndex = focused.SelectedIndex;
+
+            if (equipment != null)
+            {
+                var slot = equipment.FirstOrDefault(e => e.EquipSlot == selectedEquipmentIndex);
+                if (slot != null)
+                {
+                    var itemId = slot.ItemTypeId;
+                    selectedItemDef = GameData.Instance.Items.Get(itemId);
+                }
+            }
+        }
+
+        return selectedItemDef;
+    }
+
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
         int gameCols = totalCols - AsciiDraw.HudColumns;
@@ -172,34 +207,7 @@ public sealed class InventoryScreen : IScreen
         renderer.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
         bool debugLightOff = debug is { Enabled: true, LightOff: true };
         _worldRenderer.Render(renderer, _ctx.GameState, zoomedGameCols, zoomedRows, shakeX, shakeY, tileW, tileH, fontScale, debugLightOff);
-
-        // Find current inventory selection for rendering the preview
-
-        var focused = _inventoryRenderer.InventoryLayout.FocusedSection;
-        ItemDefinition? selectedItemDef = null;
-        if (focused != null && focused.Name == "InvItems")
-        {
-            var inventory = _ctx.GameState.PlayerState?.InventoryItems;
-            var selectedInventoryIndex = focused.SelectedIndex;
-            if (inventory != null && selectedInventoryIndex >= 0 && selectedInventoryIndex < inventory.Length)
-            {
-                var itemId = inventory[selectedInventoryIndex].ItemTypeId;
-                selectedItemDef = GameData.Instance.Items.Get(itemId);
-            }
-        }
-        else if (focused != null && focused.Name == "InvEquipment")
-        {
-            var equipment = _ctx.GameState.PlayerState?.EquippedItems;
-            var selectedEquipmentIndex = focused.SelectedIndex;
-
-            if (equipment != null && selectedEquipmentIndex >= 0 && selectedEquipmentIndex < equipment.Length)
-            {
-                var itemId = equipment[selectedEquipmentIndex].ItemTypeId;
-                selectedItemDef = GameData.Instance.Items.Get(itemId);
-            }
-        }
-
-        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, IsPlacingMode, selectedItemDef);
+        _inventoryRenderer.Render(renderer, _ctx.GameState, gameCols, totalRows, IsPlacingMode, GetSelectedItemDef());
 
         // Render particles
         int halfW = zoomedGameCols / 2;
@@ -226,6 +234,8 @@ public sealed class InventoryScreen : IScreen
             section.SelectedIndex = itemCount - 1;
             section.EnsureSelectionVisible(itemCount);
         }
+
+        var selectedItemDef = GetSelectedItemDef();
 
         if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
         {
@@ -268,11 +278,22 @@ public sealed class InventoryScreen : IScreen
         else if (input.IsActionPressed(InputAction.UseItem8))
             SendInventoryAction(ActionTypes.SetQuickSlot, 7, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.MenuConfirm))
-            SendInventoryAction(ActionTypes.UseItem, section.SelectedIndex);
+        {
+            if (selectedItemDef != null)
+            {
+                if (selectedItemDef.IsPlaceable)
+                    TryBeginPlace(section.SelectedIndex);
+                else if (selectedItemDef.IsConsumable || selectedItemDef.IsEquippable)
+                    SendInventoryAction(ActionTypes.UseItem, section.SelectedIndex);
+            }
+        }
         else if (input.IsActionPressed(InputAction.Drop) && section.SelectedIndex < itemCount)
             SendInventoryAction(ActionTypes.Drop, section.SelectedIndex);
         else if (input.IsActionPressed(InputAction.Place) && section.SelectedIndex < itemCount)
-            TryBeginPlace(section.SelectedIndex);
+        {
+            if (selectedItemDef != null && selectedItemDef.IsPlaceable)
+                TryBeginPlace(section.SelectedIndex);
+        }
     }
 
     private void HandleInvEquipmentInput(IInputManager input, HudSection section, int cap)
@@ -314,10 +335,10 @@ public sealed class InventoryScreen : IScreen
 
     private void TryBeginPlace(int slot)
     {
-        var hud = _ctx.GameState.PlayerState;
-        if (hud == null || slot < 0 || slot >= hud.InventoryItems.Length) return;
-        var cat = hud.InventoryItems[slot].Category;
-        if (cat != (int)ItemCategory.Placeable) return;
+        var playerState = _ctx.GameState.PlayerState;
+        if (playerState == null || slot < 0 || slot >= playerState.InventoryItems.Length) return;
+        var itemDef = GameData.Instance.Items.Get(playerState.InventoryItems[slot].ItemTypeId);
+        if (itemDef == null || !itemDef.IsPlaceable) return;
         _placingSlot = slot;
     }
 

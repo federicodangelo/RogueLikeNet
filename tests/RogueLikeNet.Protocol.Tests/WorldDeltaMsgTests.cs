@@ -44,9 +44,9 @@ public class WorldDeltaMsgTests
             InventoryCount = 3,
             InventoryCapacity = 20,
             InventoryItems = [
-                new ItemDataMsg { ItemTypeId = 1, StackCount = 1, Category = 0 },
-                new ItemDataMsg { ItemTypeId = 2, StackCount = 1, Category = 1 },
-                new ItemDataMsg { ItemTypeId = 3, StackCount = 1, Category = 4 },
+                new ItemDataMsg { ItemTypeId = 1, StackCount = 1 },
+                new ItemDataMsg { ItemTypeId = 2, StackCount = 1 },
+                new ItemDataMsg { ItemTypeId = 3, StackCount = 1 },
             ],
         };
         var data = NetSerializer.Serialize(msg);
@@ -61,7 +61,6 @@ public class WorldDeltaMsgTests
         Assert.Equal(20, result.InventoryCapacity);
         Assert.Equal(3, result.InventoryItems.Length);
         Assert.Equal(1, result.InventoryItems[0].ItemTypeId);
-        Assert.Equal(1, result.InventoryItems[1].Category);
     }
 
     [Fact]
@@ -124,7 +123,7 @@ public class WorldDeltaMsgTests
             FgColor = 0xFF0000,
             Health = 80,
             MaxHealth = 100,
-            Item = new ItemDataMsg { ItemTypeId = 5, Category = 1, StackCount = 1 },
+            Item = new ItemDataMsg { ItemTypeId = 5, StackCount = 1 },
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<EntityUpdateMsg>(data);
@@ -137,7 +136,6 @@ public class WorldDeltaMsgTests
         Assert.Equal(100, result.MaxHealth);
         Assert.NotNull(result.Item);
         Assert.Equal(5, result.Item.ItemTypeId);
-        Assert.Equal(1, result.Item.Category);
     }
 
     [Fact]
@@ -217,12 +215,12 @@ public class WorldDeltaMsgTests
             InventoryCount = 2,
             InventoryCapacity = 20,
             InventoryItems = [
-                new ItemDataMsg { ItemTypeId = 10, StackCount = 1, Category = 0 },
-                new ItemDataMsg { ItemTypeId = 11, StackCount = 5, Category = 4 },
+                new ItemDataMsg { ItemTypeId = 10, StackCount = 1 },
+                new ItemDataMsg { ItemTypeId = 11, StackCount = 5 },
             ],
             EquippedItems = [
-                new ItemDataMsg { ItemTypeId = 10, Category = 0, EquipSlot = 5 },
-                new ItemDataMsg { ItemTypeId = 12, Category = 1, EquipSlot = 1 },
+                new ItemDataMsg { ItemTypeId = 10, EquipSlot = 5 },
+                new ItemDataMsg { ItemTypeId = 12, EquipSlot = 1 },
             ],
         };
         var data = NetSerializer.Serialize(msg);

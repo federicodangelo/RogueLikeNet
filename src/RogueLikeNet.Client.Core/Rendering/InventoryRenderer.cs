@@ -60,7 +60,12 @@ public sealed class InventoryRenderer
                 case "InvHeader":
                     if (row >= maxRow) break;
                     AsciiDraw.DrawString(r, col, row, $"INVENTORY {hud.InventoryCount}/{hud.InventoryCapacity}", RenderingTheme.Title);
-                    AsciiDraw.DrawString(r, col + innerW - 5, row, "[Esc]", RenderingTheme.Dim);
+                    AsciiDraw.DrawString(r, col + innerW - 5, row, "[ESC]", RenderingTheme.Dim);
+                    if (InventoryLayout.FocusedSection?.Name != "InvItems")
+                    {
+                        // Show hint to switch to inventory when it's not focused
+                        AsciiDraw.DrawString(r, col + innerW - 10, row, "[TAB]", RenderingTheme.Dim);
+                    }
                     row++;
                     if (row >= maxRow) break;
                     AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
@@ -108,9 +113,12 @@ public sealed class InventoryRenderer
                         if (focusedName == "InvEquipment")
                         {
                             if (row >= maxRow) break;
-                            AsciiDraw.DrawString(r, col, row, "[Enter] Unequip [X] Drop", RenderingTheme.Dim); row++;
-                            if (row >= maxRow) break;
-                            AsciiDraw.DrawString(r, col, row, "[Tab] Inventory", RenderingTheme.Dim);
+                            if (selectedItemDef != null)
+                                AsciiDraw.DrawString(r, col, row, "[Enter] Unequip", RenderingTheme.Dim);
+                            else
+                                AsciiDraw.DrawString(r, col, row, "[Enter] ---", RenderingTheme.Dim);
+                            AsciiDraw.DrawString(r, col + innerW / 2 + 2, row, "[X] Drop", RenderingTheme.Dim);
+                            row++;
                         }
                         else
                         {
@@ -118,21 +126,18 @@ public sealed class InventoryRenderer
                             if (selectedItemDef != null)
                             {
                                 if (selectedItemDef.IsEquippable)
-                                    AsciiDraw.DrawString(r, col, row, "[Enter] Equip [X] Drop", RenderingTheme.Dim);
+                                    AsciiDraw.DrawString(r, col, row, "[Enter] Equip", RenderingTheme.Dim);
                                 else if (selectedItemDef.IsConsumable)
-                                    AsciiDraw.DrawString(r, col, row, "[Enter] Use [X] Drop", RenderingTheme.Dim);
+                                    AsciiDraw.DrawString(r, col, row, "[Enter] Use", RenderingTheme.Dim);
                                 else if (selectedItemDef.IsPlaceable)
-                                    AsciiDraw.DrawString(r, col, row, "[P] Place [X] Drop", RenderingTheme.Dim);
+                                    AsciiDraw.DrawString(r, col, row, "[Enter] Place", RenderingTheme.Dim);
                                 else
-                                    AsciiDraw.DrawString(r, col, row, "[X] Drop", RenderingTheme.Dim);
+                                    AsciiDraw.DrawString(r, col, row, "[Enter] ---", RenderingTheme.Dim);
                             }
-                            else
-                            {
-                                AsciiDraw.DrawString(r, col, row, "[X] Drop", RenderingTheme.Dim);
-                            }
+                            AsciiDraw.DrawString(r, col + innerW / 2 + 2, row, "[X] Drop", RenderingTheme.Dim);
                             row++;
                             if (row >= maxRow) break;
-                            AsciiDraw.DrawString(r, col, row, "[1-8] Slot  [Tab] Equipment", RenderingTheme.Dim);
+                            AsciiDraw.DrawString(r, col, row, "[1-8] Assign Quick Use Slot", RenderingTheme.Dim);
                         }
                     }
                     break;
@@ -172,11 +177,12 @@ public sealed class InventoryRenderer
             }
 
             var item = hud.InventoryItems[i];
-            string catTag = AsciiDraw.CategoryTag(item.Category);
-            string name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
-            int stack = item.StackCount;
-            string stackStr = stack > 1 ? $" x{stack}" : "";
-            string text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
+            var itemDef = GameData.Instance.Items.Get(item.ItemTypeId);
+            var catTag = ItemDefinition.CategoryTag(itemDef?.Category ?? ItemCategory.Misc);
+            var name = AsciiDraw.ItemDisplayName(item.ItemTypeId);
+            var stack = item.StackCount;
+            var stackStr = stack > 1 ? $" x{stack}" : "";
+            var text = $"{prefix}{slotTag}{catTag}{name}{stackStr}";
             if (text.Length > innerW) text = text[..innerW];
             var color = sel ? RenderingTheme.InvSel : RenderingTheme.Item;
             AsciiDraw.DrawString(r, col, row, text, color);
@@ -228,7 +234,13 @@ public sealed class InventoryRenderer
         PlayerStateMsg hud, HudSection section, bool focused)
     {
         if (row >= maxRow) return;
-        AsciiDraw.DrawString(r, col, row, "Equipment", RenderingTheme.Title); row++;
+        AsciiDraw.DrawString(r, col, row, "Equipment", RenderingTheme.Title);
+        if (!focused)
+        {
+            // Show hint to switch to inventory when equipment is not focused
+            AsciiDraw.DrawString(r, col + innerW - 5, row, "[TAB]", RenderingTheme.Dim);
+        }
+        row++;
         if (row >= maxRow) return;
         AsciiDraw.DrawHudSeparator(r, col, row, innerW); row++;
 
