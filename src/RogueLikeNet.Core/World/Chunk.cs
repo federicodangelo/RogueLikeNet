@@ -38,7 +38,7 @@ public record struct ChunkPosition(int X, int Y, int Z)
 }
 
 
-public class Chunk
+public class Chunk : EntitiesCollection
 {
     public const int Size = 64;
 
@@ -51,98 +51,12 @@ public class Chunk
 
     public Dictionary<int, byte[]>? ServerExploredTilesByServerPlayerId { get; set; }
 
-    // ── Entity storage ────────────────────────────────────────────────
-    public Span<MonsterEntity> Monsters => CollectionsMarshal.AsSpan(_monsters);
-    public Span<GroundItemEntity> GroundItems => CollectionsMarshal.AsSpan(_groundItems);
-    public Span<ResourceNodeEntity> ResourceNodes => CollectionsMarshal.AsSpan(_resourceNodes);
-    public Span<TownNpcEntity> TownNpcs => CollectionsMarshal.AsSpan(_townNpcs);
-    public Span<CropEntity> Crops => CollectionsMarshal.AsSpan(_crops);
-    public Span<AnimalEntity> Animals => CollectionsMarshal.AsSpan(_animals);
+    private readonly EntitiesCollection _entitiesCollection = new();
+
 
     // ── Light-emitting placeable tracking ─────────────────────────────
     public ReadOnlySpan<long> LightEmittingTiles => CollectionsMarshal.AsSpan(_lightEmittingTiles);
 
-    public ref struct SolidEntityWithHealth
-    {
-        public readonly EntityRef Entity;
-        public readonly ref Position Position;
-        public readonly ref Health Health;
-        public readonly bool IsDead => !Health.IsAlive;
-
-        public SolidEntityWithHealth(EntityRef entityRef, ref Position position, ref Health health)
-        {
-            Entity = entityRef;
-            Position = ref position;
-            Health = ref health;
-        }
-    }
-
-    public ref struct SolidEntitiesWithHealthEnumerator
-    {
-        private readonly Chunk _chunk;
-        private int _phase; // 0 = monsters, 1 = resourceNodes, 2 = townNpcs
-        private int _index;
-
-        public SolidEntitiesWithHealthEnumerator(Chunk chunk)
-        {
-            _chunk = chunk;
-            _phase = 0;
-            _index = -1;
-        }
-
-        public SolidEntitiesWithHealthEnumerator GetEnumerator() => this;
-
-        public bool MoveNext()
-        {
-            _index++;
-            while (_phase <= 3)
-            {
-                int count = _phase switch
-                {
-                    0 => _chunk._monsters.Count,
-                    1 => _chunk._resourceNodes.Count,
-                    2 => _chunk._townNpcs.Count,
-                    3 => _chunk._animals.Count,
-                    _ => 0
-                };
-                if (_index < count) return true;
-                _phase++;
-                _index = 0;
-            }
-            return false;
-        }
-
-        public SolidEntityWithHealth Current => _phase switch
-        {
-            0 => new SolidEntityWithHealth(
-                new EntityRef(_chunk._monsters[_index].Id, EntityType.Monster),
-                ref _chunk.Monsters[_index].Position,
-                ref _chunk.Monsters[_index].Health),
-            1 => new SolidEntityWithHealth(
-                new EntityRef(_chunk._resourceNodes[_index].Id, EntityType.ResourceNode),
-                ref _chunk.ResourceNodes[_index].Position,
-                ref _chunk.ResourceNodes[_index].Health),
-            2 => new SolidEntityWithHealth(
-                new EntityRef(_chunk._townNpcs[_index].Id, EntityType.TownNpc),
-                ref _chunk.TownNpcs[_index].Position,
-                ref _chunk.TownNpcs[_index].Health),
-            3 => new SolidEntityWithHealth(
-                new EntityRef(_chunk._animals[_index].Id, EntityType.Animal),
-                ref _chunk.Animals[_index].Position,
-                ref _chunk.Animals[_index].Health),
-            _ => throw new InvalidOperationException()
-        };
-    }
-
-    public SolidEntitiesWithHealthEnumerator AllSolidEntitiesWithHealth =>
-        new SolidEntitiesWithHealthEnumerator(this);
-
-    private readonly List<MonsterEntity> _monsters = [];
-    private readonly List<GroundItemEntity> _groundItems = [];
-    private readonly List<ResourceNodeEntity> _resourceNodes = [];
-    private readonly List<TownNpcEntity> _townNpcs = [];
-    private readonly List<CropEntity> _crops = [];
-    private readonly List<AnimalEntity> _animals = [];
     private readonly List<long> _lightEmittingTiles = [];
 
     /// <summary>World-coordinate dirty tiles modified since last flush.</summary>
@@ -211,96 +125,6 @@ public class Chunk
         int cx = world.X >= 0 ? world.X / Size : (world.X - Size + 1) / Size;
         int cy = world.Y >= 0 ? world.Y / Size : (world.Y - Size + 1) / Size;
         return ChunkPosition.FromCoords(cx, cy, world.Z);
-    }
-
-    public void RemoveEntity(EntityRef entity)
-    {
-        switch (entity.Type)
-        {
-            case EntityType.Monster:
-                _monsters.RemoveAll(m => m.Id == entity.Id);
-                break;
-            case EntityType.GroundItem:
-                _groundItems.RemoveAll(i => i.Id == entity.Id);
-                break;
-            case EntityType.ResourceNode:
-                _resourceNodes.RemoveAll(r => r.Id == entity.Id);
-                break;
-            case EntityType.TownNpc:
-                _townNpcs.RemoveAll(n => n.Id == entity.Id);
-                break;
-            case EntityType.Crop:
-                _crops.RemoveAll(c => c.Id == entity.Id);
-                break;
-            case EntityType.Animal:
-                _animals.RemoveAll(a => a.Id == entity.Id);
-                break;
-        }
-        MarkModified();
-    }
-
-    public void RemoveEntity(MonsterEntity entity) { _monsters.RemoveAll(m => m.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(GroundItemEntity entity) { _groundItems.RemoveAll(i => i.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(ResourceNodeEntity entity) { _resourceNodes.RemoveAll(r => r.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(TownNpcEntity entity) { _townNpcs.RemoveAll(n => n.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(CropEntity entity) { _crops.RemoveAll(c => c.Id == entity.Id); MarkModified(); }
-    public void RemoveEntity(AnimalEntity entity) { _animals.RemoveAll(a => a.Id == entity.Id); MarkModified(); }
-
-    public ref MonsterEntity AddEntity(MonsterEntity entity) { _monsters.Add(entity); MarkModified(); return ref Monsters[^1]; }
-    public ref GroundItemEntity AddEntity(GroundItemEntity entity) { _groundItems.Add(entity); MarkModified(); return ref GroundItems[^1]; }
-    public ref ResourceNodeEntity AddEntity(ResourceNodeEntity entity) { _resourceNodes.Add(entity); MarkModified(); return ref ResourceNodes[^1]; }
-    public ref TownNpcEntity AddEntity(TownNpcEntity entity) { _townNpcs.Add(entity); MarkModified(); return ref TownNpcs[^1]; }
-    public ref CropEntity AddEntity(CropEntity entity) { _crops.Add(entity); MarkModified(); return ref Crops[^1]; }
-    public ref AnimalEntity AddEntity(AnimalEntity entity) { _animals.Add(entity); MarkModified(); return ref Animals[^1]; }
-
-    // ── Ref getters for in-place mutation ─────────────────────────────
-
-    public ref MonsterEntity GetMonsterRef(int entityId)
-    {
-        var span = Monsters;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Monster entity {entityId} not found in chunk.");
-    }
-
-    public ref GroundItemEntity GetGroundItemRef(int entityId)
-    {
-        var span = GroundItems;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Ground item entity {entityId} not found in chunk.");
-    }
-
-    public ref ResourceNodeEntity GetResourceNodeRef(int entityId)
-    {
-        var span = ResourceNodes;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Resource node entity {entityId} not found in chunk.");
-    }
-
-    public ref TownNpcEntity GetTownNpcRef(int entityId)
-    {
-        var span = TownNpcs;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Town NPC entity {entityId} not found in chunk.");
-    }
-
-    public ref CropEntity GetCropRef(int entityId)
-    {
-        var span = Crops;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Crop entity {entityId} not found in chunk.");
-    }
-
-    public ref AnimalEntity GetAnimalRef(int entityId)
-    {
-        var span = Animals;
-        for (int i = 0; i < span.Length; i++)
-            if (span[i].Id == entityId) return ref span[i];
-        throw new KeyNotFoundException($"Animal entity {entityId} not found in chunk.");
     }
 
     // Called by WorldMap when a chunk is loaded (from disk or generated) to perform any necessary initialization
@@ -428,28 +252,6 @@ public class Chunk
         return true;
     }
 
-    /// <summary>Removes dead entities from all lists (compacts in-place).</summary>
-    public void RemoveDeadOrDestroyedEntities()
-    {
-        if (_monsters.RemoveAll(m => m.IsDead) != 0) MarkModified();
-        if (_groundItems.RemoveAll(i => i.IsDestroyed) != 0) MarkModified();
-        if (_resourceNodes.RemoveAll(r => r.IsDead) != 0) MarkModified();
-        if (_townNpcs.RemoveAll(n => n.IsDead) != 0) MarkModified();
-        if (_crops.RemoveAll(c => c.IsDestroyed) != 0) MarkModified();
-        if (_animals.RemoveAll(a => a.IsDead) != 0) MarkModified();
-    }
-
-    /// <summary>Clears all entity lists (used when unloading a chunk).</summary>
-    public void ClearEntities()
-    {
-        _monsters.Clear();
-        _groundItems.Clear();
-        _resourceNodes.Clear();
-        _townNpcs.Clear();
-        _crops.Clear();
-        _animals.Clear();
-    }
-
     internal void FlushDirtyTiles(List<(Position, TileInfo)> result)
     {
         if (_dirtyTiles.Count == 0) return;
@@ -462,5 +264,10 @@ public class Chunk
             }
         }
         _dirtyTiles.Clear();
+    }
+
+    protected override void OnModified()
+    {
+        MarkModified();
     }
 }
