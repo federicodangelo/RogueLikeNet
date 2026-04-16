@@ -4,6 +4,7 @@ public enum ScreenState
 {
     MainMenu,
     MainMenuHelp,
+    Options,
     ClassSelect,
     SaveSlotSelect,
     Connecting,
@@ -12,6 +13,7 @@ public enum ScreenState
     Crafting,
     Paused,
     PausedHelp,
+    PausedOptions,
     ServerAdmin,
     NewGame,
     Login,

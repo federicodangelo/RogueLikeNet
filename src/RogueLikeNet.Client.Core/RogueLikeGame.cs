@@ -23,6 +23,7 @@ public sealed class RogueLikeGame : GameBase
     private readonly ScreenShakeEffect _screenShake = new();
     private readonly NetworkMessageDrainer _networkDrainer = new();
     private readonly DebugSettings _debug = new();
+    private readonly GameOptions _options = new();
 
     private readonly ScreenContext _ctx;
     private readonly ScreenManager _screenManager;
@@ -85,6 +86,7 @@ public sealed class RogueLikeGame : GameBase
             Performance = _performance,
             ScreenShake = _screenShake,
             Debug = _debug,
+            Options = _options,
             RequestTransition = state => _screenManager!.TransitionTo(state),
             OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex),
             OnStartOnline = (classId, name) => StartOnlineRequested?.Invoke(classId, name),
@@ -113,6 +115,7 @@ public sealed class RogueLikeGame : GameBase
         var crafting = new CraftingScreen(_ctx, worldRenderer, overlayRenderer);
         var paused = new PausedScreen(_ctx, playing, menuRenderer);
         var help = new HelpScreen(_ctx, menuRenderer, playing);
+        var options = new OptionsScreen(_ctx, menuRenderer, playing);
         var saveSlot = new SaveSlotScreen(_ctx, menuRenderer, newGame);
         var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, newGame);
         var login = new LoginScreen(_ctx, menuRenderer);
@@ -126,13 +129,18 @@ public sealed class RogueLikeGame : GameBase
         _classSelectScreen = classSelect;
         _loginScreen = login;
 
-        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, saveSlot, serverAdmin, newGame, login);
+        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, options, saveSlot, serverAdmin, newGame, login);
     }
 
     public void Initialize(IPlatform platform)
     {
         Platform = platform;
         _ctx.SpriteRenderer = SpriteRenderer;
+        _ctx.Settings = Settings;
+
+        // Load persisted options
+        _options.Load(Settings);
+        _options.LoadDebugEnabled(Settings, _debug);
     }
 
     public void SetConnection(IGameServerConnection connection)

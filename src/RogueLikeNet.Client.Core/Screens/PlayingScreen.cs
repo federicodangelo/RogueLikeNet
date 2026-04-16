@@ -400,6 +400,7 @@ public sealed class PlayingScreen : IScreen
             halfW, halfH, shakeX, shakeY, tileW, tileH);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
-        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
+        if (_ctx.Options.ShowStats)
+            _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
     }
 }

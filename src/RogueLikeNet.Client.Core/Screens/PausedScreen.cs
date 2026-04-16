@@ -39,15 +39,17 @@ public sealed class PausedScreen : IScreen
         // Debug key toggles (only in debug mode)
         _ctx.Debug.HandleDebugKeys(input, _ctx.DebugSyncRequested);
 
+        int itemCount = 4;
         if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
-            _pauseIndex = (_pauseIndex + 2) % 3;
+            _pauseIndex = (_pauseIndex + itemCount - 1) % itemCount;
         else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
-            _pauseIndex = (_pauseIndex + 1) % 3;
+            _pauseIndex = (_pauseIndex + 1) % itemCount;
         else if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_pauseIndex)
             {
                 case MenuRenderer.PauseMenuResumeIndex: _ctx.RequestTransition(Rendering.ScreenState.Playing); break;
+                case MenuRenderer.PauseMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedOptions); break;
                 case MenuRenderer.PauseMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedHelp); break;
                 case MenuRenderer.PauseMenuMainMenuIndex: _ctx.OnReturnToMenu(); break;
             }

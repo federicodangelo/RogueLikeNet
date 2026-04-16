@@ -12,19 +12,20 @@ namespace RogueLikeNet.Client.Core.Rendering;
 /// </summary>
 public sealed class MenuRenderer
 {
-    private static readonly string[] MainMenuItems = ["New Game/Load Game", "Play Online", "Admin Online", "Debug Mode:", "Help", "Quit"];
+    private static readonly string[] MainMenuItems = ["New Game/Load Game", "Play Online", "Admin Online", "Options", "Help", "Quit"];
     public const int MainMenuPlayOfflineIndex = 0;
     public const int MainMenuPlayOnlineIndex = 1;
     public const int MainMenuAdminOnlineIndex = 2;
-    public const int MainMenuDebugModeIndex = 3;
+    public const int MainMenuOptionsIndex = 3;
     public const int MainMenuHelpIndex = 4;
     public const int MainMenuQuitIndex = 5;
 
 
-    private static readonly string[] PauseMenuItems = ["Resume", "Help", "Return to Main Menu"];
+    private static readonly string[] PauseMenuItems = ["Resume", "Options", "Help", "Return to Main Menu"];
     public const int PauseMenuResumeIndex = 0;
-    public const int PauseMenuHelpIndex = 1;
-    public const int PauseMenuMainMenuIndex = 2;
+    public const int PauseMenuOptionsIndex = 1;
+    public const int PauseMenuHelpIndex = 2;
+    public const int PauseMenuMainMenuIndex = 3;
 
 
     private static readonly string[] HelpLines =
@@ -46,7 +47,7 @@ public sealed class MenuRenderer
         "Escape   Ingame menu",
     ];
 
-    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex, bool debugEnabled)
+    public void RenderMainMenu(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex)
     {
         r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
 
@@ -70,17 +71,7 @@ public sealed class MenuRenderer
         {
             bool sel = i == selectedIndex;
             string prefix = sel ? " \u25ba " : "   ";
-
-            string label;
-            if (i == MainMenuDebugModeIndex)
-            {
-                label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
-            }
-            else
-            {
-                label = prefix + MainMenuItems[i];
-            }
-
+            string label = prefix + MainMenuItems[i];
             int tx = bx + 6;
             AsciiDraw.DrawString(r, tx, itemStartY + i, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
         }
@@ -174,7 +165,7 @@ public sealed class MenuRenderer
             AsciiDraw.DrawChar(r, i, sepY, '\u2500', RenderingTheme.Dim);
 
         int itemStartY = sepY + 2;
-        string nameDisplay = nameEditing ? nameEditText + "_" : (slotName.Length > 0 ? slotName : "(press Enter)");
+        string nameDisplay = nameEditing ? nameEditText + "_" : (slotName.Length > 0 ? slotName : "");
         string seedDisplay = seedEditing ? seedEditText + "_" : worldSeed.ToString();
         string genName = GeneratorRegistry.GetName(generatorIndex);
         string[] labels =
@@ -200,11 +191,9 @@ public sealed class MenuRenderer
 
         string footer;
         if (nameEditing)
-            footer = "Type name   Enter Confirm   Esc Cancel";
+            footer = "Type name   Enter Next   Esc Back";
         else if (seedEditing)
-            footer = "Type seed   Enter Confirm   Esc Cancel";
-        else if (selectedIndex == 1)
-            footer = "\u2190\u2192 Adjust   Enter Edit   \u2191\u2193 Navigate";
+            footer = "Type seed   Enter Next   Esc Back";
         else if (selectedIndex == 2)
             footer = "\u2190\u2192 Change Generator   \u2191\u2193 Navigate";
         else
@@ -321,6 +310,53 @@ public sealed class MenuRenderer
         }
 
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter Select", RenderingTheme.Dim);
+    }
+
+    public void RenderOptions(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
+        bool showStats, bool showDebugOption, bool debugEnabled, bool isOverlay)
+    {
+        int itemCount = showDebugOption ? 2 : 1;
+        int boxW = 50;
+        int boxH = itemCount + 8;
+        int bx = (totalCols - boxW) / 2;
+        int by = (totalRows - boxH) / 2;
+
+        if (isOverlay)
+            AsciiDraw.FillOverlay(r, totalCols, totalRows);
+        else
+            r.DrawRectScreen(0, 0, totalCols * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.Black);
+
+        AsciiDraw.DrawBox(r, bx, by, boxW, boxH, RenderingTheme.Border, new Color4(10, 10, 15, 255));
+
+        AsciiDraw.DrawCentered(r, totalCols, by + 1, "OPTIONS", RenderingTheme.Title);
+
+        int sepY = by + 2;
+        for (int i = bx + 2; i < bx + boxW - 2; i++)
+            AsciiDraw.DrawChar(r, i, sepY, '\u2500', RenderingTheme.Dim);
+
+        int itemY = sepY + 2;
+        int tx = bx + 4;
+
+        // Show Stats toggle
+        {
+            bool sel = selectedIndex == 0;
+            string prefix = sel ? " \u25ba " : "   ";
+            string label = prefix + "Show Stats: " + (showStats ? "ON" : "OFF");
+            AsciiDraw.DrawString(r, tx, itemY, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
+            itemY++;
+        }
+
+        // Debug Mode toggle (only from main menu)
+        if (showDebugOption)
+        {
+            bool sel = selectedIndex == 1;
+            string prefix = sel ? " \u25ba " : "   ";
+            string label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
+            AsciiDraw.DrawString(r, tx, itemY, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
+            itemY++;
+        }
+
+        AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, "\u2191\u2193 Navigate   Enter/\u2190\u2192 Toggle   Esc Back", RenderingTheme.Dim);
     }
 
 
@@ -443,8 +479,6 @@ public sealed class MenuRenderer
         string nameDisplay = nameActive ? editText + "_" : userName;
         string nameLabel = "Username: " + nameDisplay;
         AsciiDraw.DrawString(r, fieldX, nameY, nameLabel, nameActive ? RenderingTheme.Selected : (nameSelected ? RenderingTheme.ClassHighlight : RenderingTheme.Normal));
-        if (nameSelected && !isEditing)
-            AsciiDraw.DrawString(r, fieldX, nameY + 1, "(Enter to edit)", RenderingTheme.Dim);
 
         // Password field
         bool passSelected = selectedField == 1;
@@ -452,8 +486,6 @@ public sealed class MenuRenderer
         string maskedPass = passActive ? new string('*', editText.Length) + "_" : new string('*', password.Length);
         string passLabel = "Password: " + maskedPass + (password.Length == 0 && !passActive ? " (optional)" : "");
         AsciiDraw.DrawString(r, fieldX, passY, passLabel, passActive ? RenderingTheme.Selected : (passSelected ? RenderingTheme.ClassHighlight : RenderingTheme.Normal));
-        if (passSelected && !isEditing)
-            AsciiDraw.DrawString(r, fieldX, passY + 1, "(Enter to edit)", RenderingTheme.Dim);
 
         // Error message
         if (errorMessage != null)
@@ -463,9 +495,7 @@ public sealed class MenuRenderer
             AsciiDraw.DrawCentered(r, totalCols, errY, err, RenderingTheme.HpText);
         }
 
-        string footer = isEditing
-            ? "Type text   Enter Confirm   Esc Cancel"
-            : "\u2191\u2193 Select field   Enter Edit/Confirm   Tab Confirm   Esc Back";
+        string footer = "\u2191\u2193 Select field   Enter Next/Confirm   Tab Confirm   Esc Back";
         AsciiDraw.DrawCentered(r, totalCols, by + boxH - 2, footer, RenderingTheme.Dim);
     }
 

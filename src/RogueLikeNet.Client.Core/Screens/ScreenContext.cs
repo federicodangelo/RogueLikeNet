@@ -17,9 +17,11 @@ public sealed class ScreenContext
     public required PerformanceMonitor Performance { get; init; }
     public required ScreenShakeEffect ScreenShake { get; init; }
     public required DebugSettings Debug { get; init; }
+    public required GameOptions Options { get; init; }
 
     public IGameServerConnection? Connection { get; set; }
     public ISpriteRenderer SpriteRenderer { get; set; } = null!;
+    public ISettings? Settings { get; set; }
 
     /// <summary>Request a screen transition.</summary>
     public required Action<ScreenState> RequestTransition { get; init; }

@@ -51,28 +51,70 @@ public sealed class NewGameScreen : IScreen
     public void OnEnter()
     {
         _menuIndex = 0;
-        _seedEditing = false;
-        _nameEditing = false;
         _slotName = "";
         _nameEditText = "";
+        // Auto-start editing the first field (Name)
+        _nameEditing = true;
+        _seedEditing = false;
     }
 
     public void HandleInput(IInputManager input)
     {
-        if (_seedEditing) { HandleSeedEditing(input); return; }
-        if (_nameEditing) { HandleNameEditing(input); return; }
+        // Handle text input for active text fields
+        if (_nameEditing)
+            HandleNameTextInput(input);
+        else if (_seedEditing)
+            HandleSeedTextInput(input);
 
+        // Handle Escape — commit and go back
         if (input.IsActionPressed(InputAction.MenuBack))
         {
+            CommitCurrentEdit();
             _ctx.RequestTransition(_returnState);
             return;
         }
 
+        // Handle Enter — commit text field and advance, or execute action
+        if (input.TextInputReturnsCount > 0)
+        {
+            if (_nameEditing || _seedEditing)
+            {
+                CommitCurrentEdit();
+                _menuIndex = (_menuIndex + 1) % MenuItemCount;
+                StartEditIfNeeded();
+                return;
+            }
+            else
+            {
+                switch (_menuIndex)
+                {
+                    case MenuGenerator: break;
+                    case MenuRandomize:
+                        _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
+                        break;
+                    case MenuStart:
+                        if (_slotName.Length > 0)
+                            OnConfirmed?.Invoke(_slotName);
+                        break;
+                }
+                return;
+            }
+        }
+
+        // Handle navigation
+        int prevIndex = _menuIndex;
         if (input.IsActionPressedOrRepeated(InputAction.MenuUp))
             _menuIndex = (_menuIndex + MenuItemCount - 1) % MenuItemCount;
         else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % MenuItemCount;
 
+        if (_menuIndex != prevIndex)
+        {
+            CommitField(prevIndex);
+            StartEditIfNeeded();
+        }
+
+        // Handle left/right for generator
         if (_menuIndex == MenuGenerator)
         {
             int genCount = GeneratorRegistry.Count;
@@ -81,26 +123,12 @@ public sealed class NewGameScreen : IScreen
             else if (input.IsActionPressedOrRepeated(InputAction.MoveRight))
                 _generatorIndex = (_generatorIndex + 1) % genCount;
         }
-        else if (_menuIndex == MenuSeed)
-        {
-            if (input.IsActionPressedOrRepeated(InputAction.MoveLeft) && _worldSeed > 0)
-                _worldSeed--;
-            else if (input.IsActionPressedOrRepeated(InputAction.MoveRight) && _worldSeed < long.MaxValue)
-                _worldSeed++;
-        }
 
-        if (input.IsActionPressed(InputAction.MenuConfirm))
+        // Handle MenuConfirm for non-text-field items (when Enter wasn't already consumed as TextInputReturns)
+        if (!_nameEditing && !_seedEditing && input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
             {
-                case MenuName:
-                    _nameEditing = true;
-                    _nameEditText = _slotName;
-                    break;
-                case MenuSeed:
-                    _seedEditing = true;
-                    _seedEditText = _worldSeed.ToString();
-                    break;
                 case MenuGenerator: break;
                 case MenuRandomize:
                     _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
@@ -122,26 +150,12 @@ public sealed class NewGameScreen : IScreen
             _nameEditing, _nameEditText);
     }
 
-    private void HandleSeedEditing(IInputManager input)
+    private void HandleSeedTextInput(IInputManager input)
     {
-        if (input.IsActionPressed(InputAction.MenuBack))
-        {
-            _seedEditing = false;
-            return;
-        }
-
         for (int i = 0; i < input.TextInputBackspacesCount; i++)
         {
             if (_seedEditText.Length > 0)
                 _seedEditText = _seedEditText[..^1];
-        }
-
-        if (input.TextInputReturnsCount > 0)
-        {
-            if (long.TryParse(_seedEditText, out long parsed))
-                _worldSeed = parsed;
-            _seedEditing = false;
-            return;
         }
 
         string typed = input.TextInput;
@@ -152,26 +166,12 @@ public sealed class NewGameScreen : IScreen
         }
     }
 
-    private void HandleNameEditing(IInputManager input)
+    private void HandleNameTextInput(IInputManager input)
     {
-        if (input.IsActionPressed(InputAction.MenuBack))
-        {
-            _nameEditing = false;
-            return;
-        }
-
         for (int i = 0; i < input.TextInputBackspacesCount; i++)
         {
             if (_nameEditText.Length > 0)
                 _nameEditText = _nameEditText[..^1];
-        }
-
-        if (input.TextInputReturnsCount > 0)
-        {
-            if (_nameEditText.Length > 0)
-                _slotName = _nameEditText;
-            _nameEditing = false;
-            return;
         }
 
         string typed = input.TextInput;
@@ -179,6 +179,52 @@ public sealed class NewGameScreen : IScreen
         {
             if ((char.IsLetterOrDigit(c) || c == ' ' || c == '_' || c == '-' || c == '\'') && _nameEditText.Length < 24)
                 _nameEditText += c;
+        }
+    }
+
+    private void CommitCurrentEdit()
+    {
+        if (_nameEditing)
+        {
+            if (_nameEditText.Length > 0)
+                _slotName = _nameEditText;
+            _nameEditing = false;
+        }
+        else if (_seedEditing)
+        {
+            if (long.TryParse(_seedEditText, out long parsed))
+                _worldSeed = parsed;
+            _seedEditing = false;
+        }
+    }
+
+    private void CommitField(int fieldIndex)
+    {
+        if (fieldIndex == MenuName && _nameEditing)
+        {
+            if (_nameEditText.Length > 0)
+                _slotName = _nameEditText;
+            _nameEditing = false;
+        }
+        else if (fieldIndex == MenuSeed && _seedEditing)
+        {
+            if (long.TryParse(_seedEditText, out long parsed))
+                _worldSeed = parsed;
+            _seedEditing = false;
+        }
+    }
+
+    private void StartEditIfNeeded()
+    {
+        if (_menuIndex == MenuName)
+        {
+            _nameEditing = true;
+            _nameEditText = _slotName;
+        }
+        else if (_menuIndex == MenuSeed)
+        {
+            _seedEditing = true;
+            _seedEditText = _worldSeed.ToString();
         }
     }
 }

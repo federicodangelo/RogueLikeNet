@@ -17,6 +17,7 @@ public sealed class ScreenManager
     private readonly ConnectingScreen? _connecting;
     private readonly PausedScreen? _paused;
     private readonly HelpScreen? _help;
+    private readonly OptionsScreen? _options;
     private readonly MainMenuScreen? _mainMenu;
     private readonly InventoryScreen? _inventory;
     private readonly CraftingScreen? _crafting;
@@ -36,6 +37,7 @@ public sealed class ScreenManager
         CraftingScreen crafting,
         PausedScreen paused,
         HelpScreen help,
+        OptionsScreen options,
         SaveSlotScreen saveSlot,
         ServerAdminScreen serverAdmin,
         NewGameScreen newGame,
@@ -46,6 +48,7 @@ public sealed class ScreenManager
         _connecting = connecting;
         _paused = paused;
         _help = help;
+        _options = options;
         _inventory = inventory;
         _crafting = crafting;
         _saveSlot = saveSlot;
@@ -63,6 +66,8 @@ public sealed class ScreenManager
         _screens[ScreenState.Paused] = paused;
         _screens[ScreenState.MainMenuHelp] = help;
         _screens[ScreenState.PausedHelp] = help;
+        _screens[ScreenState.Options] = options;
+        _screens[ScreenState.PausedOptions] = options;
         _screens[ScreenState.ServerAdmin] = serverAdmin;
         _screens[ScreenState.NewGame] = newGame;
         _screens[ScreenState.Login] = login;
@@ -102,6 +107,12 @@ public sealed class ScreenManager
             case ScreenState.PausedHelp:
                 _help?.SetMode(ScreenState.PausedHelp, ScreenState.Paused);
                 break;
+            case ScreenState.Options:
+                _options?.SetMode(ScreenState.Options, ScreenState.MainMenu);
+                break;
+            case ScreenState.PausedOptions:
+                _options?.SetMode(ScreenState.PausedOptions, ScreenState.Paused);
+                break;
             case ScreenState.Inventory:
                 // If coming from crafting, select the last crafted item
                 if (previousState == ScreenState.Crafting && _crafting != null && _crafting.LastCraftedItemTypeId != 0)
@@ -116,6 +127,9 @@ public sealed class ScreenManager
                 break;
             case ScreenState.NewGame:
                 _newGame?.OnEnter();
+                break;
+            case ScreenState.Login:
+                _login?.OnEnter();
                 break;
         }
     }

@@ -29,12 +29,6 @@ public sealed class MainMenuScreen : IScreen
         else if (input.IsActionPressedOrRepeated(InputAction.MenuDown))
             _menuIndex = (_menuIndex + 1) % itemCount;
 
-        if (_menuIndex == MenuRenderer.MainMenuDebugModeIndex)
-        {
-            if (input.IsActionPressed(InputAction.MoveLeft) || input.IsActionPressed(InputAction.MoveRight))
-                _ctx.Debug.Enabled = !_ctx.Debug.Enabled;
-        }
-
         if (input.IsActionPressed(InputAction.MenuConfirm))
         {
             switch (_menuIndex)
@@ -50,7 +44,7 @@ public sealed class MainMenuScreen : IScreen
                 case MenuRenderer.MainMenuAdminOnlineIndex:
                     _ctx.OnAdminOnline();
                     break;
-                case MenuRenderer.MainMenuDebugModeIndex: _ctx.Debug.Enabled = !_ctx.Debug.Enabled; break;
+                case MenuRenderer.MainMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.Options); break;
                 case MenuRenderer.MainMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
                 case MenuRenderer.MainMenuQuitIndex: _ctx.OnQuit(); break;
             }
@@ -61,7 +55,7 @@ public sealed class MainMenuScreen : IScreen
 
     public void Render(ISpriteRenderer renderer, int totalCols, int totalRows)
     {
-        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex, _ctx.Debug.Enabled);
+        _menuRenderer.RenderMainMenu(renderer, totalCols, totalRows, _menuIndex);
     }
 
     public void ResetMenuIndex()
