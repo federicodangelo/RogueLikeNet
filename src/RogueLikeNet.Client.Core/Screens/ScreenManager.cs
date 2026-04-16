@@ -23,6 +23,7 @@ public sealed class ScreenManager
     private readonly SaveSlotScreen? _saveSlot;
     private readonly ServerAdminScreen? _serverAdmin;
     private readonly NewGameScreen? _newGame;
+    private readonly LoginScreen? _login;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -37,7 +38,8 @@ public sealed class ScreenManager
         HelpScreen help,
         SaveSlotScreen saveSlot,
         ServerAdminScreen serverAdmin,
-        NewGameScreen newGame)
+        NewGameScreen newGame,
+        LoginScreen login)
     {
         _mainMenu = mainMenu;
         _classSelect = classSelect;
@@ -49,6 +51,7 @@ public sealed class ScreenManager
         _saveSlot = saveSlot;
         _serverAdmin = serverAdmin;
         _newGame = newGame;
+        _login = login;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
@@ -62,6 +65,7 @@ public sealed class ScreenManager
         _screens[ScreenState.PausedHelp] = help;
         _screens[ScreenState.ServerAdmin] = serverAdmin;
         _screens[ScreenState.NewGame] = newGame;
+        _screens[ScreenState.Login] = login;
 
         _current = mainMenu;
         CurrentState = ScreenState.MainMenu;

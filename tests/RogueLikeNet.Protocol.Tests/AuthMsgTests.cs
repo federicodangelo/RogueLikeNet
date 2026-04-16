@@ -11,12 +11,12 @@ public class MessageTests
         var msg = new LoginMsg
         {
             PlayerName = "TestHero",
-            ClassId = 2
+            Password = "secret123"
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<LoginMsg>(data);
         Assert.Equal("TestHero", result.PlayerName);
-        Assert.Equal(2, result.ClassId);
+        Assert.Equal("secret123", result.Password);
     }
 
     [Fact]
@@ -24,20 +24,20 @@ public class MessageTests
     {
         var msg = new LoginMsg();
         Assert.Equal("", msg.PlayerName);
-        Assert.Equal(0, msg.ClassId);
+        Assert.Equal("", msg.Password);
     }
 
     [Fact]
     public void LoginMsg_WrapUnwrap()
     {
-        var msg = new LoginMsg { PlayerName = "Hero", ClassId = 1 };
+        var msg = new LoginMsg { PlayerName = "Hero", Password = "pass" };
         var payload = NetSerializer.Serialize(msg);
         var wrapped = NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
         var envelope = NetSerializer.UnwrapMessage(wrapped);
         Assert.Equal(MessageTypes.LoginSend, envelope.MessageType);
         var result = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
         Assert.Equal("Hero", result.PlayerName);
-        Assert.Equal(1, result.ClassId);
+        Assert.Equal("pass", result.Password);
     }
 
     [Fact]

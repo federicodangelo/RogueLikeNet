@@ -15,6 +15,15 @@ public class PlayerConnection
     public long LastAckedTick { get; set; }
     public ConcurrentQueue<Protocol.Messages.ClientInputMsg> InputQueue { get; } = new();
 
+    /// <summary>Whether this connection has successfully authenticated.</summary>
+    public bool IsAuthenticated { get; set; }
+
+    /// <summary>Stored password hash for this player (persisted with save data).</summary>
+    public string PasswordHash { get; set; } = "";
+
+    /// <summary>Stored password salt for this player (persisted with save data).</summary>
+    public string PasswordSalt { get; set; } = "";
+
     /// <summary>Tracks last-sent entity state per entity ID for delta compression.</summary>
     public Dictionary<long, EntityUpdateMsg> LastSentEntities { get; } = new();
 

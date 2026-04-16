@@ -39,7 +39,7 @@ public sealed class ClassSelectScreen : IScreen
         _isOnline = _mainMenuScreen.IsOnlineSelected;
         if (!_isOnline)
             _playerName = DefaultPlayerName; // For offline mode, reset to default name to match the name in the savegame
-        _canEditName = _isOnline; // Only allow editing name for online mode
+        _canEditName = false; // Name is set via login screen (online) or locked to default (offline)
     }
 
     public void HandleInput(IInputManager input)

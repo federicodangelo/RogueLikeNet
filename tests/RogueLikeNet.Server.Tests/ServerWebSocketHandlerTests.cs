@@ -12,9 +12,16 @@ public class ServerWebSocketHandlerTests
 
     private static byte[] MakeLoginMessage()
     {
-        var login = new LoginMsg { PlayerName = "TestHero", ClassId = 0 };
+        var login = new LoginMsg { PlayerName = "TestHero", Password = "" };
         var payload = NetSerializer.Serialize(login);
         return NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
+    }
+
+    private static byte[] MakeClassSelectMessage(int classId = 0)
+    {
+        var msg = new ClassSelectMsg { ClassId = classId };
+        var payload = NetSerializer.Serialize(msg);
+        return NetSerializer.WrapMessage(MessageTypes.ClassSelect, payload);
     }
 
     [Fact]
@@ -23,14 +30,18 @@ public class ServerWebSocketHandlerTests
         using var loop = new GameServer(42, _gen);
         var socket = new FakeWebSocket();
         socket.EnqueueReceive(MakeLoginMessage());
+        socket.EnqueueReceive(MakeClassSelectMessage());
         socket.EnqueueClose();
 
         await ServerWebSocketHandler.HandleConnection(socket, loop);
 
-        Assert.True(socket.SentMessages.Count > 0);
-        var first = socket.SentMessages[0];
-        var env = NetSerializer.UnwrapMessage(first);
-        Assert.Equal(MessageTypes.WorldDelta, env.MessageType);
+        Assert.True(socket.SentMessages.Count >= 2);
+        // First message should be LoginResponse
+        var loginResp = NetSerializer.UnwrapMessage(socket.SentMessages[0]);
+        Assert.Equal(MessageTypes.LoginResponse, loginResp.MessageType);
+        // Second message should be WorldDelta snapshot
+        var delta = NetSerializer.UnwrapMessage(socket.SentMessages[1]);
+        Assert.Equal(MessageTypes.WorldDelta, delta.MessageType);
     }
 
     [Fact]
@@ -41,6 +52,7 @@ public class ServerWebSocketHandlerTests
 
         // Send login first to spawn player
         socket.EnqueueReceive(MakeLoginMessage());
+        socket.EnqueueReceive(MakeClassSelectMessage());
 
         // Create a valid ClientInput message
         var input = new ClientInputMsg { ActionType = 1, TargetX = 5, TargetY = 3 };

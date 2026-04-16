@@ -375,7 +375,7 @@ public class GameServer : IDisposable
                     var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
                     if (player.HasValue)
                     {
-                        var playerData = PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName);
+                        var playerData = PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName, conn.PasswordHash, conn.PasswordSalt);
                         _saveProvider.SavePlayers(_currentSlotId, [playerData]);
                     }
                 }
@@ -438,19 +438,61 @@ public class GameServer : IDisposable
         }
     }
 
-    public void SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
+    public void AuthenticatePlayer(long connectionId, string playerName, string password)
     {
         if (!_connections.TryGetValue(connectionId, out var _))
             throw new Exception($"Connection not found: {connectionId}");
 
-        EnqueueCommand(() => SpawnPlayerForConnectionInternal(connectionId, classId, playerName));
+        EnqueueCommand(() => AuthenticatePlayerInternal(connectionId, playerName, password));
     }
 
-    private async Task SpawnPlayerForConnectionInternal(long connectionId, int classId, string playerName)
+    public void SelectClassForConnection(long connectionId, int classId)
+    {
+        if (!_connections.TryGetValue(connectionId, out var _))
+            throw new Exception($"Connection not found: {connectionId}");
+
+        EnqueueCommand(() => SelectClassForConnectionInternal(connectionId, classId));
+    }
+
+    private async Task AuthenticatePlayerInternal(long connectionId, string playerName, string password)
     {
         if (!_connections.TryGetValue(connectionId, out var conn)) return;
 
         conn.PlayerName = playerName;
+
+        // Disconnect any existing connection with the same player name
+        var existingConn = _connections.Values.FirstOrDefault(c =>
+            c.ConnectionId != connectionId &&
+            c.IsAuthenticated &&
+            c.PlayerName == playerName);
+
+        if (existingConn != null)
+        {
+            // Validate password before disconnecting existing connection
+            if (!PasswordHasher.VerifyPassword(password, existingConn.PasswordHash, existingConn.PasswordSalt))
+            {
+                var failMsg = new LoginResponseMsg { Success = false, ErrorMessage = "Invalid password" };
+                await SendLoginResponse(conn, failMsg);
+                await conn.CloseAsync();
+                return;
+            }
+
+
+            if (_saveProvider != null && _currentSlotId != null && existingConn.PlayerEntityId.HasValue)
+            {
+                var player = _engine.WorldMap.GetPlayer(existingConn.PlayerEntityId.Value);
+                if (player.HasValue)
+                {
+                    var playerData = PlayerSerializer.SerializePlayer(player.Value, existingConn.PlayerName, existingConn.PasswordHash, existingConn.PasswordSalt);
+                    _saveProvider.SavePlayers(_currentSlotId, [playerData]);
+                }
+
+                _engine.WorldMap.RemovePlayer(existingConn.PlayerEntityId.Value);
+            }
+
+            _connections.TryRemove(existingConn.ConnectionId, out _);
+            await existingConn.CloseAsync();
+        }
 
         // Check for saved player data
         if (_saveProvider != null && _currentSlotId != null)
@@ -458,11 +500,29 @@ public class GameServer : IDisposable
             var savedPlayer = _saveProvider.LoadPlayer(_currentSlotId, playerName);
             if (savedPlayer != null)
             {
-                if (savedPlayer.ServerPlayerId == 0)
+                // Existing player — verify password
+                if (!PasswordHasher.VerifyPassword(password, savedPlayer.PasswordHash, savedPlayer.PasswordSalt))
                 {
-                    // Assign a new ServerPlayerId if not present in the save (for backward compatibility)
-                    savedPlayer.ServerPlayerId = _nextServerPlayerId++;
+                    var failMsg = new LoginResponseMsg { Success = false, ErrorMessage = "Invalid password" };
+                    await SendLoginResponse(conn, failMsg);
+                    await conn.CloseAsync();
+                    return;
                 }
+
+                // Update password hash if it was previously empty and now a password is provided
+                if (string.IsNullOrEmpty(savedPlayer.PasswordHash) && !string.IsNullOrEmpty(password))
+                {
+                    var (hash, salt) = PasswordHasher.HashPassword(password);
+                    savedPlayer.PasswordHash = hash;
+                    savedPlayer.PasswordSalt = salt;
+                }
+
+                conn.PasswordHash = savedPlayer.PasswordHash;
+                conn.PasswordSalt = savedPlayer.PasswordSalt;
+                conn.IsAuthenticated = true;
+
+                if (savedPlayer.ServerPlayerId == 0)
+                    savedPlayer.ServerPlayerId = _nextServerPlayerId++;
 
                 var chunkPos = Chunk.WorldToChunkCoord(Position.FromCoords(savedPlayer.PositionX, savedPlayer.PositionY, savedPlayer.PositionZ));
                 _engine.EnsureChunkLoaded(chunkPos);
@@ -476,11 +536,28 @@ public class GameServer : IDisposable
                 _engine.Tick();
                 ResetConnectionTracking(conn);
                 await SendSnapshot(conn);
+
+                var successMsg = new LoginResponseMsg { Success = true, IsNewPlayer = false };
+                await SendLoginResponse(conn, successMsg);
                 return;
             }
         }
 
-        // No saved player — spawn fresh
+        // New player — hash password and wait for class selection
+        var (newHash, newSalt) = PasswordHasher.HashPassword(password);
+        conn.PasswordHash = newHash;
+        conn.PasswordSalt = newSalt;
+        conn.IsAuthenticated = true;
+
+        var newPlayerMsg = new LoginResponseMsg { Success = true, IsNewPlayer = true };
+        await SendLoginResponse(conn, newPlayerMsg);
+    }
+
+    private async Task SelectClassForConnectionInternal(long connectionId, int classId)
+    {
+        if (!_connections.TryGetValue(connectionId, out var conn)) return;
+        if (!conn.IsAuthenticated || conn.PlayerEntityId != null) return;
+
         var spawn = _engine.FindSpawnPosition();
         ref var newPlayer = ref _engine.SpawnPlayer(connectionId, spawn, classId);
         newPlayer.ServerPlayerId = _nextServerPlayerId++;
@@ -492,6 +569,13 @@ public class GameServer : IDisposable
         _engine.Tick();
         ResetConnectionTracking(conn);
         await SendSnapshot(conn);
+    }
+
+    private async Task SendLoginResponse(PlayerConnection conn, LoginResponseMsg msg)
+    {
+        var payload = NetSerializer.Serialize(msg);
+        var data = NetSerializer.WrapMessage(MessageTypes.LoginResponse, payload);
+        await conn.SendAsync(data);
     }
 
     private void ResetConnectionTracking(PlayerConnection conn)
@@ -663,7 +747,7 @@ public class GameServer : IDisposable
                 var player = _engine.WorldMap.GetPlayer(conn.PlayerEntityId.Value);
                 if (player.HasValue)
                 {
-                    playerEntries.Add(PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName));
+                    playerEntries.Add(PlayerSerializer.SerializePlayer(player.Value, conn.PlayerName, conn.PasswordHash, conn.PasswordSalt));
                 }
             }
             if (playerEntries.Count > 0)

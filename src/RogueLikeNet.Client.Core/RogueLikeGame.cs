@@ -30,10 +30,12 @@ public sealed class RogueLikeGame : GameBase
     private readonly SaveSlotScreen _saveSlotScreen;
     private readonly ServerAdminScreen _serverAdminScreen;
     private readonly ClassSelectScreen _classSelectScreen;
+    private readonly LoginScreen _loginScreen;
 
     private IGameServerConnection? _connection;
     private long _lastFrameTicks;
     private int _lastSentVisibleChunks;
+    private volatile bool _connectionClosed;
 
     public ClientGameState GameState => _gameState;
     public ScreenState CurrentScreen => _screenManager.CurrentState;
@@ -47,6 +49,9 @@ public sealed class RogueLikeGame : GameBase
 
     /// <summary>Fired when the player selects "Play Online" from the main menu.</summary>
     public event Action<int, string>? StartOnlineRequested;
+
+    /// <summary>Fired when the player submits login credentials for online play.</summary>
+    public event Action<string, string>? LoginOnlineRequested;
 
     /// <summary>Fired when the player selects "Return to Main Menu" from the pause menu.</summary>
     public event Action? ReturnToMenuRequested;
@@ -68,6 +73,8 @@ public sealed class RogueLikeGame : GameBase
 
     public bool IsFirstDeltaProcessed => _networkDrainer.FirstDeltaProcessed;
 
+
+
     public RogueLikeGame()
     {
         _ctx = new ScreenContext
@@ -81,6 +88,7 @@ public sealed class RogueLikeGame : GameBase
             RequestTransition = state => _screenManager!.TransitionTo(state),
             OnStartOffline = (seed, classId, name, genIndex) => StartOfflineRequested?.Invoke(seed, classId, name, genIndex),
             OnStartOnline = (classId, name) => StartOnlineRequested?.Invoke(classId, name),
+            OnLoginOnline = (name, password) => LoginOnlineRequested?.Invoke(name, password),
             OnReturnToMenu = () => ReturnToMenuRequested?.Invoke(),
             OnQuit = () => QuitRequested?.Invoke(),
             OnPlayOffline = () => PlayOfflineRequested?.Invoke(),
@@ -107,6 +115,7 @@ public sealed class RogueLikeGame : GameBase
         var help = new HelpScreen(_ctx, menuRenderer, playing);
         var saveSlot = new SaveSlotScreen(_ctx, menuRenderer, newGame);
         var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, newGame);
+        var login = new LoginScreen(_ctx, menuRenderer);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);
@@ -115,8 +124,9 @@ public sealed class RogueLikeGame : GameBase
         _saveSlotScreen = saveSlot;
         _serverAdminScreen = serverAdmin;
         _classSelectScreen = classSelect;
+        _loginScreen = login;
 
-        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, saveSlot, serverAdmin, newGame);
+        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, saveSlot, serverAdmin, newGame, login);
     }
 
     public void Initialize(IPlatform platform)
@@ -132,8 +142,10 @@ public sealed class RogueLikeGame : GameBase
         _connection.OnWorldDelta += OnNetworkWorldDelta;
         _connection.OnChatReceived += OnNetworkChatReceived;
         _connection.OnSaveGameResponse += OnNetworkSaveGameResponse;
+        _connection.OnDisconnected += OnNetworkDisconnected;
         _ctx.Connection = _connection;
         _lastSentVisibleChunks = 0; // Force update of visible chunk count on next frame
+        _connectionClosed = false;
     }
 
     public void ClearConnection()
@@ -143,9 +155,11 @@ public sealed class RogueLikeGame : GameBase
             _connection.OnWorldDelta -= OnNetworkWorldDelta;
             _connection.OnChatReceived -= OnNetworkChatReceived;
             _connection.OnSaveGameResponse -= OnNetworkSaveGameResponse;
+            _connection.OnDisconnected -= OnNetworkDisconnected;
             _connection = null;
             _ctx.Connection = null;
         }
+        _connectionClosed = false;
     }
 
     public void TransitionToConnecting()
@@ -173,6 +187,18 @@ public sealed class RogueLikeGame : GameBase
     public void TransitionToClassSelect()
     {
         _screenManager.TransitionTo(ScreenState.ClassSelect);
+    }
+
+    public void TransitionToLogin()
+    {
+        _loginScreen.OnEnter();
+        _screenManager.TransitionTo(ScreenState.Login);
+    }
+
+    public void ShowLoginError(string error)
+    {
+        _loginScreen.SetError(error);
+        _screenManager.TransitionTo(ScreenState.Login);
     }
 
     public void SetSaveSlots(SaveSlotInfoMsg[] slots)
@@ -219,6 +245,12 @@ public sealed class RogueLikeGame : GameBase
         // Drain buffered network messages
         _networkDrainer.Drain(_gameState, _particles, _chat);
         _chat.DrainPendingMessages();
+
+        if (_connectionClosed &&
+            (_screenManager.CurrentState == ScreenState.Playing || _screenManager.CurrentState == ScreenState.Inventory || _screenManager.CurrentState == ScreenState.Crafting))
+        {
+            ReturnToMenuRequested?.Invoke();
+        }
 
         // Frame timing
         long nowTicks = Stopwatch.GetTimestamp();
@@ -324,6 +356,11 @@ public sealed class RogueLikeGame : GameBase
         {
             _serverAdminScreen.HandleSaveResponse(msg);
         }
+    }
+
+    private void OnNetworkDisconnected()
+    {
+        _connectionClosed = true;
     }
 
     public override void Dispose()

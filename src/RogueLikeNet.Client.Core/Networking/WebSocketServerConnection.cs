@@ -22,6 +22,7 @@ public class WebSocketServerConnection : IGameServerConnection
     public event Action<WorldDeltaMsg>? OnWorldDelta;
     public event Action<ChatMsg>? OnChatReceived;
     public event Action<SaveGameResponseMsg>? OnSaveGameResponse;
+    public event Action<LoginResponseMsg>? OnLoginResponse;
     public event Action? OnDisconnected;
 
     private string _uri = "";
@@ -65,6 +66,20 @@ public class WebSocketServerConnection : IGameServerConnection
 
         var payload = NetSerializer.Serialize(login);
         var data = NetSerializer.WrapMessage(MessageTypes.LoginSend, payload);
+        Interlocked.Add(ref _bytesSent, data.Length);
+        await _socket.SendAsync(
+            new ArraySegment<byte>(data),
+            WebSocketMessageType.Binary,
+            endOfMessage: true,
+            ct);
+    }
+
+    public async Task SendClassSelectAsync(ClassSelectMsg msg, CancellationToken ct = default)
+    {
+        if (_socket?.State != WebSocketState.Open) return;
+
+        var payload = NetSerializer.Serialize(msg);
+        var data = NetSerializer.WrapMessage(MessageTypes.ClassSelect, payload);
         Interlocked.Add(ref _bytesSent, data.Length);
         await _socket.SendAsync(
             new ArraySegment<byte>(data),
@@ -172,6 +187,11 @@ public class WebSocketServerConnection : IGameServerConnection
                 case MessageTypes.SaveGameResponse:
                     var saveResp = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
                     OnSaveGameResponse?.Invoke(saveResp);
+                    break;
+
+                case MessageTypes.LoginResponse:
+                    var loginResp = NetSerializer.Deserialize<LoginResponseMsg>(envelope.Payload);
+                    OnLoginResponse?.Invoke(loginResp);
                     break;
 
                 default:

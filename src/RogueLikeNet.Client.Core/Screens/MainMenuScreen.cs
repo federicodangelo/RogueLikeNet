@@ -45,7 +45,7 @@ public sealed class MainMenuScreen : IScreen
                     break;
                 case MenuRenderer.MainMenuPlayOnlineIndex:
                     SetClassSelectOnline(true);
-                    _ctx.RequestTransition(Rendering.ScreenState.ClassSelect);
+                    _ctx.RequestTransition(Rendering.ScreenState.Login);
                     break;
                 case MenuRenderer.MainMenuAdminOnlineIndex:
                     _ctx.OnAdminOnline();

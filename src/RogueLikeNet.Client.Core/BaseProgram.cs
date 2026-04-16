@@ -35,6 +35,7 @@ public abstract class BaseProgram
         Game.PlayOfflineRequested += OnPlayOffline;
         Game.StartOfflineRequested += OnStartOffline;
         Game.StartOnlineRequested += OnStartOnline;
+        Game.LoginOnlineRequested += OnLoginOnline;
         Game.ReturnToMenuRequested += OnReturnToMenu;
         Game.DebugSyncRequested += OnDebugSync;
         Game.NewOfflineGameRequested += OnNewOfflineGame;
@@ -106,7 +107,8 @@ public abstract class BaseProgram
             await _connection.ConnectAsync("embedded://localhost");
         }
 
-        await _connection!.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
+        await _connection!.SendLoginAsync(new LoginMsg { PlayerName = playerName, Password = "" });
+        await _connection!.SendClassSelectAsync(new ClassSelectMsg { ClassId = classId });
 
         while (!Game.IsFirstDeltaProcessed)
         {
@@ -132,7 +134,7 @@ public abstract class BaseProgram
         await _connection.ReconnectAsync();
 
         // We have to use the default player name since it needs to match the name in the savegame
-        await _connection!.SendLoginAsync(new LoginMsg { ClassId = 0, PlayerName = ClassSelectScreen.DefaultPlayerName });
+        await _connection!.SendLoginAsync(new LoginMsg { PlayerName = ClassSelectScreen.DefaultPlayerName, Password = "" });
 
         while (!Game.IsFirstDeltaProcessed)
         {
@@ -147,6 +149,31 @@ public abstract class BaseProgram
 
     private async void OnStartOnline(int classId, string playerName)
     {
+        // Connection already established by OnLoginOnline — just send class selection
+        if (_connection == null || !_connection.IsConnected) return;
+
+        Game.TransitionToConnecting();
+        try
+        {
+            await _connection.SendClassSelectAsync(new ClassSelectMsg { ClassId = classId });
+
+            while (!Game.IsFirstDeltaProcessed)
+            {
+                await Task.Delay(50);
+            }
+
+            Game.TransitionToPlaying();
+        }
+        catch (Exception ex)
+        {
+            Game.ClearConnection();
+            _connection = null;
+            Game.ShowConnectionError(ex.Message);
+        }
+    }
+
+    private async void OnLoginOnline(string playerName, string password)
+    {
         Game.TransitionToConnecting();
 
         try
@@ -155,14 +182,45 @@ public abstract class BaseProgram
             _connection = wsConnection;
             Game.SetConnection(_connection);
             await _connection.ConnectAsync("ws://localhost:5090/ws");
-            await _connection.SendLoginAsync(new LoginMsg { ClassId = classId, PlayerName = playerName });
-            Game.TransitionToPlaying();
+
+            var loginResponseTcs = new TaskCompletionSource<LoginResponseMsg>();
+            void OnLoginResp(LoginResponseMsg resp) => loginResponseTcs.TrySetResult(resp);
+            _connection.OnLoginResponse += OnLoginResp;
+
+            await _connection.SendLoginAsync(new LoginMsg { PlayerName = playerName, Password = password });
+
+            var response = await loginResponseTcs.Task;
+            _connection.OnLoginResponse -= OnLoginResp;
+
+            if (!response.Success)
+            {
+                Game.ClearConnection();
+                await _connection.DisposeAsync();
+                _connection = null;
+                Game.ShowLoginError(response.ErrorMessage);
+                return;
+            }
+
+            if (response.IsNewPlayer)
+            {
+                // New player — go to class selection
+                Game.TransitionToClassSelect();
+            }
+            else
+            {
+                // Existing player — server already spawned, wait for snapshot
+                while (!Game.IsFirstDeltaProcessed)
+                {
+                    await Task.Delay(50);
+                }
+                Game.TransitionToPlaying();
+            }
         }
         catch (Exception ex)
         {
             Game.ClearConnection();
             _connection = null;
-            Game.ShowConnectionError(ex.Message);
+            Game.ShowLoginError(ex.Message);
         }
     }
 

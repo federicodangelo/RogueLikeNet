@@ -14,6 +14,17 @@
             "cwd": "${workspaceFolder}/src/RogueLikeNet.Client.Desktop",
             "stopAtEntry": false,
             "console": "internalConsole"
+        },
+        {
+            "name": "RogueLikeNet.Server",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet: build",
+            "program": "${workspaceFolder}/src/RogueLikeNet.Server/bin/Debug/net10.0/RogueLikeNet.Server.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/RogueLikeNet.Server",
+            "stopAtEntry": false,
+            "console": "internalConsole"
         }
     ]
 }

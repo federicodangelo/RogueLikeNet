@@ -22,12 +22,14 @@ gameServer.Start();
 
 app.UseWebSockets();
 
+var serverShutdownCts = new CancellationTokenSource();
+
 app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var socket = await context.WebSockets.AcceptWebSocketAsync();
-        await ServerWebSocketHandler.HandleConnection(socket, gameServer, Console.Out);
+        using var socket = await context.WebSockets.AcceptWebSocketAsync();
+        await ServerWebSocketHandler.HandleConnection(socket, gameServer, Console.Out, serverShutdownCts.Token);
     }
     else
     {
@@ -40,6 +42,7 @@ app.MapGet("/", () => "RogueLikeNet Server is running");
 app.Lifetime.ApplicationStopping.Register(() =>
 {
     gameServer.Dispose();
+    serverShutdownCts.Cancel();
 });
 
 app.Run();

@@ -16,6 +16,7 @@ public interface IGameServerConnection : IAsyncDisposable
     Task ConnectAsync(string uri, CancellationToken ct = default);
     Task ReconnectAsync(CancellationToken ct = default);
     Task SendLoginAsync(LoginMsg login, CancellationToken ct = default);
+    Task SendClassSelectAsync(ClassSelectMsg msg, CancellationToken ct = default);
     Task SendInputAsync(ClientInputMsg input, CancellationToken ct = default);
     Task SendChatAsync(string text, CancellationToken ct = default);
     Task SendViewportInfoAsync(ViewportInfoMsg info, CancellationToken ct = default);
@@ -24,5 +25,6 @@ public interface IGameServerConnection : IAsyncDisposable
     event Action<WorldDeltaMsg>? OnWorldDelta;
     event Action<ChatMsg>? OnChatReceived;
     event Action<SaveGameResponseMsg>? OnSaveGameResponse;
+    event Action<LoginResponseMsg>? OnLoginResponse;
     event Action? OnDisconnected;
 }

@@ -9,9 +9,13 @@ namespace RogueLikeNet.Server;
 /// </summary>
 public static class ServerWebSocketHandler
 {
-    public static async Task HandleConnection(WebSocket socket, GameServer gameServer, TextWriter? logWriter = null)
+    public static async Task HandleConnection(WebSocket socket, GameServer gameServer, TextWriter? logWriter = null, CancellationToken serverShutdownCancellationToken = default)
     {
         logWriter ??= TextWriter.Null;
+
+        var receiveCts = new CancellationTokenSource();
+
+        var receiveOrShutdownCts = CancellationTokenSource.CreateLinkedTokenSource(receiveCts.Token, serverShutdownCancellationToken);
 
         // Create connection with send function
         var conn = gameServer.AddConnection(
@@ -30,13 +34,8 @@ public static class ServerWebSocketHandler
             // close
             async () =>
             {
-                if (socket.State == WebSocketState.Open)
-                {
-                    await socket.CloseAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "Server closing connection",
-                        CancellationToken.None);
-                }
+                // Just cancel the receive loop; the finally block will handle cleanup and socket closing
+                receiveOrShutdownCts.Cancel();
             }
         );
 
@@ -56,7 +55,7 @@ public static class ServerWebSocketHandler
                 {
                     result = await socket.ReceiveAsync(
                         new ArraySegment<byte>(buffer),
-                        CancellationToken.None);
+                        receiveOrShutdownCts.Token);
                     if (result.MessageType == WebSocketMessageType.Close)
                         break;
                     ms.Write(buffer, 0, result.Count);
@@ -75,6 +74,10 @@ public static class ServerWebSocketHandler
 
                 ms.SetLength(0); // Clear for next message
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation when closing connection
         }
         catch (WebSocketException)
         {
@@ -102,14 +105,27 @@ public static class ServerWebSocketHandler
             switch (envelope.MessageType)
             {
                 case MessageTypes.LoginSend:
-                    if (conn.PlayerEntityId == null)
+                    if (conn.PlayerEntityId == null && !conn.IsAuthenticated)
                     {
                         var login = NetSerializer.Deserialize<LoginMsg>(envelope.Payload);
-                        gameServer.SpawnPlayerForConnection(conn.ConnectionId, login.ClassId, login.PlayerName);
+                        gameServer.AuthenticatePlayer(conn.ConnectionId, login.PlayerName, login.Password);
                     }
                     else
                     {
                         logWriter.WriteLine($"Player {conn.ConnectionId} attempted to login but is already logged in");
+                        return false;
+                    }
+                    break;
+
+                case MessageTypes.ClassSelect:
+                    if (conn.IsAuthenticated && conn.PlayerEntityId == null)
+                    {
+                        var classSelect = NetSerializer.Deserialize<ClassSelectMsg>(envelope.Payload);
+                        gameServer.SelectClassForConnection(conn.ConnectionId, classSelect.ClassId);
+                    }
+                    else
+                    {
+                        logWriter.WriteLine($"Player {conn.ConnectionId} sent class select in invalid state");
                         return false;
                     }
                     break;

@@ -27,6 +27,15 @@ public class TestGameServer : GameServer
             return _engine;
         }
     }
+
+    /// <summary>
+    /// Test helper: authenticates and spawns a player in one call (replaces old SpawnPlayerForConnection).
+    /// </summary>
+    public void SpawnPlayerForConnection(long connectionId, int classId = 0, string playerName = "")
+    {
+        AuthenticatePlayer(connectionId, playerName, "");
+        SelectClassForConnection(connectionId, classId);
+    }
 }
 
 public class GameServerTests
@@ -192,7 +201,7 @@ public class GameServerTests
         var conn = loop.AddConnection(data =>
         {
             sendCount++;
-            if (sendCount > 1) throw new InvalidOperationException("send failed");
+            if (sendCount > 2) throw new InvalidOperationException("send failed"); // Allow auth response + initial snapshot
             return Task.CompletedTask;
         });
         loop.SpawnPlayerForConnection(conn.ConnectionId);
@@ -220,10 +229,10 @@ public class GameServerTests
     }
 
     [Fact]
-    public void SpawnPlayerForConnection_InvalidConnection_Throws()
+    public void AuthenticatePlayer_InvalidConnection_Throws()
     {
         using var loop = new TestGameServer(42, _gen);
-        var exception = Assert.Throws<Exception>(() => loop.SpawnPlayerForConnection(9999)); // Non-existent connection
+        var exception = Assert.Throws<Exception>(() => loop.AuthenticatePlayer(9999, "", "")); // Non-existent connection
         Assert.Equal($"Connection not found: {9999}", exception.Message);
     }
 
@@ -302,8 +311,8 @@ public class GameServerTests
             return Task.CompletedTask;
         });
 
-        loop.SpawnPlayerForConnection(conn1.ConnectionId);
-        loop.SpawnPlayerForConnection(conn2.ConnectionId);
+        loop.SpawnPlayerForConnection(conn1.ConnectionId, playerName: "player1");
+        loop.SpawnPlayerForConnection(conn2.ConnectionId, playerName: "player2");
         messages1.Clear();
         messages2.Clear();
 
@@ -756,7 +765,8 @@ public class GameServerTests
         using var loop = new GameServer(42, _gen, logWriter: logOutput);
 
         var conn = loop.AddConnection(_ => Task.CompletedTask);
-        loop.SpawnPlayerForConnection(conn.ConnectionId);
+        loop.AuthenticatePlayer(conn.ConnectionId, "", "");
+        loop.SelectClassForConnection(conn.ConnectionId, 0);
 
         loop.Start();
         // Wait enough time for at least one stats log (5 seconds)

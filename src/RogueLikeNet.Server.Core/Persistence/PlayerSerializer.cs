@@ -26,7 +26,7 @@ public static class PlayerSerializer
     /// <summary>
     /// Extracts all player state from a PlayerEntity into a PlayerSaveData.
     /// </summary>
-    public static PlayerSaveData SerializePlayer(PlayerEntity player, string playerName)
+    public static PlayerSaveData SerializePlayer(PlayerEntity player, string playerName, string passwordHash = "", string passwordSalt = "")
     {
         var data = new PlayerSaveData
         {
@@ -47,6 +47,8 @@ public static class PlayerSerializer
             MaxHunger = player.Survival.MaxHunger,
             Thirst = player.Survival.Thirst,
             MaxThirst = player.Survival.MaxThirst,
+            PasswordHash = passwordHash,
+            PasswordSalt = passwordSalt,
         };
 
         // Inventory

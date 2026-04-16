@@ -6,5 +6,5 @@ namespace RogueLikeNet.Protocol.Messages;
 public class LoginMsg
 {
     [Key(0)] public string PlayerName { get; set; } = "";
-    [Key(1)] public int ClassId { get; set; }
+    [Key(1)] public string Password { get; set; } = "";
 }

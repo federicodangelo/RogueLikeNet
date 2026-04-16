@@ -22,6 +22,7 @@ public class EmbeddedServerConnection : IGameServerConnection
     public event Action<WorldDeltaMsg>? OnWorldDelta;
     public event Action<ChatMsg>? OnChatReceived;
     public event Action<SaveGameResponseMsg>? OnSaveGameResponse;
+    public event Action<LoginResponseMsg>? OnLoginResponse;
     public event Action? OnDisconnected;
 
     public EmbeddedServerConnection(GameServer gameServer)
@@ -57,7 +58,14 @@ public class EmbeddedServerConnection : IGameServerConnection
     public Task SendLoginAsync(LoginMsg login, CancellationToken ct = default)
     {
         if (!_connected) return Task.CompletedTask;
-        _gameServer.SpawnPlayerForConnection(_connectionId, login.ClassId, login.PlayerName);
+        _gameServer.AuthenticatePlayer(_connectionId, login.PlayerName, login.Password);
+        return Task.CompletedTask;
+    }
+
+    public Task SendClassSelectAsync(ClassSelectMsg msg, CancellationToken ct = default)
+    {
+        if (!_connected) return Task.CompletedTask;
+        _gameServer.SelectClassForConnection(_connectionId, msg.ClassId);
         return Task.CompletedTask;
     }
 
@@ -110,6 +118,11 @@ public class EmbeddedServerConnection : IGameServerConnection
                 case MessageTypes.SaveGameResponse:
                     var saveResponse = NetSerializer.Deserialize<SaveGameResponseMsg>(envelope.Payload);
                     OnSaveGameResponse?.Invoke(saveResponse);
+                    break;
+
+                case MessageTypes.LoginResponse:
+                    var loginResponse = NetSerializer.Deserialize<LoginResponseMsg>(envelope.Payload);
+                    OnLoginResponse?.Invoke(loginResponse);
                     break;
             }
         }
