@@ -51,9 +51,6 @@ public class Chunk : EntitiesCollection
 
     public Dictionary<int, byte[]>? ServerExploredTilesByServerPlayerId { get; set; }
 
-    private readonly EntitiesCollection _entitiesCollection = new();
-
-
     // ── Light-emitting placeable tracking ─────────────────────────────
     public ReadOnlySpan<long> LightEmittingTiles => CollectionsMarshal.AsSpan(_lightEmittingTiles);
 

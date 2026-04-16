@@ -821,7 +821,7 @@ public class WorldMapTests
         map.AddChunk(chunk);
 
         var positions = new HashSet<long>();
-        map.CollectEntitiesPositions(positions);
+        map.CollectEntitiesWithHealthPositions(positions);
         Assert.Contains(Position.PackCoord(5, 5, Position.DefaultZ), positions);
         Assert.Contains(Position.PackCoord(10, 10, Position.DefaultZ), positions);
     }
@@ -832,7 +832,7 @@ public class WorldMapTests
         var map = new WorldMap(42);
         var pos = Position.FromCoords(5, 5, Position.DefaultZ);
         map.AddPlayer(new PlayerEntity(map.AllocateEntityId()) { Position = pos, Health = new Health(100), ConnectionId = 1 });
-        Assert.True(map.IsPositionOccupiedByEntity(pos));
+        Assert.True(map.IsPositionOccupiedByEntityWithHealth(pos));
     }
 
     [Fact]
@@ -841,14 +841,14 @@ public class WorldMapTests
         var map = new WorldMap(42);
         var chunk = new Chunk(ChunkPosition.FromCoords(0, 0, Position.DefaultZ));
         map.AddChunk(chunk);
-        Assert.False(map.IsPositionOccupiedByEntity(Position.FromCoords(5, 5, Position.DefaultZ)));
+        Assert.False(map.IsPositionOccupiedByEntityWithHealth(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     [Fact]
     public void IsPositionOccupiedByEntity_ReturnsFalse_NoChunk()
     {
         var map = new WorldMap(42);
-        Assert.False(map.IsPositionOccupiedByEntity(Position.FromCoords(5, 5, Position.DefaultZ)));
+        Assert.False(map.IsPositionOccupiedByEntityWithHealth(Position.FromCoords(5, 5, Position.DefaultZ)));
     }
 
     // ── Animal migration ──

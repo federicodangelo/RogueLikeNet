@@ -69,7 +69,7 @@ public class BuildingSystem
         }
 
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor || tile.PlaceableItemId != 0 || map.IsPositionOccupiedByEntity(target))
+        if (tile.Type != TileType.Floor || tile.PlaceableItemId != 0 || map.IsPositionOccupiedByEntityWithHealth(target))
         {
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.PlaceItem, ItemTypeId = itemData.ItemTypeId, Failed = true });
             return;

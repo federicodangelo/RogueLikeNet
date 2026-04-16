@@ -14,9 +14,9 @@ public class MovementSystem
     private readonly HashSet<long> _actorPositions = new();
     public void Update(WorldMap map, bool debugNoCollision = false, bool debugMaxSpeed = false)
     {
-        // Collect all actor positions (alive players + monsters + NPCs)
+        // Collect positions of all alive entities to validate movement and detect attacks
         _actorPositions.Clear();
-        map.CollectEntitiesPositions(_actorPositions);
+        map.CollectEntitiesWithHealthPositions(_actorPositions);
 
         foreach (ref var player in map.Players)
         {

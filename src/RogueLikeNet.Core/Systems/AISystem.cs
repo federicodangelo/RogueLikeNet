@@ -57,7 +57,7 @@ public class AISystem
     private void CollectEntitiesPositions(WorldMap map)
     {
         _entitiesPositions.Clear();
-        map.CollectEntitiesPositions(_entitiesPositions);
+        map.CollectEntitiesWithHealthPositions(_entitiesPositions);
     }
 
     private void CollectPlayerPositions(WorldMap map)

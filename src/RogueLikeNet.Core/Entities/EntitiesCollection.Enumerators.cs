@@ -76,12 +76,13 @@ public partial class EntitiesCollection
         };
     }
 
-    public EntitiesWithHealthAndPositionEnumerator AllSolidEntitiesWithHealth => new(this);
+    public EntitiesWithHealthAndPositionEnumerator AllEntitiesWithHealthAndPosition => new(this);
 
     public readonly ref struct EntityWithPosition
     {
         public readonly EntityRef Entity;
         public readonly ref Position Position;
+        public readonly ref TileAppearance Appearance;
         public readonly bool IsDeadOrDestroyed;
 
         public EntityWithPosition(EntityRef entityRef, ref Position position, bool isDeadOrDestroyed)
@@ -161,5 +162,5 @@ public partial class EntitiesCollection
         };
     }
 
-    public EntitiesWithPositionEnumerator EntitiesWithPosition => new(this);
+    public EntitiesWithPositionEnumerator AllEntitiesWithPosition => new(this);
 }

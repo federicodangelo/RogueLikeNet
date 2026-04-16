@@ -100,29 +100,9 @@ public class WorldMap
         var chunk = GetChunkForWorldPos(pos);
         if (chunk == null) return default;
 
-        foreach (var m in chunk.Monsters)
-            if (!m.IsDead && m.Position == pos)
-                return new EntityRef(m.Id, EntityType.Monster);
-
-        foreach (var n in chunk.TownNpcs)
-            if (!n.IsDead && n.Position == pos)
-                return new EntityRef(n.Id, EntityType.TownNpc);
-
-        foreach (var r in chunk.ResourceNodes)
-            if (!r.IsDead && r.Position == pos)
-                return new EntityRef(r.Id, EntityType.ResourceNode);
-
-        foreach (var g in chunk.GroundItems)
-            if (!g.IsDestroyed && g.Position == pos)
-                return new EntityRef(g.Id, EntityType.GroundItem);
-
-        foreach (var c in chunk.Crops)
-            if (!c.IsDestroyed && c.Position == pos)
-                return new EntityRef(c.Id, EntityType.Crop);
-
-        foreach (var a in chunk.Animals)
-            if (!a.IsDead && a.Position == pos)
-                return new EntityRef(a.Id, EntityType.Animal);
+        foreach (var m in chunk.AllEntitiesWithPosition)
+            if (!m.IsDeadOrDestroyed && m.Position == pos)
+                return m.Entity;
 
         return default;
     }
@@ -141,29 +121,9 @@ public class WorldMap
         var chunk = GetChunkForWorldPos(pos);
         if (chunk == null) return refs.Count > 0 ? refs.ToArray() : [];
 
-        foreach (var m in chunk.Monsters)
-            if (!m.IsDead && m.Position == pos)
-                refs.Add(new EntityRef(m.Id, EntityType.Monster));
-
-        foreach (var n in chunk.TownNpcs)
-            if (!n.IsDead && n.Position == pos)
-                refs.Add(new EntityRef(n.Id, EntityType.TownNpc));
-
-        foreach (var r in chunk.ResourceNodes)
-            if (!r.IsDead && r.Position == pos)
-                refs.Add(new EntityRef(r.Id, EntityType.ResourceNode));
-
-        foreach (var g in chunk.GroundItems)
-            if (!g.IsDestroyed && g.Position == pos)
-                refs.Add(new EntityRef(g.Id, EntityType.GroundItem));
-
-        foreach (var c in chunk.Crops)
-            if (!c.IsDestroyed && c.Position == pos)
-                refs.Add(new EntityRef(c.Id, EntityType.Crop));
-
-        foreach (var a in chunk.Animals)
-            if (!a.IsDead && a.Position == pos)
-                refs.Add(new EntityRef(a.Id, EntityType.Animal));
+        foreach (var m in chunk.AllEntitiesWithPosition)
+            if (!m.IsDeadOrDestroyed && m.Position == pos)
+                refs.Add(m.Entity);
 
         return refs.Count > 0 ? refs.ToArray() : [];
     }
@@ -214,25 +174,25 @@ public class WorldMap
 
     // ── Spatial queries ──────────────────────────────────────────────
 
-    /// <summary>Builds a set of packed coordinates for all alive entities (players, monsters, NPCs, resource nodes).</summary>
-    public void CollectEntitiesPositions(HashSet<long> set)
+    /// <summary>Builds a set of packed coordinates for all alive entities with health (players, monsters, NPCs).</summary>
+    public void CollectEntitiesWithHealthPositions(HashSet<long> set)
     {
         foreach (var p in _players)
             if (!p.IsDead) set.Add(Position.PackCoord(p.Position.X, p.Position.Y, p.Position.Z));
         foreach (var chunk in _chunks.Values)
-            foreach (var m in chunk.AllSolidEntitiesWithHealth)
+            foreach (var m in chunk.AllEntitiesWithHealthAndPosition)
                 if (!m.IsDead) set.Add(Position.PackCoord(m.Position.X, m.Position.Y, m.Position.Z));
     }
 
     /// <summary>Checks if any alive actor (player, monster, NPC) occupies the given position.</summary>
-    public bool IsPositionOccupiedByEntity(Position pos)
+    public bool IsPositionOccupiedByEntityWithHealth(Position pos)
     {
         foreach (var p in _players)
             if (!p.IsDead && p.Position == pos) return true;
         var c = Chunk.WorldToChunkCoord(pos);
         var chunk = TryGetChunk(c);
         if (chunk == null) return false;
-        foreach (var m in chunk.AllSolidEntitiesWithHealth)
+        foreach (var m in chunk.AllEntitiesWithHealthAndPosition)
             if (!m.IsDead && m.Position == pos) return true;
         return false;
     }

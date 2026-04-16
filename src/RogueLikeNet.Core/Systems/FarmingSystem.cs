@@ -108,7 +108,7 @@ public class FarmingSystem
 
         // Target must be a floor tile (dirt/grass)
         var tile = map.GetTile(target);
-        if (tile.Type != TileType.Floor || tile.HasPlaceable || map.IsPositionOccupiedByEntity(target))
+        if (tile.Type != TileType.Floor || tile.HasPlaceable || map.IsPositionOccupiedByEntityWithHealth(target))
         {
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Till, Failed = true });
             return;
@@ -175,7 +175,7 @@ public class FarmingSystem
         }
 
         // Check no other entity occupies the position
-        if (map.IsPositionOccupiedByEntity(target))
+        if (map.IsPositionOccupiedByEntityWithHealth(target))
         {
             player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Plant, ItemTypeId = itemData.ItemTypeId, Failed = true });
             return;

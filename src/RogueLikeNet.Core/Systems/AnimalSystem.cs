@@ -214,10 +214,10 @@ public class AnimalSystem
                     var midX = (a.Position.X + b.Position.X) / 2;
                     var midY = (a.Position.Y + b.Position.Y) / 2;
                     var spawnPos = Position.FromCoords(midX, midY, a.Position.Z);
-                    if (!map.IsWalkable(spawnPos) || map.IsPositionOccupiedByEntity(spawnPos))
+                    if (!map.IsWalkable(spawnPos) || map.IsPositionOccupiedByEntityWithHealth(spawnPos))
                     {
                         spawnPos = FindAdjacentDropPosition(map, a.Position);
-                        if (map.IsPositionOccupiedByEntity(spawnPos)) continue;
+                        if (map.IsPositionOccupiedByEntityWithHealth(spawnPos)) continue;
                     }
 
                     newAnimals.Add((spawnPos, a.AnimalData.AnimalTypeId));
@@ -266,7 +266,7 @@ public class AnimalSystem
         foreach (var (dx, dy) in offsets)
         {
             var pos = Position.FromCoords(origin.X + dx, origin.Y + dy, origin.Z);
-            if (map.IsWalkable(pos) && !map.IsPositionOccupiedByEntity(pos))
+            if (map.IsWalkable(pos) && !map.IsPositionOccupiedByEntityWithHealth(pos))
                 return pos;
         }
         return origin;
