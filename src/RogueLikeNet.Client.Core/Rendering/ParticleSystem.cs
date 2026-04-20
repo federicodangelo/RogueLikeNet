@@ -74,6 +74,33 @@ public sealed class ParticleSystem
         }
     }
 
+    /// <summary>Spawn a projectile trail from attacker to target (for ranged attacks).</summary>
+    public void SpawnProjectileTrail(int attackerX, int attackerY, int targetX, int targetY)
+    {
+        float dx = targetX - attackerX;
+        float dy = targetY - attackerY;
+        float dist = MathF.Sqrt(dx * dx + dy * dy);
+        if (dist < 1f) return;
+
+        // Place trail particles along the line from attacker to target
+        int steps = Math.Max(1, (int)dist);
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = i / (float)steps;
+            _particles.Add(new Particle
+            {
+                WorldX = attackerX + dx * t,
+                WorldY = attackerY + dy * t,
+                VelocityX = 0f,
+                VelocityY = 0f,
+                Text = "·",
+                Color = new Color4(255, 220, 100, 255),
+                Life = 0.15f + (1f - t) * 0.3f, // tail fades first
+                Decay = 2.0f,
+            });
+        }
+    }
+
     /// <summary>Update all particles. Call once per frame with deltaTime in seconds.</summary>
     public void Update(float dt)
     {

@@ -63,6 +63,7 @@ public class ActiveEffectsSystem
 
         // 3. Equipment bonuses
         int equipAtk = 0, equipDef = 0, equipHp = 0;
+        int equipMana = 0;
         int weaponSpeedBonus = 0;
         for (int i = 0; i < Equipment.SlotCount; i++)
         {
@@ -76,6 +77,8 @@ public class ActiveEffectsSystem
                     equipHp += def.BaseHealth;
                     if (def.Weapon != null)
                         weaponSpeedBonus += def.Weapon.AttackSpeed - 4; // 4 is neutral baseline
+                    if (def.Magic != null)
+                        equipMana += def.Magic.BonusMana;
                 }
             }
         }
@@ -93,6 +96,13 @@ public class ActiveEffectsSystem
         int newMaxHealth = baseStats.Health + levelBonus.Health + equipHp;
         player.Health.Max = newMaxHealth;
         player.Health.Current = Math.Min(player.Health.Current, player.Health.Max);
+
+        // Recalculate max mana
+        int baseMana = ClassDefinitions.GetStartingMana(player.ClassData.ClassId);
+        int levelMana = ClassDefinitions.GetLevelManaBonus(player.ClassData.ClassId, player.ClassData.Level);
+        int newMaxMana = baseMana + levelMana + equipMana;
+        player.Mana.Max = newMaxMana;
+        player.Mana.Current = Math.Min(player.Mana.Current, player.Mana.Max);
 
         // Recalculate move delay and attack delay from speed + effects
         int baseDelay = Math.Max(0, 10 - (6 + classStats.Speed + levelBonus.Speed));

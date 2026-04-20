@@ -40,6 +40,9 @@ public sealed class PlayingScreen : IScreen
     private bool _interacting;
     public bool IsInteracting => _interacting;
 
+    // Spell casting — selected spell index for cycling
+    private int _selectedSpellIndex;
+
     public ScreenState ScreenState => ScreenState.Playing;
 
     public PlayingScreen(ScreenContext ctx, GameWorldRenderer worldRenderer, HudRenderer hudRenderer,
@@ -181,6 +184,8 @@ public sealed class PlayingScreen : IScreen
                 _lookingAround = true;
             else if (input.IsActionPressed(InputAction.UseStairs))
                 msg = new ClientInputMsg { ActionType = ActionTypes.UseStairs };
+            else if (input.IsActionPressed(InputAction.CastSpell))
+                msg = TryCastSpell();
         }
 
         if (msg != null)
@@ -355,6 +360,26 @@ public sealed class PlayingScreen : IScreen
             msg.Tick = _ctx.GameState.WorldTick;
             _ = _ctx.Connection.SendInputAsync(msg);
         }
+    }
+
+    private ClientInputMsg? TryCastSpell()
+    {
+        var ps = _ctx.GameState.PlayerState;
+        if (ps == null) return null;
+
+        // Find spells from equipped weapon
+        var hand = ps.EquippedItems.FirstOrDefault(eq => eq.EquipSlot == (int)EquipSlot.Hand);
+        if (hand == null) return null;
+
+        var def = GameData.Instance.Items.Get(hand.ItemTypeId);
+        if (def?.Magic == null || def.Magic.SpellIds.Length == 0) return null;
+
+        // Cycle through spells using _selectedSpellIndex
+        string spellId = def.Magic.SpellIds[_selectedSpellIndex % def.Magic.SpellIds.Length];
+        var spell = GameData.Instance.Spells.Get(spellId);
+        if (spell == null) return null;
+
+        return new ClientInputMsg { ActionType = ActionTypes.CastSpell, ItemSlot = spell.NumericId };
     }
 
     public void Update(float deltaTime)

@@ -46,6 +46,7 @@ public enum InputAction
     Place,
     PickUpPlaced,
     UseStairs,
+    CastSpell,
 }
 
 public enum InputActionAxis

@@ -22,6 +22,7 @@ public struct PlayerEntity
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
     public Survival Survival;
+    public Mana Mana;
     public ActiveEffects ActiveEffects;
     public List<PlayerActionEvent> ActionEvents = new();
     public bool IsDead => !Health.IsAlive;

@@ -35,6 +35,8 @@ public class GameEngine : IDisposable
     private readonly ActiveEffectsSystem _activeEffectsSystem;
     private readonly FarmingSystem _farmingSystem;
     private readonly AnimalSystem _animalSystem;
+    private readonly TradingSystem _tradingSystem;
+    private readonly SpellSystem _spellSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private Position? _generatorSpawnHint;
@@ -42,6 +44,7 @@ public class GameEngine : IDisposable
     public WorldMap WorldMap => _worldMap;
     public long CurrentTick => _tick;
     public CombatSystem Combat => _combatSystem;
+    public SpellSystem Spells => _spellSystem;
     public InventorySystem Inventory => _inventorySystem;
     public GameData GameData { get; }
 
@@ -80,6 +83,8 @@ public class GameEngine : IDisposable
         _activeEffectsSystem = new ActiveEffectsSystem();
         _farmingSystem = new FarmingSystem();
         _animalSystem = new AnimalSystem();
+        _tradingSystem = new TradingSystem();
+        _spellSystem = new SpellSystem();
         _worldRng = new SeededRandom(worldSeed);
     }
 
@@ -168,6 +173,7 @@ public class GameEngine : IDisposable
             MoveDelay = new MoveDelay(moveDelay),
             AttackDelay = new AttackDelay(attackDelay),
             Survival = Components.Survival.Default(),
+            Mana = new Components.Mana(ClassDefinitions.GetStartingMana(classId)),
         };
         return ref _worldMap.AddPlayer(player);
     }
@@ -274,7 +280,7 @@ public class GameEngine : IDisposable
             Position = pos,
             Health = new Health(9999),
             CombatStats = new CombatStats(0, 999, 3),
-            Appearance = new TileAppearance(RenderConstants.GlyphTownNpc, RenderConstants.ColorTownNpcFg),
+            Appearance = new TileAppearance(RenderConstants.GlyphTownNpc, GetNpcColor(role)),
             AI = new AIState { StateId = AIStates.Idle },
             MoveDelay = new MoveDelay(5),
             AttackDelay = new AttackDelay(0),
@@ -296,6 +302,17 @@ public class GameEngine : IDisposable
         var c = Chunk.WorldToChunkCoord(pos);
         return ref _worldMap.GetChunk(c).AddEntity(npc);
     }
+
+    private static int GetNpcColor(TownNpcRole role) => role switch
+    {
+        TownNpcRole.Merchant => RenderConstants.ColorNpcMerchant,
+        TownNpcRole.Blacksmith => RenderConstants.ColorNpcBlacksmith,
+        TownNpcRole.Farmer => RenderConstants.ColorNpcFarmer,
+        TownNpcRole.Alchemist => RenderConstants.ColorNpcAlchemist,
+        TownNpcRole.Guard => RenderConstants.ColorNpcGuard,
+        TownNpcRole.Innkeeper => RenderConstants.ColorNpcInnkeeper,
+        _ => RenderConstants.ColorNpcVillager,
+    };
 
     /// <summary>
     /// Spawns a farm animal at the given position using an animal definition.
@@ -364,8 +381,10 @@ public class GameEngine : IDisposable
         _activeEffectsSystem.Update(_worldMap);
         _movementSystem.Update(_worldMap, DebugNoCollision, DebugMaxSpeed);
         _combatSystem.Update(_worldMap, DebugInvulnerable);
+        _spellSystem.Update(_worldMap);
         _aiSystem.Update(_worldMap);
         _inventorySystem.Update(_worldMap, this);
+        _tradingSystem.Update(_worldMap);
         _craftingSystem.Update(_worldMap, DebugFreeCrafting);
         _buildingSystem.Update(_worldMap);
         _farmingSystem.Update(_worldMap);
@@ -578,6 +597,8 @@ public class GameEngine : IDisposable
             MaxHunger = player.Survival.MaxHunger,
             Thirst = player.Survival.Thirst,
             MaxThirst = player.Survival.MaxThirst,
+            Mana = player.Mana.Current,
+            MaxMana = player.Mana.Max,
             InventoryCount = player.Inventory.Items.Count,
             InventoryCapacity = player.Inventory.Capacity,
             ClassId = player.ClassData.ClassId,

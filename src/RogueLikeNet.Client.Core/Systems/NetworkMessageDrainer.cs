@@ -22,7 +22,7 @@ public sealed class NetworkMessageDrainer
         _pendingDeltas.Enqueue(delta);
     }
 
-    public void Drain(ClientGameState gameState, ParticleSystem particles, ChatSystem? chat = null)
+    public void Drain(ClientGameState gameState, ParticleSystem particles, ChatSystem? chat = null, Action<int>? onShopNpcInteracted = null)
     {
         while (_pendingDeltas.TryDequeue(out var delta))
         {
@@ -38,6 +38,8 @@ public sealed class NetworkMessageDrainer
             }
             else
             {
+                if (evt.IsRanged)
+                    particles.SpawnProjectileTrail(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY);
                 particles.SpawnDamageNumber(evt.TargetX, evt.TargetY, evt.Damage, evt.TargetDied);
                 particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
             }
@@ -47,6 +49,11 @@ public sealed class NetworkMessageDrainer
         foreach (var dlg in gameState.PendingNpcDialogues)
         {
             chat?.AddChatLine($"[{dlg.NpcName}]: {dlg.Text}");
+
+            // Check if this NPC has a shop — trigger shop opening
+            var role = (RogueLikeNet.Core.Data.TownNpcRole)dlg.NpcRole;
+            if (onShopNpcInteracted != null && GameData.Instance.Shops.GetByRole(role) != null)
+                onShopNpcInteracted(dlg.NpcRole);
         }
 
         foreach (var evt in gameState.PendingPlayerActionEvents)

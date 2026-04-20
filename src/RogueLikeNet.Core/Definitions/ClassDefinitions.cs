@@ -21,6 +21,7 @@ public static class ClassDefinitions
     private const int BaseAttack = 10;
     private const int BaseDefense = 5;
     private const int BaseSpeed = 10;
+    private const int BaseMana = 30;
     public static ClassStats BaseStats => new(BaseAttack, BaseDefense, BaseHealth, BaseSpeed);
 
     public static int NumClasses => GameData.Instance.Classes.ClassCount;
@@ -34,6 +35,12 @@ public static class ClassDefinitions
     {
         var def = GetDef(classIndex);
         return new ClassStats(def.StartingStats.Attack, def.StartingStats.Defense, def.StartingStats.Health, def.StartingStats.Speed);
+    }
+
+    public static int GetStartingMana(int classIndex)
+    {
+        var def = GetDef(classIndex);
+        return BaseMana + def.StartingStats.Mana;
     }
 
     public static string[] GetAsciiArt(int classIndex)
@@ -66,6 +73,23 @@ public static class ClassDefinitions
         if (best != null)
             return new ClassStats(best.Attack, best.Defense, best.Health, best.Speed);
         return default;
+    }
+
+    public static int GetLevelManaBonus(int classIndex, int level)
+    {
+        var def = GetDef(classIndex);
+        foreach (var bonus in def.LevelBonuses)
+        {
+            if (bonus.Level == level)
+                return bonus.Mana;
+        }
+        ClassLevelBonus? best = null;
+        foreach (var bonus in def.LevelBonuses)
+        {
+            if (bonus.Level <= level && (best == null || bonus.Level > best.Level))
+                best = bonus;
+        }
+        return best?.Mana ?? 0;
     }
 }
 

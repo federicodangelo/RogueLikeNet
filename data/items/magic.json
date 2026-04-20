@@ -1,0 +1,137 @@
+[
+    {
+        "id": "apprentice_staff",
+        "name": "Apprentice Staff",
+        "category": "weapon",
+        "glyphId": "/",
+        "fgColor": "#8080FF",
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 2,
+            "attackSpeed": 4,
+            "damageType": "magic",
+            "range": 1,
+            "twoHanded": true
+        },
+        "magic": {
+            "spellIds": [
+                "magic_missile",
+                "heal"
+            ],
+            "bonusSpellDamage": 2,
+            "bonusMana": 10
+        }
+    },
+    {
+        "id": "lightning_wand",
+        "name": "Lightning Wand",
+        "category": "weapon",
+        "glyphId": "/",
+        "fgColor": "#FFFF00",
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "gold",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 4,
+            "attackSpeed": 6,
+            "damageType": "lightning",
+            "range": 1,
+            "twoHanded": false
+        },
+        "magic": {
+            "spellIds": [
+                "lightning_strike",
+                "magic_missile"
+            ],
+            "bonusSpellDamage": 8,
+            "bonusMana": 15
+        }
+    },
+    {
+        "id": "archmage_staff",
+        "name": "Archmage Staff",
+        "category": "weapon",
+        "glyphId": "/",
+        "fgColor": "#AA55FF",
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "mithril",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 5,
+            "damageType": "magic",
+            "range": 1,
+            "twoHanded": true
+        },
+        "magic": {
+            "spellIds": [
+                "fireball",
+                "ice_bolt",
+                "lightning_strike",
+                "heal",
+                "arcane_shield",
+                "flame_burst",
+                "poison_cloud",
+                "magic_missile"
+            ],
+            "bonusSpellDamage": 12,
+            "bonusMana": 50
+        }
+    },
+    {
+        "id": "scroll_fireball",
+        "name": "Scroll of Fireball",
+        "category": "magic",
+        "glyphId": "?",
+        "fgColor": "#FF4400",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "magic": {
+            "spellIds": [
+                "fireball"
+            ],
+            "bonusSpellDamage": 0,
+            "bonusMana": 0
+        }
+    },
+    {
+        "id": "scroll_heal",
+        "name": "Scroll of Heal",
+        "category": "magic",
+        "glyphId": "?",
+        "fgColor": "#00FF00",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "magic": {
+            "spellIds": [
+                "heal"
+            ],
+            "bonusSpellDamage": 0,
+            "bonusMana": 0
+        }
+    },
+    {
+        "id": "scroll_lightning",
+        "name": "Scroll of Lightning",
+        "category": "magic",
+        "glyphId": "?",
+        "fgColor": "#FFFF00",
+        "stackable": true,
+        "maxStackSize": 10,
+        "materialTier": "none",
+        "magic": {
+            "spellIds": [
+                "lightning_strike"
+            ],
+            "bonusSpellDamage": 0,
+            "bonusMana": 0
+        }
+    }
+]

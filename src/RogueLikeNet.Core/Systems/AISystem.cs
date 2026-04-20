@@ -115,6 +115,10 @@ public class AISystem
 
                 if (npc.MoveDelay.Current > 0) continue;
 
+                // Shopkeepers stay at their post
+                if (GameData.Instance.Shops.GetByRole(npc.NpcData.Role) != null)
+                    continue;
+
                 int dir = _rng.Next(4);
                 var nextPosition = Position.FromCoords(
                     npc.Position.X + (dir == 0 ? 1 : dir == 1 ? -1 : 0),

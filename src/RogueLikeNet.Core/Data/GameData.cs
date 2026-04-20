@@ -17,6 +17,8 @@ public sealed class GameData
     public readonly PlayerLevelTable PlayerLevels = new();
     public readonly StructureRegistry Structures = new();
     public readonly TownRegistry Towns = new();
+    public readonly ShopRegistry Shops = new();
+    public readonly SpellRegistry Spells = new();
 
     public GameData()
     {
@@ -42,5 +44,7 @@ public sealed class GameData
         output.WriteLine($"[GameData] Loaded {PlayerLevels.Count} player levels");
         output.WriteLine($"[GameData] Loaded {Structures.Count} structures");
         output.WriteLine($"[GameData] Loaded {Towns.Count} town types");
+        output.WriteLine($"[GameData] Loaded {Shops.Count} shops");
+        output.WriteLine($"[GameData] Loaded {Spells.Count} spells");
     }
 }

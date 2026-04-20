@@ -25,6 +25,7 @@ public sealed class ScreenManager
     private readonly ServerAdminScreen? _serverAdmin;
     private readonly NewGameScreen? _newGame;
     private readonly LoginScreen? _login;
+    private readonly ShopScreen? _shop;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -41,7 +42,8 @@ public sealed class ScreenManager
         SaveSlotScreen saveSlot,
         ServerAdminScreen serverAdmin,
         NewGameScreen newGame,
-        LoginScreen login)
+        LoginScreen login,
+        ShopScreen shop)
     {
         _mainMenu = mainMenu;
         _classSelect = classSelect;
@@ -55,6 +57,7 @@ public sealed class ScreenManager
         _serverAdmin = serverAdmin;
         _newGame = newGame;
         _login = login;
+        _shop = shop;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
@@ -71,6 +74,7 @@ public sealed class ScreenManager
         _screens[ScreenState.ServerAdmin] = serverAdmin;
         _screens[ScreenState.NewGame] = newGame;
         _screens[ScreenState.Login] = login;
+        _screens[ScreenState.Shop] = shop;
 
         _current = mainMenu;
         CurrentState = ScreenState.MainMenu;
@@ -131,7 +135,16 @@ public sealed class ScreenManager
             case ScreenState.Login:
                 _login?.OnEnter();
                 break;
+            case ScreenState.Shop:
+                _shop?.OnEnter();
+                break;
         }
+    }
+
+    public void OpenShop(RogueLikeNet.Core.Data.TownNpcRole role)
+    {
+        _shop?.OpenShop(role);
+        TransitionTo(ScreenState.Shop);
     }
 
     public void HandleInput(IInputManager input) => _current.HandleInput(input);

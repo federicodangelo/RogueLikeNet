@@ -206,7 +206,33 @@ public static class DataLoader
             }
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns);
+        // Load shops from data/shops/
+        var shops = new List<ShopDefinition>();
+        var shopsDir = Path.Combine(dataDir, "shops");
+        if (Directory.Exists(shopsDir))
+        {
+            foreach (var file in Directory.GetFiles(shopsDir, "*.json"))
+            {
+                var loaded = DeserializeFile<ShopDefinition[]>(file);
+                if (loaded != null)
+                    shops.AddRange(loaded);
+            }
+        }
+
+        // Load spells from data/spells/
+        var spells = new List<SpellDefinition>();
+        var spellsDir = Path.Combine(dataDir, "spells");
+        if (Directory.Exists(spellsDir))
+        {
+            foreach (var file in Directory.GetFiles(spellsDir, "*.json"))
+            {
+                var loaded = DeserializeFile<SpellDefinition[]>(file);
+                if (loaded != null)
+                    spells.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells);
     }
     /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
     /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
@@ -303,10 +329,34 @@ public static class DataLoader
             }
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns);
+        // Load shops from data/shops/*.json resources
+        var shops = new List<ShopDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/shops/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<ShopDefinition[]>(assembly, name);
+                if (loaded != null)
+                    shops.AddRange(loaded);
+            }
+        }
+
+        // Load spells from data/spells/*.json resources
+        var spells = new List<SpellDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/spells/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<SpellDefinition[]>(assembly, name);
+                if (loaded != null)
+                    spells.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells);
     }
 
-    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels, IEnumerable<StructureDefinition> structures, IEnumerable<TownDefinition> towns)
+    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels, IEnumerable<StructureDefinition> structures, IEnumerable<TownDefinition> towns, IEnumerable<ShopDefinition> shops, IEnumerable<SpellDefinition> spells)
     {
         var data = new GameData();
 
@@ -321,6 +371,8 @@ public static class DataLoader
         data.PlayerLevels.Load(playerLevels);
         data.Structures.Register(structures);
         data.Towns.Register(towns);
+        data.Shops.Register(shops);
+        data.Spells.Register(spells);
 
         Validate(data);
 

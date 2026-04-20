@@ -17,4 +17,5 @@ public enum ScreenState
     ServerAdmin,
     NewGame,
     Login,
+    Shop,
 }

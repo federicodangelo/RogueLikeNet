@@ -240,4 +240,39 @@ public class WorldDeltaMsgTests
         Assert.Empty(msg.EquippedItems);
         Assert.Empty(msg.InventoryItems);
     }
+
+    [Fact]
+    public void PlayerStateMsg_ManaFields_RoundTrip()
+    {
+        var msg = new PlayerStateMsg
+        {
+            Health = 80,
+            MaxHealth = 100,
+            Mana = 45,
+            MaxMana = 100,
+        };
+        var data = NetSerializer.Serialize(msg);
+        var result = NetSerializer.Deserialize<PlayerStateMsg>(data);
+        Assert.Equal(45, result.Mana);
+        Assert.Equal(100, result.MaxMana);
+    }
+
+    [Fact]
+    public void PlayerStateMsg_ManaFields_DefaultToZero()
+    {
+        var msg = new PlayerStateMsg();
+        Assert.Equal(0, msg.Mana);
+        Assert.Equal(0, msg.MaxMana);
+    }
+
+    [Fact]
+    public void PlayerStateMsg_Equality_IncludesMana()
+    {
+        var a = new PlayerStateMsg { Health = 100, MaxHealth = 100, Mana = 50, MaxMana = 80 };
+        var b = new PlayerStateMsg { Health = 100, MaxHealth = 100, Mana = 50, MaxMana = 80 };
+        var c = new PlayerStateMsg { Health = 100, MaxHealth = 100, Mana = 30, MaxMana = 80 };
+
+        Assert.Equal(a, b);
+        Assert.NotEqual(a, c);
+    }
 }

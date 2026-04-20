@@ -224,8 +224,10 @@ public static class GameStateSerializer
     public static CombatEventMsg[] SerializeCombatEvents(GameEngine engine)
     {
         var combatEvents = engine.Combat.LastTickEvents;
-        if (combatEvents.Count == 0) return [];
-        return combatEvents.Select(e => new CombatEventMsg
+        var spellEvents = engine.Spells.LastTickEvents;
+        if (combatEvents.Count == 0 && spellEvents.Count == 0) return [];
+
+        static CombatEventMsg ToMsg(CombatEvent e) => new()
         {
             AttackerX = e.Attacker.X,
             AttackerY = e.Attacker.Y,
@@ -234,7 +236,16 @@ public static class GameStateSerializer
             Damage = e.Damage,
             TargetDied = e.TargetDied,
             Blocked = e.Blocked,
-        }).ToArray();
+            IsRanged = e.IsRanged,
+        };
+
+        var result = new CombatEventMsg[combatEvents.Count + spellEvents.Count];
+        int idx = 0;
+        foreach (var e in combatEvents)
+            result[idx++] = ToMsg(e);
+        foreach (var e in spellEvents)
+            result[idx++] = ToMsg(e);
+        return result;
     }
 
     public static NpcDialogueMsg[] SerializeNpcDialogueEvents(GameEngine engine)
@@ -247,6 +258,7 @@ public static class GameStateSerializer
             NpcY = e.Npc.Y,
             NpcName = e.NpcName,
             Text = e.Text,
+            NpcRole = e.NpcRole,
         }).ToArray();
     }
 
@@ -284,6 +296,8 @@ public static class GameStateSerializer
             MaxHunger = stateData.MaxHunger,
             Thirst = stateData.Thirst,
             MaxThirst = stateData.MaxThirst,
+            Mana = stateData.Mana,
+            MaxMana = stateData.MaxMana,
             InventoryCount = stateData.InventoryCount,
             InventoryCapacity = stateData.InventoryCapacity,
             InventoryItems = stateData.InventoryItems.Select(i => new ItemDataMsg { ItemTypeId = i.ItemTypeId, StackCount = i.StackCount, EquipSlot = -1 }).ToArray(),

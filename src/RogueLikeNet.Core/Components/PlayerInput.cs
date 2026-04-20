@@ -34,4 +34,7 @@ public static class ActionTypes
     public const int FeedAnimal = 21;
     public const int Interact = 22;         // Context-sensitive: server resolves to Till/Plant/Water/Harvest/Feed
     public const int DropEquipped = 23;      // Unequip + drop to ground in one action
+    public const int BuyItem = 24;           // Buy item from shop (ItemSlot = shop entry index)
+    public const int SellItem = 25;          // Sell item from inventory (ItemSlot = inventory slot)
+    public const int CastSpell = 26;         // Cast spell (ItemSlot = spell numeric ID)
 }

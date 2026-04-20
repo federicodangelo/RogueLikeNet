@@ -26,6 +26,15 @@ public static class RenderConstants
     public const int ColorTorchFg = 0xFFCC66;
     public const int ColorTownNpcFg = 0x44AAFF;
 
+    // Town NPC role colors
+    public const int ColorNpcVillager = 0x44AAFF;   // Light blue
+    public const int ColorNpcMerchant = 0xFFD700;    // Gold
+    public const int ColorNpcBlacksmith = 0xFF6633;  // Orange-red
+    public const int ColorNpcFarmer = 0x66CC44;      // Green
+    public const int ColorNpcAlchemist = 0xCC44FF;   // Purple
+    public const int ColorNpcGuard = 0xCCCCCC;       // Silver
+    public const int ColorNpcInnkeeper = 0xFFAA55;   // Warm amber
+
     // Crop growth stage glyphs (CP437)
     public const int GlyphCropStage0 = 250;
     public const int GlyphCropStage1 = 44;

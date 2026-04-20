@@ -1,0 +1,186 @@
+[
+    {
+        "id": "merchant_shop",
+        "name": "General Store",
+        "role": "merchant",
+        "sellPricePercent": 50,
+        "items": [
+            {
+                "itemId": "torch_placeable",
+                "price": 5
+            },
+            {
+                "itemId": "wooden_arrow",
+                "price": 2
+            },
+            {
+                "itemId": "iron_arrow",
+                "price": 5
+            },
+            {
+                "itemId": "bread",
+                "price": 8
+            },
+            {
+                "itemId": "apple",
+                "price": 5
+            },
+            {
+                "itemId": "water_flask",
+                "price": 3
+            },
+            {
+                "itemId": "rope",
+                "price": 10
+            },
+            {
+                "itemId": "chest_placeable",
+                "price": 25
+            }
+        ]
+    },
+    {
+        "id": "blacksmith_shop",
+        "name": "Blacksmith",
+        "role": "blacksmith",
+        "sellPricePercent": 60,
+        "items": [
+            {
+                "itemId": "wooden_sword",
+                "price": 15
+            },
+            {
+                "itemId": "short_sword",
+                "price": 40
+            },
+            {
+                "itemId": "dagger",
+                "price": 25
+            },
+            {
+                "itemId": "wooden_bow",
+                "price": 30
+            },
+            {
+                "itemId": "wooden_pickaxe",
+                "price": 20
+            },
+            {
+                "itemId": "wooden_axe",
+                "price": 20
+            },
+            {
+                "itemId": "leather_armor",
+                "price": 30
+            },
+            {
+                "itemId": "chain_mail",
+                "price": 80
+            },
+            {
+                "itemId": "wooden_shield",
+                "price": 20
+            },
+            {
+                "itemId": "iron_arrow",
+                "price": 4
+            },
+            {
+                "itemId": "copper_arrow",
+                "price": 3
+            },
+            {
+                "itemId": "iron_pickaxe",
+                "price": 60
+            },
+            {
+                "itemId": "iron_axe",
+                "price": 60
+            }
+        ]
+    },
+    {
+        "id": "alchemist_shop",
+        "name": "Alchemist",
+        "role": "alchemist",
+        "sellPricePercent": 50,
+        "items": [
+            {
+                "itemId": "health_potion",
+                "price": 20
+            },
+            {
+                "itemId": "strength_potion",
+                "price": 30
+            },
+            {
+                "itemId": "defense_potion",
+                "price": 30
+            },
+            {
+                "itemId": "speed_potion",
+                "price": 30
+            },
+            {
+                "itemId": "fire_arrow",
+                "price": 8
+            },
+            {
+                "itemId": "ice_arrow",
+                "price": 8
+            }
+        ]
+    },
+    {
+        "id": "farmer_shop",
+        "name": "Farm Supply",
+        "role": "farmer",
+        "sellPricePercent": 50,
+        "items": [
+            {
+                "itemId": "wheat_seeds",
+                "price": 5
+            },
+            {
+                "itemId": "carrot_seeds",
+                "price": 5
+            },
+            {
+                "itemId": "potato_seeds",
+                "price": 5
+            },
+            {
+                "itemId": "tomato_seeds",
+                "price": 8
+            },
+            {
+                "itemId": "pumpkin_seeds",
+                "price": 10
+            },
+            {
+                "itemId": "berry_seeds",
+                "price": 8
+            },
+            {
+                "itemId": "wooden_hoe",
+                "price": 15
+            },
+            {
+                "itemId": "watering_can",
+                "price": 20
+            },
+            {
+                "itemId": "chicken_feed",
+                "price": 3
+            },
+            {
+                "itemId": "cow_feed",
+                "price": 5
+            },
+            {
+                "itemId": "sheep_feed",
+                "price": 5
+            }
+        ]
+    }
+]

@@ -46,10 +46,10 @@ public class SdlInputManager : BaseInputManager
     {
         [InputAction.DebugToggle] = [InputBinding.Key(SDL.Scancode.Alpha1)],
         [InputAction.MenuConfirm] = [InputBinding.Key(SDL.Scancode.Return), InputBinding.Key(SDL.Scancode.Space), InputBinding.Gamepad(SDL.GamepadButton.South)],
-        [InputAction.MenuUp] = [InputBinding.Key(SDL.Scancode.Up), InputBinding.Key(SDL.Scancode.W), InputBinding.Gamepad(SDL.GamepadButton.DPadUp)],
-        [InputAction.MenuDown] = [InputBinding.Key(SDL.Scancode.Down), InputBinding.Key(SDL.Scancode.S), InputBinding.Gamepad(SDL.GamepadButton.DPadDown)],
-        [InputAction.MenuLeft] = [InputBinding.Key(SDL.Scancode.Left), InputBinding.Key(SDL.Scancode.A), InputBinding.Gamepad(SDL.GamepadButton.DPadLeft)],
-        [InputAction.MenuRight] = [InputBinding.Key(SDL.Scancode.Right), InputBinding.Key(SDL.Scancode.D), InputBinding.Gamepad(SDL.GamepadButton.DPadRight)],
+        [InputAction.MenuUp] = [InputBinding.Key(SDL.Scancode.Up), InputBinding.Gamepad(SDL.GamepadButton.DPadUp)],
+        [InputAction.MenuDown] = [InputBinding.Key(SDL.Scancode.Down), InputBinding.Gamepad(SDL.GamepadButton.DPadDown)],
+        [InputAction.MenuLeft] = [InputBinding.Key(SDL.Scancode.Left), InputBinding.Gamepad(SDL.GamepadButton.DPadLeft)],
+        [InputAction.MenuRight] = [InputBinding.Key(SDL.Scancode.Right), InputBinding.Gamepad(SDL.GamepadButton.DPadRight)],
         [InputAction.MenuBack] = [InputBinding.Key(SDL.Scancode.Escape), InputBinding.Gamepad(SDL.GamepadButton.East), InputBinding.Gamepad(SDL.GamepadButton.Start)],
         [InputAction.MenuSecondaryAction] = [InputBinding.Key(SDL.Scancode.X), InputBinding.Key(SDL.Scancode.Delete), InputBinding.Gamepad(SDL.GamepadButton.North)],
 
@@ -93,6 +93,7 @@ public class SdlInputManager : BaseInputManager
         [InputAction.OpenCrafting] = [InputBinding.Key(SDL.Scancode.C)],
         [InputAction.Place] = [InputBinding.Key(SDL.Scancode.P)],
         [InputAction.UseStairs] = [InputBinding.Key(SDL.Scancode.Period), InputBinding.Key(SDL.Scancode.Comma)],
+        [InputAction.CastSpell] = [InputBinding.Key(SDL.Scancode.M)],
     };
 
     private bool _quitRequested;

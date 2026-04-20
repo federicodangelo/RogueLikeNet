@@ -18,6 +18,9 @@ public enum PlayerActionEventType
     Craft = 13,
     LevelUp = 14,
     Kill = 15,
+    Buy = 16,
+    Sell = 17,
+    CastSpell = 18,
 }
 
 /// <summary>
@@ -29,6 +32,8 @@ public enum ActionFailReason
     InventoryFull = 1,
     NoItemsOnGround = 2,
     NothingToPickUp = 3,
+    InsufficientMana = 4,
+    SpellOnCooldown = 5,
 }
 
 public struct PlayerActionEvent

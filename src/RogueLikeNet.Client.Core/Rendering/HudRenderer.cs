@@ -83,18 +83,30 @@ public sealed class HudRenderer
                 case "HP":
                     if (row >= maxRow) break;
                     Ds(r, col, row, "HP", RenderingTheme.HpText);
+                    Ds(r, col + innerW / 2 + 1, row, "MP", RenderingTheme.ManaText);
                     Ds(r, col + innerW - 5, row, "[ESC]", RenderingTheme.Dim);
                     row++;
                     if (row >= maxRow) break;
-                    int barW = innerW;
-                    float hpRatio = playerState.MaxHealth > 0 ? (float)playerState.Health / playerState.MaxHealth : 0;
-                    int filled = (int)(barW * hpRatio);
-                    for (int i = 0; i < barW; i++)
-                        Dc(r, col + i, row, i < filled ? '\u2588' : '\u2591', i < filled ? RenderingTheme.HpFill : RenderingTheme.HpBar);
+                    {
+                        // HP bar on the left
+                        int hpBarW = innerW / 2;
+                        float hpRatio = playerState.MaxHealth > 0 ? (float)playerState.Health / playerState.MaxHealth : 0;
+                        int hpFilled = (int)(hpBarW * hpRatio);
+                        for (int i = 0; i < hpBarW; i++)
+                            Dc(r, col + i, row, i < hpFilled ? '\u2588' : '\u2591', i < hpFilled ? RenderingTheme.HpFill : RenderingTheme.HpBar);
+
+                        // Mana bar on the right
+                        int manaBarW = innerW / 2;
+                        int manaCol = col + innerW / 2 + 1;
+                        float manaRatio = playerState.MaxMana > 0 ? (float)playerState.Mana / playerState.MaxMana : 0;
+                        int manaFilled = (int)(manaBarW * manaRatio);
+                        for (int i = 0; i < manaBarW; i++)
+                            Dc(r, manaCol + i, row, i < manaFilled ? '\u2588' : '\u2591', i < manaFilled ? RenderingTheme.ManaFill : RenderingTheme.ManaBar);
+                    }
                     row++;
                     if (row >= maxRow) break;
-                    string hpText = $"{playerState.Health}/{playerState.MaxHealth}";
-                    Ds(r, col, row, hpText, RenderingTheme.HpText);
+                    Ds(r, col, row, $"{playerState.Health}/{playerState.MaxHealth}", RenderingTheme.HpText);
+                    Ds(r, col + innerW / 2 + 1, row, $"{playerState.Mana}/{playerState.MaxMana}", RenderingTheme.ManaText);
                     break;
 
                 case "Survival":
@@ -171,11 +183,24 @@ public sealed class HudRenderer
                                 int stack = handItem.StackCount;
                                 string stackStr = stack > 1 ? $"x{stack}" : "";
 
-                                Ds(r, col, row, $"HAND: {name}{stackStr}", RenderingTheme.Item);
+                                // For ranged weapons, show ammo info
+                                string ammoStr = "";
+                                var weaponDef = GameData.Instance.Items.Get(handItem.ItemTypeId);
+                                if (weaponDef?.Weapon != null && weaponDef.Weapon.Range > 1)
+                                {
+                                    var ammoItem = playerState.InventoryItems
+                                        .FirstOrDefault(i => GameData.Instance.Items.Get(i.ItemTypeId)?.Category == ItemCategory.Ammo);
+                                    if (ammoItem != null)
+                                        ammoStr = $" (x{ammoItem.StackCount})";
+                                    else
+                                        ammoStr = " (No Ammo)";
+                                }
+
+                                Ds(r, col, row, $"HAND: {name}{stackStr}{ammoStr} [F]", RenderingTheme.Item);
                             }
                             else
                             {
-                                Ds(r, col, row, "HAND: ---", RenderingTheme.Dim);
+                                Ds(r, col, row, "HAND: --- [F]", RenderingTheme.Dim);
                             }
                             row++;
                         }
@@ -319,7 +344,7 @@ public sealed class HudRenderer
         }
 
         if (row >= maxRow) return;
-        Ds(r, col, row, "[I] Inventory [C] Crafting", RenderingTheme.Dim); row++;
+        Ds(r, col, row, "[I] Inv [C] Craft", RenderingTheme.Dim); row++;
     }
 
     private static bool HasAdjacentTileWithPlaceable(ClientGameState state)

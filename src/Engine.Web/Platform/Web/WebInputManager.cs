@@ -65,10 +65,10 @@ public class WebInputManager : BaseInputManager
     {
         [InputAction.DebugToggle] = [InputBinding.Key("Digit1")],
         [InputAction.MenuConfirm] = [InputBinding.Key("Enter"), InputBinding.Key("Space"), InputBinding.Key("NumpadEnter"), InputBinding.Btn(GpBtnSouth)],
-        [InputAction.MenuUp] = [InputBinding.Key("ArrowUp"), InputBinding.Key("KeyW"), InputBinding.Btn(GpBtnDPadUp)],
-        [InputAction.MenuDown] = [InputBinding.Key("ArrowDown"), InputBinding.Key("KeyS"), InputBinding.Btn(GpBtnDPadDown)],
-        [InputAction.MenuLeft] = [InputBinding.Key("ArrowLeft"), InputBinding.Key("KeyA"), InputBinding.Btn(GpBtnDPadLeft)],
-        [InputAction.MenuRight] = [InputBinding.Key("ArrowRight"), InputBinding.Key("KeyD"), InputBinding.Btn(GpBtnDPadRight)],
+        [InputAction.MenuUp] = [InputBinding.Key("ArrowUp"), InputBinding.Btn(GpBtnDPadUp)],
+        [InputAction.MenuDown] = [InputBinding.Key("ArrowDown"), InputBinding.Btn(GpBtnDPadDown)],
+        [InputAction.MenuLeft] = [InputBinding.Key("ArrowLeft"), InputBinding.Btn(GpBtnDPadLeft)],
+        [InputAction.MenuRight] = [InputBinding.Key("ArrowRight"), InputBinding.Btn(GpBtnDPadRight)],
         [InputAction.MenuBack] = [InputBinding.Key("Escape"), InputBinding.Btn(GpBtnEast), InputBinding.Btn(GpBtnStart)],
         [InputAction.MenuSecondaryAction] = [InputBinding.Key("KeyX"), InputBinding.Key("Delete")],
 
@@ -106,6 +106,7 @@ public class WebInputManager : BaseInputManager
         [InputAction.OpenCrafting] = [InputBinding.Key("KeyC")],
         [InputAction.Place] = [InputBinding.Key("KeyP")],
         [InputAction.UseStairs] = [InputBinding.Key("Period"), InputBinding.Key("Comma")],
+        [InputAction.CastSpell] = [InputBinding.Key("KeyM")],
     };
 
     private readonly record struct InputBinding(string? KeyCode, int? MouseBtn, int? GamepadBtn)

@@ -21,4 +21,6 @@ public class PlayerStateData
     public int[] QuickSlotIndices = [];
     public int[] NearbyStationsTypes = [];
     public int ClassId;
+    public int Mana;
+    public int MaxMana;
 }

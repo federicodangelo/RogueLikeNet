@@ -13,6 +13,8 @@ public class SurvivalSystem
     public const int DehydrationDamage = 1;
     public const int RegenAmount = 1;
     public const int RegenTickInterval = 20 * 10; // ticks between regen heals when well-fed and hydrated (about 10 seconds at 20 TPS)
+    public const int ManaRegenAmount = 1;
+    public const int ManaRegenTickInterval = 20 * 5; // ticks between mana regen (about 5 seconds at 20 TPS)
 
     private int _regenCounter;
 
@@ -104,6 +106,12 @@ public class SurvivalSystem
             {
                 player.Health.Current = Math.Min(player.Health.Max, player.Health.Current + RegenAmount);
             }
+        }
+
+        // Mana regen (always regenerates, faster than health)
+        if (_regenCounter % ManaRegenTickInterval == 0 && player.Mana.Current < player.Mana.Max)
+        {
+            player.Mana.Current = Math.Min(player.Mana.Max, player.Mana.Current + ManaRegenAmount);
         }
     }
 }

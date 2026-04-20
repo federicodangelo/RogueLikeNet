@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
@@ -7,8 +8,9 @@ using RogueLikeNet.Core.World;
 namespace RogueLikeNet.Core.Systems;
 
 /// <summary>
-/// Handles melee combat. All damage is integer.
+/// Handles melee and ranged combat. All damage is integer.
 /// Melee attacks auto-target the closest adjacent enemy (cardinal + same tile).
+/// Ranged attacks auto-target the closest enemy within weapon range with line-of-sight.
 /// Bumping a town NPC triggers dialogue instead of damage.
 /// </summary>
 public class CombatSystem
@@ -45,10 +47,52 @@ public class CombatSystem
 
             int attackerAttack = player.CombatStats.Attack;
 
+            // Determine weapon range
+            int weaponRange = 1;
+            bool isRanged = false;
+            int ammoBonusDamage = 0;
+            var weaponItem = player.Equipment.Hand;
+            ItemDefinition? weaponDef = null;
+            if (!weaponItem.IsNone)
+            {
+                weaponDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);
+                if (weaponDef?.Weapon != null && weaponDef.Weapon.Range > 1)
+                {
+                    weaponRange = weaponDef.Weapon.Range;
+                    isRanged = true;
+                }
+            }
+
+            // For ranged weapons, find and validate ammo
+            int ammoSlot = -1;
+            if (isRanged)
+            {
+                ammoSlot = FindAmmoSlot(ref player);
+                if (ammoSlot < 0)
+                {
+                    // No ammo — fall back to melee (base stats, range 1)
+                    isRanged = false;
+                    weaponRange = 1;
+                    ammoBonusDamage = 0;
+                }
+                else
+                {
+                    var ammoItem = player.Inventory.Items[ammoSlot];
+                    var ammoDef = GameData.Instance.Items.Get(ammoItem.ItemTypeId);
+                    if (ammoDef?.Ammo != null)
+                        ammoBonusDamage = ammoDef.Ammo.Damage;
+                }
+            }
+
             var targetPosition = player.Position;
             if (player.Input.TargetX == 0 && player.Input.TargetY == 0)
             {
-                var best = FindClosestAdjacentTarget(map, player);
+                Position? best;
+                if (isRanged)
+                    best = FindClosestRangedTarget(map, player, weaponRange);
+                else
+                    best = FindClosestAdjacentTarget(map, player);
+
                 if (best == null)
                 {
                     player.Input.ActionType = ActionTypes.None;
@@ -61,6 +105,31 @@ public class CombatSystem
                 targetPosition.X += player.Input.TargetX;
                 targetPosition.Y += player.Input.TargetY;
             }
+
+            // For ranged attacks, verify line-of-sight to target
+            if (isRanged && targetPosition != player.Position)
+            {
+                int dist = Math.Abs(targetPosition.X - player.Position.X)
+                         + Math.Abs(targetPosition.Y - player.Position.Y);
+                int playerZ = player.Position.Z;
+                if (dist > weaponRange || !Bresenham.HasLineOfSight(
+                    player.Position.X, player.Position.Y,
+                    targetPosition.X, targetPosition.Y,
+                    (x, y) => !map.IsTransparent(Position.FromCoords(x, y, playerZ))))
+                {
+                    player.Input.ActionType = ActionTypes.None;
+                    continue;
+                }
+            }
+
+            // Consume ammo for ranged attacks
+            if (isRanged && ammoSlot >= 0)
+            {
+                ConsumeAmmo(ref player, ammoSlot);
+            }
+
+            // Total attack = base stats + ammo bonus damage for ranged
+            int totalAttack = attackerAttack + ammoBonusDamage;
 
             // Check monsters and resource nodes at target position
             var targetChunk = map.GetChunkForWorldPos(targetPosition);
@@ -80,6 +149,7 @@ public class CombatSystem
                             Npc = npc.Position,
                             NpcName = npc.NpcData.Name,
                             Text = dialogue,
+                            NpcRole = (int)npc.NpcData.Role,
                         });
                     }
                 }
@@ -89,7 +159,7 @@ public class CombatSystem
                 {
                     if (monster.IsDead || monster.Position != targetPosition) continue;
 
-                    int damage = Math.Max(1, attackerAttack - monster.CombatStats.Defense);
+                    int damage = Math.Max(1, totalAttack - monster.CombatStats.Defense);
                     monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
 
                     _events.Add(new CombatEvent
@@ -97,7 +167,8 @@ public class CombatSystem
                         Attacker = player.Position,
                         Target = monster.Position,
                         Damage = damage,
-                        TargetDied = monster.IsDead
+                        TargetDied = monster.IsDead,
+                        IsRanged = isRanged,
                     });
 
                     if (monster.IsDead)
@@ -120,25 +191,28 @@ public class CombatSystem
                     }
                 }
 
-                // Resource nodes — tools provide bonus damage
-                foreach (ref var node in targetChunk.ResourceNodes)
+                // Resource nodes — tools provide bonus damage (melee only)
+                if (!isRanged)
                 {
-                    if (node.IsDead || node.Position != targetPosition) continue;
-
-                    int effectiveAttack = attackerAttack;
-                    int toolBonus = GetToolBonus(ref player, node.NodeData.RequiredToolType);
-                    effectiveAttack += toolBonus;
-
-                    int damage = Math.Max(1, effectiveAttack - node.CombatStats.Defense);
-                    node.Health.Current = Math.Max(0, node.Health.Current - damage);
-
-                    _events.Add(new CombatEvent
+                    foreach (ref var node in targetChunk.ResourceNodes)
                     {
-                        Attacker = player.Position,
-                        Target = node.Position,
-                        Damage = damage,
-                        TargetDied = node.IsDead
-                    });
+                        if (node.IsDead || node.Position != targetPosition) continue;
+
+                        int effectiveAttack = attackerAttack;
+                        int toolBonus = GetToolBonus(ref player, node.NodeData.RequiredToolType);
+                        effectiveAttack += toolBonus;
+
+                        int damage = Math.Max(1, effectiveAttack - node.CombatStats.Defense);
+                        node.Health.Current = Math.Max(0, node.Health.Current - damage);
+
+                        _events.Add(new CombatEvent
+                        {
+                            Attacker = player.Position,
+                            Target = node.Position,
+                            Damage = damage,
+                            TargetDied = node.IsDead
+                        });
+                    }
                 }
             }
 
@@ -167,6 +241,7 @@ public class CombatSystem
 
         // Full heal on level up
         player.Health.Current = player.Health.Max;
+        player.Mana.Current = player.Mana.Max;
 
         player.ActionEvents.Add(new PlayerActionEvent
         {
@@ -268,6 +343,77 @@ public class CombatSystem
     }
 
     /// <summary>
+    /// Finds the closest monster within weapon range that has a clear line-of-sight.
+    /// Searches all loaded chunks for monsters within Manhattan distance &lt;= range.
+    /// </summary>
+    private static Position? FindClosestRangedTarget(WorldMap map, PlayerEntity attacker, int range)
+    {
+        Position? best = null;
+        int bestDist = int.MaxValue;
+
+        foreach (var chunk in map.LoadedChunks)
+        {
+            foreach (var monster in chunk.Monsters)
+            {
+                if (monster.IsDead) continue;
+                if (monster.Position.Z != attacker.Position.Z) continue;
+
+                int dx = Math.Abs(monster.Position.X - attacker.Position.X);
+                int dy = Math.Abs(monster.Position.Y - attacker.Position.Y);
+                int dist = dx + dy;
+                if (dist > range || dist >= bestDist) continue;
+
+                // Check line-of-sight
+                if (!Bresenham.HasLineOfSight(
+                    attacker.Position.X, attacker.Position.Y,
+                    monster.Position.X, monster.Position.Y,
+                    (x, y) => !map.IsTransparent(Position.FromCoords(x, y, attacker.Position.Z))))
+                    continue;
+
+                bestDist = dist;
+                best = monster.Position;
+            }
+        }
+
+        // Also check adjacent targets (melee fallback) — allows ranged weapons to hit at melee range
+        if (best == null)
+            best = FindClosestAdjacentTarget(map, attacker);
+
+        return best;
+    }
+
+    /// <summary>
+    /// Finds the first inventory slot containing ammo (ItemCategory.Ammo).
+    /// Returns -1 if no ammo found.
+    /// </summary>
+    private static int FindAmmoSlot(ref PlayerEntity player)
+    {
+        var items = player.Inventory.Items;
+        for (int i = 0; i < items.Count; i++)
+        {
+            var itemDef = GameData.Instance.Items.Get(items[i].ItemTypeId);
+            if (itemDef?.Category == ItemCategory.Ammo)
+                return i;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Consumes one ammo from the given inventory slot.
+    /// Decrements StackCount; removes the slot if empty.
+    /// </summary>
+    private static void ConsumeAmmo(ref PlayerEntity player, int slot)
+    {
+        var items = player.Inventory.Items;
+        var ammo = items[slot];
+        ammo.StackCount--;
+        if (ammo.StackCount <= 0)
+            items.RemoveAt(slot);
+        else
+            items[slot] = ammo;
+    }
+
+    /// <summary>
     /// Calculates tool bonus damage when attacking a resource node.
     /// If the player has a tool equipped that matches the node's required tool type,
     /// the tool's MiningPower is added as bonus damage.
@@ -312,6 +458,7 @@ public struct CombatEvent
     public int Damage;
     public bool TargetDied;
     public bool Blocked;
+    public bool IsRanged;
 }
 
 public struct NpcDialogueEvent
@@ -319,4 +466,5 @@ public struct NpcDialogueEvent
     public Position Npc;
     public string NpcName;
     public string Text;
+    public int NpcRole;
 }

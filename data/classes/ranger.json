@@ -6,7 +6,8 @@
         "attack": 2,
         "defense": 1,
         "health": 0,
-        "speed": 2
+        "speed": 2,
+        "mana": 20
     },
     "asciiArt": [
         "    O}  ",

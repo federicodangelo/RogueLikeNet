@@ -375,6 +375,15 @@
             "damageType": "fire",
             "range": 4,
             "twoHanded": true
+        },
+        "magic": {
+            "spellIds": [
+                "fireball",
+                "flame_burst",
+                "magic_missile"
+            ],
+            "bonusSpellDamage": 5,
+            "bonusMana": 20
         }
     },
     {
@@ -393,6 +402,15 @@
             "damageType": "ice",
             "range": 4,
             "twoHanded": true
+        },
+        "magic": {
+            "spellIds": [
+                "ice_bolt",
+                "arcane_shield",
+                "magic_missile"
+            ],
+            "bonusSpellDamage": 5,
+            "bonusMana": 20
         }
     },
     {

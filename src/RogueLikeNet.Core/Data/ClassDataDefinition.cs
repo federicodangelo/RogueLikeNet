@@ -9,6 +9,7 @@ public class ClassLevelBonus
     public int Defense { get; set; }
     public int Health { get; set; }
     public int Speed { get; set; }
+    public int Mana { get; set; }
 }
 
 public class ClassStartingStats
@@ -17,6 +18,7 @@ public class ClassStartingStats
     public int Defense { get; set; }
     public int Health { get; set; }
     public int Speed { get; set; }
+    public int Mana { get; set; }
 }
 
 public class ClassDataDefinition : BaseDefinition

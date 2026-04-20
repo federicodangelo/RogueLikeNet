@@ -69,6 +69,7 @@ public sealed class ItemDefinition : BaseDefinition
     public SeedData? Seed { get; set; }
     public PlaceableData? Placeable { get; set; }
     public AmmoData? Ammo { get; set; }
+    public MagicData? Magic { get; set; }
 
     // Computed convenience properties for backward compatibility
     public int BaseAttack => Weapon?.BaseDamage ?? 0;
@@ -258,4 +259,11 @@ public sealed class AmmoData
 {
     public int Damage { get; set; }
     public DamageType DamageType { get; set; }
+}
+
+public sealed class MagicData
+{
+    public string[] SpellIds { get; set; } = [];
+    public int BonusSpellDamage { get; set; }
+    public int BonusMana { get; set; }
 }
