@@ -17,10 +17,7 @@
             "twoHanded": true
         },
         "magic": {
-            "spellIds": [
-                "magic_missile",
-                "heal"
-            ],
+            "spellId": "magic_missile",
             "bonusSpellDamage": 2,
             "bonusMana": 10
         }
@@ -43,10 +40,7 @@
             "twoHanded": false
         },
         "magic": {
-            "spellIds": [
-                "lightning_strike",
-                "magic_missile"
-            ],
+            "spellId": "lightning_strike",
             "bonusSpellDamage": 8,
             "bonusMana": 15
         }
@@ -69,16 +63,7 @@
             "twoHanded": true
         },
         "magic": {
-            "spellIds": [
-                "fireball",
-                "ice_bolt",
-                "lightning_strike",
-                "heal",
-                "arcane_shield",
-                "flame_burst",
-                "poison_cloud",
-                "magic_missile"
-            ],
+            "spellId": "fireball",
             "bonusSpellDamage": 12,
             "bonusMana": 50
         }
@@ -93,9 +78,7 @@
         "maxStackSize": 10,
         "materialTier": "none",
         "magic": {
-            "spellIds": [
-                "fireball"
-            ],
+            "spellId": "fireball",
             "bonusSpellDamage": 0,
             "bonusMana": 0
         }
@@ -110,9 +93,7 @@
         "maxStackSize": 10,
         "materialTier": "none",
         "magic": {
-            "spellIds": [
-                "heal"
-            ],
+            "spellId": "heal",
             "bonusSpellDamage": 0,
             "bonusMana": 0
         }
@@ -127,11 +108,55 @@
         "maxStackSize": 10,
         "materialTier": "none",
         "magic": {
-            "spellIds": [
-                "lightning_strike"
-            ],
+            "spellId": "lightning_strike",
             "bonusSpellDamage": 0,
             "bonusMana": 0
+        }
+    },
+    {
+        "id": "fire_staff",
+        "name": "Fire Staff",
+        "category": "weapon",
+        "glyphId": "/",
+        "fgColor": "#FF0000",
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 6,
+            "attackSpeed": 3,
+            "damageType": "fire",
+            "range": 4,
+            "twoHanded": true
+        },
+        "magic": {
+            "spellId": "fireball",
+            "bonusSpellDamage": 5,
+            "bonusMana": 20
+        }
+    },
+    {
+        "id": "ice_staff",
+        "name": "Ice Staff",
+        "category": "weapon",
+        "glyphId": "/",
+        "fgColor": "#AAFFFF",
+        "stackable": false,
+        "maxStackSize": 1,
+        "materialTier": "wood",
+        "equipSlot": "hand",
+        "weapon": {
+            "baseDamage": 5,
+            "attackSpeed": 3,
+            "damageType": "ice",
+            "range": 4,
+            "twoHanded": true
+        },
+        "magic": {
+            "spellId": "ice_bolt",
+            "bonusSpellDamage": 5,
+            "bonusMana": 20
         }
     }
 ]

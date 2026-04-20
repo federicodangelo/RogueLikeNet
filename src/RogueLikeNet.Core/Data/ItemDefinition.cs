@@ -263,7 +263,7 @@ public sealed class AmmoData
 
 public sealed class MagicData
 {
-    public string[] SpellIds { get; set; } = [];
+    public string SpellId { get; set; } = "";
     public int BonusSpellDamage { get; set; }
     public int BonusMana { get; set; }
 }

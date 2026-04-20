@@ -33,6 +33,8 @@ public class SpellSystem
         var spell = GameData.Instance.Spells.Get(spellNumericId);
         if (spell == null) return;
 
+        player.Input.ActionType = ActionTypes.None;
+
         // Check cooldown
         if (IsOnCooldown(player.Id, spellNumericId))
         {

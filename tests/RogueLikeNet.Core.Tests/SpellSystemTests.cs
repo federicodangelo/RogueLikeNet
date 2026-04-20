@@ -239,6 +239,27 @@ public class SpellSystemTests
     }
 
     [Fact]
+    public void CastSpell_Success_ActionEventContainsSpellId()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Mage);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 200, Attack = 0, Defense = 0, Speed = 0 });
+
+        int spellId = SpellId("magic_missile");
+        player.Input.ActionType = ActionTypes.CastSpell;
+        player.Input.ItemSlot = spellId;
+        engine.Tick();
+
+        player = ref engine.WorldMap.GetPlayerRef(p.Id);
+        Assert.Contains(player.ActionEvents,
+            e => e.EventType == PlayerActionEventType.CastSpell && !e.Failed && e.ItemTypeId == spellId);
+    }
+
+    [Fact]
     public void CastSpell_Heal_RestoresPlayerHealth()
     {
         using var engine = CreateEngine();
@@ -443,21 +464,31 @@ public class SpellSystemTests
     #region Magic Items Tests
 
     [Fact]
-    public void MagicItems_StaffsExist_WithSpellIds()
+    public void MagicItems_StaffsExist_WithSpellId()
     {
         var apprentice = GameData.Instance.Items.Get("apprentice_staff")!;
         Assert.NotNull(apprentice.Magic);
-        Assert.True(apprentice.Magic.SpellIds.Length > 0);
         Assert.True(apprentice.Magic.BonusSpellDamage > 0);
         Assert.True(apprentice.Magic.BonusMana > 0);
     }
 
     [Fact]
-    public void MagicItems_ScrollsExist_WithSpellIds()
+    public void MagicItems_ScrollsExist_WithSpellId()
     {
         var scroll = GameData.Instance.Items.Get("scroll_fireball")!;
         Assert.NotNull(scroll.Magic);
-        Assert.Contains("fireball", scroll.Magic.SpellIds);
+        Assert.Equal("fireball", scroll.Magic.SpellId);
+    }
+
+    [Theory]
+    [InlineData("scroll_fireball", "fireball")]
+    [InlineData("scroll_heal", "heal")]
+    [InlineData("scroll_lightning", "lightning_strike")]
+    public void MagicScrolls_HaveCorrectSpell(string scrollId, string expectedSpellId)
+    {
+        var scroll = GameData.Instance.Items.Get(scrollId)!;
+        Assert.NotNull(scroll.Magic);
+        Assert.Equal(expectedSpellId, scroll.Magic.SpellId);
     }
 
     [Fact]
@@ -467,7 +498,20 @@ public class SpellSystemTests
         Assert.NotNull(fireStaff.Weapon);
         Assert.NotNull(fireStaff.Magic);
         Assert.True(fireStaff.Weapon.Range > 1);
-        Assert.True(fireStaff.Magic.SpellIds.Length > 0);
+        Assert.False(string.IsNullOrEmpty(fireStaff.Magic.SpellId));
+    }
+
+    [Theory]
+    [InlineData("apprentice_staff", "magic_missile")]
+    [InlineData("lightning_wand", "lightning_strike")]
+    [InlineData("archmage_staff", "fireball")]
+    [InlineData("fire_staff", "fireball")]
+    [InlineData("ice_staff", "ice_bolt")]
+    public void MagicWeapon_HasCorrectSpell(string weaponId, string expectedSpellId)
+    {
+        var weapon = GameData.Instance.Items.Get(weaponId)!;
+        Assert.NotNull(weapon.Magic);
+        Assert.Equal(expectedSpellId, weapon.Magic.SpellId);
     }
 
     [Fact]

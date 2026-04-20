@@ -196,7 +196,8 @@ public sealed class HudRenderer
                                         ammoStr = " (No Ammo)";
                                 }
 
-                                Ds(r, col, row, $"HAND: {name}{stackStr}{ammoStr} [F]", RenderingTheme.Item);
+                                string keys = weaponDef?.Magic != null ? "[F][M]" : "[F]";
+                                Ds(r, col, row, $"HAND: {name}{stackStr}{ammoStr} {keys}", RenderingTheme.Item);
                             }
                             else
                             {

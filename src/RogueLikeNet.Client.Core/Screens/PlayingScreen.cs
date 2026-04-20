@@ -40,9 +40,6 @@ public sealed class PlayingScreen : IScreen
     private bool _interacting;
     public bool IsInteracting => _interacting;
 
-    // Spell casting — selected spell index for cycling
-    private int _selectedSpellIndex;
-
     public ScreenState ScreenState => ScreenState.Playing;
 
     public PlayingScreen(ScreenContext ctx, GameWorldRenderer worldRenderer, HudRenderer hudRenderer,
@@ -372,11 +369,9 @@ public sealed class PlayingScreen : IScreen
         if (hand == null) return null;
 
         var def = GameData.Instance.Items.Get(hand.ItemTypeId);
-        if (def?.Magic == null || def.Magic.SpellIds.Length == 0) return null;
+        if (def?.Magic == null || string.IsNullOrEmpty(def.Magic.SpellId)) return null;
 
-        // Cycle through spells using _selectedSpellIndex
-        string spellId = def.Magic.SpellIds[_selectedSpellIndex % def.Magic.SpellIds.Length];
-        var spell = GameData.Instance.Spells.Get(spellId);
+        var spell = GameData.Instance.Spells.Get(def.Magic.SpellId);
         if (spell == null) return null;
 
         return new ClientInputMsg { ActionType = ActionTypes.CastSpell, ItemSlot = spell.NumericId };

@@ -102,6 +102,12 @@ public sealed class NetworkMessageDrainer
                 PlayerActionEventType.FeedAnimal => "Failed to feed animal",
                 PlayerActionEventType.Craft => evt.ItemTypeId != 0 ? $"Failed to craft {itemName}" : "Failed to craft",
                 PlayerActionEventType.Kill => "Failed to kill target",
+                PlayerActionEventType.CastSpell => evt.FailReason switch
+                {
+                    4 => "Not enough mana",     // ActionFailReason.InsufficientMana
+                    5 => "Spell is on cooldown", // ActionFailReason.SpellOnCooldown
+                    _ => "Failed to cast spell",
+                },
                 _ => null,
             };
         }
@@ -130,6 +136,7 @@ public sealed class NetworkMessageDrainer
                 : $"Crafted {itemName}",
             PlayerActionEventType.LevelUp => FormatLevelUpMessage(evt, playerState),
             PlayerActionEventType.Kill => $"Killed {GameData.Instance.Npcs.Get(evt.KilledNpcTypeId)?.Name ?? "Unknown"}",
+            PlayerActionEventType.CastSpell => GetSpellName(evt.ItemTypeId) is { } spellName ? $"Cast {spellName}" : "Cast spell",
             _ => null,
         };
     }
@@ -163,5 +170,12 @@ public sealed class NetworkMessageDrainer
         if (itemTypeId == 0) return "unknown";
         var def = GameData.Instance.Items.Get(itemTypeId);
         return def?.Name ?? "unknown";
+    }
+
+    private static string? GetSpellName(int spellNumericId)
+    {
+        if (spellNumericId == 0) return null;
+        var def = GameData.Instance.Spells.Get(spellNumericId);
+        return def?.Name;
     }
 }

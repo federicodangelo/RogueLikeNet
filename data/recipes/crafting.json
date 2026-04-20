@@ -330,44 +330,6 @@
         }
     },
     {
-        "id": "craft_wand",
-        "name": "Wand",
-        "station": "workbench",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 4
-            },
-            {
-                "itemId": "gem_emerald",
-                "count": 1
-            }
-        ],
-        "result": {
-            "itemId": "wand",
-            "count": 1
-        }
-    },
-    {
-        "id": "craft_magic_staff",
-        "name": "Magic Staff",
-        "station": "workbench",
-        "ingredients": [
-            {
-                "itemId": "wood",
-                "count": 6
-            },
-            {
-                "itemId": "gem_sapphire",
-                "count": 2
-            }
-        ],
-        "result": {
-            "itemId": "magic_staff",
-            "count": 1
-        }
-    },
-    {
         "id": "craft_fire_staff",
         "name": "Fire Staff",
         "station": "workbench",

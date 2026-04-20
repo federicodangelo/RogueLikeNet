@@ -1,5 +1,6 @@
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 
@@ -46,6 +47,17 @@ public class CraftingSystem
                 }
             }
 
+            // Resolve result definition before consuming ingredients
+            var resultDef = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
+            if (resultDef == null) continue;
+
+            // Pre-check: ensure inventory can hold the result
+            if (!CanHoldCraftResult(ref player, resultDef, recipe))
+            {
+                player.ActionEvents.Add(new PlayerActionEvent { EventType = PlayerActionEventType.Craft, ItemTypeId = recipe.Result.NumericItemId, Failed = true });
+                continue;
+            }
+
             // Remove ingredients (skip when debug free crafting)
             if (!debugFreeCrafting)
                 foreach (var ingredient in recipe.Ingredients)
@@ -71,8 +83,6 @@ public class CraftingSystem
                 }
 
             // Add crafted item
-            var resultDef = GameData.Instance.Items.Get(recipe.Result.NumericItemId);
-            if (resultDef == null) return;
             var resultItem = new ItemData
             {
                 ItemTypeId = recipe.Result.NumericItemId,
@@ -120,6 +130,45 @@ public class CraftingSystem
                     return true;
             }
         }
+        return false;
+    }
+
+    /// <summary>
+    /// Checks whether inventory can hold the crafted result, accounting for slots freed by ingredient removal.
+    /// </summary>
+    private static bool CanHoldCraftResult(ref PlayerEntity player, ItemDefinition resultDef, RecipeDefinition recipe)
+    {
+        if (!player.Inventory.IsFull)
+            return true;
+
+        // Inventory is full — stackable items might merge into existing stacks
+        if (resultDef.Stackable)
+        {
+            int resultCount = recipe.Result.Count;
+            for (int i = 0; i < player.Inventory.Items.Count; i++)
+            {
+                if (player.Inventory.Items[i].ItemTypeId == recipe.Result.NumericItemId &&
+                    player.Inventory.Items[i].StackCount < resultDef.MaxStackSize)
+                {
+                    resultCount -= resultDef.MaxStackSize - player.Inventory.Items[i].StackCount;
+                    if (resultCount <= 0) return true;
+                }
+            }
+        }
+
+        // Check if consuming ingredients would free at least one slot
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            int remaining = ingredient.Count;
+            for (int i = 0; i < player.Inventory.Items.Count && remaining > 0; i++)
+            {
+                if (player.Inventory.Items[i].ItemTypeId != ingredient.NumericItemId) continue;
+                if (player.Inventory.Items[i].StackCount <= remaining)
+                    return true; // This stack will be fully consumed, freeing a slot
+                remaining -= player.Inventory.Items[i].StackCount;
+            }
+        }
+
         return false;
     }
 }

@@ -2,9 +2,11 @@ using System.Drawing;
 using Engine.Core;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Algorithms;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Utilities;
 using RogueLikeNet.Core.World;
 
@@ -192,6 +194,9 @@ public sealed class GameWorldRenderer
             // Draw player on top of everything
             if (playerEntity != null)
                 DrawEntity(r, playerEntity, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculatedBrightness);
+
+            // Draw red rectangle around ranged weapon target
+            DrawRangedTargetHighlight(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, precalculatedBrightness);
         }
     }
 
@@ -220,6 +225,72 @@ public sealed class GameWorldRenderer
             r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
             r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
         }
+    }
+
+    private static readonly Color4 RangedTargetColor = new(255, 60, 60, 200);
+    private static readonly Color4 MagicTargetColor = new(60, 120, 255, 200);
+
+    private static void DrawRangedTargetHighlight(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float[] precalculatedBrightness)
+    {
+        var playerState = state.PlayerState;
+        if (playerState == null) return;
+
+        // Check if equipped hand weapon is ranged
+        var handItem = playerState.EquippedItems.FirstOrDefault(eq => eq.EquipSlot == (int)EquipSlot.Hand);
+        if (handItem == null) return;
+
+        var weaponDef = GameData.Instance.Items.Get(handItem.ItemTypeId);
+        if (weaponDef?.Weapon == null || weaponDef.Weapon.Range <= 1) return;
+
+        int range = weaponDef.Weapon.Range;
+
+        // Find closest monster in range with line-of-sight (mirrors server auto-target)
+        int bestDist = int.MaxValue;
+        ClientEntity? bestTarget = null;
+
+        foreach (var entity in state.Entities.Values)
+        {
+            if (entity.Z != state.PlayerZ) continue;
+            if (entity.Id == state.PlayerEntityId) continue;
+            if (entity.EntityType != EntityType.Monster) continue;
+            if (entity.Health <= 0) continue;
+
+            int dx = Math.Abs(entity.X - state.PlayerX);
+            int dy = Math.Abs(entity.Y - state.PlayerY);
+            int dist = dx + dy;
+            if (dist > range || dist >= bestDist) continue;
+
+            if (!Bresenham.HasLineOfSight(
+                state.PlayerX, state.PlayerY, entity.X, entity.Y,
+                (x, y) => !state.GetTile(x, y).IsTransparent))
+                continue;
+
+            bestDist = dist;
+            bestTarget = entity;
+        }
+
+        if (bestTarget == null) return;
+
+        // Convert to screen coordinates
+        var sx = bestTarget.X - (cameraCenterX - visibleCols / 2);
+        var sy = bestTarget.Y - (cameraCenterY - visibleRows / 2);
+        if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) return;
+
+        var brightness = precalculatedBrightness[sy * visibleCols + sx];
+        if (brightness <= 0f) return;
+
+        float px = sx * tileW + shakeX;
+        float py = sy * tileH + shakeY;
+
+        // Draw 1-pixel rectangle outline (blue for magic, red for physical)
+        bool isMagic = weaponDef.Weapon.DamageType != DamageType.Physical;
+        var color = isMagic ? MagicTargetColor : RangedTargetColor;
+        r.DrawLineScreen(px, py, px + tileW, py, color);             // Top
+        r.DrawLineScreen(px + tileW, py, px + tileW, py + tileH, color); // Right
+        r.DrawLineScreen(px + tileW, py + tileH, px, py + tileH, color); // Bottom
+        r.DrawLineScreen(px, py + tileH, px, py, color);             // Left
     }
 
     /// <summary>

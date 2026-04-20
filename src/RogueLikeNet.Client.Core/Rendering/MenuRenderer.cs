@@ -40,6 +40,8 @@ public sealed class MenuRenderer
         "G        Pick up item",
         "X        Drop item",
         "P        Pickup placeable",
+        "F        Melee / Ranged attack",
+        "M        Cast spell",
         "L        Look around",
         "E        Interact",
         "I        Inventory",
