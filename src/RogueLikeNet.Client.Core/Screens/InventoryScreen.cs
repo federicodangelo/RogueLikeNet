@@ -216,7 +216,10 @@ public sealed class InventoryScreen : IScreen
             halfW, halfH, shakeX, shakeY, tileW, tileH);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
-        _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
+        if (_ctx.Options.ShowStats)
+            _overlayRenderer.RenderPerformance(renderer, gameCols, _ctx.Performance, _ctx.Debug);
+        if (_ctx.Options.ShowQuestTracker)
+            _overlayRenderer.RenderQuestTracker(renderer, gameCols, totalRows, _ctx.GameState.PlayerState);
     }
 
     private void HandleInvItemsInput(IInputManager input, HudSection section, int itemCount)

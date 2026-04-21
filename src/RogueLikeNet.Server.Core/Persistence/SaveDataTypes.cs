@@ -50,6 +50,7 @@ public class PlayerSaveData
     public int MaxHunger { get; set; } = 100;
     public int Thirst { get; set; } = 100;
     public int MaxThirst { get; set; } = 100;
+    public string QuestsJson { get; set; } = "{}";
     public string PasswordHash { get; set; } = "";
     public string PasswordSalt { get; set; } = "";
 }

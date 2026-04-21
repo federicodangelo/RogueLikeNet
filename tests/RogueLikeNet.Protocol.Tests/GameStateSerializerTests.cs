@@ -379,14 +379,15 @@ public class GameStateSerializerTests
         Assert.Empty(events);
     }
 
-    // ── SerializeNpcDialogueEvents ──
+    // ── SerializeNpcInteractions ──
 
     [Fact]
-    public void SerializeNpcDialogueEvents_EmptyWhenNoEvents()
+    public void SerializeNpcInteractions_EmptyWhenNoEvents()
     {
-        using var engine = new RogueLikeNet.Core.GameEngine(42, _gen);
-        var events = GameStateSerializer.SerializeNpcDialogueEvents(engine);
+        var (engine, player) = CreateEngineWithPlayer();
+        var events = GameStateSerializer.SerializeNpcInteractions(engine, player);
         Assert.Empty(events);
+        engine.Dispose();
     }
 
     // ── SerializeChunk ──
@@ -579,7 +580,7 @@ public class GameStateSerializerTests
         p.Input.TargetY = 0;
         engine.Tick();
 
-        var events = GameStateSerializer.SerializeNpcDialogueEvents(engine);
+        var events = GameStateSerializer.SerializeNpcInteractions(engine, p);
         Assert.NotEmpty(events);
         Assert.Equal("TestNpc", events[0].NpcName);
 

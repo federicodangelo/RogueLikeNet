@@ -97,6 +97,12 @@ public sealed class PlayingScreen : IScreen
             return;
         }
 
+        if (input.IsActionPressed(InputAction.OpenQuestLog))
+        {
+            _ctx.RequestTransition(Rendering.ScreenState.QuestLog);
+            return;
+        }
+
         if (input.IsActionPressed(InputAction.OpenChat))
         {
             _ctx.Chat.InputActive = true;
@@ -421,6 +427,8 @@ public sealed class PlayingScreen : IScreen
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
         if (_ctx.Options.ShowStats)
-            _overlayRenderer.RenderPerformance(renderer, _ctx.Performance, _ctx.Debug);
+            _overlayRenderer.RenderPerformance(renderer, gameCols, _ctx.Performance, _ctx.Debug);
+        if (_ctx.Options.ShowQuestTracker)
+            _overlayRenderer.RenderQuestTracker(renderer, gameCols, totalRows, _ctx.GameState.PlayerState);
     }
 }

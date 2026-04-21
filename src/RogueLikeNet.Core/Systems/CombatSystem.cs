@@ -16,19 +16,19 @@ namespace RogueLikeNet.Core.Systems;
 public class CombatSystem
 {
     private readonly List<CombatEvent> _events = new();
-    private readonly List<NpcDialogueEvent> _dialogueEvents = new();
+    private readonly List<NpcInteractionEvent> _interactionEvents = new();
     private readonly Random _rng = new();
 
     private static readonly (int DX, int DY)[] MeleeOffsets =
         [(0, 0), (0, -1), (0, 1), (-1, 0), (1, 0)];
 
     public IReadOnlyList<CombatEvent> LastTickEvents => _events;
-    public IReadOnlyList<NpcDialogueEvent> LastTickDialogueEvents => _dialogueEvents;
+    public IReadOnlyList<NpcInteractionEvent> LastTickInteractionEvents => _interactionEvents;
 
     public void Update(WorldMap map, bool debugInvulnerable = false)
     {
         _events.Clear();
-        _dialogueEvents.Clear();
+        _interactionEvents.Clear();
 
         // Player attacks
         ProcessPlayerAttacks(map);
@@ -135,22 +135,17 @@ public class CombatSystem
             var targetChunk = map.GetChunkForWorldPos(targetPosition);
             if (targetChunk != null)
             {
-                // Check Town NPCs first (dialogue instead of damage)
+                // Check Town NPCs first (interaction instead of damage)
                 foreach (ref var npc in targetChunk.TownNpcs)
                 {
                     if (npc.IsDead || npc.Position != targetPosition) continue;
                     if (npc.NpcData.TalkTimer <= 0)
                     {
                         npc.NpcData.TalkTimer = 60;
+                        npc.NpcData.InConversationWith = player.Id;
                         string dialogue = TownNpcDefinitions.Dialogues[npc.NpcData.DialogueIndex];
                         npc.NpcData.DialogueIndex = (npc.NpcData.DialogueIndex + 1) % TownNpcDefinitions.Dialogues.Length;
-                        _dialogueEvents.Add(new NpcDialogueEvent
-                        {
-                            Npc = npc.Position,
-                            NpcName = npc.NpcData.Name,
-                            Text = dialogue,
-                            NpcRole = (int)npc.NpcData.Role,
-                        });
+                        _interactionEvents.Add(BuildInteractionEvent(ref player, ref npc, dialogue));
                     }
                 }
 
@@ -212,6 +207,16 @@ public class CombatSystem
                             Damage = damage,
                             TargetDied = node.IsDead
                         });
+
+                        if (node.IsDead)
+                        {
+                            player.ActionEvents.Add(new PlayerActionEvent
+                            {
+                                EventType = PlayerActionEventType.Gather,
+                                ItemTypeId = node.NodeData.ResourceItemTypeId,
+                                KilledNpcTypeId = node.NodeData.NodeTypeId,
+                            });
+                        }
                     }
                 }
             }
@@ -449,6 +454,66 @@ public class CombatSystem
         int effectiveDef = MaterialTiers.Apply(def.Armor.BaseDefense, def.MaterialTier);
         return Math.Min(50, effectiveDef * 2);
     }
+
+    /// <summary>
+    /// Builds an <see cref="NpcInteractionEvent"/> for a player bumping the given NPC,
+    /// including quest offers (for this giver role) and turn-ins (active quests whose
+    /// giver is this specific NPC id). Flavor text is the current dialogue line.
+    /// </summary>
+    private static NpcInteractionEvent BuildInteractionEvent(ref PlayerEntity player, ref TownNpcEntity npc, string flavorText)
+    {
+        var role = npc.NpcData.Role;
+        var offered = new List<int>();
+        var turnIns = new List<int>();
+
+        // Quest offers: quests with this giver role that player qualifies for and doesn't already have active/completed.
+        var quests = GameData.Instance.Quests.GetForGiverRole(role);
+        if (quests.Count > 0)
+        {
+            bool atCapacity = player.Quests.AtCapacity;
+            for (int i = 0; i < quests.Count; i++)
+            {
+                var q = quests[i];
+                if (atCapacity) break;
+                if (player.ClassData.Level < q.MinPlayerLevel) continue;
+                if (player.Quests.HasActive(q.NumericId)) continue;
+                if (player.Quests.HasCompleted(q.NumericId)) continue;
+                bool prereqOk = true;
+                for (int p = 0; p < q.PrerequisiteQuestNumericIds.Length; p++)
+                {
+                    if (!player.Quests.HasCompleted(q.PrerequisiteQuestNumericIds[p])) { prereqOk = false; break; }
+                }
+                if (!prereqOk) continue;
+                offered.Add(q.NumericId);
+            }
+        }
+
+        // Turn-ins: active quests whose giver is this specific NPC entity.
+        if (player.Quests.ActiveQuests != null)
+        {
+            for (int i = 0; i < player.Quests.ActiveQuests.Count; i++)
+            {
+                var aq = player.Quests.ActiveQuests[i];
+                if (aq.GiverEntityId != npc.Id) continue;
+                turnIns.Add(aq.QuestNumericId);
+            }
+        }
+
+        bool hasShop = GameData.Instance.Shops.GetByRole(role) != null;
+
+        return new NpcInteractionEvent
+        {
+            PlayerEntityId = player.Id,
+            NpcEntityId = npc.Id,
+            Npc = npc.Position,
+            NpcName = npc.NpcData.Name,
+            Text = flavorText,
+            NpcRole = (int)role,
+            OfferedQuestIds = offered.ToArray(),
+            TurnInQuestIds = turnIns.ToArray(),
+            HasShop = hasShop,
+        };
+    }
 }
 
 public struct CombatEvent
@@ -461,10 +526,15 @@ public struct CombatEvent
     public bool IsRanged;
 }
 
-public struct NpcDialogueEvent
+public struct NpcInteractionEvent
 {
+    public int PlayerEntityId;
+    public int NpcEntityId;
     public Position Npc;
     public string NpcName;
     public string Text;
     public int NpcRole;
+    public int[] OfferedQuestIds;
+    public int[] TurnInQuestIds;
+    public bool HasShop;
 }

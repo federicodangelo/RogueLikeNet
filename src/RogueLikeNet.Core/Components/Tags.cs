@@ -35,4 +35,10 @@ public struct TownNpcTag
     public int DialogueIndex;
     /// <summary>Role of this NPC in the town.</summary>
     public TownNpcRole Role;
+    /// <summary>
+    /// Entity id of the player currently engaged in conversation with this NPC (0 = none).
+    /// While set, the NPC skips AI movement. Cleared automatically when the player
+    /// strays outside <c>ConversationClearDistance</c> tiles or dies.
+    /// </summary>
+    public int InConversationWith;
 }

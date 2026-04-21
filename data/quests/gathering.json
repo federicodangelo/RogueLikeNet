@@ -1,0 +1,78 @@
+[
+    {
+        "id": "q_gather_iron_ore",
+        "title": "Forge Needs Feeding",
+        "description": "Bring me iron ore and I'll pay well for it.",
+        "completionText": "Prime ore. The forge will sing tonight.",
+        "declineText": "Pity. I'll wait.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "iron_rock",
+                "count": 8,
+                "description": "Mine 8 iron ore from iron rocks"
+            }
+        ],
+        "rewards": {
+            "experience": 120,
+            "gold": 60,
+            "items": [
+                {
+                    "itemId": "iron_ingot",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_gather_copper_ore",
+        "title": "Copper Contract",
+        "description": "I need copper for tools. Gather some from copper rocks.",
+        "completionText": "That's a fine haul. Here's your cut.",
+        "declineText": "Suit yourself.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "copper_rock",
+                "count": 10,
+                "description": "Mine 10 copper ore from copper rocks"
+            }
+        ],
+        "rewards": {
+            "experience": 80,
+            "gold": 40,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_wheat",
+        "title": "Bountiful Harvest",
+        "description": "My fields are ripe but I'm short-handed. Harvest wheat for me.",
+        "completionText": "Bless you. Bread for the whole village.",
+        "declineText": "Hmph. I'll do it myself then.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "wheat",
+                "count": 6,
+                "description": "Harvest 6 wheat"
+            }
+        ],
+        "rewards": {
+            "experience": 90,
+            "gold": 35,
+            "items": [
+                {
+                    "itemId": "bread",
+                    "count": 3
+                }
+            ]
+        }
+    }
+]

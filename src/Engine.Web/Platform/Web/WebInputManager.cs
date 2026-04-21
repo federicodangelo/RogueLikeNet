@@ -104,6 +104,7 @@ public class WebInputManager : BaseInputManager
         [InputAction.Drop] = [InputBinding.Key("KeyX")],
         [InputAction.CycleSection] = [InputBinding.Key("Tab")],
         [InputAction.OpenCrafting] = [InputBinding.Key("KeyC")],
+        [InputAction.OpenQuestLog] = [InputBinding.Key("KeyQ")],
         [InputAction.Place] = [InputBinding.Key("KeyP")],
         [InputAction.UseStairs] = [InputBinding.Key("Period"), InputBinding.Key("Comma")],
         [InputAction.CastSpell] = [InputBinding.Key("KeyM")],

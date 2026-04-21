@@ -91,6 +91,7 @@ public class SdlInputManager : BaseInputManager
         [InputAction.Drop] = [InputBinding.Key(SDL.Scancode.X)],
         [InputAction.CycleSection] = [InputBinding.Key(SDL.Scancode.Tab)],
         [InputAction.OpenCrafting] = [InputBinding.Key(SDL.Scancode.C)],
+        [InputAction.OpenQuestLog] = [InputBinding.Key(SDL.Scancode.Q)],
         [InputAction.Place] = [InputBinding.Key(SDL.Scancode.P)],
         [InputAction.UseStairs] = [InputBinding.Key(SDL.Scancode.Period), InputBinding.Key(SDL.Scancode.Comma)],
         [InputAction.CastSpell] = [InputBinding.Key(SDL.Scancode.M)],

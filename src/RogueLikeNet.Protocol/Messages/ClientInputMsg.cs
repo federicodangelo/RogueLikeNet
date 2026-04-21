@@ -11,4 +11,6 @@ public class ClientInputMsg
     [Key(3)] public int TargetY { get; set; }
     [Key(4)] public int ItemSlot { get; set; }
     [Key(5)] public int TargetSlot { get; set; }
+    [Key(6)] public int TargetNpcEntityId { get; set; }
+    [Key(7)] public int TargetQuestId { get; set; }
 }

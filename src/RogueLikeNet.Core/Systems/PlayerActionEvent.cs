@@ -21,6 +21,12 @@ public enum PlayerActionEventType
     Buy = 16,
     Sell = 17,
     CastSpell = 18,
+    Gather = 19,
+    QuestAccepted = 20,
+    QuestObjectiveAdvanced = 21,
+    QuestCompleted = 22,
+    QuestAbandoned = 23,
+    QuestActionFailed = 24,
 }
 
 /// <summary>
@@ -34,6 +40,14 @@ public enum ActionFailReason
     NothingToPickUp = 3,
     InsufficientMana = 4,
     SpellOnCooldown = 5,
+    QuestNotAvailable = 6,
+    QuestAlreadyActive = 7,
+    QuestNotComplete = 8,
+    QuestWrongGiver = 9,
+    QuestTooFar = 10,
+    QuestMissingItems = 11,
+    QuestCapacityFull = 12,
+    QuestNotFound = 13,
 }
 
 public struct PlayerActionEvent
@@ -46,4 +60,8 @@ public struct PlayerActionEvent
     public int OldLevel;
     public int NewLevel;
     public int KilledNpcTypeId;
+    public int QuestNumericId;
+    public int QuestObjectiveIndex;
+    public int ObjectiveCurrent;
+    public int ObjectiveTarget;
 }

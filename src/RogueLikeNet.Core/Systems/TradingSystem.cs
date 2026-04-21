@@ -172,7 +172,12 @@ public class TradingSystem
                 int dx = Math.Abs(npc.Position.X - player.Position.X);
                 int dy = Math.Abs(npc.Position.Y - player.Position.Y);
                 if (dx <= MaxProximity && dy <= MaxProximity && npc.Position.Z == player.Position.Z)
+                {
+                    // Lock this NPC in conversation with the player so it stops wandering
+                    // while the shop interaction is ongoing.
+                    npc.NpcData.InConversationWith = player.Id;
                     return true;
+                }
             }
         }
 

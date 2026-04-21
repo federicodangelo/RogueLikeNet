@@ -1,0 +1,51 @@
+[
+    {
+        "id": "q_deliver_meat",
+        "title": "Stocking the Kitchen",
+        "description": "The hearth is cold. Bring me cooked meat and I'll pay handsomely.",
+        "completionText": "Ah, dinner is saved! Here, for your pains.",
+        "declineText": "Tonight we eat bread, I suppose.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "cooked_meat",
+                "count": 3,
+                "description": "Deliver 3 cooked meat"
+            }
+        ],
+        "rewards": {
+            "experience": 80,
+            "gold": 45,
+            "items": [
+                {
+                    "itemId": "bread",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_merchant_leather",
+        "title": "Caravan Stock",
+        "description": "My caravan is short on leather. Bring me some hides.",
+        "completionText": "Excellent quality. A pleasure doing business.",
+        "declineText": "I'll find another supplier then.",
+        "giverRole": "merchant",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "leather",
+                "count": 5,
+                "description": "Deliver 5 leather"
+            }
+        ],
+        "rewards": {
+            "experience": 80,
+            "gold": 70,
+            "items": []
+        }
+    }
+]

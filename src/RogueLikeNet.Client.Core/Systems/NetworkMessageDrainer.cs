@@ -22,7 +22,8 @@ public sealed class NetworkMessageDrainer
         _pendingDeltas.Enqueue(delta);
     }
 
-    public void Drain(ClientGameState gameState, ParticleSystem particles, ChatSystem? chat = null, Action<int>? onShopNpcInteracted = null)
+    public void Drain(ClientGameState gameState, ParticleSystem particles, ChatSystem? chat = null,
+        Action<NpcInteractionMsg>? onNpcDialogue = null)
     {
         while (_pendingDeltas.TryDequeue(out var delta))
         {
@@ -46,14 +47,19 @@ public sealed class NetworkMessageDrainer
         }
         gameState.DrainCombatEvents();
 
-        foreach (var dlg in gameState.PendingNpcDialogues)
+        foreach (var interaction in gameState.PendingNpcInteractions)
         {
-            chat?.AddChatLine($"[{dlg.NpcName}]: {dlg.Text}");
+            chat?.AddChatLine($"[{interaction.NpcName}]: {interaction.FlavorText}");
 
-            // Check if this NPC has a shop — trigger shop opening
-            var role = (RogueLikeNet.Core.Data.TownNpcRole)dlg.NpcRole;
-            if (onShopNpcInteracted != null && GameData.Instance.Shops.GetByRole(role) != null)
-                onShopNpcInteracted(dlg.NpcRole);
+            bool hasContent = interaction.QuestOffers.Length > 0
+                || interaction.QuestTurnIns.Length > 0
+                || interaction.HasShop;
+
+            if (hasContent)
+            {
+                // Unified dialogue modal handles quest offers/turn-ins + shop.
+                onNpcDialogue?.Invoke(interaction);
+            }
         }
 
         foreach (var evt in gameState.PendingPlayerActionEvents)
@@ -63,7 +69,7 @@ public sealed class NetworkMessageDrainer
                 chat?.AddChatLine(msg);
         }
 
-        gameState.DrainNpcDialogues();
+        gameState.DrainNpcInteractions();
         gameState.DrainPlayerActionEvents();
     }
 
@@ -137,8 +143,59 @@ public sealed class NetworkMessageDrainer
             PlayerActionEventType.LevelUp => FormatLevelUpMessage(evt, playerState),
             PlayerActionEventType.Kill => $"Killed {GameData.Instance.Npcs.Get(evt.KilledNpcTypeId)?.Name ?? "Unknown"}",
             PlayerActionEventType.CastSpell => GetSpellName(evt.ItemTypeId) is { } spellName ? $"Cast {spellName}" : "Cast spell",
+            PlayerActionEventType.QuestAccepted => FormatQuestAccepted(evt),
+            PlayerActionEventType.QuestCompleted => FormatQuestCompleted(evt),
+            PlayerActionEventType.QuestAbandoned => FormatQuestAbandoned(evt),
+            PlayerActionEventType.QuestObjectiveAdvanced => FormatQuestObjectiveAdvanced(evt),
             _ => null,
         };
+    }
+
+    private static string FormatQuestAccepted(PlayerActionEventMsg evt)
+    {
+        var def = GameData.Instance.Quests.Get(evt.QuestNumericId);
+        return def != null
+            ? $"Quest accepted: {def.Title}"
+            : "Quest accepted.";
+    }
+
+    private static string FormatQuestAbandoned(PlayerActionEventMsg evt)
+    {
+        var def = GameData.Instance.Quests.Get(evt.QuestNumericId);
+        return def != null
+            ? $"Quest abandoned: {def.Title}"
+            : "Quest abandoned.";
+    }
+
+    private static string FormatQuestObjectiveAdvanced(PlayerActionEventMsg evt)
+    {
+        var def = GameData.Instance.Quests.Get(evt.QuestNumericId);
+        if (def == null || evt.QuestObjectiveIndex < 0 || evt.QuestObjectiveIndex >= def.Objectives.Length)
+            return $"Objective progress: {evt.ObjectiveCurrent}/{evt.ObjectiveTarget}";
+        var objDesc = def.Objectives[evt.QuestObjectiveIndex].Description;
+        if (string.IsNullOrEmpty(objDesc))
+            return $"{def.Title}: {evt.ObjectiveCurrent}/{evt.ObjectiveTarget}";
+        if (evt.ObjectiveCurrent >= evt.ObjectiveTarget)
+            return $"{def.Title}: {objDesc} — complete!";
+        return $"{def.Title}: {objDesc} ({evt.ObjectiveCurrent}/{evt.ObjectiveTarget})";
+    }
+
+    private static string FormatQuestCompleted(PlayerActionEventMsg evt)
+    {
+        var def = GameData.Instance.Quests.Get(evt.QuestNumericId);
+        if (def == null) return "Quest completed.";
+
+        var parts = new List<string>();
+        if (def.Rewards.Experience > 0) parts.Add($"{def.Rewards.Experience} XP");
+        if (def.Rewards.Gold > 0) parts.Add($"{def.Rewards.Gold} gold");
+        foreach (var item in def.Rewards.Items)
+        {
+            var itemDef = GameData.Instance.Items.Get(item.ItemNumericId);
+            string name = itemDef?.Name ?? "item";
+            parts.Add(item.Count > 1 ? $"{name} x{item.Count}" : name);
+        }
+        string rewardSummary = parts.Count > 0 ? $" Rewards: {string.Join(", ", parts)}" : "";
+        return $"Quest completed: {def.Title}.{rewardSummary}";
     }
 
     private static string FormatLevelUpMessage(PlayerActionEventMsg evt, PlayerStateMsg? playerState)

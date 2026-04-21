@@ -120,7 +120,8 @@ public sealed class RogueLikeGame : GameBase
         var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, newGame);
         var login = new LoginScreen(_ctx, menuRenderer);
 
-        var shop = new ShopScreen(_ctx, worldRenderer, overlayRenderer);
+        var npcDialogue = new NpcDialogueScreen(_ctx, worldRenderer, overlayRenderer);
+        var questLog = new QuestLogScreen(_ctx, worldRenderer, overlayRenderer);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);
@@ -131,7 +132,7 @@ public sealed class RogueLikeGame : GameBase
         _classSelectScreen = classSelect;
         _loginScreen = login;
 
-        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, options, saveSlot, serverAdmin, newGame, login, shop);
+        _screenManager = new ScreenManager(mainMenu, classSelect, connecting, playing, inventory, crafting, paused, help, options, saveSlot, serverAdmin, newGame, login, npcDialogue, questLog);
     }
 
     public void Initialize(IPlatform platform)
@@ -253,14 +254,15 @@ public sealed class RogueLikeGame : GameBase
         }
 
         // Drain buffered network messages
-        _networkDrainer.Drain(_gameState, _particles, _chat, role =>
-        {
-            _screenManager!.OpenShop((RogueLikeNet.Core.Data.TownNpcRole)role);
-        });
+        _networkDrainer.Drain(_gameState, _particles, _chat,
+            onNpcDialogue: interaction =>
+            {
+                _screenManager!.OpenNpcDialogue(interaction);
+            });
         _chat.DrainPendingMessages();
 
         if (_connectionClosed &&
-            (_screenManager.CurrentState == ScreenState.Playing || _screenManager.CurrentState == ScreenState.Inventory || _screenManager.CurrentState == ScreenState.Crafting || _screenManager.CurrentState == ScreenState.Shop))
+            (_screenManager.CurrentState == ScreenState.Playing || _screenManager.CurrentState == ScreenState.Inventory || _screenManager.CurrentState == ScreenState.Crafting || _screenManager.CurrentState == ScreenState.NpcDialogue || _screenManager.CurrentState == ScreenState.QuestLog))
         {
             ReturnToMenuRequested?.Invoke();
         }

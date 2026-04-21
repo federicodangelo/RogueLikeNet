@@ -17,6 +17,11 @@ public class AISystem
 {
     private const int DetectionRange = 8;
     private const int ChaseRange = 12;
+    /// <summary>
+    /// If the player engaging an NPC in conversation strays beyond this tile distance
+    /// (Chebyshev, same Z), the NPC's conversation lock is released and it resumes wandering.
+    /// </summary>
+    private const int ConversationClearDistance = 3;
 
     private readonly SeededRandom _rng;
 
@@ -113,11 +118,27 @@ public class AISystem
                 if (npc.NpcData.TalkTimer > 0)
                     npc.NpcData.TalkTimer--;
 
-                if (npc.MoveDelay.Current > 0) continue;
+                // Clear conversation lock if the player has strayed too far or died.
+                if (npc.NpcData.InConversationWith != 0)
+                {
+                    bool keepLock = false;
+                    foreach (ref var p in map.Players)
+                    {
+                        if (p.Id != npc.NpcData.InConversationWith) continue;
+                        if (p.IsDead) break;
+                        int dx = Math.Abs(p.Position.X - npc.Position.X);
+                        int dy = Math.Abs(p.Position.Y - npc.Position.Y);
+                        if (p.Position.Z == npc.Position.Z && dx <= ConversationClearDistance && dy <= ConversationClearDistance)
+                            keepLock = true;
+                        break;
+                    }
+                    if (!keepLock)
+                        npc.NpcData.InConversationWith = 0;
+                    else
+                        continue; // still in conversation → skip movement
+                }
 
-                // Shopkeepers stay at their post
-                if (GameData.Instance.Shops.GetByRole(npc.NpcData.Role) != null)
-                    continue;
+                if (npc.MoveDelay.Current > 0) continue;
 
                 int dir = _rng.Next(4);
                 var nextPosition = Position.FromCoords(

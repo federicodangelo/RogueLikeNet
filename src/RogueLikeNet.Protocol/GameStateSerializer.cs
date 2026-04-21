@@ -248,18 +248,125 @@ public static class GameStateSerializer
         return result;
     }
 
-    public static NpcDialogueMsg[] SerializeNpcDialogueEvents(GameEngine engine)
+    public static NpcInteractionMsg[] SerializeNpcInteractions(GameEngine engine, PlayerEntity player)
     {
-        var events = engine.Combat.LastTickDialogueEvents;
+        var events = engine.Combat.LastTickInteractionEvents;
         if (events.Count == 0) return [];
-        return events.Select(e => new NpcDialogueMsg
+        var result = new List<NpcInteractionMsg>();
+        foreach (var e in events)
         {
+            if (e.PlayerEntityId != player.Id) continue;
+            result.Add(BuildNpcInteractionMsg(e, player));
+        }
+        return result.ToArray();
+    }
+
+    private static NpcInteractionMsg BuildNpcInteractionMsg(NpcInteractionEvent e, PlayerEntity player)
+    {
+        var offers = new QuestOfferMsg[e.OfferedQuestIds?.Length ?? 0];
+        for (int i = 0; i < offers.Length; i++)
+        {
+            var q = GameData.Instance.Quests.Get(e.OfferedQuestIds![i]);
+            if (q == null) { offers[i] = new QuestOfferMsg { QuestNumericId = e.OfferedQuestIds[i] }; continue; }
+            offers[i] = new QuestOfferMsg
+            {
+                QuestNumericId = q.NumericId,
+                QuestStringId = q.Id ?? "",
+                Title = q.Title,
+                Description = q.Description,
+                Objectives = BuildObjectivePreview(q),
+                Rewards = BuildRewardInfo(q),
+            };
+        }
+
+        var turnIns = new QuestTurnInMsg[e.TurnInQuestIds?.Length ?? 0];
+        for (int i = 0; i < turnIns.Length; i++)
+        {
+            int qid = e.TurnInQuestIds![i];
+            var q = GameData.Instance.Quests.Get(qid);
+            var active = player.Quests.GetActive(qid);
+            turnIns[i] = new QuestTurnInMsg
+            {
+                QuestNumericId = qid,
+                Title = q?.Title ?? "",
+                CompletionText = q?.CompletionText ?? "",
+                IsComplete = active?.AllObjectivesComplete ?? false,
+                Objectives = BuildObjectiveProgress(q, active),
+                Rewards = q != null ? BuildRewardInfo(q) : null,
+            };
+        }
+
+        return new NpcInteractionMsg
+        {
+            NpcEntityId = e.NpcEntityId,
             NpcX = e.Npc.X,
             NpcY = e.Npc.Y,
-            NpcName = e.NpcName,
-            Text = e.Text,
+            NpcZ = e.Npc.Z,
+            NpcName = e.NpcName ?? "",
             NpcRole = e.NpcRole,
-        }).ToArray();
+            FlavorText = e.Text ?? "",
+            QuestOffers = offers,
+            QuestTurnIns = turnIns,
+            HasShop = e.HasShop,
+        };
+    }
+
+    private static QuestObjectiveInfoMsg[] BuildObjectivePreview(QuestDefinition q)
+    {
+        var arr = new QuestObjectiveInfoMsg[q.Objectives.Length];
+        for (int i = 0; i < q.Objectives.Length; i++)
+        {
+            var o = q.Objectives[i];
+            arr[i] = new QuestObjectiveInfoMsg
+            {
+                Type = (int)o.Type,
+                TargetNumericId = o.TargetNumericId,
+                Current = 0,
+                Target = o.Count,
+                Description = o.Description ?? "",
+            };
+        }
+        return arr;
+    }
+
+    private static QuestObjectiveInfoMsg[] BuildObjectiveProgress(QuestDefinition? q, ActiveQuest? active)
+    {
+        if (q == null) return [];
+        var arr = new QuestObjectiveInfoMsg[q.Objectives.Length];
+        for (int i = 0; i < q.Objectives.Length; i++)
+        {
+            var o = q.Objectives[i];
+            int current = active != null && i < active.Objectives.Length ? active.Objectives[i].Current : 0;
+            arr[i] = new QuestObjectiveInfoMsg
+            {
+                Type = (int)o.Type,
+                TargetNumericId = o.TargetNumericId,
+                Current = current,
+                Target = o.Count,
+                Description = o.Description ?? "",
+            };
+        }
+        return arr;
+    }
+
+    private static QuestRewardInfoMsg BuildRewardInfo(QuestDefinition q)
+    {
+        var items = new ItemDataMsg[q.Rewards.Items.Length];
+        for (int i = 0; i < q.Rewards.Items.Length; i++)
+        {
+            items[i] = new ItemDataMsg
+            {
+                ItemTypeId = q.Rewards.Items[i].ItemNumericId,
+                StackCount = q.Rewards.Items[i].Count,
+                EquipSlot = -1,
+            };
+        }
+        return new QuestRewardInfoMsg
+        {
+            Experience = q.Rewards.Experience,
+            Gold = q.Rewards.Gold,
+            Items = items,
+        };
     }
 
     public static PlayerActionEventMsg[] SerializePlayerActionEvents(PlayerEntity player)
@@ -275,7 +382,68 @@ public static class GameStateSerializer
             OldLevel = e.OldLevel,
             NewLevel = e.NewLevel,
             KilledNpcTypeId = (int)e.KilledNpcTypeId,
+            QuestNumericId = e.QuestNumericId,
+            QuestObjectiveIndex = e.QuestObjectiveIndex,
+            ObjectiveCurrent = e.ObjectiveCurrent,
+            ObjectiveTarget = e.ObjectiveTarget,
         }).ToArray();
+    }
+
+    private static PlayerQuestStateMsg BuildQuestState(GameEngine engine, PlayerEntity player)
+    {
+        var active = player.Quests.ActiveQuests ?? new List<ActiveQuest>();
+        var completed = player.Quests.CompletedQuestIds ?? new List<int>();
+        var activeArr = new ActiveQuestInfoMsg[active.Count];
+        for (int i = 0; i < active.Count; i++)
+        {
+            var aq = active[i];
+            var q = GameData.Instance.Quests.Get(aq.QuestNumericId);
+            var objs = new QuestObjectiveInfoMsg[aq.Objectives.Length];
+            for (int j = 0; j < aq.Objectives.Length; j++)
+            {
+                var defObj = q != null && j < q.Objectives.Length ? q.Objectives[j] : null;
+                objs[j] = new QuestObjectiveInfoMsg
+                {
+                    Type = defObj != null ? (int)defObj.Type : 0,
+                    TargetNumericId = defObj?.TargetNumericId ?? 0,
+                    Current = aq.Objectives[j].Current,
+                    Target = aq.Objectives[j].Target,
+                    Description = defObj?.Description ?? "",
+                };
+            }
+            activeArr[i] = new ActiveQuestInfoMsg
+            {
+                QuestNumericId = aq.QuestNumericId,
+                Title = q?.Title ?? "",
+                GiverEntityId = aq.GiverEntityId,
+                GiverName = aq.GiverName,
+                GiverChunkX = aq.GiverChunkX,
+                GiverChunkY = aq.GiverChunkY,
+                GiverChunkZ = aq.GiverChunkZ,
+                Objectives = objs,
+            };
+        }
+        return new PlayerQuestStateMsg
+        {
+            Active = activeArr,
+            CompletedQuestIds = completed.ToArray(),
+            QuestGiverEntityIds = BuildQuestGiverEntityIds(engine, player),
+        };
+    }
+
+    private static int[] BuildQuestGiverEntityIds(GameEngine engine, PlayerEntity player)
+    {
+        var list = new List<int>();
+        foreach (var chunk in engine.WorldMap.LoadedChunks)
+        {
+            foreach (ref var npc in chunk.TownNpcs)
+            {
+                if (npc.IsDead) continue;
+                if (QuestSystem.HasAvailableOfferForRole(ref player, npc.NpcData.Role))
+                    list.Add(npc.Id);
+            }
+        }
+        return list.ToArray();
     }
 
     public static PlayerStateMsg? BuildPlayerState(GameEngine engine, PlayerEntity player)
@@ -306,6 +474,7 @@ public static class GameStateSerializer
             PlayerEntityId = (long)player.Id,
             NearbyStationsTypes = stateData.NearbyStationsTypes,
             ClassId = stateData.ClassId,
+            Quests = BuildQuestState(engine, player),
         };
     }
 

@@ -24,6 +24,7 @@
     <EmbeddedResource Include="..\..\data\meta\*.json" LogicalName="data/meta/%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\data\structures\*.json" LogicalName="data/structures/%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\data\towns\*.json" LogicalName="data/towns/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\data\quests\*.json" LogicalName="data/quests/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

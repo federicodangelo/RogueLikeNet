@@ -37,6 +37,7 @@ public class GameEngine : IDisposable
     private readonly AnimalSystem _animalSystem;
     private readonly TradingSystem _tradingSystem;
     private readonly SpellSystem _spellSystem;
+    private readonly QuestSystem _questSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
     private Position? _generatorSpawnHint;
@@ -86,6 +87,7 @@ public class GameEngine : IDisposable
         _tradingSystem = new TradingSystem();
         _spellSystem = new SpellSystem();
         _worldRng = new SeededRandom(worldSeed);
+        _questSystem = new QuestSystem();
     }
 
     public Chunk? EnsureChunkLoadedOrDoesntExist(ChunkPosition chunkPos)
@@ -274,8 +276,17 @@ public class GameEngine : IDisposable
     /// Spawns a peaceful town NPC that wanders within a radius.
     /// </summary>
     public ref TownNpcEntity SpawnTownNpc(Position pos, string name, int townCenterX, int townCenterY, int wanderRadius, TownNpcRole role = TownNpcRole.Villager)
+        => ref SpawnTownNpcInternal(_worldMap.AllocateEntityId(), pos, name, townCenterX, townCenterY, wanderRadius, role);
+
+    /// <summary>
+    /// Spawns a peaceful town NPC with a pre-existing entity id (used when restoring from save).
+    /// </summary>
+    public ref TownNpcEntity SpawnTownNpcWithId(int entityId, Position pos, string name, int townCenterX, int townCenterY, int wanderRadius, TownNpcRole role = TownNpcRole.Villager)
+        => ref SpawnTownNpcInternal(entityId, pos, name, townCenterX, townCenterY, wanderRadius, role);
+
+    private ref TownNpcEntity SpawnTownNpcInternal(int entityId, Position pos, string name, int townCenterX, int townCenterY, int wanderRadius, TownNpcRole role)
     {
-        var npc = new TownNpcEntity(_worldMap.AllocateEntityId())
+        var npc = new TownNpcEntity(entityId)
         {
             Position = pos,
             Health = new Health(9999),
@@ -389,6 +400,7 @@ public class GameEngine : IDisposable
         _buildingSystem.Update(_worldMap);
         _farmingSystem.Update(_worldMap);
         _animalSystem.Update(_worldMap);
+        _questSystem.Update(_worldMap, this);
         _worldMap.Update();
         _fovSystem.Update(_worldMap);
         _lightingSystem.Update(_worldMap);

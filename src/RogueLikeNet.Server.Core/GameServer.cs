@@ -866,6 +866,8 @@ public class GameServer : IDisposable
                 player.Input.TargetY = input.TargetY;
                 player.Input.ItemSlot = input.ItemSlot;
                 player.Input.TargetSlot = input.TargetSlot;
+                player.Input.TargetNpcEntityId = input.TargetNpcEntityId;
+                player.Input.TargetQuestId = input.TargetQuestId;
                 break;
             }
         }
@@ -950,7 +952,7 @@ public class GameServer : IDisposable
             EntityPositionHealthUpdates = serializedEntityData.PositionHealthUpdates,
             EntityRemovals = serializedEntityData.Removals,
             CombatEvents = GameStateSerializer.SerializeCombatEvents(_engine),
-            NpcDialogueEvents = GameStateSerializer.SerializeNpcDialogueEvents(_engine),
+            NpcInteractions = GameStateSerializer.SerializeNpcInteractions(_engine, player),
             PlayerActionEvents = GameStateSerializer.SerializePlayerActionEvents(player),
             PlayerState = playerState,
         };

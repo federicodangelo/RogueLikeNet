@@ -623,8 +623,8 @@ public class CombatSystemTests
         player.Input.TargetY = 0;
         engine.Tick();
 
-        Assert.True(engine.Combat.LastTickDialogueEvents.Count > 0);
-        Assert.Equal("TestNpc", engine.Combat.LastTickDialogueEvents[0].NpcName);
+        Assert.True(engine.Combat.LastTickInteractionEvents.Count > 0);
+        Assert.Equal("TestNpc", engine.Combat.LastTickInteractionEvents[0].NpcName);
     }
 
     [Fact]
@@ -642,7 +642,7 @@ public class CombatSystemTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.True(engine.Combat.LastTickDialogueEvents.Count > 0);
+        Assert.True(engine.Combat.LastTickInteractionEvents.Count > 0);
 
         // Second immediate talk - should be on cooldown
         player = ref engine.WorldMap.GetPlayerRef(_p.Id);
@@ -650,7 +650,7 @@ public class CombatSystemTests
         player.Input.TargetX = 1;
         player.Input.TargetY = 0;
         engine.Tick();
-        Assert.Empty(engine.Combat.LastTickDialogueEvents);
+        Assert.Empty(engine.Combat.LastTickInteractionEvents);
     }
 
     // ── Resource Node Tool Bonus Tests ──

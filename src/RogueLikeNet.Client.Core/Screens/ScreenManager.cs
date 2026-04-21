@@ -25,7 +25,8 @@ public sealed class ScreenManager
     private readonly ServerAdminScreen? _serverAdmin;
     private readonly NewGameScreen? _newGame;
     private readonly LoginScreen? _login;
-    private readonly ShopScreen? _shop;
+    private readonly NpcDialogueScreen? _npcDialogue;
+    private readonly QuestLogScreen? _questLog;
 
     public ScreenState CurrentState { get; private set; }
 
@@ -43,7 +44,8 @@ public sealed class ScreenManager
         ServerAdminScreen serverAdmin,
         NewGameScreen newGame,
         LoginScreen login,
-        ShopScreen shop)
+        NpcDialogueScreen npcDialogue,
+        QuestLogScreen questLog)
     {
         _mainMenu = mainMenu;
         _classSelect = classSelect;
@@ -57,7 +59,8 @@ public sealed class ScreenManager
         _serverAdmin = serverAdmin;
         _newGame = newGame;
         _login = login;
-        _shop = shop;
+        _npcDialogue = npcDialogue;
+        _questLog = questLog;
 
         _screens[ScreenState.MainMenu] = mainMenu;
         _screens[ScreenState.ClassSelect] = classSelect;
@@ -74,7 +77,8 @@ public sealed class ScreenManager
         _screens[ScreenState.ServerAdmin] = serverAdmin;
         _screens[ScreenState.NewGame] = newGame;
         _screens[ScreenState.Login] = login;
-        _screens[ScreenState.Shop] = shop;
+        _screens[ScreenState.NpcDialogue] = npcDialogue;
+        _screens[ScreenState.QuestLog] = questLog;
 
         _current = mainMenu;
         CurrentState = ScreenState.MainMenu;
@@ -135,16 +139,19 @@ public sealed class ScreenManager
             case ScreenState.Login:
                 _login?.OnEnter();
                 break;
-            case ScreenState.Shop:
-                _shop?.OnEnter();
+            case ScreenState.NpcDialogue:
+                _npcDialogue?.OnEnter();
+                break;
+            case ScreenState.QuestLog:
+                _questLog?.OnEnter();
                 break;
         }
     }
 
-    public void OpenShop(RogueLikeNet.Core.Data.TownNpcRole role)
+    public void OpenNpcDialogue(RogueLikeNet.Protocol.Messages.NpcInteractionMsg interaction)
     {
-        _shop?.OpenShop(role);
-        TransitionTo(ScreenState.Shop);
+        _npcDialogue?.OpenFor(interaction);
+        TransitionTo(ScreenState.NpcDialogue);
     }
 
     public void HandleInput(IInputManager input) => _current.HandleInput(input);

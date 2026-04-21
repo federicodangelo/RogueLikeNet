@@ -345,7 +345,7 @@ public sealed class HudRenderer
         }
 
         if (row >= maxRow) return;
-        Ds(r, col, row, "[I] Inv [C] Craft", RenderingTheme.Dim); row++;
+        Ds(r, col, row, "[I] Inv [C] Craft [Q] Quests", RenderingTheme.Dim); row++;
     }
 
     private static bool HasAdjacentTileWithPlaceable(ClientGameState state)

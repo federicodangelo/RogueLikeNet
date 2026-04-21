@@ -143,6 +143,7 @@ public class EntitySerializerTests : IDisposable
     public void TownNpc_RoundTrip_PreservesData()
     {
         var npc = _engine.SpawnTownNpc(Position.FromCoords(2, 8, Z), "Blacksmith", 5, 10, 3);
+        int originalId = npc.Id;
 
         ref var npcRef = ref _engine.WorldMap.GetTownNpcRef(npc.Id);
         npcRef.Health.Current = 8000;
@@ -160,6 +161,7 @@ public class EntitySerializerTests : IDisposable
         var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
         var found = chunk2.TownNpcs.ToArray().FirstOrDefault(n => n.Position.X == 2 && n.Position.Y == 8 && n.Position.Z == Z);
         Assert.NotEqual(EntityRef.NullId, found.Id);
+        Assert.Equal(originalId, found.Id);
 
         Assert.Equal("Blacksmith", found!.NpcData.Name);
         Assert.Equal(5, found.NpcData.TownCenterX);

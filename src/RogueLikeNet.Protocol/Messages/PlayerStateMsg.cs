@@ -27,6 +27,7 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
     [Key(20)] public int BonusDefense { get; set; }
     [Key(21)] public int Mana { get; set; }
     [Key(22)] public int MaxMana { get; set; }
+    [Key(23)] public PlayerQuestStateMsg? Quests { get; set; }
 
     public static bool Equals(PlayerStateMsg? a, PlayerStateMsg? b)
     {
@@ -54,7 +55,31 @@ public class PlayerStateMsg : IEquatable<PlayerStateMsg>
         if (a.ClassId != b.ClassId) return false;
         if (a.Mana != b.Mana) return false;
         if (a.MaxMana != b.MaxMana) return false;
+        if (!QuestStateEquals(a.Quests, b.Quests)) return false;
 
+        return true;
+    }
+
+    private static bool QuestStateEquals(PlayerQuestStateMsg? a, PlayerQuestStateMsg? b)
+    {
+        if (ReferenceEquals(a, b)) return true;
+        if (a is null || b is null) return false;
+        if (!a.CompletedQuestIds.SequenceEqual(b.CompletedQuestIds)) return false;
+        if (!a.QuestGiverEntityIds.SequenceEqual(b.QuestGiverEntityIds)) return false;
+        if (a.Active.Length != b.Active.Length) return false;
+        for (int i = 0; i < a.Active.Length; i++)
+        {
+            var aq = a.Active[i];
+            var bq = b.Active[i];
+            if (aq.QuestNumericId != bq.QuestNumericId) return false;
+            if (aq.GiverEntityId != bq.GiverEntityId) return false;
+            if (aq.Objectives.Length != bq.Objectives.Length) return false;
+            for (int j = 0; j < aq.Objectives.Length; j++)
+            {
+                if (aq.Objectives[j].Current != bq.Objectives[j].Current) return false;
+                if (aq.Objectives[j].Target != bq.Objectives[j].Target) return false;
+            }
+        }
         return true;
     }
 

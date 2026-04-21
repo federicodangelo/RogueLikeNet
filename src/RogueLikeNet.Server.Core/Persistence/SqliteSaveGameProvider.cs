@@ -99,6 +99,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         MigrateAddColumn("WorldMetas", "NextServerPlayerId", "INTEGER NOT NULL DEFAULT 1");
         MigrateAddColumn("Players", "PasswordHash", "TEXT NOT NULL DEFAULT ''");
         MigrateAddColumn("Players", "PasswordSalt", "TEXT NOT NULL DEFAULT ''");
+        MigrateAddColumn("Players", "QuestsJson", "TEXT NOT NULL DEFAULT '{}'");
     }
 
     private void MigrateRemoveColumn(string table, string column)
@@ -283,8 +284,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
         {
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO Players (SlotId, PlayerName, ServerPlayerId, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst, PasswordHash, PasswordSalt)
-                VALUES ($slotId, $name, $serverPlayerId, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst, $passwordHash, $passwordSalt)
+                INSERT INTO Players (SlotId, PlayerName, ServerPlayerId, ClassId, Level, Experience, PositionX, PositionY, PositionZ, HealthCurrent, HealthMax, Attack, Defense, Speed, InventoryJson, EquipmentJson, QuickSlotsJson, Hunger, MaxHunger, Thirst, MaxThirst, PasswordHash, PasswordSalt, QuestsJson)
+                VALUES ($slotId, $name, $serverPlayerId, $classId, $level, $exp, $px, $py, $pz, $hpCur, $hpMax, $atk, $def, $spd, $inv, $equip, $quickSlots, $hunger, $maxHunger, $thirst, $maxThirst, $passwordHash, $passwordSalt, $quests)
                 ON CONFLICT(SlotId, PlayerName) DO UPDATE SET
                     ServerPlayerId=$serverPlayerId, ClassId=$classId, Level=$level, Experience=$exp,
                     PositionX=$px, PositionY=$py, PositionZ=$pz,
@@ -293,7 +294,8 @@ public class SqliteSaveGameProvider : ISaveGameProvider
                     InventoryJson=$inv, EquipmentJson=$equip, QuickSlotsJson=$quickSlots,
                     Hunger=$hunger, MaxHunger=$maxHunger,
                     Thirst=$thirst, MaxThirst=$maxThirst,
-                    PasswordHash=$passwordHash, PasswordSalt=$passwordSalt
+                    PasswordHash=$passwordHash, PasswordSalt=$passwordSalt,
+                    QuestsJson=$quests
                 """;
             cmd.Parameters.AddWithValue("$slotId", slotId);
             cmd.Parameters.AddWithValue("$name", p.PlayerName);
@@ -318,6 +320,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             cmd.Parameters.AddWithValue("$maxThirst", p.MaxThirst);
             cmd.Parameters.AddWithValue("$passwordHash", p.PasswordHash);
             cmd.Parameters.AddWithValue("$passwordSalt", p.PasswordSalt);
+            cmd.Parameters.AddWithValue("$quests", p.QuestsJson);
             cmd.ExecuteNonQuery();
         }
         transaction.Commit();
@@ -372,6 +375,7 @@ public class SqliteSaveGameProvider : ISaveGameProvider
             MaxThirst = reader.GetInt32(reader.GetOrdinal("MaxThirst")),
             PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
             PasswordSalt = reader.GetString(reader.GetOrdinal("PasswordSalt")),
+            QuestsJson = reader.GetString(reader.GetOrdinal("QuestsJson")),
         };
         return data;
     }

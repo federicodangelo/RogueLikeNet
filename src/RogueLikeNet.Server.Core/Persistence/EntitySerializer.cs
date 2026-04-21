@@ -144,6 +144,7 @@ public static class EntitySerializer
         {
             if (n.IsDead) continue;
             var dict = new Dictionary<string, object> { ["Type"] = TypeTownNpc };
+            dict["EntityId"] = n.Id;
             SerializePosition(dict, n.Position);
             SerializeTownNpcTag(dict, n.NpcData);
             SerializeHealth(dict, n.Health);
@@ -295,8 +296,12 @@ public static class EntitySerializer
         int tcx = GetInt(dict, "TownCenterX"), tcy = GetInt(dict, "TownCenterY"), radius = GetInt(dict, "WanderRadius");
         string role = GetString(dict, "Role", "Villager");
         var npcRole = Enum.TryParse<TownNpcRole>(role, true, out var parsed) ? parsed : TownNpcRole.Villager;
+        int entityId = GetInt(dict, "EntityId", 0);
 
-        ref var npc = ref engine.SpawnTownNpc(Position.FromCoords(x, y, z), name, tcx, tcy, radius, npcRole);
+        ref var npc = ref entityId > 0
+            ? ref engine.SpawnTownNpcWithId(entityId, Position.FromCoords(x, y, z), name, tcx, tcy, radius, npcRole)
+            : ref engine.SpawnTownNpc(Position.FromCoords(x, y, z), name, tcx, tcy, radius, npcRole);
+        if (entityId > 0) engine.WorldMap.BumpNextEntityIdPast(entityId);
 
         // Restore runtime state
         npc.Health.Current = GetInt(dict, "HealthCurrent", npc.Health.Current);

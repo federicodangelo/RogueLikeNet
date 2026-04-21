@@ -43,6 +43,7 @@ public enum InputAction
     Drop,
     CycleSection,
     OpenCrafting,
+    OpenQuestLog,
     Place,
     PickUpPlaced,
     UseStairs,

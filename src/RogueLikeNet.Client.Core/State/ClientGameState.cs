@@ -18,7 +18,7 @@ public class ClientGameState
     private readonly Dictionary<long, Chunk> _chunks = new();
     private readonly Dictionary<long, ClientEntity> _entities = new();
     private readonly List<CombatEventMsg> _pendingCombatEvents = new();
-    private readonly List<NpcDialogueMsg> _pendingNpcDialogues = new();
+    private readonly List<NpcInteractionMsg> _pendingNpcInteractions = new();
     private readonly List<PlayerActionEventMsg> _pendingPlayerActionEvents = new();
     private readonly HashSet<long> _visibleTiles = new();
     private (int x, int y, int x1, int y1) _visibleTilesBounds = (0, 0, 0, 0);
@@ -35,7 +35,7 @@ public class ClientGameState
     public IReadOnlyDictionary<long, Chunk> Chunks => _chunks;
     public PlayerStateMsg? PlayerState { get; private set; }
     public IReadOnlyList<CombatEventMsg> PendingCombatEvents => _pendingCombatEvents;
-    public IReadOnlyList<NpcDialogueMsg> PendingNpcDialogues => _pendingNpcDialogues;
+    public IReadOnlyList<NpcInteractionMsg> PendingNpcInteractions => _pendingNpcInteractions;
     public IReadOnlyList<PlayerActionEventMsg> PendingPlayerActionEvents => _pendingPlayerActionEvents;
 
     public void Clear()
@@ -43,7 +43,7 @@ public class ClientGameState
         _chunks.Clear();
         _entities.Clear();
         _pendingCombatEvents.Clear();
-        _pendingNpcDialogues.Clear();
+        _pendingNpcInteractions.Clear();
         _pendingPlayerActionEvents.Clear();
         _visibleTiles.Clear();
         PlayerX = 0;
@@ -64,7 +64,7 @@ public class ClientGameState
             _chunks.Clear();
             _entities.Clear();
             _pendingCombatEvents.Clear();
-            _pendingNpcDialogues.Clear();
+            _pendingNpcInteractions.Clear();
             _pendingPlayerActionEvents.Clear();
             _visibleTiles.Clear();
         }
@@ -143,9 +143,9 @@ public class ClientGameState
         if (delta.CombatEvents.Length > 0)
             _pendingCombatEvents.AddRange(delta.CombatEvents);
 
-        // Queue NPC dialogue events for chat display
-        if (delta.NpcDialogueEvents.Length > 0)
-            _pendingNpcDialogues.AddRange(delta.NpcDialogueEvents);
+        // Queue NPC interaction events for dialogue/quest UI
+        if (delta.NpcInteractions.Length > 0)
+            _pendingNpcInteractions.AddRange(delta.NpcInteractions);
 
         // Queue player action events for chat display
         if (delta.PlayerActionEvents.Length > 0)
@@ -171,9 +171,9 @@ public class ClientGameState
         _pendingCombatEvents.Clear();
     }
 
-    public void DrainNpcDialogues()
+    public void DrainNpcInteractions()
     {
-        _pendingNpcDialogues.Clear();
+        _pendingNpcInteractions.Clear();
     }
 
     public void DrainPlayerActionEvents()

@@ -24,6 +24,7 @@ public struct PlayerEntity
     public Survival Survival;
     public Mana Mana;
     public ActiveEffects ActiveEffects;
+    public PlayerQuests Quests = PlayerQuests.Empty();
     public List<PlayerActionEvent> ActionEvents = new();
     public bool IsDead => !Health.IsAlive;
 

@@ -315,9 +315,9 @@ public sealed class MenuRenderer
     }
 
     public void RenderOptions(ISpriteRenderer r, int totalCols, int totalRows, int selectedIndex,
-        bool showStats, bool showDebugOption, bool debugEnabled, bool isOverlay)
+        bool showStats, bool showQuestTracker, bool showDebugOption, bool debugEnabled, bool isOverlay)
     {
-        int itemCount = showDebugOption ? 2 : 1;
+        int itemCount = showDebugOption ? 3 : 2;
         int boxW = 50;
         int boxH = itemCount + 8;
         int bx = (totalCols - boxW) / 2;
@@ -348,10 +348,19 @@ public sealed class MenuRenderer
             itemY++;
         }
 
+        // Show Quest Tracker toggle
+        {
+            bool sel = selectedIndex == 1;
+            string prefix = sel ? " \u25ba " : "   ";
+            string label = prefix + "Quest Tracker: " + (showQuestTracker ? "ON" : "OFF");
+            AsciiDraw.DrawString(r, tx, itemY, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);
+            itemY++;
+        }
+
         // Debug Mode toggle (only from main menu)
         if (showDebugOption)
         {
-            bool sel = selectedIndex == 1;
+            bool sel = selectedIndex == 2;
             string prefix = sel ? " \u25ba " : "   ";
             string label = prefix + "Debug Mode: " + (debugEnabled ? "ON" : "OFF");
             AsciiDraw.DrawString(r, tx, itemY, label, sel ? RenderingTheme.Selected : RenderingTheme.Normal);

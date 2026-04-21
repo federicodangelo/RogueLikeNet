@@ -197,6 +197,9 @@ public sealed class GameWorldRenderer
 
             // Draw red rectangle around ranged weapon target
             DrawRangedTargetHighlight(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, precalculatedBrightness);
+
+            // Draw quest indicators ("!" offer, "?" turn-in ready) above NPCs
+            DrawQuestIndicators(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculatedBrightness);
         }
     }
 
@@ -224,6 +227,70 @@ public sealed class GameWorldRenderer
             var ratio = (float)entity.Health / entity.MaxHealth;
             r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
             r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
+        }
+    }
+
+    private static readonly Color4 QuestOfferColor = new(255, 235, 80, 255);
+    private static readonly Color4 QuestTurnInColor = new(120, 255, 120, 255);
+
+    private static void DrawQuestIndicators(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale,
+        float[] precalculatedBrightness)
+    {
+        var hud = state.PlayerState;
+        var quests = hud?.Quests;
+        if (quests == null) return;
+
+        // Build set of NPC entity ids whose active quest has all objectives complete.
+        HashSet<int>? turnInIds = null;
+        foreach (var aq in quests.Active)
+        {
+            bool complete = aq.Objectives.Length > 0;
+            for (int i = 0; i < aq.Objectives.Length; i++)
+            {
+                if (aq.Objectives[i].Current < aq.Objectives[i].Target) { complete = false; break; }
+            }
+            if (!complete) continue;
+            (turnInIds ??= new HashSet<int>()).Add(aq.GiverEntityId);
+        }
+
+        HashSet<int>? offerIds = null;
+        if (quests.QuestGiverEntityIds.Length > 0)
+        {
+            offerIds = new HashSet<int>(quests.QuestGiverEntityIds.Length);
+            foreach (var id in quests.QuestGiverEntityIds) offerIds.Add(id);
+        }
+
+        if (turnInIds == null && offerIds == null) return;
+
+        float pulse = (float)((Math.Sin(Environment.TickCount / 220.0) + 1.0) * 0.5); // 0..1
+        float indicatorAlpha = 0.6f + 0.4f * pulse;
+
+        foreach (var entity in state.Entities.Values)
+        {
+            if (entity.Z != state.PlayerZ) continue;
+            if (entity.EntityType != EntityType.TownNpc) continue;
+
+            int entityIdInt = unchecked((int)entity.Id);
+            // Turn-in takes priority over new-offer.
+            bool hasTurnIn = turnInIds != null && turnInIds.Contains(entityIdInt);
+            bool hasOffer = !hasTurnIn && offerIds != null && offerIds.Contains(entityIdInt);
+            if (!hasTurnIn && !hasOffer) continue;
+
+            var sx = entity.X - (cameraCenterX - visibleCols / 2);
+            var sy = entity.Y - (cameraCenterY - visibleRows / 2);
+            if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) continue;
+
+            var brightness = precalculatedBrightness[sy * visibleCols + sx];
+            if (brightness <= 0f) continue;
+
+            var px = sx * tileW + shakeX;
+            var py = sy * tileH + shakeY - tileH; // one tile above the NPC
+            char ch = hasTurnIn ? '?' : '!';
+            var baseColor = hasTurnIn ? QuestTurnInColor : QuestOfferColor;
+            var color = baseColor.WithAlpha((byte)(255 * indicatorAlpha));
+            r.DrawTextScreen(px, py, ch.ToString(), color, fontScale);
         }
     }
 

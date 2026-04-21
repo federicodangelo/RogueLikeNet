@@ -1,0 +1,51 @@
+[
+    {
+        "id": "q_reach_forest",
+        "title": "Into the Woods",
+        "description": "I need a reliable scout to map the forest. Head west and find it.",
+        "completionText": "Good eyes. That report will save lives.",
+        "declineText": "Perhaps another time.",
+        "giverRole": "guard",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "forest",
+                "count": 1,
+                "description": "Reach the forest biome"
+            }
+        ],
+        "rewards": {
+            "experience": 60,
+            "gold": 25,
+            "items": []
+        }
+    },
+    {
+        "id": "q_reach_crypt",
+        "title": "Descent into the Crypt",
+        "description": "Strange noises come from the old crypt. Investigate.",
+        "completionText": "You made it back alive? Remarkable.",
+        "declineText": "A pity. We'll send word to the temple.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "crypt",
+                "count": 1,
+                "description": "Reach the crypt biome"
+            }
+        ],
+        "rewards": {
+            "experience": 200,
+            "gold": 80,
+            "items": [
+                {
+                    "itemId": "health_potion_medium",
+                    "count": 2
+                }
+            ]
+        }
+    }
+]

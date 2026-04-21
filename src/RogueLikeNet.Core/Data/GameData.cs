@@ -19,11 +19,13 @@ public sealed class GameData
     public readonly TownRegistry Towns = new();
     public readonly ShopRegistry Shops = new();
     public readonly SpellRegistry Spells = new();
+    public readonly QuestRegistry Quests;
 
     public GameData()
     {
         Recipes = new RecipeRegistry(Items);
         Biomes = new BiomeRegistry(Tiles, Items);
+        Quests = new QuestRegistry(Items, Npcs, ResourceNodes, Biomes);
     }
 
     /// <summary>
@@ -46,5 +48,6 @@ public sealed class GameData
         output.WriteLine($"[GameData] Loaded {Towns.Count} town types");
         output.WriteLine($"[GameData] Loaded {Shops.Count} shops");
         output.WriteLine($"[GameData] Loaded {Spells.Count} spells");
+        output.WriteLine($"[GameData] Loaded {Quests.Count} quests");
     }
 }

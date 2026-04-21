@@ -14,6 +14,9 @@ namespace RogueLikeNet.Server.Persistence;
 [JsonSerializable(typeof(PlayerSerializer.EquipSlotJson))]
 [JsonSerializable(typeof(List<PlayerSerializer.EquipSlotJson>))]
 [JsonSerializable(typeof(PlayerSerializer.QuickSlotsJson))]
+[JsonSerializable(typeof(PlayerSerializer.ActiveQuestJson))]
+[JsonSerializable(typeof(List<PlayerSerializer.ActiveQuestJson>))]
+[JsonSerializable(typeof(PlayerSerializer.QuestsJson))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
 internal partial class PlayerJsonContext : JsonSerializerContext;
 
@@ -79,6 +82,32 @@ public static class PlayerSerializer
             qsData.Slots[i] = player.QuickSlots[i];
 
         data.QuickSlotsJson = JsonSerializer.Serialize(qsData, PlayerJsonContext.Default.QuickSlotsJson);
+
+        // Quests
+        var questsData = new QuestsJson();
+        if (player.Quests.ActiveQuests != null)
+        {
+            questsData.Active = new List<ActiveQuestJson>(player.Quests.ActiveQuests.Count);
+            foreach (var q in player.Quests.ActiveQuests)
+            {
+                var objs = new int[q.Objectives.Length];
+                for (int i = 0; i < objs.Length; i++)
+                    objs[i] = q.Objectives[i].Current;
+                questsData.Active.Add(new ActiveQuestJson
+                {
+                    QuestNumericId = q.QuestNumericId,
+                    GiverEntityId = q.GiverEntityId,
+                    GiverName = q.GiverName,
+                    GiverChunkX = q.GiverChunkX,
+                    GiverChunkY = q.GiverChunkY,
+                    GiverChunkZ = q.GiverChunkZ,
+                    ObjectiveCurrent = objs,
+                });
+            }
+        }
+        if (player.Quests.CompletedQuestIds != null && player.Quests.CompletedQuestIds.Count > 0)
+            questsData.Completed = player.Quests.CompletedQuestIds.ToArray();
+        data.QuestsJson = JsonSerializer.Serialize(questsData, PlayerJsonContext.Default.QuestsJson);
 
         return data;
     }
@@ -184,6 +213,50 @@ public static class PlayerSerializer
         // Restore health after recalculation (saved health may be lower than max)
         player.Health.Current = Math.Min(data.HealthCurrent, player.Health.Max);
 
+        // Restore quests
+        if (!string.IsNullOrEmpty(data.QuestsJson) && data.QuestsJson != "{}")
+        {
+            var questsData = JsonSerializer.Deserialize(data.QuestsJson, PlayerJsonContext.Default.QuestsJson);
+            if (questsData != null)
+            {
+                player.Quests = PlayerQuests.Empty();
+                if (questsData.Active != null)
+                {
+                    foreach (var aq in questsData.Active)
+                    {
+                        var questDef = GameData.Instance.Quests.Get(aq.QuestNumericId);
+                        if (questDef == null) continue; // Drop quests that no longer exist in current game data
+                        var progress = new ObjectiveProgress[questDef.Objectives.Length];
+                        for (int i = 0; i < progress.Length; i++)
+                        {
+                            int target = questDef.Objectives[i].Count;
+                            int current = (aq.ObjectiveCurrent != null && i < aq.ObjectiveCurrent.Length)
+                                ? aq.ObjectiveCurrent[i] : 0;
+                            progress[i] = new ObjectiveProgress { Current = Math.Min(current, target), Target = target };
+                        }
+                        player.Quests.ActiveQuests!.Add(new ActiveQuest
+                        {
+                            QuestNumericId = aq.QuestNumericId,
+                            GiverEntityId = aq.GiverEntityId,
+                            GiverName = aq.GiverName ?? "",
+                            GiverChunkX = aq.GiverChunkX,
+                            GiverChunkY = aq.GiverChunkY,
+                            GiverChunkZ = aq.GiverChunkZ,
+                            Objectives = progress,
+                        });
+                    }
+                }
+                if (questsData.Completed != null)
+                {
+                    foreach (var completedId in questsData.Completed)
+                    {
+                        if (GameData.Instance.Quests.Get(completedId) != null)
+                            player.Quests.CompletedQuestIds!.Add(completedId);
+                    }
+                }
+            }
+        }
+
         return ref player;
     }
 
@@ -223,5 +296,22 @@ public static class PlayerSerializer
     public class QuickSlotsJson
     {
         public int[]? Slots { get; set; }
+    }
+
+    public class ActiveQuestJson
+    {
+        public int QuestNumericId { get; set; }
+        public int GiverEntityId { get; set; }
+        public string? GiverName { get; set; }
+        public int GiverChunkX { get; set; }
+        public int GiverChunkY { get; set; }
+        public int GiverChunkZ { get; set; }
+        public int[]? ObjectiveCurrent { get; set; }
+    }
+
+    public class QuestsJson
+    {
+        public List<ActiveQuestJson>? Active { get; set; }
+        public int[]? Completed { get; set; }
     }
 }

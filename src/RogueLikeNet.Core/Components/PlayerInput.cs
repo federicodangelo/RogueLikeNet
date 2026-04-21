@@ -7,6 +7,8 @@ public struct PlayerInput
     public int TargetY;
     public int ItemSlot;
     public int TargetSlot;
+    public int TargetNpcEntityId;
+    public int TargetQuestId;
 }
 
 public static class ActionTypes
@@ -37,4 +39,9 @@ public static class ActionTypes
     public const int BuyItem = 24;           // Buy item from shop (ItemSlot = shop entry index)
     public const int SellItem = 25;          // Sell item from inventory (ItemSlot = inventory slot)
     public const int CastSpell = 26;         // Cast spell (ItemSlot = spell numeric ID)
+    public const int InteractNpc = 27;       // Bump-to-talk: server returns NpcInteractionMsg (TargetNpcEntityId required)
+    public const int AcceptQuest = 28;       // Accept quest from NPC (TargetNpcEntityId, TargetQuestId)
+    public const int DeclineQuest = 29;      // Decline quest (no state change, client-only confirmation)
+    public const int TurnInQuest = 30;       // Turn in completed quest (TargetNpcEntityId, TargetQuestId)
+    public const int AbandonQuest = 31;      // Abandon active quest (TargetQuestId)
 }

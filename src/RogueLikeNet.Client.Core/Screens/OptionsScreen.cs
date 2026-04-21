@@ -22,7 +22,7 @@ public sealed class OptionsScreen : IScreen
     /// <summary>Whether debug mode option is visible (only when accessed from main menu).</summary>
     private bool ShowDebugOption => _returnTo == ScreenState.MainMenu;
 
-    private int ItemCount => ShowDebugOption ? 2 : 1;
+    private int ItemCount => ShowDebugOption ? 3 : 2;
 
     public OptionsScreen(ScreenContext ctx, MenuRenderer menuRenderer, PlayingScreen? playingScreen)
     {
@@ -72,7 +72,7 @@ public sealed class OptionsScreen : IScreen
             _playingScreen.Render(renderer, totalCols, totalRows);
 
         _menuRenderer.RenderOptions(renderer, totalCols, totalRows, _menuIndex,
-            _ctx.Options.ShowStats, ShowDebugOption, _ctx.Debug.Enabled, isOverlay);
+            _ctx.Options.ShowStats, _ctx.Options.ShowQuestTracker, ShowDebugOption, _ctx.Debug.Enabled, isOverlay);
     }
 
     private void ToggleCurrentItem()
@@ -81,7 +81,11 @@ public sealed class OptionsScreen : IScreen
         {
             _ctx.Options.ShowStats = !_ctx.Options.ShowStats;
         }
-        else if (_menuIndex == 1 && ShowDebugOption)
+        else if (_menuIndex == 1)
+        {
+            _ctx.Options.ShowQuestTracker = !_ctx.Options.ShowQuestTracker;
+        }
+        else if (_menuIndex == 2 && ShowDebugOption)
         {
             _ctx.Debug.Enabled = !_ctx.Debug.Enabled;
         }

@@ -1,0 +1,105 @@
+[
+    {
+        "id": "q_combat_goblins",
+        "title": "Goblin Menace",
+        "description": "Goblins have been raiding the roads. Thin their numbers.",
+        "completionText": "Their raids should ease for a while. Well done.",
+        "declineText": "Cowardice won't protect this town.",
+        "giverRole": "guard",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "goblin",
+                "count": 5,
+                "description": "Slay 5 goblins"
+            }
+        ],
+        "rewards": {
+            "experience": 100,
+            "gold": 40,
+            "items": [
+                {
+                    "itemId": "iron_arrow",
+                    "count": 10
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_skeletons",
+        "title": "Bones in the Crypt",
+        "description": "The old crypt is stirring. Put the skeletons back to rest.",
+        "completionText": "The dead sleep again, thanks to you.",
+        "declineText": "The dead won't rest themselves.",
+        "giverRole": "guard",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "skeleton",
+                "count": 8,
+                "description": "Destroy 8 skeletons"
+            }
+        ],
+        "rewards": {
+            "experience": 200,
+            "gold": 75,
+            "items": [
+                {
+                    "itemId": "health_potion_medium",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_orc_warband",
+        "title": "Break the Warband",
+        "description": "A band of orcs has been spotted to the north. End them.",
+        "completionText": "Fewer orcs, safer roads. Take this.",
+        "declineText": "We'll find someone braver, then.",
+        "giverRole": "guard",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "orc",
+                "count": 4,
+                "description": "Slay 4 orcs"
+            }
+        ],
+        "rewards": {
+            "experience": 300,
+            "gold": 120,
+            "items": [
+                {
+                    "itemId": "iron_sword",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_spider_cull",
+        "title": "Web of Trouble",
+        "description": "Spiders are nesting in the outskirts. Clear them out.",
+        "completionText": "Good work. Folks can walk the paths again.",
+        "declineText": "Mind the webs on your way out.",
+        "giverRole": "villager",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "spider",
+                "count": 6,
+                "description": "Kill 6 spiders"
+            }
+        ],
+        "rewards": {
+            "experience": 150,
+            "gold": 50,
+            "items": []
+        }
+    }
+]

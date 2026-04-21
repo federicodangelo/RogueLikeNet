@@ -1,0 +1,73 @@
+[
+    {
+        "id": "q_starter_rats",
+        "title": "Rat Problem",
+        "description": "Our cellars are overrun with slimes. Slay a few and I'll reward you.",
+        "completionText": "The cellar's quiet again. Here, take this for your trouble.",
+        "declineText": "Maybe another day then.",
+        "giverRole": "villager",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "slime",
+                "count": 3,
+                "description": "Slay 3 slimes"
+            }
+        ],
+        "rewards": {
+            "experience": 50,
+            "gold": 15,
+            "items": [
+                {
+                    "itemId": "health_potion_small",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_starter_apples",
+        "title": "An Apple a Day",
+        "description": "My larder is low. Bring me a handful of apples and I'll pay you.",
+        "completionText": "Wonderful! These will keep me going for a week.",
+        "declineText": "If you find any, I'll be here.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "apple",
+                "count": 5,
+                "description": "Deliver 5 apples"
+            }
+        ],
+        "rewards": {
+            "experience": 30,
+            "gold": 20,
+            "items": []
+        }
+    },
+    {
+        "id": "q_starter_firewood",
+        "title": "Firewood for the Winter",
+        "description": "Winter is coming. Gather wood from the trees outside and I'll take it off your hands.",
+        "completionText": "That'll keep the hearth burning. Thank you, friend.",
+        "declineText": "Come back when you've got some wood.",
+        "giverRole": "villager",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "collect",
+                "targetId": "wood",
+                "count": 10,
+                "description": "Hold 10 wood"
+            }
+        ],
+        "rewards": {
+            "experience": 40,
+            "gold": 10,
+            "items": []
+        }
+    }
+]

@@ -50,6 +50,12 @@ public class WorldMap
     /// <summary>Sets the next entity ID (used when restoring from persistence).</summary>
     public void SetNextEntityId(int nextId) => _nextEntityId = nextId;
 
+    /// <summary>Ensures the next allocated entity id is strictly greater than <paramref name="id"/>.</summary>
+    public void BumpNextEntityIdPast(int id)
+    {
+        if (id >= _nextEntityId) _nextEntityId = id + 1;
+    }
+
     // ── Player management ────────────────────────────────────────────
 
     public ref PlayerEntity AddPlayer(PlayerEntity player)

@@ -1,0 +1,24 @@
+[
+    {
+        "id": "q_craft_iron_sword",
+        "title": "Proof of Skill",
+        "description": "Show me you can wield a hammer. Craft an iron sword.",
+        "completionText": "Not bad. Keep that blade — you've earned it.",
+        "declineText": "Come back when you're ready to prove yourself.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "iron_sword",
+                "count": 1,
+                "description": "Craft 1 iron sword"
+            }
+        ],
+        "rewards": {
+            "experience": 250,
+            "gold": 100,
+            "items": []
+        }
+    }
+]

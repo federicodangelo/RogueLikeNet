@@ -232,7 +232,20 @@ public static class DataLoader
             }
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells);
+        // Load quests from data/quests/
+        var quests = new List<QuestDefinition>();
+        var questsDir = Path.Combine(dataDir, "quests");
+        if (Directory.Exists(questsDir))
+        {
+            foreach (var file in Directory.GetFiles(questsDir, "*.json"))
+            {
+                var loaded = DeserializeFile<QuestDefinition[]>(file);
+                if (loaded != null)
+                    quests.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells, quests);
     }
     /// Loads all game data from embedded resources in the RogueLikeNet.Core assembly.
     /// Used as fallback when the filesystem data directory is unavailable (e.g. browser-wasm).
@@ -353,10 +366,22 @@ public static class DataLoader
             }
         }
 
-        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells);
+        // Load quests from data/quests/*.json resources
+        var quests = new List<QuestDefinition>();
+        foreach (var name in resourceNames)
+        {
+            if (name.StartsWith("data/quests/", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            {
+                var loaded = DeserializeResource<QuestDefinition[]>(assembly, name);
+                if (loaded != null)
+                    quests.AddRange(loaded);
+            }
+        }
+
+        return Load(tiles, items, recipes, nodes ?? [], npcs ?? [], biomes ?? [], animals ?? [], classes, playerLevels ?? [], structures, towns, shops, spells, quests);
     }
 
-    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels, IEnumerable<StructureDefinition> structures, IEnumerable<TownDefinition> towns, IEnumerable<ShopDefinition> shops, IEnumerable<SpellDefinition> spells)
+    private static GameData Load(IEnumerable<TileDefinition> tiles, IEnumerable<ItemDefinition> items, IEnumerable<RecipeDefinition> recipes, IEnumerable<ResourceNodeDefinition> nodes, IEnumerable<NpcDefinition> npcs, IEnumerable<BiomeDefinition> biomes, IEnumerable<AnimalDefinition> animals, IEnumerable<ClassDataDefinition> classes, IEnumerable<PlayerLevelDefinition> playerLevels, IEnumerable<StructureDefinition> structures, IEnumerable<TownDefinition> towns, IEnumerable<ShopDefinition> shops, IEnumerable<SpellDefinition> spells, IEnumerable<QuestDefinition> quests)
     {
         var data = new GameData();
 
@@ -373,6 +398,7 @@ public static class DataLoader
         data.Towns.Register(towns);
         data.Shops.Register(shops);
         data.Spells.Register(spells);
+        data.Quests.Register(quests);
 
         Validate(data);
 
@@ -899,6 +925,30 @@ public static class DataLoader
                     if (!Enum.TryParse<BiomeType>(b, true, out _))
                         errors.Add($"Town '{town.Id}': biomeOverride '{b}' is not a valid BiomeType.");
                 }
+            }
+        }
+
+        // Validate quests
+        foreach (var quest in data.Quests.All)
+        {
+            if (quest.Objectives.Length == 0)
+                errors.Add($"Quest '{quest.Id}': has no objectives.");
+            foreach (var obj in quest.Objectives)
+            {
+                if (obj.Count <= 0)
+                    errors.Add($"Quest '{quest.Id}': objective count must be > 0.");
+                if (obj.TargetNumericId == 0)
+                    errors.Add($"Quest '{quest.Id}': objective target '{obj.TargetId}' (type {obj.Type}) not found in registry.");
+            }
+            foreach (var reward in quest.Rewards.Items)
+            {
+                if (reward.ItemNumericId == 0 || data.Items.Get(reward.ItemId) == null)
+                    errors.Add($"Quest '{quest.Id}': reward item '{reward.ItemId}' not found.");
+            }
+            foreach (var preId in quest.PrerequisiteQuestIds)
+            {
+                if (data.Quests.Get(preId) == null)
+                    errors.Add($"Quest '{quest.Id}': prerequisite quest '{preId}' not found.");
             }
         }
 

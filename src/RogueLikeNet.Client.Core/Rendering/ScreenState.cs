@@ -17,5 +17,6 @@ public enum ScreenState
     ServerAdmin,
     NewGame,
     Login,
-    Shop,
+    NpcDialogue,
+    QuestLog,
 }
