@@ -98,9 +98,9 @@ public static class PlayerSerializer
                     QuestNumericId = q.QuestNumericId,
                     GiverEntityId = q.GiverEntityId,
                     GiverName = q.GiverName,
-                    GiverChunkX = q.GiverChunkX,
-                    GiverChunkY = q.GiverChunkY,
-                    GiverChunkZ = q.GiverChunkZ,
+                    TownX = q.TownX,
+                    TownY = q.TownY,
+                    TownZ = q.TownZ,
                     ObjectiveCurrent = objs,
                 });
             }
@@ -239,9 +239,9 @@ public static class PlayerSerializer
                             QuestNumericId = aq.QuestNumericId,
                             GiverEntityId = aq.GiverEntityId,
                             GiverName = aq.GiverName ?? "",
-                            GiverChunkX = aq.GiverChunkX,
-                            GiverChunkY = aq.GiverChunkY,
-                            GiverChunkZ = aq.GiverChunkZ,
+                            TownX = aq.TownX,
+                            TownY = aq.TownY,
+                            TownZ = aq.TownZ,
                             Objectives = progress,
                         });
                     }
@@ -303,9 +303,9 @@ public static class PlayerSerializer
         public int QuestNumericId { get; set; }
         public int GiverEntityId { get; set; }
         public string? GiverName { get; set; }
-        public int GiverChunkX { get; set; }
-        public int GiverChunkY { get; set; }
-        public int GiverChunkZ { get; set; }
+        public int TownX { get; set; }
+        public int TownY { get; set; }
+        public int TownZ { get; set; }
         public int[]? ObjectiveCurrent { get; set; }
     }
 

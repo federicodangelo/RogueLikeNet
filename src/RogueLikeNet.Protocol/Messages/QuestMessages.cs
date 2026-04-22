@@ -60,9 +60,9 @@ public class ActiveQuestInfoMsg
     [Key(0)] public int QuestNumericId { get; set; }
     [Key(1)] public string Title { get; set; } = "";
     [Key(2)] public int GiverEntityId { get; set; }
-    [Key(3)] public int GiverChunkX { get; set; }
-    [Key(4)] public int GiverChunkY { get; set; }
-    [Key(5)] public int GiverChunkZ { get; set; }
+    [Key(3)] public int TownX { get; set; }
+    [Key(4)] public int TownY { get; set; }
+    [Key(5)] public int TownZ { get; set; }
     [Key(6)] public QuestObjectiveInfoMsg[] Objectives { get; set; } = [];
     [Key(7)] public string GiverName { get; set; } = "";
 }

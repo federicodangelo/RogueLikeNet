@@ -43,9 +43,9 @@ public class QuestPersistenceTests
         {
             QuestNumericId = quest.NumericId,
             GiverEntityId = 7,
-            GiverChunkX = 1,
-            GiverChunkY = 2,
-            GiverChunkZ = 3,
+            TownX = 1,
+            TownY = 2,
+            TownZ = 3,
             Objectives = new[] { new ObjectiveProgress { Current = 2, Target = killObj.Count } },
         });
 
@@ -66,9 +66,9 @@ public class QuestPersistenceTests
 
         var active = restored.Quests.GetActive(quest.NumericId)!;
         Assert.Equal(7, active.GiverEntityId);
-        Assert.Equal(1, active.GiverChunkX);
-        Assert.Equal(2, active.GiverChunkY);
-        Assert.Equal(3, active.GiverChunkZ);
+        Assert.Equal(1, active.TownX);
+        Assert.Equal(2, active.TownY);
+        Assert.Equal(3, active.TownZ);
         Assert.Equal(2, active.Objectives[0].Current);
         Assert.Equal(killObj.Count, active.Objectives[0].Target);
     }

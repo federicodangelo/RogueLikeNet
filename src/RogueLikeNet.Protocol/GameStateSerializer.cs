@@ -417,9 +417,9 @@ public static class GameStateSerializer
                 Title = q?.Title ?? "",
                 GiverEntityId = aq.GiverEntityId,
                 GiverName = aq.GiverName,
-                GiverChunkX = aq.GiverChunkX,
-                GiverChunkY = aq.GiverChunkY,
-                GiverChunkZ = aq.GiverChunkZ,
+                TownX = aq.TownX,
+                TownY = aq.TownY,
+                TownZ = aq.TownZ,
                 Objectives = objs,
             };
         }

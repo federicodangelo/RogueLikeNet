@@ -94,13 +94,12 @@ public class QuestSystem
             return;
         }
 
-        if (!TryFindGiverNpc(ref player, worldMap, npcId, questDef.GiverRole, out var giverPos, out var giverName))
+        if (!TryFindGiverNpc(ref player, worldMap, npcId, questDef.GiverRole, out var giverPos, out var giverName, out var townX, out var townY))
         {
             EmitFailed(ref player, questId, ActionFailReason.QuestWrongGiver);
             return;
         }
 
-        var chunkPos = Chunk.WorldToChunkCoord(giverPos);
         var progress = new ObjectiveProgress[questDef.Objectives.Length];
         for (int i = 0; i < progress.Length; i++)
             progress[i] = new ObjectiveProgress { Current = 0, Target = questDef.Objectives[i].Count };
@@ -110,9 +109,9 @@ public class QuestSystem
             QuestNumericId = questId,
             GiverEntityId = npcId,
             GiverName = giverName,
-            GiverChunkX = chunkPos.X,
-            GiverChunkY = chunkPos.Y,
-            GiverChunkZ = chunkPos.Z,
+            TownX = townX,
+            TownY = townY,
+            TownZ = giverPos.Z,
             Objectives = progress,
         });
 
@@ -147,7 +146,7 @@ public class QuestSystem
             return;
         }
 
-        if (!TryFindGiverNpc(ref player, worldMap, npcId, questDef.GiverRole, out var giverPos, out _))
+        if (!TryFindGiverNpc(ref player, worldMap, npcId, questDef.GiverRole, out var giverPos, out _, out _, out _))
         {
             EmitFailed(ref player, questId, ActionFailReason.QuestTooFar);
             return;
@@ -346,32 +345,38 @@ public class QuestSystem
         }
     }
 
-    private static bool TryFindGiverNpc(ref PlayerEntity player, WorldMap worldMap, int npcEntityId, TownNpcRole expectedRole, out Position npcPos, out string npcName)
+    private static bool TryFindGiverNpc(ref PlayerEntity player, WorldMap worldMap, int npcEntityId, TownNpcRole expectedRole, out Position npcPos, out string npcName, out int townX, out int townY)
     {
         foreach (var chunk in worldMap.LoadedChunks)
         {
             foreach (ref var npc in chunk.TownNpcs)
             {
                 if (npc.Id != npcEntityId) continue;
-                if (npc.IsDead) { npcPos = default; npcName = ""; return false; }
-                if (npc.NpcData.Role != expectedRole) { npcPos = default; npcName = ""; return false; }
+                if (npc.IsDead) { npcPos = default; npcName = ""; townX = 0; townY = 0; return false; }
+                if (npc.NpcData.Role != expectedRole) { npcPos = default; npcName = ""; townX = 0; townY = 0; return false; }
                 int dx = Math.Abs(npc.Position.X - player.Position.X);
                 int dy = Math.Abs(npc.Position.Y - player.Position.Y);
                 if (dx > MaxProximity || dy > MaxProximity || npc.Position.Z != player.Position.Z)
                 {
                     npcPos = default;
                     npcName = "";
+                    townX = 0;
+                    townY = 0;
                     return false;
                 }
                 // Refresh conversation lock so the NPC stays put for any follow-up interactions.
                 npc.NpcData.InConversationWith = player.Id;
                 npcPos = npc.Position;
                 npcName = npc.NpcData.Name ?? "";
+                townX = npc.NpcData.TownCenterX;
+                townY = npc.NpcData.TownCenterY;
                 return true;
             }
         }
         npcPos = default;
         npcName = "";
+        townX = 0;
+        townY = 0;
         return false;
     }
 

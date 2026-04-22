@@ -22,9 +22,13 @@ public sealed class ActiveQuest
     /// <summary>Display name of the giver NPC captured at accept-time, so it still
     /// renders in the quest log even when the NPC's chunk is unloaded.</summary>
     public string GiverName = "";
-    public int GiverChunkX;
-    public int GiverChunkY;
-    public int GiverChunkZ;
+    /// <summary>World X of the town the giver belongs to (captured at accept-time).
+    /// Used for wayfinding arrows when the giver's chunk is unloaded.</summary>
+    public int TownX;
+    /// <summary>World Y of the town the giver belongs to.</summary>
+    public int TownY;
+    /// <summary>World Z of the town (same Z as the giver at accept-time).</summary>
+    public int TownZ;
     public ObjectiveProgress[] Objectives = [];
 
     public bool AllObjectivesComplete

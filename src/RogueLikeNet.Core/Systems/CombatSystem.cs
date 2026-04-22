@@ -468,13 +468,11 @@ public class CombatSystem
 
         // Quest offers: quests with this giver role that player qualifies for and doesn't already have active/completed.
         var quests = GameData.Instance.Quests.GetForGiverRole(role);
-        if (quests.Count > 0)
+        if (quests.Count > 0 && !player.Quests.AtCapacity)
         {
-            bool atCapacity = player.Quests.AtCapacity;
             for (int i = 0; i < quests.Count; i++)
             {
                 var q = quests[i];
-                if (atCapacity) break;
                 if (player.ClassData.Level < q.MinPlayerLevel) continue;
                 if (player.Quests.HasActive(q.NumericId)) continue;
                 if (player.Quests.HasCompleted(q.NumericId)) continue;

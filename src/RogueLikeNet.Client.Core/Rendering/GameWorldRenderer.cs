@@ -292,6 +292,104 @@ public sealed class GameWorldRenderer
             var color = baseColor.WithAlpha((byte)(255 * indicatorAlpha));
             r.DrawTextScreen(px, py, ch.ToString(), color, fontScale);
         }
+
+        // Off-screen wayfinding arrows for completed (ready to turn in) quests.
+        DrawTurnInArrows(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, indicatorAlpha);
+    }
+
+    private static void DrawTurnInArrows(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale, float alpha)
+    {
+        var hud = state.PlayerState;
+        var quests = hud?.Quests;
+        if (quests == null) return;
+
+        int originX = cameraCenterX - visibleCols / 2;
+        int originY = cameraCenterY - visibleRows / 2;
+        int cx = visibleCols / 2;
+        int cy = visibleRows / 2;
+        var arrowColor = QuestTurnInColor.WithAlpha((byte)(255 * alpha));
+
+        foreach (var aq in quests.Active)
+        {
+            // Only for fully complete quests.
+            if (aq.Objectives.Length == 0) continue;
+            var complete = true;
+            for (var i = 0; i < aq.Objectives.Length; i++)
+            {
+                if (aq.Objectives[i].Current < aq.Objectives[i].Target)
+                {
+                    complete = false;
+                    break;
+                }
+            }
+            if (!complete) continue;
+
+            // Prefer the live NPC position if we can see the giver entity.
+            var targetX = aq.TownX;
+            var targetY = aq.TownY;
+            var targetZ = aq.TownZ;
+            var foundNpc = false;
+            foreach (var e in state.Entities.Values)
+            {
+                if (e.EntityType == EntityType.TownNpc && e.Id == aq.GiverEntityId)
+                {
+                    targetX = e.X;
+                    targetY = e.Y;
+                    targetZ = e.Z;
+                    foundNpc = true;
+                    break;
+                }
+            }
+
+            if (targetZ != state.PlayerZ) continue; // no arrow across z-levels
+            int sxi = targetX - originX;
+            int syi = targetY - originY;
+
+            // If the target is inside the world view, the '?' indicator already points it out.
+            if (foundNpc && sxi >= 0 && sxi < visibleCols && syi >= 0 && syi < visibleRows)
+                continue;
+
+            int dx = sxi - cx;
+            int dy = syi - cy;
+            if (dx == 0 && dy == 0) continue;
+
+            // Clamp the arrow position to the inner border of the world view by casting
+            // a ray from the screen center toward the target and finding where it exits.
+            // Inner bounds: [1, visibleCols-2] × [1, visibleRows-2] so the arrow is fully
+            // inside the game view and does not sit on the outermost column/row.
+            int minX = 1, maxX = visibleCols - 2;
+            int minY = 1, maxY = visibleRows - 2;
+            if (maxX < minX || maxY < minY) continue;
+
+            float tX = dx > 0 ? (float)(maxX - cx) / dx
+                     : dx < 0 ? (float)(minX - cx) / dx
+                     : float.PositiveInfinity;
+            float tY = dy > 0 ? (float)(maxY - cy) / dy
+                     : dy < 0 ? (float)(minY - cy) / dy
+                     : float.PositiveInfinity;
+            float t = Math.Min(tX, tY);
+            if (t <= 0 || float.IsInfinity(t)) continue;
+
+            int arrX = (int)Math.Round(cx + dx * t);
+            int arrY = (int)Math.Round(cy + dy * t);
+            arrX = Math.Clamp(arrX, minX, maxX);
+            arrY = Math.Clamp(arrY, minY, maxY);
+
+            char arrow = PickArrowChar(dx, dy);
+            float px = arrX * tileW + shakeX;
+            float py = arrY * tileH + shakeY;
+            r.DrawTextScreen(px, py, arrow.ToString(), arrowColor, fontScale);
+        }
+    }
+
+    private static char PickArrowChar(int dx, int dy)
+    {
+        int ax = Math.Abs(dx);
+        int ay = Math.Abs(dy);
+        if (ax >= ay) return dx > 0 ? '\u2192' : '\u2190'; // → ←
+        return dy > 0 ? '\u2193' : '\u2191'; // ↓ ↑
     }
 
     private static readonly Color4 RangedTargetColor = new(255, 60, 60, 200);

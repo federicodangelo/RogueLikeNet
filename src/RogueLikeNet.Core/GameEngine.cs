@@ -293,7 +293,7 @@ public class GameEngine : IDisposable
             CombatStats = new CombatStats(0, 999, 3),
             Appearance = new TileAppearance(RenderConstants.GlyphTownNpc, GetNpcColor(role)),
             AI = new AIState { StateId = AIStates.Idle },
-            MoveDelay = new MoveDelay(5),
+            MoveDelay = new MoveDelay(20),
             AttackDelay = new AttackDelay(0),
             NpcData = new TownNpcTag
             {
