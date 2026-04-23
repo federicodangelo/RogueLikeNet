@@ -268,8 +268,7 @@ public sealed class NpcDialogueScreen : IScreen
         _ctx.Particles.Render(renderer, _ctx.GameState.PlayerX, _ctx.GameState.PlayerY,
             halfW, halfH, shakeX, shakeY, tileW, tileH);
 
-        AsciiDraw.FillOverlay(renderer, totalCols, totalRows);
-        RenderModal(renderer, totalCols, totalRows);
+        RenderPanel(renderer, gameCols, totalRows);
 
         _overlayRenderer.RenderChat(renderer, totalCols, totalRows, _ctx.Chat);
         if (_ctx.Options.ShowStats)
@@ -278,22 +277,24 @@ public sealed class NpcDialogueScreen : IScreen
             _overlayRenderer.RenderQuestTracker(renderer, gameCols, totalRows, _ctx.GameState.PlayerState);
     }
 
-    private void RenderModal(ISpriteRenderer r, int totalCols, int totalRows)
+    private void RenderPanel(ISpriteRenderer r, int hudStartCol, int totalRows)
     {
         if (_interaction == null) return;
 
-        int w = Math.Min(72, totalCols - 4);
-        int h = Math.Min(30, totalRows - 4);
-        int x = (totalCols - w) / 2;
-        int y = (totalRows - h) / 2;
+        // Background + vertical separator, matching Inventory/Crafting HUD panels.
+        float hx = hudStartCol * AsciiDraw.TileWidth;
+        r.DrawRectScreen(hx, 0, AsciiDraw.HudColumns * AsciiDraw.TileWidth, totalRows * AsciiDraw.TileHeight, RenderingTheme.HudBg);
 
-        AsciiDraw.DrawBox(r, x, y, w, h, RenderingTheme.Border, RenderingTheme.OverlayBg);
+        AsciiDraw.DrawChar(r, hudStartCol, 0, '\u252C', RenderingTheme.Border);
+        for (int y = 1; y < totalRows - 1; y++)
+            AsciiDraw.DrawChar(r, hudStartCol, y, '\u2502', RenderingTheme.Border);
+        AsciiDraw.DrawChar(r, hudStartCol, totalRows - 1, '\u2534', RenderingTheme.Border);
 
-        int innerX = x + 2;
-        int innerW = w - 4;
-        int innerTop = y + 1;
-        int innerBottom = y + h - 2;      // last usable row (footer sits on y+h-2)
-        int footerRow = y + h - 2;
+        int innerX = hudStartCol + 1;
+        int innerW = AsciiDraw.HudColumns - 1;
+        int innerTop = 0;
+        int footerRow = totalRows - 2;
+        int innerBottom = footerRow;
 
         if (_subMode == SubMode.Shop)
         {
@@ -302,33 +303,44 @@ public sealed class NpcDialogueScreen : IScreen
         }
 
         // Footer hint
-        string hint = "[\u2191/\u2193] Select  [Enter] Confirm  [Esc] Leave";
+        string hint = "[Enter] OK";
         if (hint.Length > innerW) hint = hint[..innerW];
         AsciiDraw.DrawString(r, innerX, footerRow, hint, RenderingTheme.Dim);
+        AsciiDraw.DrawHudSeparator(r, innerX, footerRow - 1, innerW);
 
         // Header: NPC name
         int row = innerTop;
         string title = _interaction.NpcName;
         if (title.Length > innerW) title = title[..innerW];
         AsciiDraw.DrawString(r, innerX, row++, title, RenderingTheme.Title);
+        AsciiDraw.DrawString(r, innerX + innerW - 5, innerTop, "[ESC]", RenderingTheme.Dim);
+        AsciiDraw.DrawHudSeparator(r, innerX, row++, innerW);
 
-        // Flavor text (wrapped) — clamp to at most 4 lines so the list has room.
-        var flavorLines = WrapText(_interaction.FlavorText, innerW).ToList();
-        int maxFlavor = Math.Min(flavorLines.Count, 4);
-        for (int i = 0; i < maxFlavor; i++)
+        int listBottomExclusive = footerRow - 1;
+
+        // Flavor text (wrapped) — clamp to at most 3 lines so the list has room.
+        var flavorLines = RenderingHelpers.WrapText(_interaction.FlavorText, innerW).ToList();
+        int maxFlavor = Math.Min(flavorLines.Count, 3);
+        for (int i = 0; i < maxFlavor && row < listBottomExclusive; i++)
         {
             AsciiDraw.DrawString(r, innerX, row++, flavorLines[i], RenderingTheme.Normal);
         }
 
-        // Separator between flavor and action list
-        AsciiDraw.DrawHudSeparator(r, innerX, row++, innerW);
+        if (maxFlavor > 0 && row < listBottomExclusive)
+        {
+            AsciiDraw.DrawHudSeparator(r, innerX, row++, innerW);
+        }
 
-        // Action list (one row per action)
-        for (int i = 0; i < _actions.Count && row < innerBottom - 1; i++)
+        // Action list — budget roughly half the remaining space.
+        int remaining = listBottomExclusive - row;
+        int actionRows = Math.Min(_actions.Count, Math.Max(2, remaining / 2));
+        if (actionRows > remaining - 1) actionRows = Math.Max(1, remaining - 1);
+
+        for (int i = 0; i < _actions.Count && actionRows > 0 && row < listBottomExclusive; i++, actionRows--)
         {
             var a = _actions[i];
             bool sel = i == _selectedIndex;
-            string prefix = sel ? "\u25ba " : "  ";
+            string prefix = sel ? "\u25ba" : " ";
             string text = prefix + a.Label;
             if (text.Length > innerW) text = text[..innerW];
 
@@ -342,16 +354,14 @@ public sealed class NpcDialogueScreen : IScreen
             AsciiDraw.DrawString(r, innerX, row++, text, color);
         }
 
-        // Separator between action list and detail pane
-        if (row < innerBottom - 1)
+        if (row < listBottomExclusive)
         {
             AsciiDraw.DrawHudSeparator(r, innerX, row++, innerW);
         }
 
-        // Detail pane for the selected quest fills the remaining space.
-        if (row < innerBottom - 1)
+        if (row < listBottomExclusive)
         {
-            RenderSelectedDetail(r, innerX, innerW, row, footerRow - 1);
+            RenderSelectedDetail(r, innerX, innerW, row, listBottomExclusive);
         }
     }
 
@@ -370,7 +380,7 @@ public sealed class NpcDialogueScreen : IScreen
                 if (offer == null) return;
                 AsciiDraw.DrawString(r, col, row++, offer.Title, RenderingTheme.Title);
                 if (row >= endRow) return;
-                foreach (var line in WrapText(offer.Description, innerW))
+                foreach (var line in RenderingHelpers.WrapText(offer.Description, innerW))
                 {
                     if (row >= endRow) return;
                     AsciiDraw.DrawString(r, col, row++, line, RenderingTheme.Normal);
@@ -391,7 +401,13 @@ public sealed class NpcDialogueScreen : IScreen
                 if (row < endRow && offer.Rewards != null)
                 {
                     row++;
-                    if (row < endRow) AsciiDraw.DrawString(r, col, row++, RewardLine(offer.Rewards), ReadyColor);
+                    var rewardLine = RewardLine(offer.Rewards);
+
+                    foreach (var line in RenderingHelpers.WrapText(rewardLine, innerW))
+                    {
+                        if (row >= endRow) return;
+                        AsciiDraw.DrawString(r, col, row++, line, ReadyColor);
+                    }
                 }
                 break;
             }
@@ -408,7 +424,7 @@ public sealed class NpcDialogueScreen : IScreen
 
                 if (!string.IsNullOrEmpty(turnIn.CompletionText) && turnIn.IsComplete)
                 {
-                    foreach (var line in WrapText(turnIn.CompletionText, innerW))
+                    foreach (var line in RenderingHelpers.WrapText(turnIn.CompletionText, innerW))
                     {
                         if (row >= endRow) return;
                         AsciiDraw.DrawString(r, col, row++, line, RenderingTheme.Normal);
@@ -436,7 +452,11 @@ public sealed class NpcDialogueScreen : IScreen
                 AsciiDraw.DrawString(r, col, row, "Browse this merchant's wares.", RenderingTheme.Normal);
                 break;
             case DialogueActionKind.Leave:
-                AsciiDraw.DrawString(r, col, row, "Step away from the conversation.", RenderingTheme.Dim);
+                foreach (var line in RenderingHelpers.WrapText("Step away from the conversation.", innerW))
+                {
+                    if (row >= endRow) return;
+                    AsciiDraw.DrawString(r, col, row++, line, RenderingTheme.Dim);
+                }
                 break;
         }
     }
@@ -445,12 +465,13 @@ public sealed class NpcDialogueScreen : IScreen
     {
         if (_interaction == null) return;
 
-        // Footer hint
+        // Footer hint — compact to fit the narrow HUD column.
         string hint = _shopSellMode
-            ? "[\u2191/\u2193] Select  [Enter] Sell  [I] Buy mode  [Esc] Back"
-            : "[\u2191/\u2193] Select  [Enter] Buy   [I] Sell mode [Esc] Back";
+            ? "[Enter] Sell  [I] Buy"
+            : "[Enter] Buy   [I] Sell";
         if (hint.Length > innerW) hint = hint[..innerW];
         AsciiDraw.DrawString(r, innerX, footerRow, hint, RenderingTheme.Dim);
+        AsciiDraw.DrawHudSeparator(r, innerX, footerRow - 1, innerW);
 
         int row = innerTop;
 
@@ -460,6 +481,7 @@ public sealed class NpcDialogueScreen : IScreen
         string title = $"{shopName} [{mode}]";
         if (title.Length > innerW) title = title[..innerW];
         AsciiDraw.DrawString(r, innerX, row++, title, RenderingTheme.Title);
+        AsciiDraw.DrawString(r, innerX + innerW - 5, innerTop, "[ESC]", RenderingTheme.Dim);
 
         // Gold line
         int gold = GetPlayerGoldCount();
@@ -469,8 +491,8 @@ public sealed class NpcDialogueScreen : IScreen
 
         // List area fills the rest; reserve the last 2 rows for detail + footer.
         int listTop = row;
-        int detailRow = footerRow - 1; // single-line detail pane just above footer
-        int listBottom = detailRow - 1; // separator
+        int detailRow = footerRow - 2; // single-line detail pane just above footer separator
+        int listBottom = detailRow - 1; // separator row before the detail pane
         int visibleRows = Math.Max(1, listBottom - listTop);
 
         // Clamp scroll so the selection is visible.
@@ -638,31 +660,6 @@ public sealed class NpcDialogueScreen : IScreen
         }
         if (parts.Count == 0) return "Reward: none";
         return "Reward: " + string.Join(", ", parts);
-    }
-
-    private static IEnumerable<string> WrapText(string text, int width)
-    {
-        if (string.IsNullOrEmpty(text) || width <= 0) yield break;
-        var words = text.Split(' ');
-        var line = new System.Text.StringBuilder();
-        foreach (var w in words)
-        {
-            if (line.Length == 0)
-            {
-                line.Append(w);
-            }
-            else if (line.Length + 1 + w.Length <= width)
-            {
-                line.Append(' ').Append(w);
-            }
-            else
-            {
-                yield return line.ToString();
-                line.Clear();
-                line.Append(w);
-            }
-        }
-        if (line.Length > 0) yield return line.ToString();
     }
 
     // ─── Shop sub-view helpers ─────────────────────────────────────────────
