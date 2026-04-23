@@ -64,7 +64,7 @@ public class TradingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(p.Id);
 
         // Should have the bought item
-        Assert.True(player.Inventory.Items.Any(i => i.ItemTypeId == expectedItemId));
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == expectedItemId);
 
         // Gold should be reduced
         var goldItem = player.Inventory.Items.FirstOrDefault(i => i.ItemTypeId == ItemId("gold_coin"));
@@ -159,7 +159,7 @@ public class TradingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(p.Id);
 
         // Should have gold from selling
-        Assert.True(player.Inventory.Items.Any(i => i.ItemTypeId == ItemId("gold_coin")));
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == ItemId("gold_coin"));
 
         // Should have a Sell action event
         Assert.Contains(player.ActionEvents, e => e.EventType == PlayerActionEventType.Sell);
@@ -244,7 +244,7 @@ public class TradingSystemTests
         player = ref engine.WorldMap.GetPlayerRef(p.Id);
 
         int expectedItemId = GameData.Instance.Items.GetNumericId(firstItem.ItemId);
-        Assert.True(player.Inventory.Items.Any(i => i.ItemTypeId == expectedItemId));
+        Assert.Contains(player.Inventory.Items, i => i.ItemTypeId == expectedItemId);
     }
 
     [Fact]

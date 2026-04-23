@@ -772,6 +772,7 @@ public class SpellSystemTests
 
         var stateData = engine.GetPlayerStateData(player);
 
+        Assert.NotNull(stateData);
         Assert.Equal(player.Mana.Current, stateData.Mana);
         Assert.Equal(player.Mana.Max, stateData.MaxMana);
         Assert.True(stateData.MaxMana > 0);
