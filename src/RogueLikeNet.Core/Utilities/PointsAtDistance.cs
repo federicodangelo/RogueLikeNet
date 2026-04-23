@@ -1,10 +1,12 @@
+using System.Collections.Concurrent;
+
 namespace RogueLikeNet.Core.Utilities;
 
 public static class PointsAtDistance
 {
     public readonly record struct Point(int X, int Y);
 
-    private static readonly Dictionary<int, Point[]> _cache = new();
+    private static readonly ConcurrentDictionary<int, Point[]> _cache = new();
 
     /// <summary>
     /// Returns the points in a rectangle around an origin sorted by distance to the center (using manhattan distance for sorting) with (0,0) always first
@@ -38,7 +40,7 @@ public static class PointsAtDistance
 
         points = pointList.OrderBy(p => Math.Abs(p.X) + Math.Abs(p.Y)).ToArray();
 
-        _cache[distance] = points;
+        _cache.TryAdd(distance, points);
 
         return points;
     }
