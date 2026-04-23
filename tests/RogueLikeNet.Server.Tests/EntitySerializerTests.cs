@@ -172,7 +172,7 @@ public class EntitySerializerTests : IDisposable
         Assert.Equal(9999, found.Health.Max);
 
         Assert.Equal(1, found.AI.StateId);
-        Assert.Equal(5, found.MoveDelay.Interval);
+        Assert.Equal(20, found.MoveDelay.Interval);
         Assert.Equal(2, found.MoveDelay.Current);
     }
 
