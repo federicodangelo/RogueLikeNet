@@ -100,6 +100,13 @@ public sealed class CraftingScreen : IScreen
             return;
         }
 
+        if (input.IsActionPressed(InputAction.OpenQuestLog))
+        {
+            _preserveStateOnEnter = true; // remember positions when switching back
+            _ctx.RequestTransition(ScreenState.QuestLog);
+            return;
+        }
+
         if (_inCategoryMode)
         {
             int count = _internalCategoryIdsInOrder.Length;

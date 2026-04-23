@@ -47,6 +47,18 @@ public sealed class QuestLogScreen : IScreen
             return;
         }
 
+        if (input.IsActionPressed(InputAction.OpenInventory))
+        {
+            _ctx.RequestTransition(ScreenState.Inventory);
+            return;
+        }
+
+        if (input.IsActionPressed(InputAction.OpenCrafting))
+        {
+            _ctx.RequestTransition(ScreenState.Crafting);
+            return;
+        }
+
         if (quests.Length == 0) return;
 
         if (input.IsActionPressedOrRepeated(InputAction.MenuUp))

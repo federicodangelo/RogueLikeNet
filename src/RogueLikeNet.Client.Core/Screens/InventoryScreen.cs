@@ -125,6 +125,13 @@ public sealed class InventoryScreen : IScreen
             return;
         }
 
+        if (input.IsActionPressed(InputAction.OpenQuestLog))
+        {
+            _preserveStateOnEnter = true; // remember positions when switching back
+            _ctx.RequestTransition(Rendering.ScreenState.QuestLog);
+            return;
+        }
+
         if (input.IsActionPressed(InputAction.CycleSection))
         {
             _inventoryRenderer.InventoryLayout.CycleFocus();
