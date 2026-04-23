@@ -137,16 +137,20 @@ public sealed class NpcDialogueRenderer
                     string desc = string.IsNullOrEmpty(o.Description)
                         ? $"{o.Current}/{o.Target}"
                         : $"{o.Description} ({o.Current}/{o.Target})";
-                    string line = "  - " + desc;
-                    if (line.Length > innerW) line = line[..innerW];
-                    AsciiDraw.DrawString(r, col, row++, line, RenderingTheme.Normal);
+                    string descLine = "  - " + desc;
+
+                    foreach (var line in RenderingHelpers.WrapText(descLine, innerW, 4))
+                    {
+                        if (row >= endRow) return;
+                        AsciiDraw.DrawString(r, col, row++, line, ReadyColor);
+                    }
                 }
                 if (row < endRow && offer.Rewards != null)
                 {
                     row++;
                     var rewardLine = RewardLine(offer.Rewards);
 
-                    foreach (var line in RenderingHelpers.WrapText(rewardLine, innerW))
+                    foreach (var line in RenderingHelpers.WrapText(rewardLine, innerW, 8))
                     {
                         if (row >= endRow) return;
                         AsciiDraw.DrawString(r, col, row++, line, ReadyColor);
@@ -184,10 +188,13 @@ public sealed class NpcDialogueRenderer
                     string desc = string.IsNullOrEmpty(o.Description)
                         ? $"{o.Current}/{o.Target}"
                         : $"{o.Description} ({o.Current}/{o.Target})";
-                    string line = $"  {mark} {desc}";
-                    if (line.Length > innerW) line = line[..innerW];
-                    var c = o.Current >= o.Target ? ReadyColor : RenderingTheme.Normal;
-                    AsciiDraw.DrawString(r, col, row++, line, c);
+                    string fullLine = $"  {mark} {desc}";
+                    foreach (var line in RenderingHelpers.WrapText(fullLine, innerW, 4))
+                    {
+                        if (row >= endRow) return;
+                        var c = o.Current >= o.Target ? ReadyColor : RenderingTheme.Normal;
+                        AsciiDraw.DrawString(r, col, row++, line, c);
+                    }
                 }
                 break;
             }

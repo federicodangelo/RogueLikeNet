@@ -114,10 +114,13 @@ public sealed class QuestLogRenderer
                 string desc = string.IsNullOrEmpty(obj.Description)
                     ? $"{obj.Current}/{obj.Target}"
                     : $"{obj.Description} ({obj.Current}/{obj.Target})";
-                string line = mark + desc;
-                if (line.Length > innerW) line = line[..innerW];
-                Color4 c = obj.Current >= obj.Target ? ReadyColor : RenderingTheme.Normal;
-                AsciiDraw.DrawString(r, col, row++, line, c);
+                string fullLine = mark + desc;
+                foreach (var line in RenderingHelpers.WrapText(fullLine, innerW, 4))
+                {
+                    if (row >= bottomLimit) break;
+                    Color4 c = obj.Current >= obj.Target ? ReadyColor : RenderingTheme.Normal;
+                    AsciiDraw.DrawString(r, col, row++, line, c);
+                }
             }
 
             if (AllObjectivesComplete(q) && !string.IsNullOrEmpty(q.GiverName) && row < bottomLimit)

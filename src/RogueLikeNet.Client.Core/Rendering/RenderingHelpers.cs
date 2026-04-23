@@ -12,7 +12,7 @@ public static class RenderingHelpers
         return dt.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
     }
 
-    public static IEnumerable<string> WrapText(string text, int width)
+    public static IEnumerable<string> WrapText(string text, int width, int leftPadding = 0)
     {
         if (string.IsNullOrEmpty(text) || width <= 0) yield break;
         var words = text.Split(' ');
@@ -31,6 +31,7 @@ public static class RenderingHelpers
             {
                 yield return line.ToString();
                 line.Clear();
+                for (int i = 0; i < leftPadding; i++) line.Append(' ');
                 line.Append(w);
             }
         }
