@@ -9,7 +9,7 @@
   </a>
 </p>
 
-A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons with multiple generators (BSP, biome-based, cellular automata caves, overworld), real-time combat, typed entity architecture, item stacking and equipment, persistent save/load with SQLite, and both desktop (SDL3/native AOT) and web browser (WASM) clients.
+A multiplayer ASCII roguelike game built with .NET 10. Features procedurally generated dungeons with multiple generators (BSP, biome-based, cellular automata caves, overworld, town), real-time combat, typed entity architecture, item stacking and equipment, spells and mana system, quest system with wayfinding, NPC dialogue and trading, persistent save/load with SQLite, and both desktop (SDL3/native AOT) and web browser (WASM) clients.
 
 ## About This Project
 
@@ -118,30 +118,38 @@ Browser / WebAssembly implementation of the Engine platform interfaces. Used by 
 
 The pure game logic library. Zero external dependencies (only references the Engine abstraction). Contains no networking, rendering, or persistence code. Uses typed entity classes stored in per-chunk lists.
 
-| Folder          | Description                                                                                                                                                                                                                                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `World/`        | Entity definitions and world structure: `Entities.cs` (6 entity classes: `PlayerEntity`, `MonsterEntity`, `GroundItemEntity`, `ResourceNodeEntity`, `TownNpcEntity`, `ElementEntity`), `Chunk` (64×64 tiles + entity lists), `WorldMap` (chunk dictionary + player registry), `TileInfo`                             |
-| `Components/`   | Entity components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots`                                                                                              |
-| `Algorithms/`   | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS                                                                                                                                                                           |
-| `Systems/`      | Game systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `SkillSystem`, `CraftingSystem`, `BuildingSystem`                                                                                                                                                      |
-| `Generation/`   | Procedural content: `BspDungeonGenerator` (BSP rooms+corridors), `BiomeDungeonGenerator` (biome-themed floors), `CellularAutomataCaveGenerator` (organic caves), `DirectionalTunnelGenerator` (winding tunnels), `OverworldGenerator` (world map with biome climate), `PerlinNoise`, `SeededRandom` (xoshiro256\*\*) |
-| `Definitions/`  | Data-driven definitions: `ItemDefinitions` (stackable items), `SkillDefinitions` (array-based lookup), `NpcDefinitions` (NPC templates), `ClassDefinitions`, `CraftingDefinitions`, `PlaceableDefinitions`, `ResourceNodeDefinitions`, `TownNpcDefinitions`                                                          |
-| `GameEngine.cs` | Orchestrates all systems, manages entity spawning/migration and the world map                                                                                                                                                                                                                                        |
+| Folder          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `World/`        | Entity definitions and world structure: 7 entity classes (`PlayerEntity`, `MonsterEntity`, `GroundItemEntity`, `ResourceNodeEntity`, `TownNpcEntity`, `AnimalEntity`, `CropEntity`) in individual files, `EntitiesCollection` base (Span-based per-chunk storage + ref-struct enumerators), `Chunk` (64×64 tiles + entity lists), `WorldMap` (chunk dictionary + player registry), `TileInfo`                                                                                                           |
+| `Components/`   | Entity components — all use `int`/`long` values: `Position`, `Health`, `CombatStats`, `Mana`, `FOVData`, `LightSource`, `Inventory`, `ClassData`, `AIState`, `PlayerInput`, `TileAppearance`, `Tags`, `Equipment`, `QuickSlots`, `PlayerQuests`, `Survival`, `ActiveEffects`, `GridVelocity`                                                                                                                                                                                                            |
+| `Algorithms/`   | Custom integer-only algorithms: **ShadowCast FOV** (8-octant recursive), **A\* Pathfinding** (Manhattan heuristic), **Bresenham** line/LOS                                                                                                                                                                                                                                                                                                                                                              |
+| `Systems/`      | Game systems: `MovementSystem`, `CombatSystem`, `AISystem`, `FOVSystem`, `LightingSystem`, `InventorySystem`, `CraftingSystem`, `BuildingSystem`, `QuestSystem`, `SpellSystem`, `TradingSystem`, `FarmingSystem`, `AnimalSystem`, `SurvivalSystem`, `ActiveEffectsSystem`                                                                                                                                                                                                                               |
+| `Generation/`   | Procedural content: `BspDungeonGenerator` (BSP rooms+corridors), `BiomeDungeonGenerator` (biome-themed floors), `CellularAutomataCaveGenerator` (organic caves), `DirectionalTunnelGenerator` (winding tunnels), `OverworldGenerator` (world map with biome climate), `TownGenerator` (towns with buildings, shops, and NPCs), `ArenaGenerator`, `StructurePlacer` (JSON-driven structure placement), `MultiLevelDungeonGenerator`, `GeneratorRegistry`, `PerlinNoise`, `SeededRandom` (xoshiro256\*\*) |
+| `Data/`         | Data-driven definitions and registries: `ItemRegistry`, `TilesRegistry`, `NpcRegistry`, `ClassRegistry`, `RecipeRegistry`, `ResourceNodeRegistry`, `AnimalRegistry`, `BiomeRegistry`, `QuestRegistry`, `ShopRegistry`, `SpellRegistry`, `StructureRegistry`, `TownRegistry`, `PlayerLevelTable`, `GameData` singleton, `DataLoader` (two-stage JSON → registry pipeline), `DefinitionIdHash` (MurmurHash3 numeric IDs)                                                                                  |
+| `GameEngine.cs` | Orchestrates all systems, manages entity spawning/migration and the world map                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### `src/RogueLikeNet.Protocol`
 
 Network message definitions using [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) binary serialization.
 
-| File                           | Description                                                                |
-| ------------------------------ | -------------------------------------------------------------------------- |
-| `Messages/NetworkEnvelope.cs`  | Type-discriminated message wrapper + `MessageTypes` constants              |
-| `Messages/ClientInputMsg.cs`   | Client → Server: player actions (move, attack, use item)                   |
-| `Messages/WorldSnapshotMsg.cs` | Server → Client: full world state (chunks + entities)                      |
-| `Messages/WorldDeltaMsg.cs`    | Server → Client: incremental updates (entity moves, combat events)         |
-| `Messages/PlayerHudMsg.cs`     | Server → Client: player HUD data (HP, stats, inventory, equipment, skills) |
-| `Messages/AuthMsg.cs`          | Authentication request/response + chat messages                            |
-| `NetSerializer.cs`             | Serialize/deserialize helpers with `UntrustedData` security                |
-| `GameStateSerializer.cs`       | Shared helpers for entity/chunk/HUD serialization                          |
+| File                             | Description                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| `Messages/NetworkEnvelope.cs`    | Type-discriminated message wrapper + `MessageTypes` constants                        |
+| `Messages/ClientInputMsg.cs`     | Client → Server: player actions (move, attack, use item, cast spell, interact)       |
+| `Messages/ChunkDataMsg.cs`       | Server → Client: chunk tile + entity data                                            |
+| `Messages/WorldDeltaMsg.cs`      | Server → Client: incremental updates (entity moves, combat events, NPC interactions) |
+| `Messages/PlayerStateMsg.cs`     | Server → Client: player HUD data (HP, mana, stats, inventory, equipment, quests)     |
+| `Messages/LoginMsg.cs`           | Client → Server: login request with username/password                                |
+| `Messages/LoginResponseMsg.cs`   | Server → Client: login result + player info                                          |
+| `Messages/QuestMessages.cs`      | Quest-related messages (quest state, updates)                                        |
+| `Messages/NpcInteractionMsg.cs`  | NPC dialogue and shop interaction messages                                           |
+| `Messages/CombatEventMsg.cs`     | Server → Client: combat hit/miss/kill events                                         |
+| `Messages/EntityUpdateMsg.cs`    | Server → Client: entity state changes                                                |
+| `Messages/SaveGameCommandMsg.cs` | Client → Server: save/load game slot commands                                        |
+| `Messages/TileUpdateMsg.cs`      | Server → Client: individual tile change notifications                                |
+| `NetSerializer.cs`               | Serialize/deserialize helpers with `UntrustedData` security                          |
+| `GameStateSerializer.cs`         | Shared helpers for entity/chunk/HUD serialization                                    |
+| `ChunkTracker.cs`                | Tracks which chunks each client has received for delta compression                   |
 
 ### `src/RogueLikeNet.Server.Core`
 
@@ -175,17 +183,18 @@ ASP.NET Core host for the authoritative game server.
 
 Shared client library — the **only** layer that contains rendering code and float operations. Renders through the `Engine` abstraction layer (`ISpriteRenderer`), not directly to any platform API.
 
-| File                                      | Description                                                                                                                                                                   |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RogueLikeGame.cs`                        | Main game class — state machine (`MainMenu` → `Connecting` → `Playing`), events for `StartOfflineRequested`, `StartOnlineRequested`, `ReturnToMenuRequested`, `QuitRequested` |
-| `Rendering/TileRenderer.cs`               | CP437 tile renderer — uses `ISpriteRenderer.DrawGlyphGridScreen` for tiles, HUD drawing, menus, FPS/latency overlay                                                           |
-| `Rendering/HudLayout.cs`                  | HUD layout calculations                                                                                                                                                       |
-| `Rendering/ParticleSystem.cs`             | Particle effects                                                                                                                                                              |
-| `Rendering/ScreenState.cs`                | Shared state for render passes                                                                                                                                                |
-| `Networking/IGameServerConnection.cs`     | Connection abstraction (`ConnectAsync`, `SendInputAsync`, events)                                                                                                             |
-| `Networking/WebSocketServerConnection.cs` | WebSocket client implementation for remote server play                                                                                                                        |
-| `Networking/EmbeddedServerConnection.cs`  | In-process bridge to an embedded `GameLoop` for standalone/offline play — shared by Desktop and Web                                                                           |
-| `State/ClientGameState.cs`                | Client-side world state — applies snapshots and deltas                                                                                                                        |
+| File / Folder                             | Description                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RogueLikeGame.cs`                        | Main game class — state machine (`MainMenu` → `Login` → `Connecting` → `Playing`), events for `StartOfflineRequested`, `StartOnlineRequested`, `ReturnToMenuRequested`, `QuitRequested`                                                                                                                  |
+| `Screens/`                                | Screen stack manager + per-screen logic: `PlayingScreen`, `InventoryScreen`, `CraftingScreen`, `QuestLogScreen`, `NpcDialogueScreen`, `PausedScreen`, `OptionsScreen`, `HelpScreen`; Menus: `MainMenuScreen`, `LoginScreen`, `ClassSelectScreen`, `NewGameScreen`, `SaveSlotScreen`, `ServerAdminScreen` |
+| `Rendering/Game/`                         | In-game rendering: `TileRenderer` (CP437 glyph grid), `PlayingBackdropRenderer`                                                                                                                                                                                                                          |
+| `Rendering/Hud/`                          | HUD renderers: `HudRenderer`, `InventoryRenderer`, `CraftingRenderer`, `QuestLogRenderer`, `NpcDialogueRenderer`                                                                                                                                                                                         |
+| `Rendering/Menus/`                        | Menu renderers: `MainMenuRenderer`, `LoginRenderer`, `ClassSelectRenderer`, `NewGameRenderer`, `SaveSlotMenuRenderer`, `OptionsRenderer`, `HelpRenderer`, `ConnectingRenderer`, `ServerAdminRenderer`                                                                                                    |
+| `Rendering/ParticleSystem.cs`             | Particle effects (projectile trails, hit sparks, etc.)                                                                                                                                                                                                                                                   |
+| `Networking/IGameServerConnection.cs`     | Connection abstraction (`ConnectAsync`, `SendInputAsync`, events)                                                                                                                                                                                                                                        |
+| `Networking/WebSocketServerConnection.cs` | WebSocket client implementation for remote server play                                                                                                                                                                                                                                                   |
+| `Networking/EmbeddedServerConnection.cs`  | In-process bridge to an embedded `GameLoop` for standalone/offline play — shared by Desktop and Web                                                                                                                                                                                                      |
+| `State/ClientGameState.cs`                | Client-side world state — applies snapshots and deltas                                                                                                                                                                                                                                                   |
 
 ### `src/RogueLikeNet.Client.Desktop`
 
@@ -206,12 +215,12 @@ Browser WebAssembly client (`RuntimeIdentifier: browser-wasm`). Runs the game en
 
 ### `tests/`
 
-| Project                          | Tests | Coverage                                                                                                                                                                                                                                                                                                            |
-| -------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RogueLikeNet.Core.Tests`        | 421   | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, SkillSystem, ItemDefinitions, SkillDefinitions, NpcDefinitions, ClassData, Loot, QuickSlots, entity migration, chunk dirty tracking |
-| `RogueLikeNet.Client.Core.Tests` | 87    | BiomePalette, ClientGameState, HudLayout, ParticleSystem, DebugSettings                                                                                                                                                                                                                                             |
-| `RogueLikeNet.Protocol.Tests`    | 62    | MessagePack round-trip, envelope wrapping, snapshot/delta/HUD serialization, GameStateSerializer, ChunkTracker                                                                                                                                                                                                      |
-| `RogueLikeNet.Server.Tests`      | 110   | GameServer lifecycle, connections, player spawning, input queuing, save/load persistence, entity serialization round-trip, player serialization, SQLite provider                                                                                                                                                    |
+| Project                          | Tests | Coverage                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RogueLikeNet.Core.Tests`        | 969   | Position, Health, Chunk, SeededRandom, BSP/biome/cave/tunnel/overworld/town dungeon generation, Bresenham, A\*, ShadowCast FOV, WorldMap, GameEngine, CombatSystem, InventorySystem, QuestSystem, SpellSystem, TradingSystem, FarmingSystem, AnimalSystem, ItemDefinitions, NpcDefinitions, ClassData, Loot, QuickSlots, entity migration, chunk dirty tracking, structures, town generation |
+| `RogueLikeNet.Client.Core.Tests` | 103   | BiomePalette, ClientGameState, HudLayout, ParticleSystem, DebugSettings                                                                                                                                                                                                                                                                                                                      |
+| `RogueLikeNet.Protocol.Tests`    | 86    | MessagePack round-trip, envelope wrapping, delta/player-state serialization, GameStateSerializer, ChunkTracker, login/quest/NPC interaction messages                                                                                                                                                                                                                                         |
+| `RogueLikeNet.Server.Tests`      | 156   | GameServer lifecycle, connections, player spawning, input queuing, save/load persistence, entity serialization round-trip, player serialization, SQLite provider, TradingSystem                                                                                                                                                                                                              |
 
 ## Prerequisites
 
@@ -280,20 +289,27 @@ Platform-specific scripts are provided in the `scripts/` folder:
 
 ## Controls
 
-| Key       | Action               |
-| --------- | -------------------- |
-| `W` / `↑` | Move north           |
-| `S` / `↓` | Move south           |
-| `A` / `←` | Move west            |
-| `D` / `→` | Move east            |
-| `Space`   | Wait one turn        |
-| `F`       | Attack nearest enemy |
-| `G`       | Pick up item         |
-| `1`-`4`   | Use item in slot     |
-| `E`       | Interact             |
-| `X`       | Drop item            |
-| `I`       | Open inventory       |
-| `Escape`  | Pause / Back         |
+| Key       | Action                         |
+| --------- | ------------------------------ |
+| `W` / `↑` | Move north                     |
+| `S` / `↓` | Move south                     |
+| `A` / `←` | Move west                      |
+| `D` / `→` | Move east                      |
+| `Space`   | Wait one turn                  |
+| `F`       | Attack nearest enemy           |
+| `G`       | Pick up item                   |
+| `1`-`8`   | Use quick-slot item            |
+| `E`       | Interact (NPC / door / object) |
+| `X`       | Drop item                      |
+| `I`       | Open inventory                 |
+| `C`       | Open crafting                  |
+| `Q`       | Open quest log                 |
+| `M`       | Cast spell                     |
+| `P`       | Place held item                |
+| `.` / `,` | Use stairs (down / up)         |
+| `T`       | Open chat                      |
+| `Tab`     | Cycle panel section            |
+| `Escape`  | Pause / Back                   |
 
 ### Inventory Controls
 
