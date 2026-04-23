@@ -180,6 +180,10 @@ public sealed class GameWorldRenderer
         {
             ClientEntity? playerEntity = null;
 
+            // Highlight quest-relevant entities (monsters/nodes/items matching active objectives)
+            // drawn BEHIND the entity glyph so it reads as a subtle aura.
+            DrawQuestTargetHighlights(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, precalculatedBrightness);
+
             foreach (var entity in state.Entities.Values)
             {
                 if (entity.Z != state.PlayerZ) continue;
@@ -390,6 +394,80 @@ public sealed class GameWorldRenderer
         int ay = Math.Abs(dy);
         if (ax >= ay) return dx > 0 ? '\u2192' : '\u2190'; // → ←
         return dy > 0 ? '\u2193' : '\u2191'; // ↓ ↑
+    }
+
+    private static readonly Color4 QuestTargetColor = new(255, 215, 80, 255);
+
+    /// <summary>
+    /// Draws a subtle pulsing tinted rectangle behind entities that match an active
+    /// quest objective (kill / collect / deliver / gather / harvest targets).
+    /// </summary>
+    private static void DrawQuestTargetHighlights(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float[] precalculatedBrightness)
+    {
+        var hud = state.PlayerState;
+        var quests = hud?.Quests;
+        if (quests == null || quests.Active.Length == 0) return;
+
+        // Build sets of target ids per relevant category. Only incomplete objectives are highlighted.
+        HashSet<int>? killIds = null;
+        HashSet<int>? nodeIds = null;
+        HashSet<int>? itemIds = null;
+        foreach (var aq in quests.Active)
+        {
+            foreach (var obj in aq.Objectives)
+            {
+                if (obj.Current >= obj.Target) continue;
+                switch ((QuestObjectiveType)obj.Type)
+                {
+                    case QuestObjectiveType.Kill:
+                        (killIds ??= new HashSet<int>()).Add(obj.TargetNumericId);
+                        break;
+                    case QuestObjectiveType.Gather:
+                        (nodeIds ??= new HashSet<int>()).Add(obj.TargetNumericId);
+                        break;
+                    case QuestObjectiveType.Collect:
+                    case QuestObjectiveType.Deliver:
+                    case QuestObjectiveType.Harvest:
+                        (itemIds ??= new HashSet<int>()).Add(obj.TargetNumericId);
+                        break;
+                }
+            }
+        }
+        if (killIds == null && nodeIds == null && itemIds == null) return;
+
+        float pulse = (float)((MathF.Sin(Environment.TickCount / 260.0f) + 1.0f) * 0.5f); // 0..1
+        byte alpha = (byte)(0 + 50 * pulse); // 0..50
+        var fill = QuestTargetColor.WithAlpha(alpha);
+
+        int originX = cameraCenterX - visibleCols / 2;
+        int originY = cameraCenterY - visibleRows / 2;
+
+        foreach (var entity in state.Entities.Values)
+        {
+            if (entity.Z != state.PlayerZ) continue;
+
+            bool match = entity.EntityType switch
+            {
+                EntityType.Monster => killIds != null && killIds.Contains(entity.TypeNumericId),
+                EntityType.ResourceNode => nodeIds != null && nodeIds.Contains(entity.TypeNumericId),
+                EntityType.GroundItem => itemIds != null && entity.Item != null && itemIds.Contains(entity.Item.ItemTypeId),
+                _ => false,
+            };
+            if (!match) continue;
+
+            int sx = entity.X - originX;
+            int sy = entity.Y - originY;
+            if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) continue;
+
+            float brightness = precalculatedBrightness[sy * visibleCols + sx];
+            if (brightness <= 0f) continue;
+
+            float px = sx * tileW + shakeX;
+            float py = sy * tileH + shakeY;
+            r.DrawRectScreen(px, py, tileW, tileH, fill);
+        }
     }
 
     private static readonly Color4 RangedTargetColor = new(255, 60, 60, 200);

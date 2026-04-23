@@ -118,6 +118,7 @@ public class ClientGameState
             entity.MaxHealth = entityUpdate.MaxHealth;
             entity.LightRadius = entityUpdate.LightRadius;
             entity.Item = entityUpdate.Item;
+            entity.TypeNumericId = entityUpdate.TypeNumericId;
         }
 
         // Position-health-only updates (X, Y, Health changed)
@@ -421,4 +422,6 @@ public class ClientEntity
     public int MaxHealth { get; set; }
     public int LightRadius { get; set; }
     public ItemDataMsg? Item { get; set; }
+    /// <summary>Content-specific type id used for quest matching (MonsterTypeId, NodeTypeId).</summary>
+    public int TypeNumericId { get; set; }
 }

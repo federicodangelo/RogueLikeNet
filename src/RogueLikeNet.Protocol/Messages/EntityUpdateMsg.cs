@@ -16,6 +16,13 @@ public class EntityUpdateMsg
     [Key(8)] public int MaxHealth { get; set; }
     [Key(9)] public int LightRadius { get; set; }
     [Key(10)] public ItemDataMsg? Item { get; set; }
+    /// <summary>
+    /// Content-specific type id used for quest matching:
+    /// - Monster: MonsterTypeId
+    /// - ResourceNode: NodeTypeId
+    /// - Other: 0 (for ground items, use <see cref="Item"/>.ItemTypeId instead).
+    /// </summary>
+    [Key(11)] public int TypeNumericId { get; set; }
 
 
     /// <summary>
@@ -28,6 +35,7 @@ public class EntityUpdateMsg
         FgColor == other.FgColor &&
         MaxHealth == other.MaxHealth &&
         LightRadius == other.LightRadius &&
+        TypeNumericId == other.TypeNumericId &&
         ItemDataMsg.Equals(Item, other.Item);
 
     /// <summary>

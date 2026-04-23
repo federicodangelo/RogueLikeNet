@@ -119,7 +119,7 @@ public static class GameStateSerializer
         var currentIds = new HashSet<long>();
 
         void ProcessEntity(long id, EntityType entityType, Position pos, TileAppearance appearance,
-            int hp, int maxHp, int lightRadius, ItemDataMsg? item)
+            int hp, int maxHp, int lightRadius, ItemDataMsg? item, int typeNumericId = 0)
         {
             if (!debugVisibilityOff && !fov.IsVisible(pos)) return;
 
@@ -138,6 +138,7 @@ public static class GameStateSerializer
                 MaxHealth = maxHp,
                 LightRadius = lightRadius,
                 Item = item,
+                TypeNumericId = typeNumericId,
             };
 
             if (previousState.TryGetValue(id, out var prev))
@@ -171,7 +172,7 @@ public static class GameStateSerializer
             foreach (var m in chunk.Monsters)
             {
                 if (m.IsDead) continue;
-                ProcessEntity((long)m.Id, EntityType.Monster, m.Position, m.Appearance, m.Health.Current, m.Health.Max, 0, null);
+                ProcessEntity((long)m.Id, EntityType.Monster, m.Position, m.Appearance, m.Health.Current, m.Health.Max, 0, null, m.MonsterData.MonsterTypeId);
             }
 
             foreach (var gi in chunk.GroundItems)
@@ -188,7 +189,7 @@ public static class GameStateSerializer
             foreach (var r in chunk.ResourceNodes)
             {
                 if (r.IsDead) continue;
-                ProcessEntity((long)r.Id, EntityType.ResourceNode, r.Position, r.Appearance, r.Health.Current, r.Health.Max, 0, null);
+                ProcessEntity((long)r.Id, EntityType.ResourceNode, r.Position, r.Appearance, r.Health.Current, r.Health.Max, 0, null, r.NodeData.NodeTypeId);
             }
 
             foreach (var n in chunk.TownNpcs)
