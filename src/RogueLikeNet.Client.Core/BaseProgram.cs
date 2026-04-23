@@ -1,6 +1,7 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Screens;
+using RogueLikeNet.Client.Core.Screens.Menus;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Generation;
 using RogueLikeNet.Protocol.Messages;

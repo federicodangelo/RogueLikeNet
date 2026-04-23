@@ -1,6 +1,7 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Client.Core.Rendering.Game;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Client.Core.Systems;
 

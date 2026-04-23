@@ -1,7 +1,7 @@
 [
     {
         "id": "q_starter_rats",
-        "title": "Rat Problem",
+        "title": "Slime Problem",
         "description": "Our cellars are overrun with slimes. Slay a few and I'll reward you.",
         "completionText": "The cellar's quiet again. Here, take this for your trouble.",
         "declineText": "Maybe another day then.",

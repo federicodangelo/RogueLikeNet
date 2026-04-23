@@ -1,5 +1,6 @@
 using Engine.Platform.Null;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Client.Core.Rendering.Game;
 
 namespace RogueLikeNet.Client.Core.Tests;
 

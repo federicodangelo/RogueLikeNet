@@ -2,7 +2,14 @@ using System.Diagnostics;
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Networking;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Client.Core.Rendering.Game;
+using RogueLikeNet.Client.Core.Rendering.Hud;
+using RogueLikeNet.Client.Core.Rendering.Menus;
+using RogueLikeNet.Client.Core.Rendering.Overlays;
 using RogueLikeNet.Client.Core.Screens;
+using RogueLikeNet.Client.Core.Screens.Connection;
+using RogueLikeNet.Client.Core.Screens.Menus;
+using RogueLikeNet.Client.Core.Screens.Playing;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Client.Core.Systems;
 using RogueLikeNet.Core.Utilities;
@@ -111,16 +118,20 @@ public sealed class RogueLikeGame : GameBase
         var worldRenderer = new GameWorldRenderer();
         var hudRenderer = new HudRenderer();
         var inventoryRenderer = new InventoryRenderer();
+        var craftingRenderer = new CraftingRenderer();
+        var questLogRenderer = new QuestLogRenderer();
+        var npcDialogueRenderer = new NpcDialogueRenderer();
         var overlayRenderer = new OverlayRenderer();
+        var playingBackdrop = new PlayingBackdropRenderer(worldRenderer);
 
         // Create screens
         var mainMenu = new MainMenuScreen(_ctx, mainMenuRenderer);
         var newGame = new NewGameScreen(_ctx, newGameRenderer);
         var classSelect = new ClassSelectScreen(_ctx, classSelectRenderer, mainMenu, newGame);
         var connecting = new ConnectingScreen(_ctx, connectingRenderer);
-        var playing = new PlayingScreen(_ctx, worldRenderer, hudRenderer, overlayRenderer);
-        var inventory = new InventoryScreen(_ctx, worldRenderer, inventoryRenderer, overlayRenderer);
-        var crafting = new CraftingScreen(_ctx, worldRenderer, overlayRenderer);
+        var playing = new PlayingScreen(_ctx, playingBackdrop, hudRenderer, overlayRenderer);
+        var inventory = new InventoryScreen(_ctx, playingBackdrop, inventoryRenderer, overlayRenderer);
+        var crafting = new CraftingScreen(_ctx, playingBackdrop, craftingRenderer, overlayRenderer);
         var paused = new PausedScreen(_ctx, playing, pausedRenderer);
         var help = new HelpScreen(_ctx, helpRenderer, playing);
         var options = new OptionsScreen(_ctx, optionsRenderer, playing);
@@ -128,8 +139,8 @@ public sealed class RogueLikeGame : GameBase
         var serverAdmin = new ServerAdminScreen(_ctx, serverAdminRenderer, newGame);
         var login = new LoginScreen(_ctx, loginRenderer);
 
-        var npcDialogue = new NpcDialogueScreen(_ctx, worldRenderer, overlayRenderer);
-        var questLog = new QuestLogScreen(_ctx, worldRenderer, overlayRenderer);
+        var npcDialogue = new NpcDialogueScreen(_ctx, playingBackdrop, npcDialogueRenderer, overlayRenderer);
+        var questLog = new QuestLogScreen(_ctx, playingBackdrop, questLogRenderer, overlayRenderer);
 
         saveSlot.OnNewGameRequested = (slotName, _) => NewOfflineGameRequested?.Invoke(slotName);
         saveSlot.OnLoadSlotRequested = slotId => LoadSlotRequested?.Invoke(slotId);

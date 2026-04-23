@@ -1,0 +1,485 @@
+using System.Drawing;
+using Engine.Core;
+using Engine.Platform;
+using RogueLikeNet.Client.Core.State;
+using RogueLikeNet.Core.Algorithms;
+using RogueLikeNet.Core.Components;
+using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Definitions;
+using RogueLikeNet.Core.Entities;
+using RogueLikeNet.Core.Utilities;
+using RogueLikeNet.Core.World;
+
+namespace RogueLikeNet.Client.Core.Rendering.Game;
+
+/// <summary>
+/// Renders the game world tile grid: background tiles with FOW, glow effects, and entity sprites.
+/// </summary>
+public sealed class GameWorldRenderer
+{
+    private GlyphTile[] _precalculatedGlyphs = Array.Empty<GlyphTile>();
+    private float[] _precalculatedBrightness = Array.Empty<float>();
+    private List<(Position, TileInfo)> _tilesWithGlow = new List<(Position, TileInfo)>();
+
+    private (GlyphTile[], float[], List<(Position, TileInfo)>) PrecalculateTiles(ClientGameState state, int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows, bool debugLightOff)
+    {
+        using var _ = TimeMeasurer.FromMethodName();
+
+        int requiredSize = visibleCols * visibleRows;
+        if (_precalculatedGlyphs.Length < requiredSize)
+        {
+            _precalculatedGlyphs = new GlyphTile[requiredSize];
+            _precalculatedBrightness = new float[requiredSize];
+        }
+
+        _tilesWithGlow.Clear();
+
+        _precalculatedGlyphs.AsSpan().Clear();
+        _precalculatedBrightness.AsSpan().Clear();
+
+        int originX = cameraCenterX - visibleCols / 2;
+        int originY = cameraCenterY - visibleRows / 2;
+        long tick = state.WorldTick;
+
+        state.ForEachTileInBounds(originX, originY, originX + visibleCols - 1, originY + visibleRows - 1, state.PlayerZ,
+            (int worldX, int worldY, ref TileInfo tile, int lightLevel, bool visible, bool explored) =>
+            {
+                int col = worldX - originX;
+                int row = worldY - originY;
+
+                var minBrightness = explored ? AsciiDraw.FogBrightness : 0f;
+                var brightness =
+                    !visible && !explored ? 0f :
+                        debugLightOff ? 1f :
+                        visible ?
+                            Math.Max(AsciiDraw.LightLevelToBrightness(lightLevel), minBrightness) :
+                            minBrightness;
+
+
+                var emptyTile = tile.GlyphId == 0;
+                var glyphTile = new GlyphTile('\0', default, RenderingTheme.Black);
+
+                if (!emptyTile && brightness > 0f)
+                {
+                    if (tile.Type == TileType.Water || tile.Type == TileType.Lava)
+                    {
+                        // Animate water and lava, making some tiles slightly brighter or darker over time without using a sine wave to avoid uniformity. 
+                        // This adds a bit of life to the environment.
+                        float variation =
+                            (float)((((worldX * 73856093 ^ worldY * 19349663 ^ tick / 20) % 10) - 5) / 10.0f * 0.3);
+
+                        //float brightnessOffset = (float)(Math.Sin(tick * 0.1 + (worldX + worldY) * 0.5) * 0.2);
+                        float brightnessOffset = variation;
+                        brightness = Math.Clamp(brightness + brightnessOffset, 0f, 1f);
+                    }
+
+                    var bgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.BgColor), brightness);
+                    var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(tile.FgColor), brightness);
+                    var glyphId = tile.GlyphId;
+                    var placeableEmitsLight = false;
+
+                    // Override glyph/color from placed item when present
+                    if (tile.PlaceableItemId != 0)
+                    {
+                        var placeableDef = GameData.Instance.Items.Get(tile.PlaceableItemId);
+                        if (placeableDef != null)
+                        {
+                            glyphId = placeableDef.GlyphId;
+                            fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(GameData.Instance.Items.GetPlaceableFgColor(placeableDef, tile.PlaceableItemExtra)), brightness);
+                            if (placeableDef.Placeable != null && placeableDef.Placeable.LightRadius > 0)
+                                placeableEmitsLight = true;
+                        }
+                    }
+
+                    if ((placeableEmitsLight || (tile.Type is TileType.Lava or TileType.StairsDown or TileType.StairsUp))
+                        && visible && lightLevel >= 2)
+                    {
+                        _tilesWithGlow.Add((Position.FromCoords(col, row, 0), tile));
+                    }
+
+                    // Client-side door glyph override: pick | or - based on surrounding walls
+                    if (GameData.Instance.Items.IsPlaceableDoor(tile.PlaceableItemId))
+                    {
+                        var worldDoorX = cameraCenterX - visibleCols / 2 + col;
+                        var worldDoorY = cameraCenterY - visibleRows / 2 + row;
+                        glyphId = GetDoorGlyph(state, tile.PlaceableItemExtra, worldDoorX, worldDoorY);
+                    }
+
+                    var ch = AsciiDraw.GlyphIdToChar(glyphId);
+                    glyphTile = new GlyphTile(ch, fgColor, bgColor);
+                }
+
+                _precalculatedGlyphs[row * visibleCols + col] = glyphTile;
+                _precalculatedBrightness[row * visibleCols + col] = brightness;
+            });
+
+        return (_precalculatedGlyphs, _precalculatedBrightness, _tilesWithGlow);
+    }
+
+    public void Render(ISpriteRenderer r, ClientGameState state, int visibleCols, int visibleRows,
+        float shakeX, float shakeY, int tileW = 0, int tileH = 0, float fontScale = 0f, bool debugLightOff = false)
+    {
+        using var _ = new TimeMeasurer("GameWorldRenderer.Render");
+
+        _tilesWithGlow.Clear();
+
+        if (tileW <= 0) tileW = AsciiDraw.TileWidth;
+        if (tileH <= 0) tileH = AsciiDraw.TileHeight;
+        if (fontScale <= 0f) fontScale = AsciiDraw.FontScale;
+
+        int cameraCenterX = state.PlayerX;
+        int cameraCenterY = state.PlayerY;
+        long tick = state.WorldTick;
+
+        // Precalculate tile brightness and colors for the entire viewport in a single pass.
+        var (precalculatedGlyphs, precalculatedBrightness, tilesWithGlow) = PrecalculateTiles(state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, debugLightOff);
+
+        // Pass 1: tile backgrounds and foreground glyphs (batched)
+        using (new TimeMeasurer("Pass 1: Tiles"))
+        {
+            r.DrawGlyphGridScreen(shakeX, shakeY, visibleCols, visibleRows, tileW, tileH, fontScale, precalculatedGlyphs);
+        }
+
+        // Pass 2: glow effects behind torches and light-emitting tiles (visible only)
+        using (new TimeMeasurer("Pass 2: Glow Effects"))
+        {
+            foreach (var (pos, tile) in tilesWithGlow)
+            {
+                var sx = pos.X;
+                var sy = pos.Y;
+
+                var itemDef = tile.PlaceableItemId != 0 ? GameData.Instance.Items.Get(tile.PlaceableItemId) : null;
+
+                float cx = sx * tileW + tileW * 0.5f + shakeX;
+                float cy = sy * tileH + tileH * 0.5f + shakeY;
+                float radius = tileW * 2.5f;
+                Color4 inner;
+                Color4 outer;
+                if (itemDef != null && itemDef.Placeable != null && itemDef.Placeable.LightRadius > 0)
+                {
+                    inner = ColorUtils.IntToColor4(itemDef.Placeable.LightColor).WithAlpha(40);
+                    outer = inner.WithAlpha(0);
+                }
+                else
+                {
+                    inner = tile.Type switch
+                    {
+                        TileType.Lava => new Color4(255, 80, 20, 25),
+                        TileType.StairsDown => new Color4(200, 180, 50, 25),
+                        TileType.StairsUp => new Color4(250, 150, 150, 25),
+                        _ => new Color4(255, 255, 255, 25)
+                    };
+                    outer = inner.WithAlpha(0);
+                }
+                r.DrawFilledCircleScreen(cx, cy, radius, inner, outer, radius * 0.3f, 16);
+            }
+        }
+
+        // Pass 3: entities (players drawn last so they appear on top)
+        using (new TimeMeasurer("Pass 3: Entities"))
+        {
+            ClientEntity? playerEntity = null;
+
+            foreach (var entity in state.Entities.Values)
+            {
+                if (entity.Z != state.PlayerZ) continue;
+                if (entity.Id == state.PlayerEntityId)
+                {
+                    playerEntity = entity;
+                    continue;
+                }
+                DrawEntity(r, entity, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculatedBrightness);
+            }
+
+            // Draw player on top of everything
+            if (playerEntity != null)
+                DrawEntity(r, playerEntity, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculatedBrightness);
+
+            // Draw red rectangle around ranged weapon target
+            DrawRangedTargetHighlight(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, precalculatedBrightness);
+
+            // Draw quest indicators ("!" offer, "?" turn-in ready) above NPCs
+            DrawQuestIndicators(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, precalculatedBrightness);
+        }
+    }
+
+    private static void DrawEntity(ISpriteRenderer r, ClientEntity entity,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale,
+        float[] precalculatedBrightness)
+    {
+        var sx = entity.X - (cameraCenterX - visibleCols / 2);
+        var sy = entity.Y - (cameraCenterY - visibleRows / 2);
+
+        if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) return;
+
+        var brightness = precalculatedBrightness[sy * visibleCols + sx];
+        if (brightness <= 0f) return;
+
+        var px = sx * tileW + shakeX;
+        var py = sy * tileH + shakeY;
+        var fgColor = ColorUtils.ApplyBrightness(ColorUtils.IntToColor4(entity.FgColor), brightness);
+        var ch = AsciiDraw.GlyphIdToChar(entity.GlyphId);
+        r.DrawTextScreen(px, py, ch.ToString(), fgColor, fontScale);
+
+        if (entity.MaxHealth > 0 && entity.Health < entity.MaxHealth)
+        {
+            var ratio = (float)entity.Health / entity.MaxHealth;
+            r.DrawRectScreen(px, py - 2, tileW, 2, RenderingTheme.HpBar.WithAlpha(180));
+            r.DrawRectScreen(px, py - 2, tileW * ratio, 2, RenderingTheme.HpFill.WithAlpha(180));
+        }
+    }
+
+    private static readonly Color4 QuestOfferColor = new(255, 235, 80, 255);
+    private static readonly Color4 QuestTurnInColor = new(120, 255, 120, 255);
+
+    private static void DrawQuestIndicators(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale,
+        float[] precalculatedBrightness)
+    {
+        var hud = state.PlayerState;
+        var quests = hud?.Quests;
+        if (quests == null) return;
+
+        // Build set of NPC entity ids whose active quest has all objectives complete.
+        HashSet<int>? turnInIds = null;
+        foreach (var aq in quests.Active)
+        {
+            bool complete = aq.Objectives.Length > 0;
+            for (int i = 0; i < aq.Objectives.Length; i++)
+            {
+                if (aq.Objectives[i].Current < aq.Objectives[i].Target) { complete = false; break; }
+            }
+            if (!complete) continue;
+            (turnInIds ??= new HashSet<int>()).Add(aq.GiverEntityId);
+        }
+
+        HashSet<int>? offerIds = null;
+        if (quests.QuestGiverEntityIds.Length > 0)
+        {
+            offerIds = new HashSet<int>(quests.QuestGiverEntityIds.Length);
+            foreach (var id in quests.QuestGiverEntityIds) offerIds.Add(id);
+        }
+
+        if (turnInIds == null && offerIds == null) return;
+
+        float pulse = (float)((Math.Sin(Environment.TickCount / 220.0) + 1.0) * 0.5); // 0..1
+        float indicatorAlpha = 0.6f + 0.4f * pulse;
+
+        foreach (var entity in state.Entities.Values)
+        {
+            if (entity.Z != state.PlayerZ) continue;
+            if (entity.EntityType != EntityType.TownNpc) continue;
+
+            int entityIdInt = unchecked((int)entity.Id);
+            // Turn-in takes priority over new-offer.
+            bool hasTurnIn = turnInIds != null && turnInIds.Contains(entityIdInt);
+            bool hasOffer = !hasTurnIn && offerIds != null && offerIds.Contains(entityIdInt);
+            if (!hasTurnIn && !hasOffer) continue;
+
+            var sx = entity.X - (cameraCenterX - visibleCols / 2);
+            var sy = entity.Y - (cameraCenterY - visibleRows / 2);
+            if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) continue;
+
+            var brightness = precalculatedBrightness[sy * visibleCols + sx];
+            if (brightness <= 0f) continue;
+
+            var px = sx * tileW + shakeX;
+            var py = sy * tileH + shakeY - tileH; // one tile above the NPC
+            char ch = hasTurnIn ? '?' : '!';
+            var baseColor = hasTurnIn ? QuestTurnInColor : QuestOfferColor;
+            var color = baseColor.WithAlpha((byte)(255 * indicatorAlpha));
+            r.DrawTextScreen(px, py, ch.ToString(), color, fontScale);
+        }
+
+        // Off-screen wayfinding arrows for completed (ready to turn in) quests.
+        DrawTurnInArrows(r, state, cameraCenterX, cameraCenterY, visibleCols, visibleRows, tileW, tileH, shakeX, shakeY, fontScale, indicatorAlpha);
+    }
+
+    private static void DrawTurnInArrows(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float fontScale, float alpha)
+    {
+        var hud = state.PlayerState;
+        var quests = hud?.Quests;
+        if (quests == null) return;
+
+        int originX = cameraCenterX - visibleCols / 2;
+        int originY = cameraCenterY - visibleRows / 2;
+        int cx = visibleCols / 2;
+        int cy = visibleRows / 2;
+        var arrowColor = QuestTurnInColor.WithAlpha((byte)(255 * alpha));
+
+        foreach (var aq in quests.Active)
+        {
+            // Only for fully complete quests.
+            if (aq.Objectives.Length == 0) continue;
+            var complete = true;
+            for (var i = 0; i < aq.Objectives.Length; i++)
+            {
+                if (aq.Objectives[i].Current < aq.Objectives[i].Target)
+                {
+                    complete = false;
+                    break;
+                }
+            }
+            if (!complete) continue;
+
+            // Prefer the live NPC position if we can see the giver entity.
+            var targetX = aq.TownX;
+            var targetY = aq.TownY;
+            var targetZ = aq.TownZ;
+            var foundNpc = false;
+            foreach (var e in state.Entities.Values)
+            {
+                if (e.EntityType == EntityType.TownNpc && e.Id == aq.GiverEntityId)
+                {
+                    targetX = e.X;
+                    targetY = e.Y;
+                    targetZ = e.Z;
+                    foundNpc = true;
+                    break;
+                }
+            }
+
+            if (targetZ != state.PlayerZ) continue; // no arrow across z-levels
+            int sxi = targetX - originX;
+            int syi = targetY - originY;
+
+            // If the target is inside the world view, the '?' indicator already points it out.
+            if (foundNpc && sxi >= 0 && sxi < visibleCols && syi >= 0 && syi < visibleRows)
+                continue;
+
+            int dx = sxi - cx;
+            int dy = syi - cy;
+            if (dx == 0 && dy == 0) continue;
+
+            // Clamp the arrow position to the inner border of the world view by casting
+            // a ray from the screen center toward the target and finding where it exits.
+            // Inner bounds: [1, visibleCols-2] × [1, visibleRows-2] so the arrow is fully
+            // inside the game view and does not sit on the outermost column/row.
+            int minX = 1, maxX = visibleCols - 2;
+            int minY = 1, maxY = visibleRows - 2;
+            if (maxX < minX || maxY < minY) continue;
+
+            float tX = dx > 0 ? (float)(maxX - cx) / dx
+                     : dx < 0 ? (float)(minX - cx) / dx
+                     : float.PositiveInfinity;
+            float tY = dy > 0 ? (float)(maxY - cy) / dy
+                     : dy < 0 ? (float)(minY - cy) / dy
+                     : float.PositiveInfinity;
+            float t = Math.Min(tX, tY);
+            if (t <= 0 || float.IsInfinity(t)) continue;
+
+            int arrX = (int)Math.Round(cx + dx * t);
+            int arrY = (int)Math.Round(cy + dy * t);
+            arrX = Math.Clamp(arrX, minX, maxX);
+            arrY = Math.Clamp(arrY, minY, maxY);
+
+            char arrow = PickArrowChar(dx, dy);
+            float px = arrX * tileW + shakeX;
+            float py = arrY * tileH + shakeY;
+            r.DrawTextScreen(px, py, arrow.ToString(), arrowColor, fontScale);
+        }
+    }
+
+    private static char PickArrowChar(int dx, int dy)
+    {
+        int ax = Math.Abs(dx);
+        int ay = Math.Abs(dy);
+        if (ax >= ay) return dx > 0 ? '\u2192' : '\u2190'; // → ←
+        return dy > 0 ? '\u2193' : '\u2191'; // ↓ ↑
+    }
+
+    private static readonly Color4 RangedTargetColor = new(255, 60, 60, 200);
+    private static readonly Color4 MagicTargetColor = new(60, 120, 255, 200);
+
+    private static void DrawRangedTargetHighlight(ISpriteRenderer r, ClientGameState state,
+        int cameraCenterX, int cameraCenterY, int visibleCols, int visibleRows,
+        int tileW, int tileH, float shakeX, float shakeY, float[] precalculatedBrightness)
+    {
+        var playerState = state.PlayerState;
+        if (playerState == null) return;
+
+        // Check if equipped hand weapon is ranged
+        var handItem = playerState.EquippedItems.FirstOrDefault(eq => eq.EquipSlot == (int)EquipSlot.Hand);
+        if (handItem == null) return;
+
+        var weaponDef = GameData.Instance.Items.Get(handItem.ItemTypeId);
+        if (weaponDef?.Weapon == null || weaponDef.Weapon.Range <= 1) return;
+
+        int range = weaponDef.Weapon.Range;
+
+        // Find closest monster in range with line-of-sight (mirrors server auto-target)
+        int bestDist = int.MaxValue;
+        ClientEntity? bestTarget = null;
+
+        foreach (var entity in state.Entities.Values)
+        {
+            if (entity.Z != state.PlayerZ) continue;
+            if (entity.Id == state.PlayerEntityId) continue;
+            if (entity.EntityType != EntityType.Monster) continue;
+            if (entity.Health <= 0) continue;
+
+            int dx = Math.Abs(entity.X - state.PlayerX);
+            int dy = Math.Abs(entity.Y - state.PlayerY);
+            int dist = dx + dy;
+            if (dist > range || dist >= bestDist) continue;
+
+            if (!Bresenham.HasLineOfSight(
+                state.PlayerX, state.PlayerY, entity.X, entity.Y,
+                (x, y) => !state.GetTile(x, y).IsTransparent))
+                continue;
+
+            bestDist = dist;
+            bestTarget = entity;
+        }
+
+        if (bestTarget == null) return;
+
+        // Convert to screen coordinates
+        var sx = bestTarget.X - (cameraCenterX - visibleCols / 2);
+        var sy = bestTarget.Y - (cameraCenterY - visibleRows / 2);
+        if (sx < 0 || sx >= visibleCols || sy < 0 || sy >= visibleRows) return;
+
+        var brightness = precalculatedBrightness[sy * visibleCols + sx];
+        if (brightness <= 0f) return;
+
+        float px = sx * tileW + shakeX;
+        float py = sy * tileH + shakeY;
+
+        // Draw 1-pixel rectangle outline (blue for magic, red for physical)
+        bool isMagic = weaponDef.Weapon.DamageType != DamageType.Physical;
+        var color = isMagic ? MagicTargetColor : RangedTargetColor;
+        r.DrawLineScreen(px, py, px + tileW, py, color);             // Top
+        r.DrawLineScreen(px + tileW, py, px + tileW, py + tileH, color); // Right
+        r.DrawLineScreen(px + tileW, py + tileH, px, py + tileH, color); // Bottom
+        r.DrawLineScreen(px, py + tileH, px, py, color);             // Left
+    }
+
+    /// <summary>
+    /// Determines the door glyph based on surrounding wall tiles (client-side only).
+    /// Walls N/S → vertical |, walls E/W → horizontal -.
+    /// </summary>
+    private static int GetDoorGlyph(ClientGameState state, int extra, int x, int y)
+    {
+        if (extra > 0)
+        {
+            // Open door!
+            return RenderConstants.GlyphDoor;
+        }
+
+        bool wallN = IsWallLike(state.GetTile(x, y - 1));
+        bool wallS = IsWallLike(state.GetTile(x, y + 1));
+        bool wallE = IsWallLike(state.GetTile(x + 1, y));
+        bool wallW = IsWallLike(state.GetTile(x - 1, y));
+
+        if (wallN && wallS) return RenderConstants.GlyphDoorVertical;
+        if (wallE && wallW) return RenderConstants.GlyphDoorHorizontal;
+        return RenderConstants.GlyphDoorVertical; // default
+    }
+
+    private static bool IsWallLike(TileInfo tile) =>
+        tile.Type == TileType.Blocked || GameData.Instance.Items.IsPlaceableWall(tile.PlaceableItemId);
+}

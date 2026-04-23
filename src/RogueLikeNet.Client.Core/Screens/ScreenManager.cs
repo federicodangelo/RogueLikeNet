@@ -1,5 +1,8 @@
 using Engine.Platform;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Client.Core.Screens.Connection;
+using RogueLikeNet.Client.Core.Screens.Menus;
+using RogueLikeNet.Client.Core.Screens.Playing;
 using RogueLikeNet.Core.Utilities;
 
 namespace RogueLikeNet.Client.Core.Screens;

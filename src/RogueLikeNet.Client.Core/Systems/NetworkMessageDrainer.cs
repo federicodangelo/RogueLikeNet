@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using RogueLikeNet.Client.Core.Rendering;
+using RogueLikeNet.Client.Core.Rendering.Game;
 using RogueLikeNet.Client.Core.State;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
