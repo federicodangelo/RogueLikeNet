@@ -306,6 +306,8 @@ public sealed class RogueLikeGame : GameBase
         _screenManager.HandleInput(input);
         _screenManager.Update(dt);
 
+        _chat.Update();
+
         renderer.Update();
         renderer.BeginFrame();
 

@@ -10,9 +10,15 @@ namespace RogueLikeNet.Client.Core.Systems;
 /// </summary>
 public sealed class ChatSystem
 {
+    private const int MaxChatLogLines = 50;
+    private const int ChatLineLifetimeSeconds = 10;
+
     private readonly ConcurrentQueue<ChatMsg> _pendingChats = new();
 
-    public List<string> ChatLog { get; } = new();
+    private readonly List<string> _chatLog = new();
+    private readonly List<DateTime> _chatLogTimestamps = new();
+
+    public IReadOnlyList<string> ChatLog => _chatLog;
     public bool InputActive { get; set; }
     public string InputText { get; set; } = "";
 
@@ -31,8 +37,26 @@ public sealed class ChatSystem
 
     public void AddChatLine(string line)
     {
-        ChatLog.Add(line);
-        if (ChatLog.Count > 50) ChatLog.RemoveAt(0);
+        _chatLog.Add(line);
+        _chatLogTimestamps.Add(DateTime.UtcNow);
+        if (_chatLog.Count > MaxChatLogLines)
+        {
+            _chatLog.RemoveAt(0);
+            _chatLogTimestamps.RemoveAt(0);
+        }
+    }
+
+    public void Update()
+    {
+        var now = DateTime.UtcNow;
+        for (int i = _chatLogTimestamps.Count - 1; i >= 0; i--)
+        {
+            if ((now - _chatLogTimestamps[i]).TotalSeconds > ChatLineLifetimeSeconds)
+            {
+                _chatLog.RemoveAt(i);
+                _chatLogTimestamps.RemoveAt(i);
+            }
+        }
     }
 
     public void HandleInput(IInputManager input, IGameServerConnection? connection)
@@ -70,7 +94,7 @@ public sealed class ChatSystem
 
     public void Clear()
     {
-        ChatLog.Clear();
+        _chatLog.Clear();
         InputActive = false;
         InputText = "";
         while (_pendingChats.TryDequeue(out _)) { }
