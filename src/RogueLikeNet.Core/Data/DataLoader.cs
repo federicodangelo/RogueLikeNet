@@ -952,6 +952,23 @@ public static class DataLoader
             }
         }
 
+        // Validate shops
+        foreach (var shop in data.Shops.All)
+        {
+            if (shop.Items.Length == 0)
+                errors.Add($"Shop '{shop.Id}': has no items for sale.");
+
+            foreach (var item in shop.Items)
+            {
+                if (data.Items.Get(item.ItemId) == null)
+                    errors.Add($"Shop '{shop.Id}': item '{item.ItemId}' not found.");
+                if (item.Price < 0)
+                    errors.Add($"Shop '{shop.Id}': item '{item.ItemId}' has negative price {item.Price}.");
+                if (item.Stock < -1)
+                    errors.Add($"Shop '{shop.Id}': item '{item.ItemId}' has invalid stock {item.Stock} (must be -1 for infinite or >= 0).");
+            }
+        }
+
         if (errors.Count > 0)
             throw new InvalidOperationException(
                 $"Data validation failed with {errors.Count} error(s):\n" + string.Join("\n", errors));

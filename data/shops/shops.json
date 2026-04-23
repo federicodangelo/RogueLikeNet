@@ -34,7 +34,7 @@
                 "price": 10
             },
             {
-                "itemId": "chest_placeable",
+                "itemId": "chest",
                 "price": 25
             }
         ]
@@ -78,7 +78,7 @@
                 "price": 80
             },
             {
-                "itemId": "wooden_shield",
+                "itemId": "shield",
                 "price": 20
             },
             {
@@ -106,7 +106,7 @@
         "sellPricePercent": 50,
         "items": [
             {
-                "itemId": "health_potion",
+                "itemId": "health_potion_small",
                 "price": 20
             },
             {
@@ -150,10 +150,6 @@
                 "price": 5
             },
             {
-                "itemId": "tomato_seeds",
-                "price": 8
-            },
-            {
                 "itemId": "pumpkin_seeds",
                 "price": 10
             },
@@ -170,16 +166,8 @@
                 "price": 20
             },
             {
-                "itemId": "chicken_feed",
+                "itemId": "wheat",
                 "price": 3
-            },
-            {
-                "itemId": "cow_feed",
-                "price": 5
-            },
-            {
-                "itemId": "sheep_feed",
-                "price": 5
             }
         ]
     }
