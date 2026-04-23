@@ -9,7 +9,7 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class HelpScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly HelpRenderer _menuRenderer;
     private readonly PlayingScreen? _playingScreen;
 
     private ScreenState _returnTo;
@@ -17,7 +17,7 @@ public sealed class HelpScreen : IScreen
 
     public ScreenState ScreenState => _screenState;
 
-    public HelpScreen(ScreenContext ctx, MenuRenderer menuRenderer, PlayingScreen? playingScreen)
+    public HelpScreen(ScreenContext ctx, HelpRenderer menuRenderer, PlayingScreen? playingScreen)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

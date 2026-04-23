@@ -10,13 +10,13 @@ public sealed class PausedScreen : IScreen
 {
     private readonly ScreenContext _ctx;
     private readonly PlayingScreen _playingScreen;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly PausedRenderer _menuRenderer;
 
     private int _pauseIndex;
 
     public ScreenState ScreenState => ScreenState.Paused;
 
-    public PausedScreen(ScreenContext ctx, PlayingScreen playingScreen, MenuRenderer menuRenderer)
+    public PausedScreen(ScreenContext ctx, PlayingScreen playingScreen, PausedRenderer menuRenderer)
     {
         _ctx = ctx;
         _playingScreen = playingScreen;
@@ -48,10 +48,10 @@ public sealed class PausedScreen : IScreen
         {
             switch (_pauseIndex)
             {
-                case MenuRenderer.PauseMenuResumeIndex: _ctx.RequestTransition(Rendering.ScreenState.Playing); break;
-                case MenuRenderer.PauseMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedOptions); break;
-                case MenuRenderer.PauseMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedHelp); break;
-                case MenuRenderer.PauseMenuMainMenuIndex: _ctx.OnReturnToMenu(); break;
+                case PausedRenderer.PauseMenuResumeIndex: _ctx.RequestTransition(Rendering.ScreenState.Playing); break;
+                case PausedRenderer.PauseMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedOptions); break;
+                case PausedRenderer.PauseMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.PausedHelp); break;
+                case PausedRenderer.PauseMenuMainMenuIndex: _ctx.OnReturnToMenu(); break;
             }
         }
     }

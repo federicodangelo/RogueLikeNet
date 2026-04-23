@@ -10,7 +10,6 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class SaveSlotScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
     private readonly NewGameScreen _newGame;
 
     private SaveSlotInfoMsg[] _slots = [];
@@ -30,10 +29,9 @@ public sealed class SaveSlotScreen : IScreen
     /// <summary>Fired when the player picks an existing slot to load.</summary>
     public Action<string>? OnLoadSlotRequested;
 
-    public SaveSlotScreen(ScreenContext ctx, MenuRenderer menuRenderer, NewGameScreen newGame)
+    public SaveSlotScreen(ScreenContext ctx, NewGameScreen newGame)
     {
         _ctx = ctx;
-        _menuRenderer = menuRenderer;
         _newGame = newGame;
     }
 

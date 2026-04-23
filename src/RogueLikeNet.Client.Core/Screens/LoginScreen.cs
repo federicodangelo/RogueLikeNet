@@ -10,7 +10,7 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class LoginScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly LoginRenderer _menuRenderer;
 
     private string _userName = "";
     private string _password = "";
@@ -28,7 +28,7 @@ public sealed class LoginScreen : IScreen
     /// <summary>The password entered by the user (available after login).</summary>
     public string Password => _password;
 
-    public LoginScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public LoginScreen(ScreenContext ctx, LoginRenderer menuRenderer)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

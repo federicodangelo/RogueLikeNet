@@ -99,26 +99,34 @@ public sealed class RogueLikeGame : GameBase
         };
 
         // Create renderers
-        var menuRenderer = new MenuRenderer();
+        var mainMenuRenderer = new MainMenuRenderer();
+        var classSelectRenderer = new ClassSelectRenderer();
+        var newGameRenderer = new NewGameRenderer();
+        var connectingRenderer = new ConnectingRenderer();
+        var helpRenderer = new HelpRenderer();
+        var pausedRenderer = new PausedRenderer();
+        var optionsRenderer = new OptionsRenderer();
+        var serverAdminRenderer = new ServerAdminRenderer();
+        var loginRenderer = new LoginRenderer();
         var worldRenderer = new GameWorldRenderer();
         var hudRenderer = new HudRenderer();
         var inventoryRenderer = new InventoryRenderer();
         var overlayRenderer = new OverlayRenderer();
 
         // Create screens
-        var mainMenu = new MainMenuScreen(_ctx, menuRenderer);
-        var newGame = new NewGameScreen(_ctx, menuRenderer);
-        var classSelect = new ClassSelectScreen(_ctx, menuRenderer, mainMenu, newGame);
-        var connecting = new ConnectingScreen(_ctx, menuRenderer);
+        var mainMenu = new MainMenuScreen(_ctx, mainMenuRenderer);
+        var newGame = new NewGameScreen(_ctx, newGameRenderer);
+        var classSelect = new ClassSelectScreen(_ctx, classSelectRenderer, mainMenu, newGame);
+        var connecting = new ConnectingScreen(_ctx, connectingRenderer);
         var playing = new PlayingScreen(_ctx, worldRenderer, hudRenderer, overlayRenderer);
         var inventory = new InventoryScreen(_ctx, worldRenderer, inventoryRenderer, overlayRenderer);
         var crafting = new CraftingScreen(_ctx, worldRenderer, overlayRenderer);
-        var paused = new PausedScreen(_ctx, playing, menuRenderer);
-        var help = new HelpScreen(_ctx, menuRenderer, playing);
-        var options = new OptionsScreen(_ctx, menuRenderer, playing);
-        var saveSlot = new SaveSlotScreen(_ctx, menuRenderer, newGame);
-        var serverAdmin = new ServerAdminScreen(_ctx, menuRenderer, newGame);
-        var login = new LoginScreen(_ctx, menuRenderer);
+        var paused = new PausedScreen(_ctx, playing, pausedRenderer);
+        var help = new HelpScreen(_ctx, helpRenderer, playing);
+        var options = new OptionsScreen(_ctx, optionsRenderer, playing);
+        var saveSlot = new SaveSlotScreen(_ctx, newGame);
+        var serverAdmin = new ServerAdminScreen(_ctx, serverAdminRenderer, newGame);
+        var login = new LoginScreen(_ctx, loginRenderer);
 
         var npcDialogue = new NpcDialogueScreen(_ctx, worldRenderer, overlayRenderer);
         var questLog = new QuestLogScreen(_ctx, worldRenderer, overlayRenderer);

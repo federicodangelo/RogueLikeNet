@@ -9,13 +9,13 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class ConnectingScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly ConnectingRenderer _menuRenderer;
 
     private string? _connectionError;
 
     public ScreenState ScreenState => ScreenState.Connecting;
 
-    public ConnectingScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public ConnectingScreen(ScreenContext ctx, ConnectingRenderer menuRenderer)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

@@ -12,7 +12,7 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class ServerAdminScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly ServerAdminRenderer _menuRenderer;
     private readonly NewGameScreen _newGame;
 
     private SaveSlotInfoMsg[] _slots = [];
@@ -25,7 +25,7 @@ public sealed class ServerAdminScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.ServerAdmin;
 
-    public ServerAdminScreen(ScreenContext ctx, MenuRenderer menuRenderer, NewGameScreen newGame)
+    public ServerAdminScreen(ScreenContext ctx, ServerAdminRenderer menuRenderer, NewGameScreen newGame)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

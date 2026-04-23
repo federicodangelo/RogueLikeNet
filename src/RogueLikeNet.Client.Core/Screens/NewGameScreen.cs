@@ -11,7 +11,7 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class NewGameScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly NewGameRenderer _menuRenderer;
 
     private int _menuIndex;
     private long _worldSeed = Random.Shared.NextInt64(0, 1_000_000_000);
@@ -37,7 +37,7 @@ public sealed class NewGameScreen : IScreen
     private const int MenuStart = 4;
     private const int MenuItemCount = 5;
 
-    public NewGameScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public NewGameScreen(ScreenContext ctx, NewGameRenderer menuRenderer)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

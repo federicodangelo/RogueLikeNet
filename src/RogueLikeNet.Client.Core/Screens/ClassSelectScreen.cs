@@ -12,7 +12,7 @@ public sealed class ClassSelectScreen : IScreen
     public const string DefaultPlayerName = "Hero";
 
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly ClassSelectRenderer _menuRenderer;
     private readonly MainMenuScreen _mainMenuScreen;
     private readonly NewGameScreen _newGameScreen;
 
@@ -25,7 +25,7 @@ public sealed class ClassSelectScreen : IScreen
 
     public ScreenState ScreenState => ScreenState.ClassSelect;
 
-    public ClassSelectScreen(ScreenContext ctx, MenuRenderer menuRenderer, MainMenuScreen mainMenuScreen, NewGameScreen newGameScreen)
+    public ClassSelectScreen(ScreenContext ctx, ClassSelectRenderer menuRenderer, MainMenuScreen mainMenuScreen, NewGameScreen newGameScreen)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

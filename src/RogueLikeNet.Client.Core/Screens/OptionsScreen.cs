@@ -10,7 +10,7 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class OptionsScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly OptionsRenderer _menuRenderer;
     private readonly PlayingScreen? _playingScreen;
 
     private ScreenState _screenState;
@@ -24,7 +24,7 @@ public sealed class OptionsScreen : IScreen
 
     private int ItemCount => ShowDebugOption ? 3 : 2;
 
-    public OptionsScreen(ScreenContext ctx, MenuRenderer menuRenderer, PlayingScreen? playingScreen)
+    public OptionsScreen(ScreenContext ctx, OptionsRenderer menuRenderer, PlayingScreen? playingScreen)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;

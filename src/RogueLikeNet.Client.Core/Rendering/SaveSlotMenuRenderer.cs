@@ -112,7 +112,7 @@ static public class SaveSlotMenuRenderer
         // Confirmation overlay
         if (confirmingDelete && selectedSlot != null)
         {
-            AsciiDraw.DrawCentered(r, totalCols, by + boxH / 2 - 1, $"Delete \"{MenuRenderer.Truncate(selectedSlot.Name, 20)}\"?", RenderingTheme.Danger);
+            AsciiDraw.DrawCentered(r, totalCols, by + boxH / 2 - 1, $"Delete \"{RenderingHelpers.Truncate(selectedSlot.Name, 20)}\"?", RenderingTheme.Danger);
             AsciiDraw.DrawCentered(r, totalCols, by + boxH / 2 + 1, "Enter Confirm   Esc Cancel", RenderingTheme.Dim);
             return;
         }
@@ -158,15 +158,15 @@ static public class SaveSlotMenuRenderer
             bool sel = slot == selectedSlot;
             string prefix = sel ? " \u25ba " : "   ";
 
-            string name = MenuRenderer.Truncate(slot.Name, boxW - 12);
+            string name = RenderingHelpers.Truncate(slot.Name, boxW - 12);
             AsciiDraw.DrawString(r, bx + 4, row, prefix + name, sel ? RenderingTheme.Selected : RenderingTheme.SlotActive);
 
-            string dateStr = MenuRenderer.FormatUnixMs(slot.LastSavedAtUnixMs);
+            string dateStr = RenderingHelpers.FormatUnixMs(slot.LastSavedAtUnixMs);
             string genName = GeneratorRegistry.GetNameOrId(slot.GeneratorId);
             string details1 = $"     Seed: {slot.Seed}  Gen: {genName}";
             string details2 = $"     Saved: {dateStr}";
-            AsciiDraw.DrawString(r, bx + 4, row + 1, MenuRenderer.Truncate(details1, boxW - 6), RenderingTheme.SlotDate);
-            AsciiDraw.DrawString(r, bx + 4, row + 2, MenuRenderer.Truncate(details2, boxW - 6), RenderingTheme.SlotDate);
+            AsciiDraw.DrawString(r, bx + 4, row + 1, RenderingHelpers.Truncate(details1, boxW - 6), RenderingTheme.SlotDate);
+            AsciiDraw.DrawString(r, bx + 4, row + 2, RenderingHelpers.Truncate(details2, boxW - 6), RenderingTheme.SlotDate);
 
             row += SaveSlotHeightRows;
             contentRow += SaveSlotHeightRows;
@@ -181,7 +181,7 @@ static public class SaveSlotMenuRenderer
         if (statusMessage != null)
         {
             var color = isError ? RenderingTheme.Danger : RenderingTheme.Floor;
-            AsciiDraw.DrawCentered(r, totalCols, by + boxH - 4, MenuRenderer.Truncate(statusMessage, boxW - 4), color);
+            AsciiDraw.DrawCentered(r, totalCols, by + boxH - 4, RenderingHelpers.Truncate(statusMessage, boxW - 4), color);
         }
 
         string footer = selectedSlot != null

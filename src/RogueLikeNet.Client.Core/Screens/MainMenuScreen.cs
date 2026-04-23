@@ -9,13 +9,13 @@ namespace RogueLikeNet.Client.Core.Screens;
 public sealed class MainMenuScreen : IScreen
 {
     private readonly ScreenContext _ctx;
-    private readonly MenuRenderer _menuRenderer;
+    private readonly MainMenuRenderer _menuRenderer;
 
     private int _menuIndex;
 
     public ScreenState ScreenState => ScreenState.MainMenu;
 
-    public MainMenuScreen(ScreenContext ctx, MenuRenderer menuRenderer)
+    public MainMenuScreen(ScreenContext ctx, MainMenuRenderer menuRenderer)
     {
         _ctx = ctx;
         _menuRenderer = menuRenderer;
@@ -33,20 +33,20 @@ public sealed class MainMenuScreen : IScreen
         {
             switch (_menuIndex)
             {
-                case MenuRenderer.MainMenuPlayOfflineIndex:
+                case MainMenuRenderer.MainMenuPlayOfflineIndex:
                     SetClassSelectOnline(false);
                     _ctx.OnPlayOffline();
                     break;
-                case MenuRenderer.MainMenuPlayOnlineIndex:
+                case MainMenuRenderer.MainMenuPlayOnlineIndex:
                     SetClassSelectOnline(true);
                     _ctx.RequestTransition(Rendering.ScreenState.Login);
                     break;
-                case MenuRenderer.MainMenuAdminOnlineIndex:
+                case MainMenuRenderer.MainMenuAdminOnlineIndex:
                     _ctx.OnAdminOnline();
                     break;
-                case MenuRenderer.MainMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.Options); break;
-                case MenuRenderer.MainMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
-                case MenuRenderer.MainMenuQuitIndex: _ctx.OnQuit(); break;
+                case MainMenuRenderer.MainMenuOptionsIndex: _ctx.RequestTransition(Rendering.ScreenState.Options); break;
+                case MainMenuRenderer.MainMenuHelpIndex: _ctx.RequestTransition(Rendering.ScreenState.MainMenuHelp); break;
+                case MainMenuRenderer.MainMenuQuitIndex: _ctx.OnQuit(); break;
             }
         }
     }
