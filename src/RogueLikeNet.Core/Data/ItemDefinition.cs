@@ -166,6 +166,7 @@ public sealed class WeaponData
     public int AttackSpeed { get; set; }
     public DamageType DamageType { get; set; }
     public int Range { get; set; } = 1;
+    public bool UsesAmmo { get; set; }
     public bool TwoHanded { get; set; }
 }
 

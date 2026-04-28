@@ -599,6 +599,8 @@ public static class DataLoader
                 case ItemCategory.Weapon:
                     if (item.Weapon == null)
                         errors.Add($"Item '{item.Id}': category is Weapon but Weapon data is missing.");
+                    if (item.Weapon != null && item.Weapon.UsesAmmo && item.Weapon.Range <= 1)
+                        errors.Add($"Item '{item.Id}': weapon uses ammo but range is {item.Weapon.Range}; ammo-based weapons must have range > 1.");
                     if (item.Armor != null)
                         errors.Add($"Item '{item.Id}': category is {item.Category} but Armor data is present.");
                     if (item.Tool != null)

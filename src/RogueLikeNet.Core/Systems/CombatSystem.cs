@@ -50,6 +50,7 @@ public class CombatSystem
             // Determine weapon range
             int weaponRange = 1;
             bool isRanged = false;
+            bool usesAmmo = false;
             int ammoBonusDamage = 0;
             DamageType damageType = DamageType.Physical;
             var weaponItem = player.Equipment.Hand;
@@ -63,12 +64,13 @@ public class CombatSystem
                 {
                     weaponRange = weaponDef.Weapon.Range;
                     isRanged = true;
+                    usesAmmo = weaponDef.Weapon.UsesAmmo;
                 }
             }
 
-            // For ranged weapons, find and validate ammo
+            // For ranged weapons that consume ammo, find and validate ammo
             int ammoSlot = -1;
-            if (isRanged)
+            if (isRanged && usesAmmo)
             {
                 ammoSlot = FindAmmoSlot(ref player);
                 if (ammoSlot < 0)
@@ -128,8 +130,8 @@ public class CombatSystem
                 }
             }
 
-            // Consume ammo for ranged attacks
-            if (isRanged && ammoSlot >= 0)
+            // Consume ammo for ranged attacks that require it
+            if (isRanged && usesAmmo && ammoSlot >= 0)
             {
                 ConsumeAmmo(ref player, ammoSlot);
             }

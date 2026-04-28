@@ -183,10 +183,10 @@ public sealed class HudRenderer
                                 int stack = handItem.StackCount;
                                 string stackStr = stack > 1 ? $"x{stack}" : "";
 
-                                // For ranged weapons, show ammo info
+                                // For ammo-based weapons, show ammo info
                                 string ammoStr = "";
                                 var weaponDef = GameData.Instance.Items.Get(handItem.ItemTypeId);
-                                if (weaponDef?.Weapon != null && weaponDef.Weapon.Range > 1)
+                                if (weaponDef?.Weapon?.UsesAmmo == true)
                                 {
                                     var ammoItem = playerState.InventoryItems
                                         .FirstOrDefault(i => GameData.Instance.Items.Get(i.ItemTypeId)?.Category == ItemCategory.Ammo);

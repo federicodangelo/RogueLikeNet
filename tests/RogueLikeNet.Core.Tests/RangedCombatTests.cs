@@ -36,6 +36,15 @@ public class RangedCombatTests
     }
 
     [Fact]
+    public void AmmoUsage_IsExplicitlyDefined_PerWeapon()
+    {
+        Assert.True(Item("wooden_bow").Weapon?.UsesAmmo);
+        Assert.True(Item("crossbow").Weapon?.UsesAmmo);
+        Assert.False(Item("fire_staff").Weapon?.UsesAmmo ?? false);
+        Assert.False(Item("spear").Weapon?.UsesAmmo ?? false);
+    }
+
+    [Fact]
     public void AmmoItemsExist_WithCorrectCategory()
     {
         var arrow = Item("wooden_arrow");
@@ -73,6 +82,34 @@ public class RangedCombatTests
         // Ammo should be consumed
         player = ref engine.WorldMap.GetPlayerRef(p.Id);
         Assert.Equal(9, player.Inventory.Items[0].StackCount);
+    }
+
+    [Theory]
+    [InlineData("fire_staff", 3)]
+    [InlineData("spear", 2)]
+    public void NonAmmoRangeWeapons_WithoutAmmo_DoNotFallbackToMelee(string weaponId, int targetDistance)
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId(weaponId), StackCount = 1 };
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
+
+        engine.SpawnMonster(Position.FromCoords(sx + targetDistance, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = 0, Health = 200, Attack = 5, Defense = 0, Speed = 8 });
+
+        player.Input.ActionType = ActionTypes.Attack;
+        engine.Tick();
+
+        Assert.True(engine.Combat.LastTickEvents.Count > 0);
+        var evt = engine.Combat.LastTickEvents[0];
+        Assert.True(evt.IsRanged);
+        Assert.True(evt.Damage > 0);
+
+        player = ref engine.WorldMap.GetPlayerRef(p.Id);
+        Assert.Empty(player.Inventory.Items);
     }
 
     [Fact]

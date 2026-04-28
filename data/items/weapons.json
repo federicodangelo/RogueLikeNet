@@ -230,6 +230,7 @@
             "attackSpeed": 4,
             "damageType": "physical",
             "range": 5,
+            "usesAmmo": true,
             "twoHanded": true
         }
     },
@@ -248,6 +249,7 @@
             "attackSpeed": 4,
             "damageType": "physical",
             "range": 6,
+            "usesAmmo": true,
             "twoHanded": true
         }
     },
@@ -266,6 +268,7 @@
             "attackSpeed": 2,
             "damageType": "physical",
             "range": 7,
+            "usesAmmo": true,
             "twoHanded": true
         }
     },
@@ -428,6 +431,7 @@
             "attackSpeed": 4,
             "damageType": "physical",
             "range": 5,
+            "usesAmmo": true,
             "twoHanded": true
         }
     }
