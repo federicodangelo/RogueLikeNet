@@ -11,7 +11,7 @@
         "equipSlot": "hand",
         "weapon": {
             "baseDamage": 2,
-            "attackSpeed": 4,
+            "attackSpeed": 0,
             "damageType": "magic",
             "range": 1,
             "twoHanded": true
@@ -34,7 +34,7 @@
         "equipSlot": "hand",
         "weapon": {
             "baseDamage": 4,
-            "attackSpeed": 6,
+            "attackSpeed": 2,
             "damageType": "lightning",
             "range": 1,
             "twoHanded": false
@@ -57,7 +57,7 @@
         "equipSlot": "hand",
         "weapon": {
             "baseDamage": 6,
-            "attackSpeed": 5,
+            "attackSpeed": 1,
             "damageType": "magic",
             "range": 1,
             "twoHanded": true
@@ -125,7 +125,7 @@
         "equipSlot": "hand",
         "weapon": {
             "baseDamage": 6,
-            "attackSpeed": 3,
+            "attackSpeed": -1,
             "damageType": "fire",
             "range": 4,
             "twoHanded": true
@@ -148,7 +148,7 @@
         "equipSlot": "hand",
         "weapon": {
             "baseDamage": 5,
-            "attackSpeed": 3,
+            "attackSpeed": -1,
             "damageType": "ice",
             "range": 4,
             "twoHanded": true

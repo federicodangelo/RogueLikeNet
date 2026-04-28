@@ -2,6 +2,7 @@ using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
 using RogueLikeNet.Core.Definitions;
 using RogueLikeNet.Core.Generation;
+using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
 namespace RogueLikeNet.Core.Tests;
@@ -957,7 +958,7 @@ public class InventorySystemTests
 
         int baseInterval = player.AttackDelay.Interval;
 
-        // short_sword: attackSpeed=5, speedBonus = 5-4 = 1 → interval decreases by 1
+        // short_sword: attackSpeed=1, so interval decreases by 1 from the unarmed baseline
         engine.SpawnItemOnGround(Item("short_sword"), Position.FromCoords(sx, sy, Position.DefaultZ));
         player.Input.ActionType = ActionTypes.PickUp;
         engine.Tick();
@@ -966,6 +967,21 @@ public class InventorySystemTests
         engine.Tick();
 
         Assert.Equal(Math.Max(0, baseInterval - 1), player.AttackDelay.Interval);
+    }
+
+    [Fact]
+    public void EquipSpeedZeroWeapon_UsesHalfSecondAttackDelay()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var _p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var player = ref engine.WorldMap.GetPlayerRef(_p.Id);
+
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId("long_sword"), StackCount = 1 };
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
+
+        Assert.Equal(0, Item("long_sword").Weapon?.AttackSpeed ?? int.MinValue);
+        Assert.Equal(10, player.AttackDelay.Interval);
     }
 
     [Fact]
@@ -991,6 +1007,49 @@ public class InventorySystemTests
         engine.Tick();
 
         Assert.Equal(baseInterval, player.AttackDelay.Interval);
+    }
+
+    [Fact]
+    public void AttackDelay_ForSameWeapon_IsIndependentOfClassSpeed()
+    {
+        using var engine = CreateEngine();
+
+        var warriorHandle = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), ClassDefinitions.Warrior);
+        ref var warrior = ref engine.WorldMap.GetPlayerRef(warriorHandle.Id);
+        warrior.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 };
+        ActiveEffectsSystem.RecalculatePlayerStats(ref warrior);
+        int warriorMoveDelay = warrior.MoveDelay.Interval;
+        int warriorAttackDelay = warrior.AttackDelay.Interval;
+
+        var rogueHandle = engine.SpawnPlayer(2, Position.FromCoords(12, 10, Position.DefaultZ), ClassDefinitions.Rogue);
+        ref var rogue = ref engine.WorldMap.GetPlayerRef(rogueHandle.Id);
+        rogue.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 };
+        ActiveEffectsSystem.RecalculatePlayerStats(ref rogue);
+        int rogueMoveDelay = rogue.MoveDelay.Interval;
+        int rogueAttackDelay = rogue.AttackDelay.Interval;
+
+        Assert.NotEqual(warriorMoveDelay, rogueMoveDelay);
+        Assert.Equal(warriorAttackDelay, rogueAttackDelay);
+    }
+
+    [Fact]
+    public void AttackDelay_ForSameWeapon_IsIndependentOfLevelSpeedBonuses()
+    {
+        using var engine = CreateEngine();
+        var handle = engine.SpawnPlayer(1, Position.FromCoords(10, 10, Position.DefaultZ), ClassDefinitions.Rogue);
+        ref var player = ref engine.WorldMap.GetPlayerRef(handle.Id);
+
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId("short_sword"), StackCount = 1 };
+        player.ClassData.Level = 1;
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
+        int levelOneMoveDelay = player.MoveDelay.Interval;
+        int levelOneAttackDelay = player.AttackDelay.Interval;
+
+        player.ClassData.Level = 6;
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
+
+        Assert.True(player.MoveDelay.Interval < levelOneMoveDelay);
+        Assert.Equal(levelOneAttackDelay, player.AttackDelay.Interval);
     }
 
     [Fact]

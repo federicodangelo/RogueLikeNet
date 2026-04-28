@@ -13,6 +13,9 @@ namespace RogueLikeNet.Core.Systems;
 /// </summary>
 public class ActiveEffectsSystem
 {
+    internal const int NeutralWeaponAttackSpeed = 0;
+    private const int BaseWeaponAttackDelayInterval = 10;
+
     public void Update(WorldMap worldMap)
     {
         foreach (ref var player in worldMap.Players)
@@ -49,7 +52,8 @@ public class ActiveEffectsSystem
 
     /// <summary>
     /// Recalculates player stats from first principles: base class stats + level bonuses + equipment + active effects.
-    /// Also updates MoveDelay.Interval and AttackDelay.Interval from the resulting speed.
+    /// Move delay is derived from class speed and active effects.
+    /// Attack delay is derived from the equipped hand weapon's attack speed and active effects.
     /// Call this whenever equipment, effects, potions, or level changes.
     /// </summary>
     public static void RecalculatePlayerStats(ref Entities.PlayerEntity player)
@@ -64,7 +68,6 @@ public class ActiveEffectsSystem
         // 3. Equipment bonuses
         int equipAtk = 0, equipDef = 0, equipHp = 0;
         int equipMana = 0;
-        int weaponSpeedBonus = 0;
         for (int i = 0; i < Equipment.SlotCount; i++)
         {
             if (player.Equipment.HasItem(i))
@@ -75,8 +78,6 @@ public class ActiveEffectsSystem
                     equipAtk += def.EffectiveAttack;
                     equipDef += def.EffectiveDefense;
                     equipHp += def.BaseHealth;
-                    if (def.Weapon != null)
-                        weaponSpeedBonus += def.Weapon.AttackSpeed - 4; // 4 is neutral baseline
                     if (def.Magic != null)
                         equipMana += def.Magic.BonusMana;
                 }
@@ -107,11 +108,27 @@ public class ActiveEffectsSystem
         // Recalculate move delay and attack delay from speed + effects
         int baseDelay = Math.Max(0, 10 - (6 + classStats.Speed + levelBonus.Speed));
         int speedMult = player.ActiveEffects.CombinedSpeedMultiplierBase100;
+        int weaponAttackSpeed = GetEquippedHandAttackSpeed(ref player);
 
         player.MoveDelay.Interval = ApplySpeedMultiplier(baseDelay, speedMult);
         player.MoveDelay.Current = Math.Min(player.MoveDelay.Current, player.MoveDelay.Interval);
-        player.AttackDelay.Interval = ApplySpeedMultiplier(Math.Max(0, baseDelay - weaponSpeedBonus), speedMult);
+        player.AttackDelay.Interval = ApplySpeedMultiplier(GetAttackDelayIntervalForWeaponSpeed(weaponAttackSpeed), speedMult);
         player.AttackDelay.Current = Math.Min(player.AttackDelay.Current, player.AttackDelay.Interval);
+    }
+
+    private static int GetEquippedHandAttackSpeed(ref Entities.PlayerEntity player)
+    {
+        var handItem = player.Equipment.Hand;
+        if (handItem.IsNone)
+            return NeutralWeaponAttackSpeed;
+
+        var handDef = GameData.Instance.Items.Get(handItem.ItemTypeId);
+        return handDef?.Weapon?.AttackSpeed ?? NeutralWeaponAttackSpeed;
+    }
+
+    internal static int GetAttackDelayIntervalForWeaponSpeed(int weaponAttackSpeed)
+    {
+        return Math.Max(0, BaseWeaponAttackDelayInterval - weaponAttackSpeed);
     }
 
     /// <summary>

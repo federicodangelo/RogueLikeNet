@@ -160,7 +160,7 @@ public class GameEngine : IDisposable
         var classStats = ClassDefinitions.GetStartingStats(classId);
         var stats = classStats + ClassDefinitions.BaseStats;
         var moveDelay = Math.Max(0, 10 - (6 + classStats.Speed));
-        var attackDelay = Math.Max(0, 10 - (6 + classStats.Speed));
+        var attackDelay = ActiveEffectsSystem.GetAttackDelayIntervalForWeaponSpeed(ActiveEffectsSystem.NeutralWeaponAttackSpeed);
 
         var player = new PlayerEntity(_worldMap.AllocateEntityId())
         {
