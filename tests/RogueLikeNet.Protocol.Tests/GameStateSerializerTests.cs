@@ -559,6 +559,9 @@ public class GameStateSerializerTests
         var events = GameStateSerializer.SerializeCombatEvents(engine);
         Assert.NotEmpty(events);
         Assert.True(events[0].Damage > 0);
+        Assert.Equal((int)DamageType.Physical, events[0].DamageType);
+        Assert.False(events[0].WasResisted);
+        Assert.False(events[0].WasWeakness);
 
         engine.Dispose();
     }

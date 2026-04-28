@@ -41,7 +41,7 @@ public sealed class NetworkMessageDrainer
             else
             {
                 if (evt.IsRanged)
-                    particles.SpawnProjectileTrail(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY);
+                    particles.SpawnProjectileTrail(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.DamageType);
                 particles.SpawnDamageNumber(evt.TargetX, evt.TargetY, evt.Damage, evt.TargetDied);
                 particles.SpawnHitSparks(evt.AttackerX, evt.AttackerY, evt.TargetX, evt.TargetY, evt.TargetDied);
             }

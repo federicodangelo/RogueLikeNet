@@ -1,3 +1,4 @@
+using RogueLikeNet.Core.Data;
 using RogueLikeNet.Protocol;
 using RogueLikeNet.Protocol.Messages;
 
@@ -169,7 +170,9 @@ public class WorldDeltaMsgTests
             TargetX = 3,
             TargetY = 4,
             Damage = 25,
-            TargetDied = true
+            TargetDied = true,
+            DamageType = (int)DamageType.Fire,
+            WasWeakness = true,
         };
         var data = NetSerializer.Serialize(msg);
         var result = NetSerializer.Deserialize<CombatEventMsg>(data);
@@ -179,6 +182,9 @@ public class WorldDeltaMsgTests
         Assert.Equal(4, result.TargetY);
         Assert.Equal(25, result.Damage);
         Assert.True(result.TargetDied);
+        Assert.Equal((int)DamageType.Fire, result.DamageType);
+        Assert.True(result.WasWeakness);
+        Assert.False(result.WasResisted);
     }
 
     [Fact]

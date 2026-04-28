@@ -238,6 +238,9 @@ public static class GameStateSerializer
             TargetDied = e.TargetDied,
             Blocked = e.Blocked,
             IsRanged = e.IsRanged,
+            DamageType = (int)e.DamageType,
+            WasResisted = e.WasResisted,
+            WasWeakness = e.WasWeakness,
         };
 
         var result = new CombatEventMsg[combatEvents.Count + spellEvents.Count];

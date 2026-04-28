@@ -414,6 +414,33 @@ public class SpellSystemTests
         Assert.True(dmgWithStaff > dmgWithout);
     }
 
+    [Fact]
+    public void CastSpell_PoisonAgainstImmuneNpc_ProducesZeroDamageMetadata()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Mage);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        int skeletonId = GameData.Instance.Npcs.GetNumericId("skeleton");
+        var monster = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = skeletonId, Health = 200, Attack = 0, Defense = 0, Speed = 0 });
+
+        player.Input.ActionType = ActionTypes.CastSpell;
+        player.Input.ItemSlot = SpellId("poison_cloud");
+        engine.Tick();
+
+        Assert.True(engine.Spells.LastTickEvents.Count > 0);
+        var evt = engine.Spells.LastTickEvents[0];
+        Assert.Equal(0, evt.Damage);
+        Assert.Equal(DamageType.Poison, evt.DamageType);
+        Assert.True(evt.WasResisted);
+        Assert.False(evt.WasWeakness);
+
+        ref var monsterAfter = ref engine.WorldMap.GetMonsterRef(monster.Id);
+        Assert.Equal(200, monsterAfter.Health.Current);
+    }
+
     #endregion
 
     #region Mana Regen Tests

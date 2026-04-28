@@ -131,8 +131,7 @@ public class SpellSystem
             return;
         }
 
-        int damage = Math.Max(1, spell.BaseDamage + bonusDamage);
-        DamageAtPosition(ref player, map, targetPos, damage);
+        DamageAtPosition(ref player, map, targetPos, spell, bonusDamage);
     }
 
     private void ApplyAoE(ref PlayerEntity player, WorldMap map, SpellDefinition spell, int bonusDamage)
@@ -162,7 +161,6 @@ public class SpellSystem
             return;
         }
 
-        int damage = Math.Max(1, spell.BaseDamage + bonusDamage);
         int radius = spell.AoERadius;
 
         // Damage all monsters within AoE radius of center
@@ -175,15 +173,13 @@ public class SpellSystem
                 int dy = Math.Abs(monster.Position.Y - centerPos.Y);
                 if (dx <= radius && dy <= radius)
                 {
-                    monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
-                    _events.Add(new CombatEvent
-                    {
-                        Attacker = player.Position,
-                        Target = monster.Position,
-                        Damage = damage,
-                        TargetDied = monster.IsDead,
-                        IsRanged = true,
-                    });
+                    var damage = DamageResolver.ResolveAgainstNpc(
+                        spell.BaseDamage + bonusDamage,
+                        0,
+                        spell.DamageType,
+                        monster.MonsterData.MonsterTypeId);
+                    monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
+                    _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead));
 
                     if (monster.IsDead)
                     {
@@ -198,7 +194,7 @@ public class SpellSystem
         }
     }
 
-    private void DamageAtPosition(ref PlayerEntity player, WorldMap map, Position target, int damage)
+    private void DamageAtPosition(ref PlayerEntity player, WorldMap map, Position target, SpellDefinition spell, int bonusDamage)
     {
         var chunk = map.GetChunkForWorldPos(target);
         if (chunk == null) return;
@@ -207,15 +203,13 @@ public class SpellSystem
         {
             if (monster.IsDead || monster.Position != target) continue;
 
-            monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
-            _events.Add(new CombatEvent
-            {
-                Attacker = player.Position,
-                Target = monster.Position,
-                Damage = damage,
-                TargetDied = monster.IsDead,
-                IsRanged = true,
-            });
+            var damage = DamageResolver.ResolveAgainstNpc(
+                spell.BaseDamage + bonusDamage,
+                0,
+                spell.DamageType,
+                monster.MonsterData.MonsterTypeId);
+            monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
+            _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead));
 
             if (monster.IsDead)
             {
@@ -227,6 +221,21 @@ public class SpellSystem
             }
             break;
         }
+    }
+
+    private static CombatEvent BuildCombatEvent(Position attacker, Position target, DamageResolution damage, bool targetDied)
+    {
+        return new CombatEvent
+        {
+            Attacker = attacker,
+            Target = target,
+            Damage = damage.Damage,
+            TargetDied = targetDied,
+            IsRanged = true,
+            DamageType = damage.DamageType,
+            WasResisted = damage.WasResisted,
+            WasWeakness = damage.WasWeakness,
+        };
     }
 
     private static Position? FindClosestTarget(WorldMap map, PlayerEntity player, int range)

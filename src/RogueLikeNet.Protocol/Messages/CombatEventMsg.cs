@@ -13,4 +13,7 @@ public class CombatEventMsg
     [Key(5)] public bool TargetDied { get; set; }
     [Key(6)] public bool Blocked { get; set; }
     [Key(7)] public bool IsRanged { get; set; }
+    [Key(8)] public int DamageType { get; set; }
+    [Key(9)] public bool WasResisted { get; set; }
+    [Key(10)] public bool WasWeakness { get; set; }
 }

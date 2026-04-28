@@ -15,9 +15,25 @@ public sealed class NpcDefinition : BaseDefinition
     public int Defense { get; set; }
     public int Speed { get; set; }
     public int XpReward { get; set; }
+    public DamageModifierDefinition[] DamageModifiers { get; set; } = [];
     public LootEntry[] LootTable { get; set; } = [];
 
+    public int GetDamageMultiplierBase100(DamageType damageType)
+    {
+        for (int i = 0; i < DamageModifiers.Length; i++)
+        {
+            if (DamageModifiers[i].DamageType == damageType)
+                return DamageModifiers[i].MultiplierBase100;
+        }
 
+        return 100;
+    }
+}
+
+public sealed class DamageModifierDefinition
+{
+    public DamageType DamageType { get; set; }
+    public int MultiplierBase100 { get; set; } = 100;
 }
 
 public sealed class LootEntry

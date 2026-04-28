@@ -51,11 +51,14 @@ public class CombatSystem
             int weaponRange = 1;
             bool isRanged = false;
             int ammoBonusDamage = 0;
+            DamageType damageType = DamageType.Physical;
             var weaponItem = player.Equipment.Hand;
             ItemDefinition? weaponDef = null;
             if (!weaponItem.IsNone)
             {
                 weaponDef = GameData.Instance.Items.Get(weaponItem.ItemTypeId);
+                if (weaponDef?.Weapon != null)
+                    damageType = weaponDef.Weapon.DamageType;
                 if (weaponDef?.Weapon != null && weaponDef.Weapon.Range > 1)
                 {
                     weaponRange = weaponDef.Weapon.Range;
@@ -80,7 +83,10 @@ public class CombatSystem
                     var ammoItem = player.Inventory.Items[ammoSlot];
                     var ammoDef = GameData.Instance.Items.Get(ammoItem.ItemTypeId);
                     if (ammoDef?.Ammo != null)
+                    {
                         ammoBonusDamage = ammoDef.Ammo.Damage;
+                        damageType = ammoDef.Ammo.DamageType;
+                    }
                 }
             }
 
@@ -154,17 +160,14 @@ public class CombatSystem
                 {
                     if (monster.IsDead || monster.Position != targetPosition) continue;
 
-                    int damage = Math.Max(1, totalAttack - monster.CombatStats.Defense);
-                    monster.Health.Current = Math.Max(0, monster.Health.Current - damage);
+                    var damage = DamageResolver.ResolveAgainstNpc(
+                        totalAttack,
+                        monster.CombatStats.Defense,
+                        damageType,
+                        monster.MonsterData.MonsterTypeId);
+                    monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
 
-                    _events.Add(new CombatEvent
-                    {
-                        Attacker = player.Position,
-                        Target = monster.Position,
-                        Damage = damage,
-                        TargetDied = monster.IsDead,
-                        IsRanged = isRanged,
-                    });
+                    _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead, isRanged));
 
                     if (monster.IsDead)
                     {
@@ -197,16 +200,10 @@ public class CombatSystem
                         int toolBonus = GetToolBonus(ref player, node.NodeData.RequiredToolType);
                         effectiveAttack += toolBonus;
 
-                        int damage = Math.Max(1, effectiveAttack - node.CombatStats.Defense);
-                        node.Health.Current = Math.Max(0, node.Health.Current - damage);
+                        var damage = DamageResolver.Resolve(effectiveAttack, node.CombatStats.Defense);
+                        node.Health.Current = Math.Max(0, node.Health.Current - damage.Damage);
 
-                        _events.Add(new CombatEvent
-                        {
-                            Attacker = player.Position,
-                            Target = node.Position,
-                            Damage = damage,
-                            TargetDied = node.IsDead
-                        });
+                        _events.Add(BuildCombatEvent(player.Position, node.Position, damage, node.IsDead));
 
                         if (node.IsDead)
                         {
@@ -291,16 +288,10 @@ public class CombatSystem
                         break;
                     }
 
-                    int damage = Math.Max(1, monster.CombatStats.Attack - player.CombatStats.Defense);
-                    player.Health.Current = Math.Max(0, player.Health.Current - damage);
+                    var damage = DamageResolver.Resolve(monster.CombatStats.Attack, player.CombatStats.Defense);
+                    player.Health.Current = Math.Max(0, player.Health.Current - damage.Damage);
 
-                    _events.Add(new CombatEvent
-                    {
-                        Attacker = monster.Position,
-                        Target = player.Position,
-                        Damage = damage,
-                        TargetDied = player.IsDead
-                    });
+                    _events.Add(BuildCombatEvent(monster.Position, player.Position, damage, player.IsDead));
 
                     monster.AttackDelay.Current = monster.AttackDelay.Interval;
                     break;
@@ -512,6 +503,26 @@ public class CombatSystem
             HasShop = hasShop,
         };
     }
+
+    private static CombatEvent BuildCombatEvent(
+        Position attacker,
+        Position target,
+        DamageResolution damage,
+        bool targetDied,
+        bool isRanged = false)
+    {
+        return new CombatEvent
+        {
+            Attacker = attacker,
+            Target = target,
+            Damage = damage.Damage,
+            TargetDied = targetDied,
+            IsRanged = isRanged,
+            DamageType = damage.DamageType,
+            WasResisted = damage.WasResisted,
+            WasWeakness = damage.WasWeakness,
+        };
+    }
 }
 
 public struct CombatEvent
@@ -522,6 +533,9 @@ public struct CombatEvent
     public bool TargetDied;
     public bool Blocked;
     public bool IsRanged;
+    public DamageType DamageType;
+    public bool WasResisted;
+    public bool WasWeakness;
 }
 
 public struct NpcInteractionEvent

@@ -1,6 +1,7 @@
 using Engine.Core;
 using Engine.Platform;
 using Engine.Rendering.Base;
+using RogueLikeNet.Core.Data;
 
 namespace RogueLikeNet.Client.Core.Rendering.Game;
 
@@ -76,6 +77,10 @@ public sealed class ParticleSystem
 
     /// <summary>Spawn a projectile trail from attacker to target (for ranged attacks).</summary>
     public void SpawnProjectileTrail(int attackerX, int attackerY, int targetX, int targetY)
+        => SpawnProjectileTrail(attackerX, attackerY, targetX, targetY, (int)DamageType.Physical);
+
+    /// <summary>Spawn a projectile trail from attacker to target (for ranged attacks).</summary>
+    public void SpawnProjectileTrail(int attackerX, int attackerY, int targetX, int targetY, int damageType)
     {
         float dx = targetX - attackerX;
         float dy = targetY - attackerY;
@@ -94,12 +99,22 @@ public sealed class ParticleSystem
                 VelocityX = 0f,
                 VelocityY = 0f,
                 Text = "·",
-                Color = new Color4(255, 220, 100, 255),
+                Color = GetProjectileTrailColor(damageType),
                 Life = 0.15f + (1f - t) * 0.3f, // tail fades first
                 Decay = 2.0f,
             });
         }
     }
+
+    private static Color4 GetProjectileTrailColor(int damageType) => (DamageType)damageType switch
+    {
+        DamageType.Fire => new Color4(255, 90, 30, 255),
+        DamageType.Ice => new Color4(90, 180, 255, 255),
+        DamageType.Lightning => new Color4(255, 245, 80, 255),
+        DamageType.Poison => new Color4(90, 220, 80, 255),
+        DamageType.Magic => new Color4(180, 120, 255, 255),
+        _ => new Color4(255, 220, 100, 255),
+    };
 
     /// <summary>Update all particles. Call once per frame with deltaTime in seconds.</summary>
     public void Update(float dt)

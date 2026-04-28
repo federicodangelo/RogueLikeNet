@@ -65,6 +65,20 @@
         "defense": 2,
         "speed": 3,
         "xpReward": 15,
+        "damageModifiers": [
+            {
+                "damageType": "Physical",
+                "multiplierBase100": 75
+            },
+            {
+                "damageType": "Fire",
+                "multiplierBase100": 125
+            },
+            {
+                "damageType": "Poison",
+                "multiplierBase100": 0
+            }
+        ],
         "lootTable": [
             {
                 "itemId": "bone",
@@ -90,6 +104,20 @@
         "defense": 8,
         "speed": 1,
         "xpReward": 100,
+        "damageModifiers": [
+            {
+                "damageType": "Fire",
+                "multiplierBase100": 50
+            },
+            {
+                "damageType": "Ice",
+                "multiplierBase100": 150
+            },
+            {
+                "damageType": "Poison",
+                "multiplierBase100": 75
+            }
+        ],
         "lootTable": [
             {
                 "itemId": "gold_coin",
@@ -121,6 +149,16 @@
         "defense": 0,
         "speed": 2,
         "xpReward": 5,
+        "damageModifiers": [
+            {
+                "damageType": "Poison",
+                "multiplierBase100": 50
+            },
+            {
+                "damageType": "Lightning",
+                "multiplierBase100": 125
+            }
+        ],
         "lootTable": [
             {
                 "itemId": "slime_gel",
@@ -184,6 +222,16 @@
         "defense": 2,
         "speed": 1,
         "xpReward": 12,
+        "damageModifiers": [
+            {
+                "damageType": "Poison",
+                "multiplierBase100": 50
+            },
+            {
+                "damageType": "Fire",
+                "multiplierBase100": 125
+            }
+        ],
         "lootTable": [
             {
                 "itemId": "bone",

@@ -249,6 +249,33 @@ public class RangedCombatTests
     }
 
     [Fact]
+    public void RangedAttack_ElementalAmmo_AppliesNpcWeaknessMetadata()
+    {
+        using var engine = CreateEngine();
+        var (sx, sy, _) = engine.FindSpawnPosition();
+        var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Ranger);
+        ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
+
+        player.Equipment[(int)EquipSlot.Hand] = new ItemData { ItemTypeId = ItemId("wooden_bow"), StackCount = 1 };
+        player.Inventory.Items.Add(new ItemData { ItemTypeId = ItemId("fire_arrow"), StackCount = 10 });
+        ActiveEffectsSystem.RecalculatePlayerStats(ref player);
+
+        int skeletonId = GameData.Instance.Npcs.GetNumericId("skeleton");
+        engine.SpawnMonster(Position.FromCoords(sx + 2, sy, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = skeletonId, Health = 200, Attack = 0, Defense = 0, Speed = 0 });
+
+        player.Input.ActionType = ActionTypes.Attack;
+        engine.Tick();
+
+        Assert.Single(engine.Combat.LastTickEvents);
+        var evt = engine.Combat.LastTickEvents[0];
+        Assert.Equal(DamageType.Fire, evt.DamageType);
+        Assert.True(evt.WasWeakness);
+        Assert.False(evt.WasResisted);
+        Assert.True(evt.Damage > 0);
+    }
+
+    [Fact]
     public void RangedAttack_KillsMonster_SetsTargetDied()
     {
         using var engine = CreateEngine();
