@@ -61,6 +61,9 @@
         "declineText": "We'll find someone braver, then.",
         "giverRole": "guard",
         "minPlayerLevel": 3,
+        "prerequisiteQuestIds": [
+            "q_craft_iron_sword"
+        ],
         "objectives": [
             {
                 "type": "kill",
@@ -100,6 +103,145 @@
             "experience": 150,
             "gold": 50,
             "items": []
+        }
+    },
+    {
+        "id": "q_combat_wolves",
+        "title": "Wolves at the Door",
+        "description": "Wolves have grown bold near the village. Thin the pack before someone gets hurt.",
+        "completionText": "The howling has stopped. Folks can sleep again.",
+        "declineText": "Then we'll bar the gates and pray.",
+        "giverRole": "villager",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "wolf",
+                "count": 6,
+                "description": "Slay 6 wolves"
+            }
+        ],
+        "rewards": {
+            "experience": 160,
+            "gold": 55,
+            "items": [
+                {
+                    "itemId": "leather_armor",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_slime_overflow",
+        "title": "Gel Harvest",
+        "description": "My reagent jars are empty. Slay slimes and bring me their gel as proof.",
+        "completionText": "Excellent! These will brew a fine batch of potions.",
+        "declineText": "Then I'll wait. Slimes are patient too.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "slime",
+                "count": 10,
+                "description": "Slay 10 slimes"
+            }
+        ],
+        "rewards": {
+            "experience": 140,
+            "gold": 60,
+            "items": [
+                {
+                    "itemId": "slime_gel",
+                    "count": 3
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_zombies",
+        "title": "Restless Dead",
+        "description": "Zombies are shambling out of the sewers. Put them down before they reach the streets.",
+        "completionText": "The stench will fade. The town owes you a debt.",
+        "declineText": "Then we lock our doors tonight.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "zombie",
+                "count": 6,
+                "description": "Destroy 6 zombies"
+            }
+        ],
+        "rewards": {
+            "experience": 280,
+            "gold": 110,
+            "items": [
+                {
+                    "itemId": "antidote",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_giant_spiders",
+        "title": "Hunters of the Hollow",
+        "description": "Larger spiders have moved into the deep woods. Cull them before they spread.",
+        "completionText": "Brave work. The roads will stay open another season.",
+        "declineText": "Mind your step in the woods, then.",
+        "giverRole": "guard",
+        "minPlayerLevel": 5,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "spider",
+                "count": 12,
+                "description": "Kill 12 spiders"
+            }
+        ],
+        "rewards": {
+            "experience": 380,
+            "gold": 150,
+            "items": [
+                {
+                    "itemId": "chain_mail",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_combat_dragon_hunt",
+        "title": "The Last Dragon",
+        "description": "A dragon has claimed the volcano. Slay it and prove yourself a legend.",
+        "completionText": "You are spoken of in songs already. Take this — you have earned it.",
+        "declineText": "A wise refusal. Few return from such a hunt.",
+        "giverRole": "guard",
+        "minPlayerLevel": 9,
+        "objectives": [
+            {
+                "type": "kill",
+                "targetId": "dragon",
+                "count": 1,
+                "description": "Slay the dragon"
+            }
+        ],
+        "rewards": {
+            "experience": 1200,
+            "gold": 500,
+            "items": [
+                {
+                    "itemId": "mithril_sword",
+                    "count": 1
+                },
+                {
+                    "itemId": "gem_ruby",
+                    "count": 2
+                }
+            ]
         }
     }
 ]

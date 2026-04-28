@@ -74,5 +74,328 @@
                 }
             ]
         }
+    },
+    {
+        "id": "q_gather_wood",
+        "title": "Lumber for the Lodge",
+        "description": "The lodge needs lumber before the rains. Chop wood from the trees outside.",
+        "completionText": "Fine timber. The roof will hold another winter.",
+        "declineText": "Then I'll get wet, I suppose.",
+        "giverRole": "villager",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "tree",
+                "count": 12,
+                "description": "Chop 12 wood from trees"
+            }
+        ],
+        "rewards": {
+            "experience": 70,
+            "gold": 30,
+            "items": []
+        }
+    },
+    {
+        "id": "q_gather_coal",
+        "title": "Feed the Furnace",
+        "description": "My furnace runs cold without coal. Bring some from the deposits in the hills.",
+        "completionText": "That'll keep the forge hot for weeks. Good work.",
+        "declineText": "Then the iron stays unrefined.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "coal_deposit",
+                "count": 6,
+                "description": "Mine 6 coal from coal deposits"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 55,
+            "items": [
+                {
+                    "itemId": "iron_ingot",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_gather_sand",
+        "title": "Sand for the Glassworks",
+        "description": "The glassblower needs fine sand. Gather some from the river deposits.",
+        "completionText": "Pure as a windowpane. Thank you.",
+        "declineText": "Then the windows stay shuttered.",
+        "giverRole": "villager",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "sand_deposit",
+                "count": 10,
+                "description": "Gather 10 sand from sand deposits"
+            }
+        ],
+        "rewards": {
+            "experience": 160,
+            "gold": 70,
+            "items": [
+                {
+                    "itemId": "glass",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_gather_clay",
+        "title": "Bricks and Mortar",
+        "description": "We're laying new walls. Bring me clay from the riverbank deposits.",
+        "completionText": "Good clay. The walls will be standing long after we're gone.",
+        "declineText": "Then the walls will wait.",
+        "giverRole": "villager",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "clay_deposit",
+                "count": 10,
+                "description": "Gather 10 clay from clay deposits"
+            }
+        ],
+        "rewards": {
+            "experience": 160,
+            "gold": 70,
+            "items": []
+        }
+    },
+    {
+        "id": "q_gather_gold",
+        "title": "A Touch of Gold",
+        "description": "Coin clinks loudest in gold. Bring me ore from the gold rocks deeper in the hills.",
+        "completionText": "Fine ore — refined gold by morning. Take your share.",
+        "declineText": "Then the coffers stay light.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "gold_rock",
+                "count": 6,
+                "description": "Mine 6 gold ore from gold rocks"
+            }
+        ],
+        "rewards": {
+            "experience": 260,
+            "gold": 200,
+            "items": []
+        }
+    },
+    {
+        "id": "q_gather_mithril",
+        "title": "Whisper of Mithril",
+        "description": "Only mithril can hold the edge I need. Find it in the deep caverns.",
+        "completionText": "This is the finest ore I have ever held. Forge ahead.",
+        "declineText": "A pity. Mithril rewards the bold.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 6,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "mithril_rock",
+                "count": 4,
+                "description": "Mine 4 mithril ore from mithril rocks"
+            }
+        ],
+        "rewards": {
+            "experience": 480,
+            "gold": 260,
+            "items": []
+        }
+    },
+    {
+        "id": "q_gather_adamantite",
+        "title": "Bones of the Earth",
+        "description": "Adamantite is harder than any blade. Bring me what you can chip from its veins.",
+        "completionText": "Adamantite — the world's bones. You have my respect.",
+        "declineText": "Few have the strength. Return when you do.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 8,
+        "objectives": [
+            {
+                "type": "gather",
+                "targetId": "adamantite_rock",
+                "count": 4,
+                "description": "Mine 4 adamantite ore from adamantite rocks"
+            }
+        ],
+        "rewards": {
+            "experience": 700,
+            "gold": 380,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_corn",
+        "title": "Corn for the Mill",
+        "description": "The mill is hungry. Harvest corn from the fields and we'll grind it together.",
+        "completionText": "Sweet corn — the kettle's already on.",
+        "declineText": "The crows will be glad of you not coming.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "corn",
+                "count": 6,
+                "description": "Harvest 6 corn"
+            }
+        ],
+        "rewards": {
+            "experience": 90,
+            "gold": 35,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_carrot",
+        "title": "Carrot Crop",
+        "description": "Carrots ripen fast and rot faster. Pull them before the frost.",
+        "completionText": "Crisp and orange. The stew tonight will be a feast.",
+        "declineText": "Then they go to the rabbits.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "carrot",
+                "count": 8,
+                "description": "Harvest 8 carrots"
+            }
+        ],
+        "rewards": {
+            "experience": 90,
+            "gold": 35,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_potato",
+        "title": "Spuds and Sweat",
+        "description": "My back can't take another bend. Dig up the potatoes for me.",
+        "completionText": "A sack of fine potatoes — winter's secured.",
+        "declineText": "Then the spuds rot in the row.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "potato",
+                "count": 10,
+                "description": "Harvest 10 potatoes"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 55,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_berry",
+        "title": "Berry Picker",
+        "description": "The berry bushes are heavy. Pick a basket before the birds get them.",
+        "completionText": "Sweet as summer. The jam will be famous.",
+        "declineText": "Then the birds dine well.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "berry",
+                "count": 12,
+                "description": "Harvest 12 berries"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 55,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_fiber",
+        "title": "Herb Garden",
+        "description": "My poultices need herb fiber. Harvest the herb beds for me.",
+        "completionText": "Strong stems and sweet leaf. Perfect.",
+        "declineText": "Then the sick wait longer.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "fiber",
+                "count": 10,
+                "description": "Harvest 10 fiber"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 55,
+            "items": [
+                {
+                    "itemId": "health_potion_small",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_harvest_pumpkin",
+        "title": "Pumpkin Patch",
+        "description": "The pumpkins are fat and orange. Bring them in before they split.",
+        "completionText": "Splendid pumpkins — the festival will be a sight.",
+        "declineText": "Then the festival has no centerpiece.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "pumpkin",
+                "count": 6,
+                "description": "Harvest 6 pumpkins"
+            }
+        ],
+        "rewards": {
+            "experience": 180,
+            "gold": 80,
+            "items": []
+        }
+    },
+    {
+        "id": "q_harvest_apple",
+        "title": "Apple Orchard",
+        "description": "The orchard is in full fruit. Pick apples before the wind takes them.",
+        "completionText": "A fine bushel — pies for a fortnight.",
+        "declineText": "Then the wind eats well tonight.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "harvest",
+                "targetId": "apple",
+                "count": 10,
+                "description": "Harvest 10 apples"
+            }
+        ],
+        "rewards": {
+            "experience": 180,
+            "gold": 80,
+            "items": []
+        }
     }
 ]

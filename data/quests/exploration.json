@@ -47,5 +47,206 @@
                 }
             ]
         }
+    },
+    {
+        "id": "q_reach_sewer",
+        "title": "Down the Drain",
+        "description": "Something is fouling the wells. Find the sewer entrance and report back.",
+        "completionText": "You smell terrible — but the report is gold. Thank you.",
+        "declineText": "Then we drink rainwater for now.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "sewer",
+                "count": 1,
+                "description": "Reach the sewer biome"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 55,
+            "items": [
+                {
+                    "itemId": "antidote",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_reach_fungal",
+        "title": "Spores and Shadows",
+        "description": "My research needs samples from the fungal caves. Reach them and live to tell.",
+        "completionText": "Spores everywhere — magnificent. Take this for your trouble.",
+        "declineText": "Then the spores keep their secrets.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "fungal",
+                "count": 1,
+                "description": "Reach the fungal biome"
+            }
+        ],
+        "rewards": {
+            "experience": 200,
+            "gold": 80,
+            "items": [
+                {
+                    "itemId": "mana_potion",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_reach_stone",
+        "title": "Stone Patrol",
+        "description": "The stone hills haven't been mapped this season. Walk them for me.",
+        "completionText": "Good map. The captain will be pleased.",
+        "declineText": "Then the maps stay blank.",
+        "giverRole": "guard",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "stone",
+                "count": 1,
+                "description": "Reach the stone biome"
+            }
+        ],
+        "rewards": {
+            "experience": 260,
+            "gold": 110,
+            "items": []
+        }
+    },
+    {
+        "id": "q_reach_ruined",
+        "title": "Echoes of the Fallen",
+        "description": "Old stories speak of ruins to the east. Reach them and bring back word.",
+        "completionText": "You walked where the ancients lay. The tales were true.",
+        "declineText": "Then the past stays buried.",
+        "giverRole": "villager",
+        "minPlayerLevel": 5,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "ruined",
+                "count": 1,
+                "description": "Reach the ruined biome"
+            }
+        ],
+        "rewards": {
+            "experience": 320,
+            "gold": 140,
+            "items": [
+                {
+                    "itemId": "health_potion_medium",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_reach_arcane",
+        "title": "Threads of Power",
+        "description": "Ley-lines pulse beyond the eastern ridge. Reach the arcane wilds and report.",
+        "completionText": "You felt the weave too, didn't you? Take this — it's hummed since you arrived.",
+        "declineText": "Then the weave keeps its secrets.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 6,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "arcane",
+                "count": 1,
+                "description": "Reach the arcane biome"
+            }
+        ],
+        "rewards": {
+            "experience": 420,
+            "gold": 180,
+            "items": [
+                {
+                    "itemId": "mana_potion",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_reach_ice",
+        "title": "Cold Country",
+        "description": "The northern ice fields swallowed our last patrol. Reach them and don't get lost.",
+        "completionText": "Frostbitten but alive. That's a true scout.",
+        "declineText": "A wise refusal. The cold is patient.",
+        "giverRole": "guard",
+        "minPlayerLevel": 7,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "ice",
+                "count": 1,
+                "description": "Reach the ice biome"
+            }
+        ],
+        "rewards": {
+            "experience": 520,
+            "gold": 220,
+            "items": []
+        }
+    },
+    {
+        "id": "q_reach_lava",
+        "title": "Across the Ash",
+        "description": "The lava plains hide a ruin worth seeing. Reach them and live to draw the map.",
+        "completionText": "You walked through fire. Few do.",
+        "declineText": "Then the ash takes its secrets.",
+        "giverRole": "guard",
+        "minPlayerLevel": 8,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "lava",
+                "count": 1,
+                "description": "Reach the lava biome"
+            }
+        ],
+        "rewards": {
+            "experience": 640,
+            "gold": 280,
+            "items": []
+        }
+    },
+    {
+        "id": "q_reach_infernal",
+        "title": "Gates of the Infernal",
+        "description": "Beyond the lava plains lies the infernal — open the door, but do not stay long.",
+        "completionText": "You returned. Few who reach the infernal ever do.",
+        "declineText": "Wisdom. The infernal does not bargain.",
+        "giverRole": "guard",
+        "minPlayerLevel": 9,
+        "objectives": [
+            {
+                "type": "reach",
+                "targetId": "infernal",
+                "count": 1,
+                "description": "Reach the infernal biome"
+            }
+        ],
+        "rewards": {
+            "experience": 800,
+            "gold": 360,
+            "items": [
+                {
+                    "itemId": "health_potion_medium",
+                    "count": 3
+                }
+            ]
+        }
     }
 ]

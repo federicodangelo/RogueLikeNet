@@ -1,5 +1,30 @@
 [
     {
+        "id": "q_craft_iron_helmet",
+        "title": "First the Head",
+        "description": "Before a sword, a smith makes a helm. Show me an iron helmet.",
+        "completionText": "Solid line, even rivets. You're ready for blade work.",
+        "declineText": "Helms first. Always.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 2,
+        "prerequisiteQuestIds": [
+            "q_gather_iron_ore"
+        ],
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "iron_helmet",
+                "count": 1,
+                "description": "Craft 1 iron helmet"
+            }
+        ],
+        "rewards": {
+            "experience": 200,
+            "gold": 80,
+            "items": []
+        }
+    },
+    {
         "id": "q_craft_iron_sword",
         "title": "Proof of Skill",
         "description": "Show me you can wield a hammer. Craft an iron sword.",
@@ -7,6 +32,9 @@
         "declineText": "Come back when you're ready to prove yourself.",
         "giverRole": "blacksmith",
         "minPlayerLevel": 2,
+        "prerequisiteQuestIds": [
+            "q_craft_iron_helmet"
+        ],
         "objectives": [
             {
                 "type": "craft",
@@ -17,6 +45,209 @@
         ],
         "rewards": {
             "experience": 250,
+            "gold": 100,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_iron_shield",
+        "title": "A Smith's Shield",
+        "description": "Forge me an iron shield. The patrol could use another.",
+        "completionText": "True curve, true weight. Take the patrol's thanks.",
+        "declineText": "Shields don't forge themselves.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "iron_shield",
+                "count": 1,
+                "description": "Craft 1 iron shield"
+            }
+        ],
+        "rewards": {
+            "experience": 240,
+            "gold": 100,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_chain_mail",
+        "title": "Linked and Loaded",
+        "description": "Chain mail keeps a blade off the bone. Forge me a set.",
+        "completionText": "Tight links, no gaps. Splendid work.",
+        "declineText": "Then the patrol goes lighter than I'd like.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "chain_mail",
+                "count": 1,
+                "description": "Craft 1 chain mail"
+            }
+        ],
+        "rewards": {
+            "experience": 320,
+            "gold": 140,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_steel_sword",
+        "title": "Steel Calling",
+        "description": "Iron is past you now. Forge a steel sword and show me what you've learned.",
+        "completionText": "The temper sings. You've outgrown my forge.",
+        "declineText": "Steel waits for the patient.",
+        "giverRole": "blacksmith",
+        "minPlayerLevel": 5,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "steel_sword",
+                "count": 1,
+                "description": "Craft 1 steel sword"
+            }
+        ],
+        "rewards": {
+            "experience": 420,
+            "gold": 180,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_health_potion",
+        "title": "First Brew",
+        "description": "Every apprentice starts with a healing draught. Brew me one.",
+        "completionText": "A clean color, a clean smell. You'll do.",
+        "declineText": "Then return when your hands are steadier.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "health_potion_small",
+                "count": 1,
+                "description": "Craft 1 small health potion"
+            }
+        ],
+        "rewards": {
+            "experience": 90,
+            "gold": 40,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_mana_potion",
+        "title": "Stirring the Weave",
+        "description": "Brew a mana potion. The weave teaches the patient.",
+        "completionText": "A bright cobalt — the weave is in it. Well done.",
+        "declineText": "The weave is patient. Return when you are.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "mana_potion",
+                "count": 1,
+                "description": "Craft 1 mana potion"
+            }
+        ],
+        "rewards": {
+            "experience": 220,
+            "gold": 100,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_antidote",
+        "title": "Against the Bite",
+        "description": "Brew an antidote. Spider season is coming.",
+        "completionText": "Bitter and bright — perfect. Carry one yourself.",
+        "declineText": "Then the bitten suffer.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "antidote",
+                "count": 1,
+                "description": "Craft 1 antidote"
+            }
+        ],
+        "rewards": {
+            "experience": 280,
+            "gold": 120,
+            "items": [
+                {
+                    "itemId": "antidote",
+                    "count": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_craft_bread",
+        "title": "First Loaf",
+        "description": "A traveler should know how to bake. Make me a loaf of bread.",
+        "completionText": "Crust like a copper coin. Beautiful.",
+        "declineText": "Then you'll go hungry on the road.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "bread",
+                "count": 1,
+                "description": "Bake 1 bread"
+            }
+        ],
+        "rewards": {
+            "experience": 70,
+            "gold": 30,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_stew",
+        "title": "Tonight's Special",
+        "description": "Cook a hearty stew. The patrons are hungry and impatient.",
+        "completionText": "They licked the bowls clean. You're a cook now.",
+        "declineText": "Then they'll grumble all night.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "stew",
+                "count": 1,
+                "description": "Cook 1 stew"
+            }
+        ],
+        "rewards": {
+            "experience": 140,
+            "gold": 60,
+            "items": []
+        }
+    },
+    {
+        "id": "q_craft_pumpkin_pie",
+        "title": "Festival Pie",
+        "description": "The harvest festival needs a pumpkin pie centerpiece. Bake one for the table.",
+        "completionText": "Golden crust, sweet filling — the festival owes you a song.",
+        "declineText": "Then the table sits bare.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 3,
+        "objectives": [
+            {
+                "type": "craft",
+                "targetId": "pumpkin_pie",
+                "count": 1,
+                "description": "Bake 1 pumpkin pie"
+            }
+        ],
+        "rewards": {
+            "experience": 220,
             "gold": 100,
             "items": []
         }

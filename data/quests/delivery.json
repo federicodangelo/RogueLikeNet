@@ -47,5 +47,213 @@
             "gold": 70,
             "items": []
         }
+    },
+    {
+        "id": "q_deliver_eggs",
+        "title": "Breakfast Run",
+        "description": "Hens won't lay if I keep cooking what I have. Bring me eggs from the farms.",
+        "completionText": "Fresh eggs — the morning rush is saved.",
+        "declineText": "Then porridge it is. Again.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "egg",
+                "count": 6,
+                "description": "Deliver 6 eggs"
+            }
+        ],
+        "rewards": {
+            "experience": 60,
+            "gold": 30,
+            "items": []
+        }
+    },
+    {
+        "id": "q_deliver_milk",
+        "title": "Milk Run",
+        "description": "The cooks need milk by noon. Bring three jugs and there's a copper in it.",
+        "completionText": "Cool and fresh — perfect.",
+        "declineText": "Then we serve it black.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "milk",
+                "count": 3,
+                "description": "Deliver 3 milk"
+            }
+        ],
+        "rewards": {
+            "experience": 60,
+            "gold": 30,
+            "items": []
+        }
+    },
+    {
+        "id": "q_deliver_animal_feed",
+        "title": "Hungry Herd",
+        "description": "My livestock are bawling. Bring me feed from the silo.",
+        "completionText": "Quiet pens at last. Thank you, friend.",
+        "declineText": "Then the noise carries to dawn.",
+        "giverRole": "farmer",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "animal_feed",
+                "count": 4,
+                "description": "Deliver 4 animal feed"
+            }
+        ],
+        "rewards": {
+            "experience": 100,
+            "gold": 55,
+            "items": []
+        }
+    },
+    {
+        "id": "q_deliver_mushrooms",
+        "title": "Forest Pickings",
+        "description": "My stew lacks depth without mushrooms. Forage me a basket.",
+        "completionText": "Earthy and fine — the stew sings tonight.",
+        "declineText": "Bland soup, then.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "mushroom",
+                "count": 4,
+                "description": "Deliver 4 mushrooms"
+            }
+        ],
+        "rewards": {
+            "experience": 110,
+            "gold": 55,
+            "items": []
+        }
+    },
+    {
+        "id": "q_deliver_slime_gel",
+        "title": "Reagents in Short Supply",
+        "description": "My potion stock runs low without slime gel. Bring me five.",
+        "completionText": "Five jars, five potions. Wonderful.",
+        "declineText": "Then the sick stay sick.",
+        "giverRole": "alchemist",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "slime_gel",
+                "count": 5,
+                "description": "Deliver 5 slime gel"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 60,
+            "items": [
+                {
+                    "itemId": "health_potion_small",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_merchant_wool",
+        "title": "Bolts and Bales",
+        "description": "The weavers cry out for wool. Bring me five bales for the next caravan.",
+        "completionText": "Fine wool — the weavers will pay well for this.",
+        "declineText": "Then the looms stay still.",
+        "giverRole": "merchant",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "wool",
+                "count": 5,
+                "description": "Deliver 5 wool"
+            }
+        ],
+        "rewards": {
+            "experience": 130,
+            "gold": 90,
+            "items": []
+        }
+    },
+    {
+        "id": "q_merchant_silk",
+        "title": "Silken Profits",
+        "description": "The northern markets pay for silk. Three bolts and the deal is yours.",
+        "completionText": "Smooth as river-water. The northern lords will love it.",
+        "declineText": "Then someone else takes the profit.",
+        "giverRole": "merchant",
+        "minPlayerLevel": 4,
+        "objectives": [
+            {
+                "type": "deliver",
+                "targetId": "silk_cloth",
+                "count": 3,
+                "description": "Deliver 3 silk cloth"
+            }
+        ],
+        "rewards": {
+            "experience": 240,
+            "gold": 180,
+            "items": []
+        }
+    },
+    {
+        "id": "q_collect_apples",
+        "title": "Stocked Pantry",
+        "description": "A good inn keeps apples on the shelf at all times. Show me you keep ten on hand.",
+        "completionText": "A well-stocked traveler is a welcome guest. Have a drink on the house.",
+        "declineText": "Come back when your pack is fuller.",
+        "giverRole": "innkeeper",
+        "minPlayerLevel": 1,
+        "objectives": [
+            {
+                "type": "collect",
+                "targetId": "apple",
+                "count": 10,
+                "description": "Hold 10 apples"
+            }
+        ],
+        "rewards": {
+            "experience": 50,
+            "gold": 25,
+            "items": [
+                {
+                    "itemId": "bread",
+                    "count": 2
+                }
+            ]
+        }
+    },
+    {
+        "id": "q_collect_arrows",
+        "title": "Quiver Full",
+        "description": "A scout that runs out of arrows is a scout that doesn't return. Carry twenty at all times.",
+        "completionText": "Now you're properly equipped. The patrol's yours when you want it.",
+        "declineText": "Come back when you can prove it.",
+        "giverRole": "guard",
+        "minPlayerLevel": 2,
+        "objectives": [
+            {
+                "type": "collect",
+                "targetId": "iron_arrow",
+                "count": 20,
+                "description": "Hold 20 iron arrows"
+            }
+        ],
+        "rewards": {
+            "experience": 110,
+            "gold": 50,
+            "items": []
+        }
     }
 ]
