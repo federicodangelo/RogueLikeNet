@@ -14,6 +14,9 @@ public class EntitySerializerTests : IDisposable
     private readonly GameEngine _engine;
     private const int Z = Position.DefaultZ;
 
+    private static MonsterData GeneratedMonster(string id, int difficulty) =>
+        NpcRegistry.GenerateMonsterData(GameData.Instance.Npcs.Get(id)!, difficulty);
+
     public EntitySerializerTests()
     {
         _engine = new GameEngine(42, _gen);
@@ -34,7 +37,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void Monster_RoundTrip_PreservesData()
     {
-        var md = new MonsterData { MonsterTypeId = 7, Health = 50, Attack = 12, Defense = 4, Speed = 8, AttackSpeed = 2 };
+        var md = GeneratedMonster("orc", 3);
         var monster = _engine.SpawnMonster(Position.FromCoords(1, 2, Z), md);
 
         // Tweak runtime state so we can verify it survives the round-trip
@@ -61,7 +64,9 @@ public class EntitySerializerTests : IDisposable
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"Monster\"", json);
+        Assert.Contains("\"MonsterDifficulty\":3", json);
         Assert.Contains("\"StatusCount\":1", json);
+        Assert.DoesNotContain("\"MonsterHealth\"", json);
 
         // Deserialize into a fresh engine
         using var engine2 = new GameEngine(42, _gen);
@@ -73,15 +78,16 @@ public class EntitySerializerTests : IDisposable
         var found = chunk2.Monsters.ToArray().FirstOrDefault(m => m.Position.X == 1 && m.Position.Y == 2 && m.Position.Z == Z);
         Assert.NotEqual(0, found.Id);
 
-        Assert.Equal(7, found!.MonsterData.MonsterTypeId);
-        Assert.Equal(50, found.MonsterData.Health);
-        Assert.Equal(12, found.MonsterData.Attack);
-        Assert.Equal(4, found.MonsterData.Defense);
-        Assert.Equal(8, found.MonsterData.Speed);
-        Assert.Equal(2, found.MonsterData.AttackSpeed);
+        Assert.Equal(md.MonsterTypeId, found!.MonsterData.MonsterTypeId);
+        Assert.Equal(3, found.MonsterData.Difficulty);
+        Assert.Equal(md.Health, found.MonsterData.Health);
+        Assert.Equal(md.Attack, found.MonsterData.Attack);
+        Assert.Equal(md.Defense, found.MonsterData.Defense);
+        Assert.Equal(md.Speed, found.MonsterData.Speed);
+        Assert.Equal(md.AttackSpeed, found.MonsterData.AttackSpeed);
 
         Assert.Equal(30, found.Health.Current);
-        Assert.Equal(50, found.Health.Max);
+        Assert.Equal(md.Health, found.Health.Max);
 
         Assert.Equal(2, found.AI.StateId);
         Assert.Equal(10, found.AI.PatrolX);
@@ -97,6 +103,30 @@ public class EntitySerializerTests : IDisposable
         Assert.Equal(11, restoredEffect.TickCounter);
         Assert.Equal(40, restoredEffect.RemainingTicks);
         Assert.Equal(99, restoredEffect.SourcePlayerEntityId);
+    }
+
+    [Fact]
+    public void Monster_LegacySnapshotWithoutDifficulty_RemainsSupported()
+    {
+        var md = GeneratedMonster("goblin", 2);
+        string json =
+            $"[{{\"Type\":\"Monster\",\"X\":1,\"Y\":2,\"Z\":{Z},\"MonsterTypeId\":{md.MonsterTypeId},\"MonsterHealth\":{md.Health},\"MonsterAttack\":{md.Attack},\"MonsterDefense\":{md.Defense},\"MonsterSpeed\":{md.Speed},\"MonsterAttackSpeed\":{md.AttackSpeed},\"HealthCurrent\":7}}]";
+
+        using var engine2 = new GameEngine(42, _gen);
+        engine2.EnsureChunkLoaded(ChunkPosition.FromCoords(0, 0, Z));
+        EntitySerializer.DeserializeEntities(json, engine2);
+
+        var chunk2 = engine2.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
+        var found = chunk2.Monsters.ToArray().FirstOrDefault(m => m.Position.X == 1 && m.Position.Y == 2 && m.Position.Z == Z);
+        Assert.NotEqual(0, found.Id);
+        Assert.Equal(md.MonsterTypeId, found!.MonsterData.MonsterTypeId);
+        Assert.Equal(2, found.MonsterData.Difficulty);
+        Assert.Equal(md.Health, found.MonsterData.Health);
+        Assert.Equal(md.Attack, found.MonsterData.Attack);
+        Assert.Equal(md.Defense, found.MonsterData.Defense);
+        Assert.Equal(md.Speed, found.MonsterData.Speed);
+        Assert.Equal(md.AttackSpeed, found.MonsterData.AttackSpeed);
+        Assert.Equal(7, found.Health.Current);
     }
 
     [Fact]
@@ -199,7 +229,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void MultipleEntityTypes_RoundTrip()
     {
-        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5, AttackSpeed = 1 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), GeneratedMonster("goblin", 1));
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
         _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnTownNpc(Position.FromCoords(6, 6, Z), "Vendor", 6, 6, 2);
@@ -286,7 +316,7 @@ public class EntitySerializerTests : IDisposable
     {
         // 1. Create a world, spawn entities, serialize the chunk
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5, AttackSpeed = 1 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), GeneratedMonster("goblin", 1));
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
         _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnTownNpc(Position.FromCoords(4, 4, Z), "Blacksmith", 4, 4, 3);

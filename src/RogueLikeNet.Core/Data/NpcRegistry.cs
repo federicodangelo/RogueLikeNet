@@ -40,6 +40,7 @@ public sealed class NpcRegistry : BaseRegistry<NpcDefinition>
         return new MonsterData
         {
             MonsterTypeId = def.NumericId,
+            Difficulty = difficulty,
             Health = def.Health + bonusHealth,
             Attack = def.Attack + bonusAttack,
             Defense = def.Defense + bonusDefense,

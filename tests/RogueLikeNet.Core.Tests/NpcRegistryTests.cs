@@ -51,6 +51,7 @@ public class NpcRegistryTests
         Assert.Equal(3, data.Defense);  // 3 + 0/2 = 3
         Assert.Equal(2, data.Speed);    // 2 + 0 = 2
         Assert.Equal(1, data.AttackSpeed);
+        Assert.Equal(0, data.Difficulty);
     }
 
     [Fact]
@@ -72,6 +73,7 @@ public class NpcRegistryTests
         Assert.Equal(5, data.Defense);  // 3 + 4/2 = 3 + 2 = 5
         Assert.Equal(2, data.Speed);    // 2 + 0 = 2
         Assert.Equal(1, data.AttackSpeed);
+        Assert.Equal(4, data.Difficulty);
     }
 
     [Fact]

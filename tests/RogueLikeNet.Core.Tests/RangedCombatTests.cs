@@ -427,20 +427,20 @@ public class RangedCombatTests
     [Fact]
     public void ShieldBlock_MonsterAttackBlocked_NoDamage()
     {
-        // Shield block is probabilistic, so we test with a very high block chance
-        // by equipping a strong shield and verifying at least one block occurs over many attempts
+        // Shield block is probabilistic, so use a high-tier shield and a fast-attacking monster
+        // to verify that the post-attack-speed-split combat loop still emits blocked hits.
         using var engine = CreateEngine();
         var (sx, sy, _) = engine.FindSpawnPosition();
         var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Warrior);
         ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
 
         // Equip a shield in offhand
-        player.Equipment[(int)EquipSlot.Offhand] = new ItemData { ItemTypeId = ItemId("shield"), StackCount = 1 };
+        player.Equipment[(int)EquipSlot.Offhand] = new ItemData { ItemTypeId = ItemId("adamantite_shield"), StackCount = 1 };
         ActiveEffectsSystem.RecalculatePlayerStats(ref player);
 
         // Spawn an aggressive monster adjacent to player
         engine.SpawnMonster(Position.FromCoords(sx + 1, sy, Position.DefaultZ),
-            new MonsterData { MonsterTypeId = 0, Health = 9999, Attack = 10, Defense = 0, Speed = 10 });
+            new MonsterData { MonsterTypeId = 0, Health = 9999, Attack = 10, Defense = 0, Speed = 10, AttackSpeed = 10 });
 
         // Run many ticks to give the shield a chance to block
         bool sawBlock = false;
@@ -459,8 +459,7 @@ public class RangedCombatTests
             if (sawBlock) break;
         }
 
-        // With shield defense=3, block chance = min(50, 3*2) = 6%
-        // Over 200 ticks, probability of never blocking is very low
+        // Adamantite shield block chance reaches the 50% cap, and the monster attacks every tick.
         Assert.True(sawBlock, "Shield should block at least one attack over many ticks");
     }
 

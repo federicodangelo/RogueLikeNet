@@ -85,11 +85,7 @@ public static class EntitySerializer
     private static void SerializeMonsterData(Dictionary<string, object> dict, MonsterData md)
     {
         dict["MonsterTypeId"] = md.MonsterTypeId;
-        dict["MonsterHealth"] = md.Health;
-        dict["MonsterAttack"] = md.Attack;
-        dict["MonsterDefense"] = md.Defense;
-        dict["MonsterSpeed"] = md.Speed;
-        dict["MonsterAttackSpeed"] = md.AttackSpeed;
+        dict["MonsterDifficulty"] = md.Difficulty;
     }
 
     private static void SerializeItemData(Dictionary<string, object> dict, ItemData id)
@@ -117,7 +113,8 @@ public static class EntitySerializer
 
     /// <summary>
     /// Serializes all non-player, non-dead entities within the given chunk to JSON.
-    /// Only runtime state is persisted; definition-derived values are rebuilt from IDs on load.
+    /// Only runtime state plus monster spawn seeds are persisted; definition-derived monster stats
+    /// are rebuilt from the monster type ID and difficulty on load.
     /// </summary>
     public static string SerializeEntities(Chunk chunk)
     {
@@ -262,15 +259,7 @@ public static class EntitySerializer
 
     private static void DeserializeMonster(Dictionary<string, JsonElement> dict, GameEngine engine)
     {
-        var monsterData = new MonsterData
-        {
-            MonsterTypeId = GetInt(dict, "MonsterTypeId"),
-            Health = GetInt(dict, "MonsterHealth"),
-            Attack = GetInt(dict, "MonsterAttack"),
-            Defense = GetInt(dict, "MonsterDefense"),
-            Speed = GetInt(dict, "MonsterSpeed"),
-            AttackSpeed = GetInt(dict, "MonsterAttackSpeed", GetInt(dict, "MonsterSpeed")),
-        };
+        var monsterData = DeserializeMonsterData(dict);
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
         ref var monster = ref engine.SpawnMonster(Position.FromCoords(x, y, z), monsterData);
@@ -284,6 +273,46 @@ public static class EntitySerializer
         monster.MoveDelay.Current = GetInt(dict, "MoveCurrent");
         monster.AttackDelay.Current = GetInt(dict, "AttackCurrent");
         RestoreStatusEffects(dict, ref monster);
+    }
+
+    private static MonsterData DeserializeMonsterData(Dictionary<string, JsonElement> dict)
+    {
+        int monsterTypeId = GetInt(dict, "MonsterTypeId");
+
+        if (dict.ContainsKey("MonsterDifficulty"))
+        {
+            int difficulty = GetInt(dict, "MonsterDifficulty");
+            var def = GameData.Instance.Npcs.Get(monsterTypeId);
+            if (def != null)
+                return NpcRegistry.GenerateMonsterData(def, difficulty);
+        }
+
+        return DeserializeLegacyMonsterData(dict, monsterTypeId);
+    }
+
+    private static MonsterData DeserializeLegacyMonsterData(Dictionary<string, JsonElement> dict, int monsterTypeId)
+    {
+        int speed = GetInt(dict, "MonsterSpeed");
+        return new MonsterData
+        {
+            MonsterTypeId = monsterTypeId,
+            Difficulty = InferLegacyMonsterDifficulty(dict, monsterTypeId),
+            Health = GetInt(dict, "MonsterHealth"),
+            Attack = GetInt(dict, "MonsterAttack"),
+            Defense = GetInt(dict, "MonsterDefense"),
+            Speed = speed,
+            AttackSpeed = GetInt(dict, "MonsterAttackSpeed", speed),
+        };
+    }
+
+    private static int InferLegacyMonsterDifficulty(Dictionary<string, JsonElement> dict, int monsterTypeId)
+    {
+        var def = GameData.Instance.Npcs.Get(monsterTypeId);
+        if (def == null)
+            return 0;
+
+        int storedAttack = GetInt(dict, "MonsterAttack", def.Attack);
+        return Math.Max(0, storedAttack - def.Attack);
     }
 
     private static void RestoreStatusEffects(Dictionary<string, JsonElement> dict, ref MonsterEntity monster)

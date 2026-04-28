@@ -6,6 +6,7 @@ namespace RogueLikeNet.Core.Components;
 public struct MonsterData
 {
     public int MonsterTypeId;
+    public int Difficulty;
     public int Health;
     public int Attack;
     public int Defense;
