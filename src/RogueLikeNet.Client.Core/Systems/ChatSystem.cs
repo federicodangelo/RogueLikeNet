@@ -95,6 +95,7 @@ public sealed class ChatSystem
     public void Clear()
     {
         _chatLog.Clear();
+        _chatLogTimestamps.Clear();
         InputActive = false;
         InputText = "";
         while (_pendingChats.TryDequeue(out _)) { }
