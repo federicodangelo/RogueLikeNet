@@ -16,4 +16,5 @@ public class CombatEventMsg
     [Key(8)] public int DamageType { get; set; }
     [Key(9)] public bool WasResisted { get; set; }
     [Key(10)] public bool WasWeakness { get; set; }
+    [Key(11)] public int StatusEffectType { get; set; } = -1;
 }

@@ -167,7 +167,10 @@ public class CombatSystem
                         monster.MonsterData.MonsterTypeId);
                     monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
 
-                    _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead, isRanged));
+                    var combatEvent = BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead, isRanged);
+                    if (StatusEffectSystem.TryApplyFromDamageType(ref monster, damage.DamageType, player.Id, damage.Damage, out var appliedEffectType))
+                        combatEvent.StatusEffectType = appliedEffectType;
+                    _events.Add(combatEvent);
 
                     if (monster.IsDead)
                     {
@@ -521,6 +524,7 @@ public class CombatSystem
             DamageType = damage.DamageType,
             WasResisted = damage.WasResisted,
             WasWeakness = damage.WasWeakness,
+            StatusEffectType = StatusEffectType.None,
         };
     }
 }
@@ -536,6 +540,7 @@ public struct CombatEvent
     public DamageType DamageType;
     public bool WasResisted;
     public bool WasWeakness;
+    public StatusEffectType StatusEffectType;
 }
 
 public struct NpcInteractionEvent

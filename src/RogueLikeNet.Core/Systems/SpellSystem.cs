@@ -179,7 +179,10 @@ public class SpellSystem
                         spell.DamageType,
                         monster.MonsterData.MonsterTypeId);
                     monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
-                    _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead));
+                    var combatEvent = BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead);
+                    if (StatusEffectSystem.TryApplyFromDamageType(ref monster, damage.DamageType, player.Id, damage.Damage, out var appliedEffectType))
+                        combatEvent.StatusEffectType = appliedEffectType;
+                    _events.Add(combatEvent);
 
                     if (monster.IsDead)
                     {
@@ -209,7 +212,10 @@ public class SpellSystem
                 spell.DamageType,
                 monster.MonsterData.MonsterTypeId);
             monster.Health.Current = Math.Max(0, monster.Health.Current - damage.Damage);
-            _events.Add(BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead));
+            var combatEvent = BuildCombatEvent(player.Position, monster.Position, damage, monster.IsDead);
+            if (StatusEffectSystem.TryApplyFromDamageType(ref monster, damage.DamageType, player.Id, damage.Damage, out var appliedEffectType))
+                combatEvent.StatusEffectType = appliedEffectType;
+            _events.Add(combatEvent);
 
             if (monster.IsDead)
             {
@@ -235,6 +241,7 @@ public class SpellSystem
             DamageType = damage.DamageType,
             WasResisted = damage.WasResisted,
             WasWeakness = damage.WasWeakness,
+            StatusEffectType = StatusEffectType.None,
         };
     }
 

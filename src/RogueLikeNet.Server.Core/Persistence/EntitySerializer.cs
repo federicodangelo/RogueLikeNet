@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using RogueLikeNet.Core;
 using RogueLikeNet.Core.Components;
 using RogueLikeNet.Core.Data;
+using RogueLikeNet.Core.Entities;
 using RogueLikeNet.Core.Systems;
 using RogueLikeNet.Core.World;
 
@@ -63,6 +64,24 @@ public static class EntitySerializer
         dict["AttackCurrent"] = atk.Current;
     }
 
+    private static void SerializeStatusEffects(Dictionary<string, object> dict, StatusEffects statusEffects)
+    {
+        dict["StatusCount"] = statusEffects.Count;
+        for (int i = 0; i < statusEffects.Count; i++)
+        {
+            var effect = statusEffects.Get(i);
+            string prefix = $"Status{i}";
+            dict[$"{prefix}Type"] = (int)effect.Type;
+            dict[$"{prefix}DamageType"] = (int)effect.DamageType;
+            dict[$"{prefix}DamagePerTick"] = effect.DamagePerTick;
+            dict[$"{prefix}TickInterval"] = effect.TickInterval;
+            dict[$"{prefix}TickCounter"] = effect.TickCounter;
+            dict[$"{prefix}RemainingTicks"] = effect.RemainingTicks;
+            dict[$"{prefix}SpeedMultiplierBase100"] = effect.SpeedMultiplierBase100;
+            dict[$"{prefix}SourcePlayerEntityId"] = effect.SourcePlayerEntityId;
+        }
+    }
+
     private static void SerializeMonsterData(Dictionary<string, object> dict, MonsterData md)
     {
         dict["MonsterTypeId"] = md.MonsterTypeId;
@@ -114,6 +133,7 @@ public static class EntitySerializer
             SerializeAIState(dict, m.AI);
             SerializeMoveDelay(dict, m.MoveDelay);
             SerializeAttackDelay(dict, m.AttackDelay);
+            SerializeStatusEffects(dict, m.StatusEffects);
             entities.Add(dict);
         }
 
@@ -261,6 +281,32 @@ public static class EntitySerializer
         monster.AI.AlertCooldown = GetInt(dict, "AlertCooldown");
         monster.MoveDelay.Current = GetInt(dict, "MoveCurrent");
         monster.AttackDelay.Current = GetInt(dict, "AttackCurrent");
+        RestoreStatusEffects(dict, ref monster);
+    }
+
+    private static void RestoreStatusEffects(Dictionary<string, JsonElement> dict, ref MonsterEntity monster)
+    {
+        int statusCount = Math.Min(GetInt(dict, "StatusCount"), StatusEffects.MaxEffects);
+        for (int i = 0; i < statusCount; i++)
+        {
+            string prefix = $"Status{i}";
+            var effect = new StatusEffect
+            {
+                Type = (StatusEffectType)GetInt(dict, $"{prefix}Type", (int)StatusEffectType.None),
+                DamageType = (DamageType)GetInt(dict, $"{prefix}DamageType"),
+                DamagePerTick = GetInt(dict, $"{prefix}DamagePerTick"),
+                TickInterval = GetInt(dict, $"{prefix}TickInterval"),
+                TickCounter = GetInt(dict, $"{prefix}TickCounter"),
+                RemainingTicks = GetInt(dict, $"{prefix}RemainingTicks"),
+                SpeedMultiplierBase100 = GetInt(dict, $"{prefix}SpeedMultiplierBase100", 100),
+                SourcePlayerEntityId = GetInt(dict, $"{prefix}SourcePlayerEntityId"),
+            };
+
+            if (effect.Type != StatusEffectType.None && effect.RemainingTicks > 0)
+                monster.StatusEffects.AddOrRefresh(effect);
+        }
+
+        StatusEffectSystem.RecalculateMonsterDelays(ref monster);
     }
 
     private static void DeserializeGroundItem(Dictionary<string, JsonElement> dict, GameEngine engine)

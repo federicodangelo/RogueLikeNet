@@ -44,12 +44,24 @@ public class EntitySerializerTests : IDisposable
         monsterRef.AI.PatrolX = 10;
         monsterRef.AI.PatrolY = 20;
         monsterRef.AI.AlertCooldown = 5;
-        monsterRef.MoveDelay.Current = 3;
-        monsterRef.AttackDelay.Current = 7;
+        monsterRef.MoveDelay.Current = 1;
+        monsterRef.AttackDelay.Current = 1;
+        monsterRef.StatusEffects.AddOrRefresh(new StatusEffect
+        {
+            Type = StatusEffectType.Burning,
+            DamageType = DamageType.Fire,
+            DamagePerTick = 3,
+            TickInterval = 20,
+            TickCounter = 11,
+            RemainingTicks = 40,
+            SpeedMultiplierBase100 = 100,
+            SourcePlayerEntityId = 99,
+        });
 
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
         var json = EntitySerializer.SerializeEntities(chunk);
         Assert.Contains("\"Type\":\"Monster\"", json);
+        Assert.Contains("\"StatusCount\":1", json);
 
         // Deserialize into a fresh engine
         using var engine2 = new GameEngine(42, _gen);
@@ -75,8 +87,15 @@ public class EntitySerializerTests : IDisposable
         Assert.Equal(20, found.AI.PatrolY);
         Assert.Equal(5, found.AI.AlertCooldown);
 
-        Assert.Equal(3, found.MoveDelay.Current);
-        Assert.Equal(7, found.AttackDelay.Current);
+        Assert.Equal(1, found.MoveDelay.Current);
+        Assert.Equal(1, found.AttackDelay.Current);
+        Assert.True(found.StatusEffects.HasEffect(StatusEffectType.Burning));
+        var restoredEffect = found.StatusEffects.Get(0);
+        Assert.Equal(DamageType.Fire, restoredEffect.DamageType);
+        Assert.Equal(3, restoredEffect.DamagePerTick);
+        Assert.Equal(11, restoredEffect.TickCounter);
+        Assert.Equal(40, restoredEffect.RemainingTicks);
+        Assert.Equal(99, restoredEffect.SourcePlayerEntityId);
     }
 
     [Fact]

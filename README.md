@@ -250,6 +250,14 @@ dotnet run --project src/RogueLikeNet.Server
 
 The server starts at `http://localhost:5090`. WebSocket endpoint: `ws://localhost:5090/ws`.
 
+Optional dedicated-server settings can be supplied through configuration or environment-style keys:
+
+```bash
+dotnet run --project src/RogueLikeNet.Server -- RogueLikeNet:WorldSeed=98765 RogueLikeNet:DatabasePath=custom-game.db
+```
+
+Supported keys are `RogueLikeNet:WorldSeed`, `WorldSeed`, `ROGUELIKENET_WORLD_SEED`, `RogueLikeNet:DatabasePath`, `DatabasePath`, and `ROGUELIKENET_DATABASE_PATH`. Defaults remain `12345` and `game.db`.
+
 ### Run the desktop client (standalone mode)
 
 ```bash

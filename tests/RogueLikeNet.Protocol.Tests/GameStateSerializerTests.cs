@@ -562,6 +562,7 @@ public class GameStateSerializerTests
         Assert.Equal((int)DamageType.Physical, events[0].DamageType);
         Assert.False(events[0].WasResisted);
         Assert.False(events[0].WasWeakness);
+        Assert.Equal((int)StatusEffectType.None, events[0].StatusEffectType);
 
         engine.Dispose();
     }

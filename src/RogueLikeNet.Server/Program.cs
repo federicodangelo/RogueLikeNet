@@ -11,9 +11,11 @@ GameData.Instance = DataLoader.Load(dataDir);
 GameData.Instance.LogLoadedData(Console.Out);
 
 // Create game loop with SQLite persistence
-long worldSeed = 12345; // TODO: configurable
-using var saveProvider = new SqliteSaveGameProvider("game.db");
-var gameServer = new GameServer(worldSeed, logWriter: Console.Out, saveProvider: saveProvider);
+var serverOptions = ServerRuntimeOptions.FromConfiguration(builder.Configuration);
+Console.WriteLine($"Server world seed: {serverOptions.WorldSeed}");
+Console.WriteLine($"Save database: {serverOptions.DatabasePath}");
+using var saveProvider = new SqliteSaveGameProvider(serverOptions.DatabasePath);
+var gameServer = new GameServer(serverOptions.WorldSeed, logWriter: Console.Out, saveProvider: saveProvider);
 
 // Auto-load last save or create a new default slot
 gameServer.InitializeFromSaveProvider();

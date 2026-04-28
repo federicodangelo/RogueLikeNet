@@ -14,5 +14,6 @@ public struct MonsterEntity
     public AIState AI;
     public MoveDelay MoveDelay;
     public AttackDelay AttackDelay;
+    public StatusEffects StatusEffects;
     public bool IsDead => !Health.IsAlive;
 }

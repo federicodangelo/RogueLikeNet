@@ -37,6 +37,7 @@ public class GameEngine : IDisposable
     private readonly AnimalSystem _animalSystem;
     private readonly TradingSystem _tradingSystem;
     private readonly SpellSystem _spellSystem;
+    private readonly StatusEffectSystem _statusEffectSystem;
     private readonly QuestSystem _questSystem;
     private readonly SeededRandom _worldRng;
     private long _tick;
@@ -46,6 +47,7 @@ public class GameEngine : IDisposable
     public long CurrentTick => _tick;
     public CombatSystem Combat => _combatSystem;
     public SpellSystem Spells => _spellSystem;
+    public StatusEffectSystem StatusEffects => _statusEffectSystem;
     public InventorySystem Inventory => _inventorySystem;
     public GameData GameData { get; }
 
@@ -86,6 +88,7 @@ public class GameEngine : IDisposable
         _animalSystem = new AnimalSystem();
         _tradingSystem = new TradingSystem();
         _spellSystem = new SpellSystem();
+        _statusEffectSystem = new StatusEffectSystem();
         _worldRng = new SeededRandom(worldSeed);
         _questSystem = new QuestSystem();
     }
@@ -393,6 +396,7 @@ public class GameEngine : IDisposable
         _movementSystem.Update(_worldMap, DebugNoCollision, DebugMaxSpeed);
         _combatSystem.Update(_worldMap, DebugInvulnerable);
         _spellSystem.Update(_worldMap);
+        _statusEffectSystem.Update(_worldMap);
         _aiSystem.Update(_worldMap);
         _inventorySystem.Update(_worldMap, this);
         _tradingSystem.Update(_worldMap);

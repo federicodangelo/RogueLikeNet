@@ -226,7 +226,8 @@ public static class GameStateSerializer
     {
         var combatEvents = engine.Combat.LastTickEvents;
         var spellEvents = engine.Spells.LastTickEvents;
-        if (combatEvents.Count == 0 && spellEvents.Count == 0) return [];
+        var statusEvents = engine.StatusEffects.LastTickEvents;
+        if (combatEvents.Count == 0 && spellEvents.Count == 0 && statusEvents.Count == 0) return [];
 
         static CombatEventMsg ToMsg(CombatEvent e) => new()
         {
@@ -241,13 +242,16 @@ public static class GameStateSerializer
             DamageType = (int)e.DamageType,
             WasResisted = e.WasResisted,
             WasWeakness = e.WasWeakness,
+            StatusEffectType = (int)e.StatusEffectType,
         };
 
-        var result = new CombatEventMsg[combatEvents.Count + spellEvents.Count];
+        var result = new CombatEventMsg[combatEvents.Count + spellEvents.Count + statusEvents.Count];
         int idx = 0;
         foreach (var e in combatEvents)
             result[idx++] = ToMsg(e);
         foreach (var e in spellEvents)
+            result[idx++] = ToMsg(e);
+        foreach (var e in statusEvents)
             result[idx++] = ToMsg(e);
         return result;
     }
