@@ -18,6 +18,10 @@ public sealed class StatusEffectSystem
 
     public IReadOnlyList<CombatEvent> LastTickEvents => _events;
 
+    internal static int GetMonsterMoveDelayInterval(int speed) => Math.Max(0, 10 - speed);
+
+    internal static int GetMonsterAttackDelayInterval(int attackSpeed) => Math.Max(0, 10 - attackSpeed);
+
     public void Update(WorldMap map)
     {
         _events.Clear();
@@ -99,12 +103,12 @@ public sealed class StatusEffectSystem
 
     public static void RecalculateMonsterDelays(ref MonsterEntity monster)
     {
-        int baseInterval = Math.Max(0, 10 - monster.MonsterData.Speed);
+        int moveBaseInterval = GetMonsterMoveDelayInterval(monster.MonsterData.Speed);
+        int attackBaseInterval = GetMonsterAttackDelayInterval(monster.MonsterData.AttackSpeed);
         int speedMultiplier = monster.StatusEffects.CombinedSpeedMultiplierBase100;
-        int interval = ApplySpeedMultiplier(baseInterval, speedMultiplier);
-        monster.MoveDelay.Interval = interval;
+        monster.MoveDelay.Interval = ApplySpeedMultiplier(moveBaseInterval, speedMultiplier);
         monster.MoveDelay.Current = Math.Min(monster.MoveDelay.Current, monster.MoveDelay.Interval);
-        monster.AttackDelay.Interval = interval;
+        monster.AttackDelay.Interval = ApplySpeedMultiplier(attackBaseInterval, speedMultiplier);
         monster.AttackDelay.Current = Math.Min(monster.AttackDelay.Current, monster.AttackDelay.Interval);
     }
 

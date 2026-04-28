@@ -43,12 +43,14 @@ public class NpcRegistryTests
             Attack = 5,
             Defense = 3,
             Speed = 2,
+            AttackSpeed = 1,
         };
         var data = NpcRegistry.GenerateMonsterData(def, 0);
         Assert.Equal(10, data.Health);  // 10 + 10*(0/2) = 10
         Assert.Equal(5, data.Attack);   // 5 + 0 = 5
         Assert.Equal(3, data.Defense);  // 3 + 0/2 = 3
         Assert.Equal(2, data.Speed);    // 2 + 0 = 2
+        Assert.Equal(1, data.AttackSpeed);
     }
 
     [Fact]
@@ -62,12 +64,14 @@ public class NpcRegistryTests
             Attack = 5,
             Defense = 3,
             Speed = 2,
+            AttackSpeed = 1,
         };
         var data = NpcRegistry.GenerateMonsterData(def, 4);
         Assert.Equal(30, data.Health);  // 10 + 10*(4/2) = 10 + 20 = 30
         Assert.Equal(9, data.Attack);   // 5 + 4 = 9
         Assert.Equal(5, data.Defense);  // 3 + 4/2 = 3 + 2 = 5
         Assert.Equal(2, data.Speed);    // 2 + 0 = 2
+        Assert.Equal(1, data.AttackSpeed);
     }
 
     [Fact]
@@ -76,7 +80,7 @@ public class NpcRegistryTests
         var registry = new NpcRegistry();
         var defs = new[]
         {
-            new NpcDefinition { Id = "goblin", Name = "Goblin", Health = 5, Attack = 2, Defense = 1, Speed = 3 },
+            new NpcDefinition { Id = "goblin", Name = "Goblin", Health = 5, Attack = 2, Defense = 1, Speed = 3, AttackSpeed = 1 },
         };
         registry.Register(defs);
         var def = registry.Get("goblin")!;

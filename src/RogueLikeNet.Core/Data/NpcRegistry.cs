@@ -35,6 +35,7 @@ public sealed class NpcRegistry : BaseRegistry<NpcDefinition>
         int bonusAttack = difficulty;
         int bonusDefense = difficulty / 2;
         int bonusSpeed = 0;
+        int bonusAttackSpeed = 0;
 
         return new MonsterData
         {
@@ -43,6 +44,7 @@ public sealed class NpcRegistry : BaseRegistry<NpcDefinition>
             Attack = def.Attack + bonusAttack,
             Defense = def.Defense + bonusDefense,
             Speed = def.Speed + bonusSpeed,
+            AttackSpeed = def.AttackSpeed + bonusAttackSpeed,
         };
     }
 }

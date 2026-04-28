@@ -62,10 +62,11 @@ public class StatusEffectSystemTests
         var (sx, sy, _) = engine.FindSpawnPosition();
         var p = engine.SpawnPlayer(1, Position.FromCoords(sx, sy, Position.DefaultZ), ClassDefinitions.Mage);
         ref var player = ref engine.WorldMap.GetPlayerRef(p.Id);
-        int baseInterval = Math.Max(0, 10 - 4);
+        int baseMoveInterval = Math.Max(0, 10 - 4);
+        int baseAttackInterval = Math.Max(0, 10 - 1);
 
         var monster = engine.SpawnMonster(Position.FromCoords(sx + 3, sy, Position.DefaultZ),
-            new MonsterData { MonsterTypeId = NpcId("goblin"), Health = 200, Attack = 0, Defense = 0, Speed = 4 });
+            new MonsterData { MonsterTypeId = NpcId("goblin"), Health = 200, Attack = 0, Defense = 0, Speed = 4, AttackSpeed = 1 });
 
         player.Input.ActionType = ActionTypes.CastSpell;
         player.Input.ItemSlot = SpellId("ice_bolt");
@@ -73,9 +74,21 @@ public class StatusEffectSystemTests
 
         ref var chilled = ref engine.WorldMap.GetMonsterRef(monster.Id);
         Assert.True(chilled.StatusEffects.HasEffect(StatusEffectType.Chilled));
-        Assert.True(chilled.MoveDelay.Interval > baseInterval);
-        Assert.True(chilled.AttackDelay.Interval > baseInterval);
+        Assert.True(chilled.MoveDelay.Interval > baseMoveInterval);
+        Assert.True(chilled.AttackDelay.Interval > baseAttackInterval);
         Assert.Equal(StatusEffectType.Chilled, engine.Spells.LastTickEvents[0].StatusEffectType);
+    }
+
+    [Fact]
+    public void MonsterAttackDelay_UsesAttackSpeed_NotMoveSpeed()
+    {
+        using var engine = CreateEngine();
+        var monster = engine.SpawnMonster(Position.FromCoords(5, 5, Position.DefaultZ),
+            new MonsterData { MonsterTypeId = NpcId("goblin"), Health = 50, Attack = 5, Defense = 1, Speed = 4, AttackSpeed = 1 });
+
+        ref var monsterRef = ref engine.WorldMap.GetMonsterRef(monster.Id);
+        Assert.Equal(Math.Max(0, 10 - 4), monsterRef.MoveDelay.Interval);
+        Assert.Equal(Math.Max(0, 10 - 1), monsterRef.AttackDelay.Interval);
     }
 
     [Fact]

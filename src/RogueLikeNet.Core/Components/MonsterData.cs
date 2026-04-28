@@ -10,4 +10,5 @@ public struct MonsterData
     public int Attack;
     public int Defense;
     public int Speed;
+    public int AttackSpeed;
 }

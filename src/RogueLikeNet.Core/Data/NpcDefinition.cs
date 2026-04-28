@@ -14,6 +14,7 @@ public sealed class NpcDefinition : BaseDefinition
     public int Attack { get; set; }
     public int Defense { get; set; }
     public int Speed { get; set; }
+    public int AttackSpeed { get; set; }
     public int XpReward { get; set; }
     public DamageModifierDefinition[] DamageModifiers { get; set; } = [];
     public LootEntry[] LootTable { get; set; } = [];

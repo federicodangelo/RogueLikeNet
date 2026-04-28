@@ -205,7 +205,8 @@ public class GameEngine : IDisposable
     public ref MonsterEntity SpawnMonster(Position pos, MonsterData data)
     {
         var def = GameData.Instance.Npcs.Get(data.MonsterTypeId);
-        int moveInterval = Math.Max(0, 10 - data.Speed);
+        int moveInterval = StatusEffectSystem.GetMonsterMoveDelayInterval(data.Speed);
+        int attackInterval = StatusEffectSystem.GetMonsterAttackDelayInterval(data.AttackSpeed);
         var monster = new MonsterEntity(_worldMap.AllocateEntityId())
         {
             Position = pos,
@@ -215,7 +216,7 @@ public class GameEngine : IDisposable
             Appearance = new TileAppearance(def?.GlyphId ?? 0, def?.FgColor ?? 0),
             AI = new AIState { StateId = AIStates.Idle },
             MoveDelay = new MoveDelay(moveInterval),
-            AttackDelay = new AttackDelay(moveInterval),
+            AttackDelay = new AttackDelay(attackInterval),
         };
 
         return ref _worldMap.GetChunk(Chunk.WorldToChunkCoord(pos)).AddEntity(monster);

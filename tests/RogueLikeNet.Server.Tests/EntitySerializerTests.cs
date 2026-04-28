@@ -34,7 +34,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void Monster_RoundTrip_PreservesData()
     {
-        var md = new MonsterData { MonsterTypeId = 7, Health = 50, Attack = 12, Defense = 4, Speed = 8 };
+        var md = new MonsterData { MonsterTypeId = 7, Health = 50, Attack = 12, Defense = 4, Speed = 8, AttackSpeed = 2 };
         var monster = _engine.SpawnMonster(Position.FromCoords(1, 2, Z), md);
 
         // Tweak runtime state so we can verify it survives the round-trip
@@ -78,6 +78,7 @@ public class EntitySerializerTests : IDisposable
         Assert.Equal(12, found.MonsterData.Attack);
         Assert.Equal(4, found.MonsterData.Defense);
         Assert.Equal(8, found.MonsterData.Speed);
+        Assert.Equal(2, found.MonsterData.AttackSpeed);
 
         Assert.Equal(30, found.Health.Current);
         Assert.Equal(50, found.Health.Max);
@@ -198,7 +199,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void MultipleEntityTypes_RoundTrip()
     {
-        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5, AttackSpeed = 1 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
         _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnTownNpc(Position.FromCoords(6, 6, Z), "Vendor", 6, 6, 2);
@@ -239,7 +240,7 @@ public class EntitySerializerTests : IDisposable
     public void OnlySerializesEntitiesInRequestedChunk()
     {
         // Spawn in chunk (0,0)
-        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 1, Defense = 1, Speed = 1, AttackSpeed = 0 });
 
         // Serialize chunk (1,1) — should not contain the monster at (1,1) since that's in chunk (0,0)
         var chunk11 = new Chunk(ChunkPosition.FromCoords(1, 1, Z));
@@ -251,7 +252,7 @@ public class EntitySerializerTests : IDisposable
     [Fact]
     public void Serialize_SkipsDeadEntities()
     {
-        var monster = _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 9999, Health = 10, Attack = 1, Defense = 1, Speed = 1 });
+        var monster = _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 9999, Health = 10, Attack = 1, Defense = 1, Speed = 1, AttackSpeed = 0 });
 
         ref var monsterRef = ref _engine.WorldMap.GetMonsterRef(monster.Id);
         monsterRef.Health.Current = 0;
@@ -285,7 +286,7 @@ public class EntitySerializerTests : IDisposable
     {
         // 1. Create a world, spawn entities, serialize the chunk
         var chunk = _engine.WorldMap.TryGetChunk(ChunkPosition.FromCoords(0, 0, Z))!;
-        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5 });
+        _engine.SpawnMonster(Position.FromCoords(1, 1, Z), new MonsterData { MonsterTypeId = 1, Health = 10, Attack = 3, Defense = 1, Speed = 5, AttackSpeed = 1 });
         _engine.SpawnItemOnGround(new ItemData { ItemTypeId = 2, StackCount = 1 }, Position.FromCoords(2, 2, Z));
         _engine.SpawnResourceNode(Position.FromCoords(3, 3, Z), GameData.Instance.ResourceNodes.Get("copper_rock")!);
         _engine.SpawnTownNpc(Position.FromCoords(4, 4, Z), "Blacksmith", 4, 4, 3);

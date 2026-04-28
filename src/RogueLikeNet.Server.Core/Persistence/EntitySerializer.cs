@@ -89,6 +89,7 @@ public static class EntitySerializer
         dict["MonsterAttack"] = md.Attack;
         dict["MonsterDefense"] = md.Defense;
         dict["MonsterSpeed"] = md.Speed;
+        dict["MonsterAttackSpeed"] = md.AttackSpeed;
     }
 
     private static void SerializeItemData(Dictionary<string, object> dict, ItemData id)
@@ -268,6 +269,7 @@ public static class EntitySerializer
             Attack = GetInt(dict, "MonsterAttack"),
             Defense = GetInt(dict, "MonsterDefense"),
             Speed = GetInt(dict, "MonsterSpeed"),
+            AttackSpeed = GetInt(dict, "MonsterAttackSpeed", GetInt(dict, "MonsterSpeed")),
         };
 
         int x = GetInt(dict, "X"), y = GetInt(dict, "Y"), z = GetInt(dict, "Z");
